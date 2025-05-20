@@ -29,19 +29,10 @@ namespace Tests;
 [TestClass]
 public sealed class ThoughtTraceability
 {
-  MockProduct Expected = null!;
-  Thought Superthought = null!;
-
-  [TestInitialize]
-  public void Setup()
-  {
-    Expected = new();
-    Superthought = new();
-  }
-
   [TestMethod]
   public void SetAndGetPayload()
   {
+    var Expected = new MockProduct();
     var T = Thought.ForProduct(Expected);
 
     var Actual = T.UseInIsolation();
@@ -52,7 +43,9 @@ public sealed class ThoughtTraceability
   [TestMethod]
   public void UseSubthought()
   {
+    var Expected = new MockProduct();
     var T = Thought.ForProduct(Expected);
+    var Superthought = new Thought();
 
     var Actual = Superthought.Use(T);
 
@@ -62,11 +55,28 @@ public sealed class ThoughtTraceability
   [TestMethod]
   public void UsingSubthoughtBindsToSuperthought()
   {
+    var Expected = new MockProduct();
     var T = Thought.ForProduct(Expected);
+    var Superthought = new Thought();
+    var Reasoning = new Reasoning(Superthought);
+    Reasoning.Use(Thought.ForProduct(new MockProduct()));
+    Reasoning.Use(Thought.ForProduct(new MockProduct()));
+    var OriginalChildren = Reasoning.Children.ToArray();
 
-    Superthought.Use(T);
+    Reasoning.Use(T);
 
     T.Parent.Should().BeSameAs(Superthought);
-    Superthought.Children.Should().Contain(T);
+    Reasoning.Children.Should().Equal([.. OriginalChildren, T]);
+  }
+
+  [TestMethod]
+  public void InternalReasoning()
+  {
+    var Expected = new MockProduct();
+    var T = Thought.ForReasoning(R => Expected);
+
+    var Actual = T.UseInIsolation();
+
+    Actual.Should().BeSameAs(Expected);
   }
 }

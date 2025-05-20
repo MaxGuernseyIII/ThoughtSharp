@@ -20,13 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using static ThoughtSharp.Runtime.Thought;
+
 namespace ThoughtSharp.Runtime;
+
+
+public class Reasoning(Thought Superthought)
+{
+  readonly List<Thought> UsedSubthoughts = [];
+
+  public T Use<T>(Thought<T> Subthought)
+  {
+    UsedSubthoughts.Add(Subthought);
+    Subthought.Parent = Superthought;
+    return default!;
+  }
+
+  public IReadOnlyList<Thought> Children => UsedSubthoughts.AsReadOnly();
+}
 
 public class Thought
 {
   public static Thought<T> ForProduct<T>(T Product)
   {
-    return new(Product);
+    return new(delegate { return Product; });
   }
 
   public T Use<T>(Thought<T> Subthought)
@@ -38,11 +55,21 @@ public class Thought
   }
 
   public IReadOnlyList<Thought> Children { get; private set; } = [];
+
+  public static Thought<T> ForReasoning<T>(Func<Reasoning, T> Produce)
+  {
+    return new(Produce);
+  }
 }
 
-public class Thought<T>(T Product) : Thought
+public class Thought<T> : Thought
 {
-  internal T Product { get; } = Product;
+  public T Product { get; }
+
+  public Thought(Func<Reasoning, T> Produce)
+  {
+    Product = Produce(new(this));
+  }
 
   public T UseInIsolation()
   {
