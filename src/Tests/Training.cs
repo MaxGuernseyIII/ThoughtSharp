@@ -44,16 +44,38 @@ public class Training
   [TestMethod]
   public void DistributiveApplication()
   {
-    float TotalRewardApplied = 0;
-    var T = Thought.Capture(new MockProduct(), R => TotalRewardApplied += R);
     var RewardToApply = Any.Float;
-    var Superthought = Thought.Do(R =>
-    {
-      R.Consume(T);
-    });
 
-    Superthought.ApplyReward(RewardToApply);
+    var TotalRewardApplied = MeasureDistributedRewardAmount(RewardToApply);
 
     TotalRewardApplied.Should().Be(RewardToApply);
+  }
+
+  [TestMethod]
+  public void WeightedDistribution()
+  {
+    var RewardToApply = Any.Float;
+    var UnweightedRewardAmount = MeasureDistributedRewardAmount(RewardToApply);
+
+    float Weight = Any.Float;
+    float TotalRewardApplied = 0;
+    Thought.Do(R =>
+    {
+      var Subthought = Thought.Capture(new MockProduct(), Reward => TotalRewardApplied += Reward);
+      R.Consume(Subthought);
+      R.SetWeight(Subthought, Weight);
+    }).ApplyReward(RewardToApply);
+
+    TotalRewardApplied.Should().BeApproximately(UnweightedRewardAmount * Weight, 0.0001f);
+  }
+
+  static float MeasureDistributedRewardAmount(float RewardToApply)
+  {
+    float TotalRewardApplied = 0;
+    Thought.Do(R =>
+    {
+      R.Consume(Thought.Capture(new MockProduct(), Reward => TotalRewardApplied += Reward));
+    }).ApplyReward(RewardToApply);
+    return TotalRewardApplied;
   }
 }

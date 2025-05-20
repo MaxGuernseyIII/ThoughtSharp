@@ -20,32 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+using System.Runtime.CompilerServices;
 
-public class Reasoning
-{
-  internal Thought? Parent { get; set; }
-
-  readonly List<Thought> UsedSubthoughts = [];
-  readonly Dictionary<Thought, float> Weights = [];
-
-  internal IReadOnlyList<Thought> Children => UsedSubthoughts.ToArray();
-  internal IReadOnlyDictionary<Thought, float> ChildrenWeights => new Dictionary<Thought, float>(Weights);
-
-  public T Consume<T>(Thought<T> Subthought)
-  {
-    if (Subthought.Container is not null)
-      throw new InvalidOperationException("A Thought can only be used in one line of reasoning");
-
-    UsedSubthoughts.Add(Subthought);
-    Subthought.Container = this;
-    Weights[Subthought] = 1f;
-
-    return Subthought.Product;
-  }
-
-  public void SetWeight(Thought Subthought, float Weight)
-  {
-    Weights[Subthought] = Weight;
-  }
-}
+[assembly:InternalsVisibleTo("Tests")]

@@ -25,28 +25,31 @@ namespace ThoughtSharp.Runtime;
 public abstract class Thought
 {
   readonly Action<float>? Reward;
+  readonly IReadOnlyDictionary<Thought, float> Weights;
 
   // prevents foreign inheritors
-  internal Thought(Action<float>? Reward)
+  internal Thought(Reasoning LineOfReasoning, Action<float>? Reward)
   {
     this.Reward = Reward;
+    Children = LineOfReasoning.Children;
+    Weights = LineOfReasoning.ChildrenWeights;
   }
 
   internal Reasoning? Container { get; set; }
 
   public Thought? Parent => Container?.Parent;
-  public IReadOnlyList<Thought> Children { get; protected set; } = [];
+  public IReadOnlyList<Thought> Children { get; }
 
   public static Thought<T> Capture<T>(T Product, Action<float>? Reward = null)
   {
-    return new(Product, [], Reward);
+    return new(Product, new(), Reward);
   }
 
   public static Thought<T> Think<T>(Func<Reasoning, T> Produce)
   {
     var Reasoning = new Reasoning();
     var Product = Produce(Reasoning);
-    var Result = new Thought<T>(Product, Reasoning.Children, null);
+    var Result = new Thought<T>(Product, Reasoning, null);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -64,7 +67,7 @@ public abstract class Thought
   {
     var Reasoning = new Reasoning();
     var Product = await Produce(Reasoning);
-    var Result = new Thought<T>(Product, Reasoning.Children, null);
+    var Result = new Thought<T>(Product, Reasoning, null);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -86,7 +89,7 @@ public abstract class Thought
     Reward?.Invoke(RewardToApply);
 
     foreach (var Child in Children)
-      Child.ApplyReward(RewardToApply);
+      Child.ApplyReward(RewardToApply * Weights[Child]);
   }
 }
 
@@ -94,11 +97,10 @@ public sealed class Thought<T> : Thought
 {
   internal readonly T Product;
 
-  internal Thought(T Product, IReadOnlyList<Thought> Children, Action<float>? Reward)
-    : base(Reward)
+  internal Thought(T Product, Reasoning LineOfReasoning, Action<float>? Reward)
+    : base(LineOfReasoning, Reward)
   {
     this.Product = Product;
-    this.Children = Children;
   }
 
   public T ConsumeDetached()
