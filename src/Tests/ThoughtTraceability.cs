@@ -36,7 +36,7 @@ public sealed class ThoughtTraceability
     
     var T = Thought.Capture(Expected);
 
-    T.Consume().Should().BeSameAs(Expected);
+    T.ConsumeDetached().Should().BeSameAs(Expected);
     T.Children.Should().Equal();
   }
 
@@ -47,7 +47,7 @@ public sealed class ThoughtTraceability
     var T = Thought.Capture(Expected);
     var Reasoning = new Reasoning();
 
-    var Actual = Reasoning.Use(T);
+    var Actual = Reasoning.Consume(T);
 
     Actual.Should().BeSameAs(Expected);
   }
@@ -58,11 +58,11 @@ public sealed class ThoughtTraceability
     var Expected = new MockProduct();
     var T = Thought.Capture(Expected);
     var Reasoning = new Reasoning();
-    Reasoning.Use(Thought.Capture(new MockProduct()));
-    Reasoning.Use(Thought.Capture(new MockProduct()));
+    Reasoning.Consume(Thought.Capture(new MockProduct()));
+    Reasoning.Consume(Thought.Capture(new MockProduct()));
     var OriginalChildren = Reasoning.Children.ToArray();
 
-    Reasoning.Use(T);
+    Reasoning.Consume(T);
 
     Reasoning.Children.Should().Equal([.. OriginalChildren, T]);
   }
@@ -73,7 +73,7 @@ public sealed class ThoughtTraceability
     var Expected = new MockProduct();
     var T = Thought.Think(_ => Expected);
 
-    var Actual = T.Consume();
+    var Actual = T.ConsumeDetached();
 
     Actual.Should().BeSameAs(Expected);
   }
@@ -85,9 +85,9 @@ public sealed class ThoughtTraceability
     var T = Thought.Think(R =>
     {
       CapturedReasoning = R;
-      R.Use(Thought.Capture(new MockProduct()));
-      R.Use(Thought.Capture(new object()));
-      R.Use(Thought.Capture(new MockProduct()));
+      R.Consume(Thought.Capture(new MockProduct()));
+      R.Consume(Thought.Capture(new object()));
+      R.Consume(Thought.Capture(new MockProduct()));
 
       return new MockProduct();
     });
@@ -103,7 +103,7 @@ public sealed class ThoughtTraceability
     var Subthought = Thought.Capture(new MockProduct());
     var Superthought = Thought.Do(R =>
     {
-      R.Use(Subthought);
+      R.Consume(Subthought);
     });
 
     Subthought.Parent.Should().BeSameAs(Superthought);
@@ -115,7 +115,7 @@ public sealed class ThoughtTraceability
     var Subthought = Thought.Capture(new MockProduct());
     var T = Thought.Think(R =>
     {
-      R.Use(Subthought);
+      R.Consume(Subthought);
 
       return new MockProduct();
     });
@@ -131,7 +131,7 @@ public sealed class ThoughtTraceability
     var Subthought = Thought.Capture(new MockProduct());
     Thought.Think(R =>
     {
-      R.Use(Subthought);
+      R.Consume(Subthought);
       return new object();
     });
     var SubthoughtParent = Subthought.Parent;
@@ -139,7 +139,7 @@ public sealed class ThoughtTraceability
     var FailedThought = Thought.Think(R =>
     {
       R
-        .Invoking(Reasoning => Reasoning.Use(Subthought))
+        .Invoking(Reasoning => Reasoning.Consume(Subthought))
         .Should()
         .Throw<InvalidOperationException>();
 
@@ -156,7 +156,7 @@ public sealed class ThoughtTraceability
     var Expected = new MockProduct();
     var T = await Thought.ThinkAsync(_ => Task.FromResult(Expected));
 
-    var Actual = T.Consume();
+    var Actual = T.ConsumeDetached();
 
     Actual.Should().BeSameAs(Expected);
   }
@@ -168,7 +168,7 @@ public sealed class ThoughtTraceability
 
     var T = await Thought.DoAsync(R =>
     {
-      R.Use(Subthought);
+      R.Consume(Subthought);
       return Task.CompletedTask;
     });
 
@@ -182,7 +182,7 @@ public sealed class ThoughtTraceability
 
     var T = await Thought.DoAsync(R =>
     {
-      R.Use(Subthought);
+      R.Consume(Subthought);
       return Task.CompletedTask;
     });
 

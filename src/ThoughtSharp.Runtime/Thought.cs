@@ -22,23 +22,31 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class Thought
+public abstract class Thought
 {
+  readonly Action<float>? Reward;
+
+  // prevents foreign inheritors
+  internal Thought(Action<float>? Reward)
+  {
+    this.Reward = Reward;
+  }
+
   internal Reasoning? Container { get; set; }
 
   public Thought? Parent => Container?.Parent;
   public IReadOnlyList<Thought> Children { get; protected set; } = [];
 
-  public static Thought<T> Capture<T>(T Product)
+  public static Thought<T> Capture<T>(T Product, Action<float>? Reward = null)
   {
-    return new(Product, []);
+    return new(Product, [], Reward);
   }
 
   public static Thought<T> Think<T>(Func<Reasoning, T> Produce)
   {
     var Reasoning = new Reasoning();
     var Product = Produce(Reasoning);
-    var Result = new Thought<T>(Product, Reasoning.Children);
+    var Result = new Thought<T>(Product, Reasoning.Children, null);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -56,7 +64,7 @@ public class Thought
   {
     var Reasoning = new Reasoning();
     var Product = await Produce(Reasoning);
-    var Result = new Thought<T>(Product, Reasoning.Children);
+    var Result = new Thought<T>(Product, Reasoning.Children, null);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -72,27 +80,26 @@ public class Thought
 
     return Result;
   }
+
+  public void ApplyReward(float RewardToApply)
+  {
+    Reward!(RewardToApply);
+  }
 }
 
-public class Thought<T> : Thought
+public sealed class Thought<T> : Thought
 {
   internal readonly T Product;
 
-  internal Thought(Func<Reasoning, T> Produce)
-  {
-    var Reasoning = new Reasoning();
-    Product = Produce(Reasoning);
-    Children = Reasoning.Children;
-  }
-
-  internal Thought(T Product, IReadOnlyList<Thought> Children)
+  internal Thought(T Product, IReadOnlyList<Thought> Children, Action<float>? Reward) 
+    : base(Reward)
   {
     this.Product = Product;
     this.Children = Children;
   }
 
-  public T Consume()
+  public T ConsumeDetached()
   {
-    return new Reasoning().Use(this);
+    return new Reasoning().Consume(this);
   }
 }

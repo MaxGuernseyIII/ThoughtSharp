@@ -20,24 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+namespace Tests;
 
-public class Reasoning
+static class Any
 {
-  internal Thought? Parent { get; set; }
+  static readonly Random Core = new();
 
-  readonly List<Thought> UsedSubthoughts = [];
-
-  public T Consume<T>(Thought<T> Subthought)
-  {
-    if (Subthought.Container is not null)
-      throw new InvalidOperationException("A Thought can only be used in one line of reasoning");
-
-    UsedSubthoughts.Add(Subthought);
-    Subthought.Container = this;
-
-    return Subthought.Product;
-  }
-
-  public IReadOnlyList<Thought> Children => UsedSubthoughts.AsReadOnly();
+  public static float Float => Core.NextSingle();
 }

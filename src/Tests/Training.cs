@@ -20,24 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+using FluentAssertions;
+using Tests.Mocks;
+using ThoughtSharp.Runtime;
 
-public class Reasoning
+namespace Tests;
+
+[TestClass]
+public class Training
 {
-  internal Thought? Parent { get; set; }
-
-  readonly List<Thought> UsedSubthoughts = [];
-
-  public T Consume<T>(Thought<T> Subthought)
+  [TestMethod]
+  public void CapturedThoughtTraining()
   {
-    if (Subthought.Container is not null)
-      throw new InvalidOperationException("A Thought can only be used in one line of reasoning");
+    float TotalRewardApplied = 0;
+    var T = Thought.Capture(new MockProduct(), R => TotalRewardApplied += R);
+    var RewardToApply = Any.Float;
 
-    UsedSubthoughts.Add(Subthought);
-    Subthought.Container = this;
+    T.ApplyReward(RewardToApply);
 
-    return Subthought.Product;
+    TotalRewardApplied.Should().Be(RewardToApply);
   }
-
-  public IReadOnlyList<Thought> Children => UsedSubthoughts.AsReadOnly();
 }
