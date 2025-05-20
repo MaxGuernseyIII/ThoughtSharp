@@ -83,7 +83,10 @@ public abstract class Thought
 
   public void ApplyReward(float RewardToApply)
   {
-    Reward!(RewardToApply);
+    Reward?.Invoke(RewardToApply);
+
+    foreach (var Child in Children)
+      Child.ApplyReward(RewardToApply);
   }
 }
 
@@ -91,7 +94,7 @@ public sealed class Thought<T> : Thought
 {
   internal readonly T Product;
 
-  internal Thought(T Product, IReadOnlyList<Thought> Children, Action<float>? Reward) 
+  internal Thought(T Product, IReadOnlyList<Thought> Children, Action<float>? Reward)
     : base(Reward)
   {
     this.Product = Product;

@@ -40,4 +40,20 @@ public class Training
 
     TotalRewardApplied.Should().Be(RewardToApply);
   }
+
+  [TestMethod]
+  public void DistributiveApplication()
+  {
+    float TotalRewardApplied = 0;
+    var T = Thought.Capture(new MockProduct(), R => TotalRewardApplied += R);
+    var RewardToApply = Any.Float;
+    var Superthought = Thought.Do(R =>
+    {
+      R.Consume(T);
+    });
+
+    Superthought.ApplyReward(RewardToApply);
+
+    TotalRewardApplied.Should().Be(RewardToApply);
+  }
 }
