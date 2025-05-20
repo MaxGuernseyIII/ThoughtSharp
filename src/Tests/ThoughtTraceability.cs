@@ -30,14 +30,14 @@ namespace Tests;
 public sealed class ThoughtTraceability
 {
   [TestMethod]
-  public void SetAndGetPayload()
+  public void ForProduct()
   {
     var Expected = new MockProduct();
+    
     var T = Thought.ForProduct(Expected);
 
-    var Actual = T.Consume();
-
-    Actual.Should().BeSameAs(Expected);
+    T.Consume().Should().BeSameAs(Expected);
+    T.Children.Should().Equal();
   }
 
   [TestMethod]
@@ -114,5 +114,30 @@ public sealed class ThoughtTraceability
     var Actual = Subthought.Parent;
 
     Actual.Should().BeSameAs(T);
+  }
+
+  [TestMethod]
+  public void SubthoughtCannotBeUsedTwice()
+  {
+    var Subthought = Thought.ForProduct(new MockProduct());
+    Thought.ForReasoning(R =>
+    {
+      R.Use(Subthought);
+      return new object();
+    });
+    var SubthoughtParent = Subthought.Parent;
+
+    var FailedThought = Thought.ForReasoning(R =>
+    {
+      R
+        .Invoking(Reasoning => Reasoning.Use(Subthought))
+        .Should()
+        .Throw<InvalidOperationException>();
+
+      return new object();
+    });
+
+    FailedThought.Children.Should().Equal();
+    Subthought.Parent.Should().BeSameAs(SubthoughtParent);
   }
 }

@@ -22,42 +22,20 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class Thought
+public class Reasoning(Thought Superthought)
 {
-  public static Thought<T> ForProduct<T>(T Product)
+  readonly List<Thought> UsedSubthoughts = [];
+
+  public T Use<T>(Thought<T> Subthought)
   {
-    return new(Product);
+    if (Subthought.Parent is not null)
+      throw new InvalidOperationException("A Thought can only be used in one line of reasoning");
+
+    UsedSubthoughts.Add(Subthought);
+    Subthought.Parent = Superthought;
+
+    return Subthought.Product;
   }
 
-  public IReadOnlyList<Thought> Children { get; protected set; } = [];
-
-  public static Thought<T> ForReasoning<T>(Func<Reasoning, T> Produce)
-  {
-    return new(Produce);
-  }
-}
-
-public class Thought<T> : Thought
-{
-  internal readonly T Product;
-
-  internal Thought(Func<Reasoning, T> Produce)
-  {
-    var Reasoning = new Reasoning(this);
-    Product = Produce(Reasoning);
-    Children = Reasoning.Children;
-  }
-
-  internal Thought(T Product)
-  {
-    this.Product = Product;
-    Children = [];
-  }
-
-  public T Consume()
-  {
-    return new Reasoning(new()).Use(this);
-  }
-
-  public Thought? Parent { get; internal set; }
+  public IReadOnlyList<Thought> Children => UsedSubthoughts.AsReadOnly();
 }
