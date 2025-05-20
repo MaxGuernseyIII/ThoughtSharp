@@ -58,15 +58,13 @@ public sealed class ThoughtTraceability
   {
     var Expected = new MockProduct();
     var T = Thought.Capture(Expected);
-    var Superthought = new Thought();
-    var Reasoning = new Reasoning(Superthought);
+    var Reasoning = new Reasoning(null!);
     Reasoning.Use(Thought.Capture(new MockProduct()));
     Reasoning.Use(Thought.Capture(new MockProduct()));
     var OriginalChildren = Reasoning.Children.ToArray();
 
     Reasoning.Use(T);
 
-    T.Parent.Should().BeSameAs(Superthought);
     Reasoning.Children.Should().Equal([.. OriginalChildren, T]);
   }
 
@@ -98,6 +96,18 @@ public sealed class ThoughtTraceability
     var Actual = T.Children;
 
     Actual.Should().Equal(CapturedReasoning.Children);
+  }
+
+  [TestMethod]
+  public void ThoughtChildrenAreAttachedToParentThought()
+  {
+    var Subthought = Thought.Capture(new MockProduct());
+    var Superthought = Thought.Do(R =>
+    {
+      R.Use(Subthought);
+    });
+
+    Subthought.Parent.Should().BeSameAs(Superthought);
   }
 
   [TestMethod]

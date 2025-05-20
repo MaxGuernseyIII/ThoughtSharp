@@ -36,6 +36,15 @@ public class Thought
     return new(Produce);
   }
 
+  public static Thought Do(Action<Reasoning> ToDo)
+  {
+    return Think(object? (R) =>
+    {
+      ToDo(R);
+      return null;
+    });
+  }
+
   public static async Task<Thought<T>> ThinkAsync<T>(Func<Reasoning, Task<T>> Func)
   {
     throw new NotImplementedException();
