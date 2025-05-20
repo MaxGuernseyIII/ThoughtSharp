@@ -45,7 +45,6 @@ public sealed class ThoughtTraceability
   {
     var Expected = new MockProduct();
     var T = Thought.Capture(Expected);
-    var Superthought = new Thought();
     var Reasoning = new Reasoning();
 
     var Actual = Reasoning.Use(T);
@@ -72,7 +71,7 @@ public sealed class ThoughtTraceability
   public void InternalReasoning()
   {
     var Expected = new MockProduct();
-    var T = Thought.Think(R => Expected);
+    var T = Thought.Think(_ => Expected);
 
     var Actual = T.Consume();
 
@@ -155,7 +154,7 @@ public sealed class ThoughtTraceability
   public async Task AsynchronousThinkingYieldsProduct()
   {
     var Expected = new MockProduct();
-    var T = await Thought.ThinkAsync(R => Task.FromResult(Expected));
+    var T = await Thought.ThinkAsync(_ => Task.FromResult(Expected));
 
     var Actual = T.Consume();
 
