@@ -24,16 +24,21 @@ namespace ThoughtSharp.Runtime;
 
 public class Thought
 {
-  public static Thought<T> ForProduct<T>(T Product)
+  public IReadOnlyList<Thought> Children { get; protected set; } = [];
+
+  public static Thought<T> Capture<T>(T Product)
   {
     return new(Product);
   }
 
-  public IReadOnlyList<Thought> Children { get; protected set; } = [];
-
-  public static Thought<T> ForReasoning<T>(Func<Reasoning, T> Produce)
+  public static Thought<T> Think<T>(Func<Reasoning, T> Produce)
   {
     return new(Produce);
+  }
+
+  public static async Task<Thought<T>> ThinkAsync<T>(Func<Reasoning, Task<T>> Func)
+  {
+    throw new NotImplementedException();
   }
 }
 

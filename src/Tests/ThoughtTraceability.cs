@@ -34,7 +34,7 @@ public sealed class ThoughtTraceability
   {
     var Expected = new MockProduct();
     
-    var T = Thought.ForProduct(Expected);
+    var T = Thought.Capture(Expected);
 
     T.Consume().Should().BeSameAs(Expected);
     T.Children.Should().Equal();
@@ -44,7 +44,7 @@ public sealed class ThoughtTraceability
   public void UseSubthought()
   {
     var Expected = new MockProduct();
-    var T = Thought.ForProduct(Expected);
+    var T = Thought.Capture(Expected);
     var Superthought = new Thought();
     var Reasoning = new Reasoning(Superthought);
 
@@ -57,11 +57,11 @@ public sealed class ThoughtTraceability
   public void UsingSubthoughtBindsToSuperthought()
   {
     var Expected = new MockProduct();
-    var T = Thought.ForProduct(Expected);
+    var T = Thought.Capture(Expected);
     var Superthought = new Thought();
     var Reasoning = new Reasoning(Superthought);
-    Reasoning.Use(Thought.ForProduct(new MockProduct()));
-    Reasoning.Use(Thought.ForProduct(new MockProduct()));
+    Reasoning.Use(Thought.Capture(new MockProduct()));
+    Reasoning.Use(Thought.Capture(new MockProduct()));
     var OriginalChildren = Reasoning.Children.ToArray();
 
     Reasoning.Use(T);
@@ -74,7 +74,7 @@ public sealed class ThoughtTraceability
   public void InternalReasoning()
   {
     var Expected = new MockProduct();
-    var T = Thought.ForReasoning(R => Expected);
+    var T = Thought.Think(R => Expected);
 
     var Actual = T.Consume();
 
@@ -85,12 +85,12 @@ public sealed class ThoughtTraceability
   public void ThoughtChildrenIsReasoningChildrenAtEndOfProduction()
   {
     Reasoning CapturedReasoning = null!;
-    var T = Thought.ForReasoning(R =>
+    var T = Thought.Think(R =>
     {
       CapturedReasoning = R;
-      R.Use(Thought.ForProduct(new MockProduct()));
-      R.Use(Thought.ForProduct(new object()));
-      R.Use(Thought.ForProduct(new MockProduct()));
+      R.Use(Thought.Capture(new MockProduct()));
+      R.Use(Thought.Capture(new object()));
+      R.Use(Thought.Capture(new MockProduct()));
 
       return new MockProduct();
     });
@@ -103,8 +103,8 @@ public sealed class ThoughtTraceability
   [TestMethod]
   public void UsedThoughtParentIsCorrectAtEndOfReasoning()
   {
-    var Subthought = Thought.ForProduct(new MockProduct());
-    var T = Thought.ForReasoning(R =>
+    var Subthought = Thought.Capture(new MockProduct());
+    var T = Thought.Think(R =>
     {
       R.Use(Subthought);
 
@@ -119,15 +119,15 @@ public sealed class ThoughtTraceability
   [TestMethod]
   public void SubthoughtCannotBeUsedTwice()
   {
-    var Subthought = Thought.ForProduct(new MockProduct());
-    Thought.ForReasoning(R =>
+    var Subthought = Thought.Capture(new MockProduct());
+    Thought.Think(R =>
     {
       R.Use(Subthought);
       return new object();
     });
     var SubthoughtParent = Subthought.Parent;
 
-    var FailedThought = Thought.ForReasoning(R =>
+    var FailedThought = Thought.Think(R =>
     {
       R
         .Invoking(Reasoning => Reasoning.Use(Subthought))
@@ -140,4 +140,15 @@ public sealed class ThoughtTraceability
     FailedThought.Children.Should().Equal();
     Subthought.Parent.Should().BeSameAs(SubthoughtParent);
   }
+
+  //[TestMethod]
+  //public async Task AsynchronousThinking()
+  //{
+  //  var Expected = new MockProduct();
+  //  var T = await Thought.ThinkAsync(async R => Expected);
+
+  //  var Actual = T.Consume();
+
+  //  Actual.Should().BeSameAs(Expected);
+  //}
 }
