@@ -160,9 +160,11 @@ static class GeneratedTypeFormatter
 }
 
 class ThoughtDataObject(
-  TypeAddress Address)
+  TypeAddress Address,
+  TypeDeclarationSyntax SourceTypeDeclaration)
 {
   public TypeAddress Address { get; } = Address;
+  public TypeDeclarationSyntax SourceTypeDeclaration { get; } = SourceTypeDeclaration;
 }
 
 [Generator]
@@ -178,7 +180,7 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
       (InnerContext, _) =>
       {
         var TargetType = (TypeDeclarationSyntax) InnerContext.TargetNode;
-        return new ThoughtDataObject(TypeAddress.ForSyntaxNode(TargetType));
+        return new ThoughtDataObject(TypeAddress.ForSyntaxNode(TargetType), TargetType);
       });
 
     Context.RegisterSourceOutput(
@@ -187,14 +189,19 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
       {
         InnerContext.AddSource(
           GeneratedTypeFormatter.GetFilename(ThoughtDataObject.Address),
-          GeneratedTypeFormatter.FrameInPartialType(ThoughtDataObject.Address, "public const int Length = 0;"));
+          GeneratedTypeFormatter.FrameInPartialType(ThoughtDataObject.Address, GenerateThoughtDataContent(ThoughtDataObject)));
       });
+  }
 
-    Context.RegisterPostInitializationOutput(ctx =>
+  static string GenerateThoughtDataContent(ThoughtDataObject ThoughtDataObject)
+  {
+    var Index = 0;
+
+    foreach (var SyntaxNode in ThoughtDataObject.SourceTypeDeclaration.ChildNodes().Where(Node => Node is FieldDeclarationSyntax or PropertyDeclarationSyntax))
     {
-      ctx.AddSource("__debug.g.cs", SourceText.From(@"
-// Generator Ran at " + DateTime.UtcNow.ToString("O"),
-        Encoding.UTF8));
-    });
+      Index++;
+    }
+
+    return $"public const int Length = {Index};";
   }
 }

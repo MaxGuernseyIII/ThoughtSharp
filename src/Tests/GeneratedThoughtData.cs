@@ -34,9 +34,16 @@ public partial class GeneratedThoughtData
 
   }
 
+  [ThoughtData]
+  public partial class SingleFloatMockThoughtData
+  {
+    public float P1;
+  }
+
   [TestMethod]
   public void LengthTest()
   {
     EmptyMockThoughtData.Length.Should().Be(0);
+    SingleFloatMockThoughtData.Length.Should().Be(1);
   }
 }
