@@ -31,14 +31,23 @@ public class Thought
 
   public T Use<T>(Thought<T> Subthought)
   {
-    return Subthought.GetPayload();
+    Subthought.Parent = this;
+    Children = [Subthought];
+
+    return Subthought.Product;
   }
+
+  public IReadOnlyList<Thought> Children { get; private set; } = [];
 }
 
 public class Thought<T>(T Product) : Thought
 {
-  public T GetPayload()
+  internal T Product { get; } = Product;
+
+  public T UseInIsolation()
   {
     return Product;
   }
+
+  public Thought? Parent { get; internal set; }
 }

@@ -30,11 +30,13 @@ namespace Tests;
 public sealed class ThoughtTraceability
 {
   MockProduct Expected = null!;
+  Thought Superthought = null!;
 
   [TestInitialize]
   public void Setup()
   {
     Expected = new();
+    Superthought = new();
   }
 
   [TestMethod]
@@ -42,7 +44,7 @@ public sealed class ThoughtTraceability
   {
     var T = Thought.ForProduct(Expected);
 
-    var Actual = T.GetPayload();
+    var Actual = T.UseInIsolation();
 
     Actual.Should().BeSameAs(Expected);
   }
@@ -52,8 +54,19 @@ public sealed class ThoughtTraceability
   {
     var T = Thought.ForProduct(Expected);
 
-    var Actual = new Thought().Use(T);
+    var Actual = Superthought.Use(T);
 
     Actual.Should().BeSameAs(Expected);
+  }
+
+  [TestMethod]
+  public void UsingSubthoughtBindsToSuperthought()
+  {
+    var T = Thought.ForProduct(Expected);
+
+    Superthought.Use(T);
+
+    T.Parent.Should().BeSameAs(Superthought);
+    Superthought.Children.Should().Contain(T);
   }
 }
