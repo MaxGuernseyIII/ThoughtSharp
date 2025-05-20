@@ -22,17 +22,19 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class Reasoning(Thought Superthought)
+public class Reasoning
 {
+  internal Thought? Parent { get; set; }
+
   readonly List<Thought> UsedSubthoughts = [];
 
   public T Use<T>(Thought<T> Subthought)
   {
-    if (Subthought.Parent is not null)
+    if (Subthought.Container is not null)
       throw new InvalidOperationException("A Thought can only be used in one line of reasoning");
 
     UsedSubthoughts.Add(Subthought);
-    Subthought.Parent = Superthought;
+    Subthought.Container = this;
 
     return Subthought.Product;
   }

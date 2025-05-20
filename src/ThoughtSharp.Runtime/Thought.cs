@@ -24,16 +24,23 @@ namespace ThoughtSharp.Runtime;
 
 public class Thought
 {
+  internal Reasoning? Container { get; set; }
+
+  public Thought? Parent => Container?.Parent;
   public IReadOnlyList<Thought> Children { get; protected set; } = [];
 
   public static Thought<T> Capture<T>(T Product)
   {
-    return new(Product);
+    return new(Product, []);
   }
 
   public static Thought<T> Think<T>(Func<Reasoning, T> Produce)
   {
-    return new(Produce);
+    var Reasoning = new Reasoning();
+    var Product = Produce(Reasoning);
+    var Result = new Thought<T>(Product, Reasoning.Children);
+    Reasoning.Parent = Result;
+    return Result;
   }
 
   public static Thought Do(Action<Reasoning> ToDo)
@@ -57,21 +64,19 @@ public class Thought<T> : Thought
 
   internal Thought(Func<Reasoning, T> Produce)
   {
-    var Reasoning = new Reasoning(this);
+    var Reasoning = new Reasoning();
     Product = Produce(Reasoning);
     Children = Reasoning.Children;
   }
 
-  internal Thought(T Product)
+  internal Thought(T Product, IReadOnlyList<Thought> Children)
   {
     this.Product = Product;
-    Children = [];
+    this.Children = Children;
   }
 
   public T Consume()
   {
-    return new Reasoning(new()).Use(this);
+    return new Reasoning().Use(this);
   }
-
-  public Thought? Parent { get; internal set; }
 }

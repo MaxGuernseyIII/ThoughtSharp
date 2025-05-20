@@ -46,7 +46,7 @@ public sealed class ThoughtTraceability
     var Expected = new MockProduct();
     var T = Thought.Capture(Expected);
     var Superthought = new Thought();
-    var Reasoning = new Reasoning(Superthought);
+    var Reasoning = new Reasoning();
 
     var Actual = Reasoning.Use(T);
 
@@ -58,7 +58,7 @@ public sealed class ThoughtTraceability
   {
     var Expected = new MockProduct();
     var T = Thought.Capture(Expected);
-    var Reasoning = new Reasoning(null!);
+    var Reasoning = new Reasoning();
     Reasoning.Use(Thought.Capture(new MockProduct()));
     Reasoning.Use(Thought.Capture(new MockProduct()));
     var OriginalChildren = Reasoning.Children.ToArray();
