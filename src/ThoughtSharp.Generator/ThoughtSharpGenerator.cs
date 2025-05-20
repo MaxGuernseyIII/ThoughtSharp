@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -30,18 +31,39 @@ namespace ThoughtSharp.Generator;
 
 class TypeIdentifier
 {
-  TypeIdentifier(string Keyword, string Name)
+  TypeIdentifier(string Keyword, string Name, IReadOnlyList<TypeAddress> TypeParameters)
   {
     this.Keyword = Keyword;
     this.Name = Name;
+    this.TypeParameters = TypeParameters;
   }
 
   public string Keyword { get; }
   public string Name { get; }
+  public IReadOnlyList<TypeAddress> TypeParameters { get; }
 
-  public static TypeIdentifier ForSyntaxNode(TypeDeclarationSyntax Node)
+  public static TypeIdentifier ForSymbol(ITypeSymbol Symbol)
   {
-    return new(Node.Keyword.Text, Node.Identifier.Text);
+    var Arguments = Symbol is INamedTypeSymbol Named
+      ? Named.TypeArguments.Select(TypeAddress.ForSymbol).ToImmutableList()
+      : [];
+
+    return new(GetTypeKeyword(Symbol), Symbol.Name, Arguments);
+  }
+
+  static string GetTypeKeyword(ITypeSymbol symbol)
+  {
+    return symbol.TypeKind switch
+    {
+      TypeKind.Class when symbol.IsRecord => "record",
+      TypeKind.Class => "class",
+      TypeKind.Struct when symbol.IsRecord => "record struct",
+      TypeKind.Struct => "struct",
+      TypeKind.Interface => "interface",
+      TypeKind.Enum => "enum",
+      TypeKind.Delegate => "delegate",
+      _ => "unknown"
+    };
   }
 }
 
@@ -61,32 +83,25 @@ class TypeAddress
   public IReadOnlyList<TypeIdentifier> ContainingTypes { get; }
   public TypeIdentifier TypeName { get; }
 
-  public static TypeAddress ForSyntaxNode(TypeDeclarationSyntax Node)
+  public static TypeAddress ForSymbol(ITypeSymbol Symbol)
   {
     var ContainingNamespaces = new List<string>();
     var ContainingTypes = new List<TypeIdentifier>();
-    var TypeName = TypeIdentifier.ForSyntaxNode(Node);
+    var TypeName = TypeIdentifier.ForSymbol(Symbol);
+    var CurrentType = Symbol.ContainingType;
 
-    var Ancestor = Node.Parent;
-
-    while (Ancestor != null)
+    while (CurrentType != null)
     {
-      switch (Ancestor)
-      {
-        case TypeDeclarationSyntax AncestorType:
-          ContainingTypes.Add(TypeIdentifier.ForSyntaxNode(AncestorType));
-          break;
+      ContainingTypes.Insert(0, TypeIdentifier.ForSymbol(CurrentType));
+      CurrentType = CurrentType.ContainingType;
+    }
 
-        case NamespaceDeclarationSyntax AncestorNamespace:
-          ContainingNamespaces.Add(AncestorNamespace.Name.ToString());
-          break;
+    var CurrentNamespace = Symbol.ContainingNamespace;
 
-        case FileScopedNamespaceDeclarationSyntax AncestorNamespace:
-          ContainingNamespaces.Add(AncestorNamespace.Name.ToString());
-          break;
-      }
-
-      Ancestor = Ancestor.Parent;
+    while (CurrentNamespace is { IsGlobalNamespace: false})
+    {
+      ContainingNamespaces.Insert(0, CurrentNamespace.Name);
+      CurrentNamespace = CurrentNamespace.ContainingNamespace;
     }
 
     return new(ContainingNamespaces, ContainingTypes, TypeName);
@@ -159,18 +174,26 @@ static class GeneratedTypeFormatter
   }
 }
 
-class ThoughtDataObject(
+class ThoughtParameter(string Name, TypeAddress Type, int Length)
+{
+  public string Name { get; } = Name;
+  public TypeAddress Type { get; } = Type;
+  public int Length { get; } = Length;
+}
+
+class ThoughtDataClass(
   TypeAddress Address,
-  TypeDeclarationSyntax SourceTypeDeclaration)
+  IReadOnlyList<ThoughtParameter> Parameters)
 {
   public TypeAddress Address { get; } = Address;
-  public TypeDeclarationSyntax SourceTypeDeclaration { get; } = SourceTypeDeclaration;
+  public IReadOnlyList<ThoughtParameter> Parameters { get; } = Parameters;
 }
 
 [Generator]
 public class ThoughtSharpGenerator : IIncrementalGenerator
 {
   const string ThoughtDataAttribute = "ThoughtSharp.Runtime.ThoughtDataAttribute";
+  const string ThoughtDataLengthAttribute = "ThoughtDataLengthAttribute";
 
   public void Initialize(IncrementalGeneratorInitializationContext Context)
   {
@@ -180,7 +203,19 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
       (InnerContext, _) =>
       {
         var TargetType = (TypeDeclarationSyntax) InnerContext.TargetNode;
-        return new ThoughtDataObject(TypeAddress.ForSyntaxNode(TargetType), TargetType);
+        var Parameters = new List<ThoughtParameter>();
+        var Symbol = (INamedTypeSymbol) InnerContext.TargetSymbol;
+        foreach (var Member in Symbol.GetMembers().OfType<IFieldSymbol>())
+        {
+          Parameters.Add(new(Member.Name, TypeAddress.ForSymbol(Member.Type), GetLength(Member)));
+        }
+
+        foreach (var Member in Symbol.GetMembers().OfType<IPropertySymbol>())
+        {
+          Parameters.Add(new(Member.Name, TypeAddress.ForSymbol(Member.Type), GetLength(Member)));
+        }
+
+        return new ThoughtDataClass(TypeAddress.ForSymbol(Symbol), Parameters.ToImmutableArray());
       });
 
     Context.RegisterSourceOutput(
@@ -193,13 +228,24 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
       });
   }
 
-  static string GenerateThoughtDataContent(ThoughtDataObject ThoughtDataObject)
+  int GetLength(ISymbol Member)
+  {
+    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataLengthAttribute))
+    {
+      if (Attribute.ConstructorArguments[0].Value is int Result)
+        return Result;
+    }
+
+    return 1;
+  }
+
+  static string GenerateThoughtDataContent(ThoughtDataClass ThoughtDataClass)
   {
     var Index = 0;
 
-    foreach (var SyntaxNode in ThoughtDataObject.SourceTypeDeclaration.ChildNodes().Where(Node => Node is FieldDeclarationSyntax or PropertyDeclarationSyntax))
+    foreach (var ThoughtParameter in ThoughtDataClass.Parameters)
     {
-      Index++;
+      Index += ThoughtParameter.Length;
     }
 
     return $"public const int Length = {Index};";

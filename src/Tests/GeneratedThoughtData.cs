@@ -40,10 +40,18 @@ public partial class GeneratedThoughtData
     public float P1;
   }
 
+  [ThoughtData]
+  public partial class FloatArrayMockThoughtData
+  {
+    [ThoughtDataLength(4)]
+    public float[] P2 = [0,0,0,0];
+  }
+
   [TestMethod]
   public void LengthTest()
   {
     EmptyMockThoughtData.Length.Should().Be(0);
     SingleFloatMockThoughtData.Length.Should().Be(1);
+    FloatArrayMockThoughtData.Length.Should().Be(4);
   }
 }
