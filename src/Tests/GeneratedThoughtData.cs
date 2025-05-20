@@ -47,11 +47,25 @@ public partial class GeneratedThoughtData
     public float[] P2 = [0,0,0,0];
   }
 
+  [ThoughtData]
+  public partial class CodecMockThoughtData
+  {
+    public string SomeText = "";
+
+    public static ThoughtDataCodec<string> SomeTextCodec => new MockLengthCodec<string>(9);
+  }
+
   [TestMethod]
   public void LengthTest()
   {
     EmptyMockThoughtData.Length.Should().Be(0);
     SingleFloatMockThoughtData.Length.Should().Be(1);
     FloatArrayMockThoughtData.Length.Should().Be(4);
+    CodecMockThoughtData.Length.Should().Be(9);
   }
+}
+
+public class MockLengthCodec<T>(int Length) : ThoughtDataCodec<T>
+{
+  public int Length { get; } = Length;
 }

@@ -21,11 +21,9 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 
 namespace ThoughtSharp.Generator;
 
@@ -98,7 +96,7 @@ class TypeAddress
 
     var CurrentNamespace = Symbol.ContainingNamespace;
 
-    while (CurrentNamespace is { IsGlobalNamespace: false})
+    while (CurrentNamespace is {IsGlobalNamespace: false})
     {
       ContainingNamespaces.Insert(0, CurrentNamespace.Name);
       CurrentNamespace = CurrentNamespace.ContainingNamespace;
@@ -122,6 +120,10 @@ static class GeneratedTypeFormatter
   {
     var Lines = Content.Split(["\r\n", "\n"], StringSplitOptions.None);
     var OutputBuilder = new StringBuilder(5 * Content.Length);
+    OutputBuilder.AppendLine("using ThoughtSharp.Runtime;");
+    OutputBuilder.AppendLine("using ThoughtSharp.Runtime.Codecs;");
+    OutputBuilder.AppendLine();
+
     var IndentLevel = 0;
 
     foreach (var Namespace in Address.ContainingNamespaces)
@@ -183,10 +185,56 @@ class ThoughtParameter(string Name, TypeAddress Type, int Length)
 
 class ThoughtDataClass(
   TypeAddress Address,
-  IReadOnlyList<ThoughtParameter> Parameters)
+  IReadOnlyList<ThoughtParameter> Parameters,
+  ImmutableArray<ThoughtParameterCodec> Codecs)
 {
   public TypeAddress Address { get; } = Address;
   public IReadOnlyList<ThoughtParameter> Parameters { get; } = Parameters;
+  public ImmutableArray<ThoughtParameterCodec> Codecs { get; } = Codecs;
+}
+
+interface IValueSymbol
+{
+  string Name { get; }
+  ITypeSymbol Type { get; }
+  bool IsStatic { get; }
+  ISymbol Raw { get; }
+}
+
+static class SymbolExtensions
+{
+  public static IValueSymbol? ToValueSymbolOrDefault(this ISymbol ToAdapt)
+  {
+    if (ToAdapt is IFieldSymbol Field)
+      return new FieldValueSymbol(Field);
+
+    if (ToAdapt is IPropertySymbol Property)
+      return new PropertyValueSymbolAdapter(Property);
+
+    return null;
+  }
+
+  class FieldValueSymbol(IFieldSymbol Field) : IValueSymbol
+  {
+    public string Name => Field.Name;
+
+    public ITypeSymbol Type => Field.Type;
+
+    public bool IsStatic => Field.IsStatic;
+
+    public ISymbol Raw => Field;
+  }
+
+  class PropertyValueSymbolAdapter(IPropertySymbol Property) : IValueSymbol
+  {
+    public string Name => Property.Name;
+
+    public ITypeSymbol Type => Property.Type;
+
+    public bool IsStatic => Property.IsStatic;
+
+    public ISymbol Raw => Property;
+  }
 }
 
 [Generator]
@@ -202,20 +250,20 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
       (Node, _) => Node is TypeDeclarationSyntax,
       (InnerContext, _) =>
       {
-        var TargetType = (TypeDeclarationSyntax) InnerContext.TargetNode;
+        var Codecs = new List<ThoughtParameterCodec>();
         var Parameters = new List<ThoughtParameter>();
         var Symbol = (INamedTypeSymbol) InnerContext.TargetSymbol;
-        foreach (var Member in Symbol.GetMembers().OfType<IFieldSymbol>())
-        {
-          Parameters.Add(new(Member.Name, TypeAddress.ForSymbol(Member.Type), GetLength(Member)));
-        }
+        var ValueSymbols = Symbol.GetMembers().Select(M => M.ToValueSymbolOrDefault())
+          .OfType<IValueSymbol>()
+          .ToImmutableArray();
 
-        foreach (var Member in Symbol.GetMembers().OfType<IPropertySymbol>())
-        {
-          Parameters.Add(new(Member.Name, TypeAddress.ForSymbol(Member.Type), GetLength(Member)));
-        }
+        foreach (var Member in ValueSymbols.Where(M => !M.IsStatic))
+          Parameters.Add(new(Member.Name, TypeAddress.ForSymbol(Member.Type), GetLength(Member.Raw)));
 
-        return new ThoughtDataClass(TypeAddress.ForSymbol(Symbol), Parameters.ToImmutableArray());
+        foreach (var Member in Symbol.GetMembers().Where(M => M.IsStatic).OfType<IPropertySymbol>())
+          Codecs.Add(new(Member.Name));
+
+        return new ThoughtDataClass(TypeAddress.ForSymbol(Symbol), [..Parameters], [..Codecs]);
       });
 
     Context.RegisterSourceOutput(
@@ -224,30 +272,65 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
       {
         InnerContext.AddSource(
           GeneratedTypeFormatter.GetFilename(ThoughtDataObject.Address),
-          GeneratedTypeFormatter.FrameInPartialType(ThoughtDataObject.Address, GenerateThoughtDataContent(ThoughtDataObject)));
+          GeneratedTypeFormatter.FrameInPartialType(ThoughtDataObject.Address,
+            GenerateThoughtDataContent(ThoughtDataObject)));
       });
   }
 
   int GetLength(ISymbol Member)
   {
     foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataLengthAttribute))
-    {
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
-    }
 
     return 1;
   }
 
   static string GenerateThoughtDataContent(ThoughtDataClass ThoughtDataClass)
   {
-    var Index = 0;
+    var ResultBuilder = new StringBuilder();
+    var CodecDictionary = ThoughtDataClass.Codecs.ToDictionary(C => C.Name);
 
-    foreach (var ThoughtParameter in ThoughtDataClass.Parameters)
+    foreach (var Parameter in ThoughtDataClass.Parameters)
     {
-      Index += ThoughtParameter.Length;
+      var ParameterCodec = GetCodeNameFor(Parameter);
+      if (CodecDictionary.ContainsKey(ParameterCodec))
+        continue;
+
+      ResultBuilder.AppendLine($"static SimpleCopyCodec {ParameterCodec} = new SimpleCopyCodec();");
     }
 
-    return $"public const int Length = {Index};";
+    ResultBuilder.Append("public static readonly int Length = ");
+    var Delimiter = string.Empty;
+    var Terminator = "0;";
+
+    foreach (var Parameter in ThoughtDataClass.Parameters)
+    {
+      var ParameterCodec = GetCodeNameFor(Parameter);
+      ResultBuilder.Append(Delimiter);
+      ResultBuilder.Append($"({ParameterCodec}.Length * {Parameter.Length})");
+
+      Delimiter = " + ";
+      Terminator = ";";
+    }
+
+    ResultBuilder.AppendLine(Terminator);
+
+    var Index = 0;
+
+    foreach (var ThoughtParameter in ThoughtDataClass.Parameters) 
+      Index += ThoughtParameter.Length;
+
+    return ResultBuilder.ToString();
   }
+
+  static string GetCodeNameFor(ThoughtParameter Parameter)
+  {
+    return $"{Parameter.Name}Codec";
+  }
+}
+
+public class ThoughtParameterCodec(string Name)
+{
+  public string Name { get; } = Name;
 }
