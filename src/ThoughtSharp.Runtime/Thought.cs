@@ -52,9 +52,25 @@ public class Thought
     });
   }
 
-  public static async Task<Thought<T>> ThinkAsync<T>(Func<Reasoning, Task<T>> Func)
+  public static async Task<Thought<T>> ThinkAsync<T>(Func<Reasoning, Task<T>> Produce)
   {
-    throw new NotImplementedException();
+    var Reasoning = new Reasoning();
+    var Product = await Produce(Reasoning);
+    var Result = new Thought<T>(Product, Reasoning.Children);
+    Reasoning.Parent = Result;
+    return Result;
+  }
+
+  public static async Task<Thought> DoAsync(Func<Reasoning, Task> ToDo)
+  {
+    var Result = await ThinkAsync(async Task<object?> (R) =>
+    {
+      await ToDo(R);
+
+      return null;
+    });
+
+    return Result;
   }
 }
 

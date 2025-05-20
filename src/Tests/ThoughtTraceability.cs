@@ -151,14 +151,42 @@ public sealed class ThoughtTraceability
     Subthought.Parent.Should().BeSameAs(SubthoughtParent);
   }
 
-  //[TestMethod]
-  //public async Task AsynchronousThinking()
-  //{
-  //  var Expected = new MockProduct();
-  //  var T = await Thought.ThinkAsync(async R => Expected);
+  [TestMethod]
+  public async Task AsynchronousThinkingYieldsProduct()
+  {
+    var Expected = new MockProduct();
+    var T = await Thought.ThinkAsync(R => Task.FromResult(Expected));
 
-  //  var Actual = T.Consume();
+    var Actual = T.Consume();
 
-  //  Actual.Should().BeSameAs(Expected);
-  //}
+    Actual.Should().BeSameAs(Expected);
+  }
+
+  [TestMethod]
+  public async Task AsynchronousThinkingCapturesParentThought()
+  {
+    var Subthought = Thought.Capture(new MockProduct());
+
+    var T = await Thought.DoAsync(R =>
+    {
+      R.Use(Subthought);
+      return Task.CompletedTask;
+    });
+
+    Subthought.Parent.Should().BeSameAs(T);
+  }
+
+  [TestMethod]
+  public async Task AsynchronousThinkingCapturesChildThought()
+  {
+    var Subthought = Thought.Capture(new MockProduct());
+
+    var T = await Thought.DoAsync(R =>
+    {
+      R.Use(Subthought);
+      return Task.CompletedTask;
+    });
+
+    T.Children.Should().Contain(Subthought);
+  }
 }
