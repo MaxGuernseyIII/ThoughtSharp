@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using FluentAssertions;
+using FluentAssertions.Execution;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
 
@@ -46,8 +47,9 @@ public sealed class ThoughtTraceability
     var Expected = new MockProduct();
     var T = Thought.ForProduct(Expected);
     var Superthought = new Thought();
+    var Reasoning = new Reasoning(Superthought);
 
-    var Actual = Superthought.Use(T);
+    var Actual = Reasoning.Use(T);
 
     Actual.Should().BeSameAs(Expected);
   }

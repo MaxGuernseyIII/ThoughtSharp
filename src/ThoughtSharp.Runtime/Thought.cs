@@ -33,7 +33,7 @@ public class Reasoning(Thought Superthought)
   {
     UsedSubthoughts.Add(Subthought);
     Subthought.Parent = Superthought;
-    return default!;
+    return Subthought.Product;
   }
 
   public IReadOnlyList<Thought> Children => UsedSubthoughts.AsReadOnly();
@@ -44,14 +44,6 @@ public class Thought
   public static Thought<T> ForProduct<T>(T Product)
   {
     return new(delegate { return Product; });
-  }
-
-  public T Use<T>(Thought<T> Subthought)
-  {
-    Subthought.Parent = this;
-    Children = [Subthought];
-
-    return Subthought.Product;
   }
 
   public IReadOnlyList<Thought> Children { get; private set; } = [];
