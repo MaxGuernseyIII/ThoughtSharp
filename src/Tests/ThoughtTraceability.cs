@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using FluentAssertions;
-using FluentAssertions.Execution;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
 
@@ -36,7 +35,7 @@ public sealed class ThoughtTraceability
     var Expected = new MockProduct();
     var T = Thought.ForProduct(Expected);
 
-    var Actual = T.UseInIsolation();
+    var Actual = T.Consume();
 
     Actual.Should().BeSameAs(Expected);
   }
@@ -77,8 +76,43 @@ public sealed class ThoughtTraceability
     var Expected = new MockProduct();
     var T = Thought.ForReasoning(R => Expected);
 
-    var Actual = T.UseInIsolation();
+    var Actual = T.Consume();
 
     Actual.Should().BeSameAs(Expected);
+  }
+
+  [TestMethod]
+  public void ThoughtChildrenIsReasoningChildrenAtEndOfProduction()
+  {
+    Reasoning CapturedReasoning = null!;
+    var T = Thought.ForReasoning(R =>
+    {
+      CapturedReasoning = R;
+      R.Use(Thought.ForProduct(new MockProduct()));
+      R.Use(Thought.ForProduct(new object()));
+      R.Use(Thought.ForProduct(new MockProduct()));
+
+      return new MockProduct();
+    });
+
+    var Actual = T.Children;
+
+    Actual.Should().Equal(CapturedReasoning.Children);
+  }
+
+  [TestMethod]
+  public void UsedThoughtParentIsCorrectAtEndOfReasoning()
+  {
+    var Subthought = Thought.ForProduct(new MockProduct());
+    var T = Thought.ForReasoning(R =>
+    {
+      R.Use(Subthought);
+
+      return new MockProduct();
+    });
+
+    var Actual = Subthought.Parent;
+
+    Actual.Should().BeSameAs(T);
   }
 }

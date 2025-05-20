@@ -46,7 +46,7 @@ public class Thought
     return new(delegate { return Product; });
   }
 
-  public IReadOnlyList<Thought> Children { get; private set; } = [];
+  public IReadOnlyList<Thought> Children { get; protected set; } = [];
 
   public static Thought<T> ForReasoning<T>(Func<Reasoning, T> Produce)
   {
@@ -56,14 +56,16 @@ public class Thought
 
 public class Thought<T> : Thought
 {
-  public T Product { get; }
+  internal readonly T Product;
 
   public Thought(Func<Reasoning, T> Produce)
   {
-    Product = Produce(new(this));
+    var Reasoning = new Reasoning(this);
+    Product = Produce(Reasoning);
+    Children = Reasoning.Children;
   }
 
-  public T UseInIsolation()
+  public T Consume()
   {
     return Product;
   }
