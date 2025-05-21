@@ -251,7 +251,7 @@ static class SymbolExtensions
 public class ThoughtSharpGenerator : IIncrementalGenerator
 {
   const string ThoughtDataAttribute = "ThoughtSharp.Runtime.ThoughtDataAttribute";
-  const string ThoughtDataLengthAttribute = "ThoughtDataLengthAttribute";
+  const string ThoughtDataCountAttribute = "ThoughtDataCountAttribute";
 
   public void Initialize(IncrementalGeneratorInitializationContext Context)
   {
@@ -289,7 +289,7 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
 
   int? GetExplicitLength(ISymbol Member)
   {
-    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataLengthAttribute))
+    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataCountAttribute))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 

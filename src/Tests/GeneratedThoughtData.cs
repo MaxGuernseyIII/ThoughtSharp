@@ -46,7 +46,7 @@ public partial class GeneratedThoughtData
   [ThoughtData]
   public partial class FloatArrayMockThoughtData
   {
-    [ThoughtDataLength(4)]
+    [ThoughtDataCount(4)]
     public float[] P2 = [0,0,0,0];
   }
 
@@ -152,7 +152,6 @@ public partial class GeneratedThoughtData
       S3 = Any.ASCIIString(ThreeStrings.S3Codec.Length).TrimEnd((char)0)
     });
   }
-
 
   void RoundTripTest<T>(T ToTest)
     where T : ThoughtData, new()
