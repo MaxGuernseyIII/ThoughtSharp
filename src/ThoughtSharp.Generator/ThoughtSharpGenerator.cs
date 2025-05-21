@@ -342,6 +342,15 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
     ResultBuilder.AppendLine();
     ResultBuilder.AppendLine("public void MarshalFrom(ReadOnlySpan<float> Target)");
     ResultBuilder.AppendLine("{");
+
+    foreach (var Parameter in ThoughtDataClass.Parameters)
+    foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
+    {
+      var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
+      ResultBuilder.AppendLine(
+        $"  {Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(Target[{GetIndexFieldNameFor(Parameter)}..({GetIndexFieldNameFor(Parameter)}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
+
+    }
     ResultBuilder.AppendLine("}");
     ResultBuilder.AppendLine();
 

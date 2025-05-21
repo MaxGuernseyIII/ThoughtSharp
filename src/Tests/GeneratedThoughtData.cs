@@ -80,4 +80,16 @@ public partial class GeneratedThoughtData
 
     Values.Should().Equal([Expected]);
   }
+
+  [TestMethod]
+  public void UnmarshalSingleFloat()
+  {
+    var Expected = Any.Float;
+    var Values = new[] { Expected };
+    var Data = new SingleFloatMockThoughtData();
+
+    Data.MarshalFrom(Values);
+
+    Data.P1.Should().Be(Expected);
+  }
 }
