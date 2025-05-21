@@ -25,6 +25,7 @@ namespace ThoughtSharp.Runtime.Codecs;
 public class BitwiseOneHotStringCodec(int Length) : ThoughtDataCodec<string>
 {
   static readonly BitwiseOneHotNumberCodec<char> Inner = new();
+  // ReSharper disable once ReplaceWithPrimaryConstructorParameter
   readonly int MaximumCharacters = Length;
   public int Length { get; } = Length * Inner.Length;
 
