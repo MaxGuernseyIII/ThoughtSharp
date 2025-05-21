@@ -20,15 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
 
-[Generator]
-public class ThoughtSharpGenerator : IIncrementalGenerator
+static class ThoughtDataModelBuilder
 {
-  public void Initialize(IncrementalGeneratorInitializationContext Context)
+  const string ThoughtDataCountAttribute = "ThoughtDataCountAttribute";
+
+  public static ThoughtDataClass ConvertToModel(GeneratorAttributeSyntaxContext InnerContext)
   {
-    ThoughtDataPipeline.Bind(Context);
+    var Codecs = new List<ThoughtParameterCodec>();
+    var Parameters = new List<ThoughtParameter>();
+    var Symbol = (INamedTypeSymbol) InnerContext.TargetSymbol;
+    var ValueSymbols = Symbol.GetMembers().Select(M => M.ToValueSymbolOrDefault())
+      .OfType<IValueSymbol>()
+      .ToImmutableArray();
+
+    foreach (var Member in ValueSymbols.Where(M => !M.IsStatic))
+      Parameters.Add(new(Member.Name, TypeAddress.ForSymbol(Member.Type), GetExplicitLength(Member.Raw)));
+
+    foreach (var Member in Symbol.GetMembers().Where(M => M.IsStatic).OfType<IPropertySymbol>())
+      Codecs.Add(new(Member.Name));
+
+    return new(TypeAddress.ForSymbol(Symbol), [..Parameters], [..Codecs]);
+  }
+
+  static int? GetExplicitLength(ISymbol Member)
+  {
+    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataCountAttribute))
+      if (Attribute.ConstructorArguments[0].Value is int Result)
+        return Result;
+
+    return null;
   }
 }

@@ -21,14 +21,39 @@
 // SOFTWARE.
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ThoughtSharp.Generator;
 
-[Generator]
-public class ThoughtSharpGenerator : IIncrementalGenerator
+static class ThoughtDataPipeline
 {
-  public void Initialize(IncrementalGeneratorInitializationContext Context)
+  const string ThoughtDataAttribute = "ThoughtSharp.Runtime.ThoughtDataAttribute";
+
+  public static void Bind(IncrementalGeneratorInitializationContext Context)
   {
-    ThoughtDataPipeline.Bind(Context);
+    var ThoughtDataPipeline = BindPipeline(Context);
+
+    BindRendering(Context, ThoughtDataPipeline);
+  }
+
+  static IncrementalValuesProvider<ThoughtDataClass> BindPipeline(IncrementalGeneratorInitializationContext Context)
+  {
+    var ThoughtDataPipeline = Context.SyntaxProvider.ForAttributeWithMetadataName(ThoughtDataAttribute,
+      (Node, _) => Node is TypeDeclarationSyntax,
+      (InnerContext, _) => ThoughtDataModelBuilder.ConvertToModel(InnerContext));
+    return ThoughtDataPipeline;
+  }
+
+  static void BindRendering(IncrementalGeneratorInitializationContext Context,
+    IncrementalValuesProvider<ThoughtDataClass> ThoughtDataPipeline)
+  {
+    Context.RegisterSourceOutput(
+      ThoughtDataPipeline,
+      (InnerContext, ThoughtDataClass) =>
+      {
+        InnerContext.AddSource(
+          GeneratedTypeFormatter.GetFilename(ThoughtDataClass.Address),
+          ThoughtDataRenderer.RenderThoughtDataClass(ThoughtDataClass));
+      });
   }
 }
