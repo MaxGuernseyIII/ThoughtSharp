@@ -36,7 +36,11 @@ class ThoughtDataRenderer
       if (CodecDictionary.ContainsKey(ParameterCodec))
         continue;
 
-      Target.WriteLine($"static {Parameter.CodecType} {ParameterCodec} = new();");
+      var Arguments = "";
+      if (Parameter.ExplicitLength is not null)
+        Arguments = $"Length: {Parameter.ExplicitLength}";
+
+      Target.WriteLine($"static {Parameter.CodecType} {ParameterCodec} = new({Arguments});");
     }
 
     var LastValue = "0";

@@ -24,7 +24,7 @@ using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
 
-public class OneHotEncodeCodec<T> : ThoughtDataCodec<T>
+public class BitwiseOneHotNumberCodec<T> : ThoughtDataCodec<T>
   where T : unmanaged, INumber<T>, IBitwiseOperators<T, T, T>, IShiftOperators<T, int, T>
 {
   public int Length { get; } = typeof(T) switch
@@ -37,6 +37,7 @@ public class OneHotEncodeCodec<T> : ThoughtDataCodec<T>
     var T when T == typeof(uint) => 32,
     var T when T == typeof(long) => 64,
     var T when T == typeof(ulong) => 64,
+    var T when T == typeof(char) => 16,
     _ => throw new NotSupportedException($"Unsupported type {typeof(T)}")
   };
 

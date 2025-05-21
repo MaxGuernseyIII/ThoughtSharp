@@ -54,6 +54,18 @@ static class Any
     return ResultBuilder.ToString();
   }
 
+  public static string StringWithBitsLength(int Length)
+  {
+    var ResultBuilder = new StringBuilder();
+
+    foreach (var _ in Enumerable.Range(0, Length / (sizeof(char) * 8)))
+    {
+      ResultBuilder.Append((char)Core.Next(char.MaxValue));
+    }
+
+    return ResultBuilder.ToString();
+  }
+
   public static T EnumValue<T>()
     where T : struct, Enum
   {

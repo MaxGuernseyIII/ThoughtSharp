@@ -22,24 +22,30 @@
 
 namespace ThoughtSharp.Runtime.Codecs;
 
-public class ASCIICodec(int Length) : ThoughtDataCodec<string>
+public class BitwiseOneHotStringCodec(int Length) : ThoughtDataCodec<string>
 {
-  public int Length { get; } = Length;
+  static readonly BitwiseOneHotNumberCodec<char> Inner = new();
+  readonly int MaximumCharacters = Length;
+  public int Length { get; } = Length * Inner.Length;
 
   public void EncodeTo(string ObjectToEncode, Span<float> Target)
   {
-    var Padded = ObjectToEncode.PadRight(Length, (char) 0);
-
-    foreach (var I in Enumerable.Range(0, Length))
-      Target[I] = Padded[I] & 127;
+    var Padded = ObjectToEncode.PadRight(MaximumCharacters, (char) 0);
+    var Index = 0;
+  
+    foreach (var C in Padded)
+    {
+      Inner.EncodeTo(C, Target[Index..(Index + Inner.Length)]);
+      Index += Inner.Length;
+    }
   }
 
   public string DecodeFrom(ReadOnlySpan<float> Source)
   {
-    var ResultBuffer = new char[Length];
+    var ResultBuffer = new char[MaximumCharacters];
 
-    foreach (var I in Enumerable.Range(0, Length))
-      ResultBuffer[I] = (char) ((int) Source[I] & 127);
+    foreach (var I in Enumerable.Range(0, MaximumCharacters))
+      ResultBuffer[I] = Inner.DecodeFrom(Source[(I * Inner.Length)..((I+1)*Inner.Length)]);
 
     return new string(ResultBuffer).TrimEnd((char)0);
   }

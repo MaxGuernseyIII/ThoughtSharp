@@ -65,9 +65,9 @@ public partial class GeneratedThoughtData
     public string S2 = "";
     public string S3 = "";
 
-    public static ASCIICodec S1Codec => new(20);
-    public static ASCIICodec S2Codec => new(3);
-    public static ASCIICodec S3Codec => new(7);
+    public static BitwiseOneHotStringCodec S1Codec => new(20);
+    public static BitwiseOneHotStringCodec S2Codec => new(3);
+    public static BitwiseOneHotStringCodec S3Codec => new(7);
   }
 
   internal enum MockPrivateEnum
@@ -80,6 +80,8 @@ public partial class GeneratedThoughtData
   [ThoughtData]
   public partial class ComplexDataStructureMockThoughtData
   {
+    public const int ImplicitlyEncodedStringLength = 40;
+
     public bool SomeFlag { get; set; }
     public int SomeInteger { get; set; }
 
@@ -87,9 +89,12 @@ public partial class GeneratedThoughtData
     public long[] SomeLongs = [0,0,0];
 
     public string EncodedString = "";
-    public static ASCIICodec EncodedStringCodec => new(20);
+    public static BitwiseOneHotStringCodec EncodedStringCodec => new(20);
 
     public float SomeFloat;
+
+    [ThoughtDataLength(ImplicitlyEncodedStringLength)]
+    public string ImplicitlyEncodedString { get; set; }= "";
 
     internal MockPrivateEnum SomeEnum;
   }
@@ -171,9 +176,9 @@ public partial class GeneratedThoughtData
   {
     RoundTripTest(new ThreeStringsMockThoughtData()
     {
-      S1 = Any.ASCIIString(ThreeStringsMockThoughtData.S1Codec.Length).TrimEnd((char)0),
-      S2 = Any.ASCIIString(ThreeStringsMockThoughtData.S2Codec.Length).TrimEnd((char)0),
-      S3 = Any.ASCIIString(ThreeStringsMockThoughtData.S3Codec.Length).TrimEnd((char)0)
+      S1 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S1Codec.Length).TrimEnd((char)0),
+      S2 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S2Codec.Length).TrimEnd((char)0),
+      S3 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S3Codec.Length).TrimEnd((char)0)
     });
   }
 
@@ -182,12 +187,13 @@ public partial class GeneratedThoughtData
   {
     RoundTripTest(new ComplexDataStructureMockThoughtData
     {
-      EncodedString = Any.ASCIIString(ComplexDataStructureMockThoughtData.EncodedStringCodec.Length),
+      EncodedString = Any.StringWithBitsLength(ComplexDataStructureMockThoughtData.EncodedStringCodec.Length),
       SomeEnum = Any.EnumValue<MockPrivateEnum>(),
       SomeFlag = Any.Bool,
       SomeFloat = Any.Float,
       SomeInteger = Any.Int(0, 100),
-      SomeLongs = [ Any.Long, Any.Long, Any.Long ]
+      SomeLongs = [ Any.Long, Any.Long, Any.Long ],
+      ImplicitlyEncodedString = Any.ASCIIString(ComplexDataStructureMockThoughtData.ImplicitlyEncodedStringLength)
     });
   }
 

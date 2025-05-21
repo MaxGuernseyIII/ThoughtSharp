@@ -28,6 +28,7 @@ namespace ThoughtSharp.Generator;
 static class ThoughtDataModelBuilder
 {
   const string ThoughtDataCountAttribute = "ThoughtDataCountAttribute";
+  const string ThoughtDataLengthAttribute = "ThoughtDataLengthAttribute";
 
   public static ThoughtDataClass ConvertToModel(GeneratorAttributeSyntaxContext InnerContext)
   {
@@ -56,16 +57,17 @@ static class ThoughtDataModelBuilder
   static ThoughtParameter CreateParameterFor(IValueSymbol Member)
   {
     var ExplicitCount = GetExplicitCount(Member.Raw);
+    var ExplicitLength = GetExplicitLength(Member.Raw);
     var EncodedType = ExplicitCount.HasValue
       ? TryGetArrayType(Member.Type) ?? TryGetIndexableType(Member.Type) ?? Member.Type
       : Member.Type;
 
-    var CodecType = GetCodecType(EncodedType);
+    var CodecType = GetCodecType(EncodedType, Member);
 
-    return new(Member.Name, TypeAddress.ForSymbol(EncodedType), ExplicitCount, CodecType);
+    return new(Member.Name, TypeAddress.ForSymbol(EncodedType), CodecType, ExplicitCount, ExplicitLength);
   }
 
-  static string GetCodecType(ITypeSymbol EncodedType)
+  static string GetCodecType(ITypeSymbol EncodedType, IValueSymbol Member)
   {
     return EncodedType switch
     {
@@ -76,11 +78,32 @@ static class ThoughtDataModelBuilder
           SpecialType.System_Byte or SpecialType.System_SByte or
           SpecialType.System_Int16 or SpecialType.System_UInt16 or
           SpecialType.System_Int32 or SpecialType.System_UInt32 or
-          SpecialType.System_Int64 or SpecialType.System_UInt64
-        } => $"OneHotEncodeCodec<{EncodedType.Name}>",
-      INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum => $"OneHotEncodeEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>",
+          SpecialType.System_Int64 or SpecialType.System_UInt64 or
+          SpecialType.System_Char
+        } => $"BitwiseOneHotNumberCodec<{EncodedType.Name}>",
+      INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum => $"BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>",
+      {SpecialType: SpecialType.System_String} => GetStringCodec(Member),
       _ => "UnknownCodec"
     };
+  }
+
+  static string GetStringCodec(IValueSymbol Member)
+  {
+    var Length = GetExplicitLength(Member.Raw);
+
+    if (Length is null)
+      return "UnknownCodec";
+
+    return "BitwiseOneHotStringCodec";
+  }
+
+  static int? GetExplicitLength(ISymbol Member)
+  {
+    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataLengthAttribute))
+      if (Attribute.ConstructorArguments[0].Value is int Result)
+        return Result;
+
+    return null;
   }
 
   static int? GetExplicitCount(ISymbol Member)

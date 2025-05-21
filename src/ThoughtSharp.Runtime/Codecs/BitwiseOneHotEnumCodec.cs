@@ -24,13 +24,13 @@ using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
 
-public class OneHotEncodeEnumCodec<T, U> : ThoughtDataCodec<T>
+public class BitwiseOneHotEnumCodec<T, U> : ThoughtDataCodec<T>
   where T : Enum
   where U : unmanaged, INumber<U>, IBitwiseOperators<U, U, U>, IShiftOperators<U, int, U>
 {
-  readonly OneHotEncodeCodec<U> Inner = new();
+  static readonly BitwiseOneHotNumberCodec<U> Inner = new();
 
-  public OneHotEncodeEnumCodec()
+  public BitwiseOneHotEnumCodec()
   {
     if (Enum.GetUnderlyingType(typeof(T)) != typeof(U))
       throw new InvalidOperationException(
