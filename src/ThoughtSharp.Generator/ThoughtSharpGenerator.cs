@@ -307,7 +307,7 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
       if (CodecDictionary.ContainsKey(ParameterCodec))
         continue;
 
-      ResultBuilder.AppendLine($"static SimpleCopyCodec {ParameterCodec} = new SimpleCopyCodec();");
+      ResultBuilder.AppendLine($"static FloatCopyCodec {ParameterCodec} = new();");
     }
 
 

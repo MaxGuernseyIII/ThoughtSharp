@@ -1,6 +1,6 @@
 ﻿namespace ThoughtSharp.Runtime.Codecs
 {
-  public class SimpleCopyCodec : ThoughtDataCodec<float>
+  public class FloatCopyCodec : ThoughtDataCodec<float>
   {
     public int Length => 1;
 
