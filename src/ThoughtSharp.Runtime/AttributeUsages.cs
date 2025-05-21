@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public class ThoughtDataAttribute : Attribute
+public static class AttributeUsages
 {
+  public const AttributeTargets Value = AttributeTargets.Field | AttributeTargets.Property;
 }
