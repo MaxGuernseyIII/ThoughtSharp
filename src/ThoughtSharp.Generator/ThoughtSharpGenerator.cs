@@ -333,8 +333,9 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
     foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
+      var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " + (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
       ResultBuilder.AppendLine(
-        $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo({Parameter.Name}{Subscript}, Target[{GetIndexFieldNameFor(Parameter)}..({GetIndexFieldNameFor(Parameter)}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
+        $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo({Parameter.Name}{Subscript}, Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
 
     }
 
@@ -347,8 +348,9 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
     foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
+      var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " + (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
       ResultBuilder.AppendLine(
-        $"  {Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(Target[{GetIndexFieldNameFor(Parameter)}..({GetIndexFieldNameFor(Parameter)}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
+        $"  {Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
 
     }
     ResultBuilder.AppendLine("}");

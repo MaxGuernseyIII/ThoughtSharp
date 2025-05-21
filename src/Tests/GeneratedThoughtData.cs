@@ -92,4 +92,40 @@ public partial class GeneratedThoughtData
 
     Data.P1.Should().Be(Expected);
   }
+
+  [TestMethod]
+  public void MarshalFloatArray()
+  {
+    var Expected0 = Any.Float;
+    var Expected1 = Any.Float;
+    var Expected2 = Any.Float;
+    var Expected3 = Any.Float;
+    var Data = new FloatArrayMockThoughtData()
+    {
+      P2 = [Expected0, Expected1, Expected2, Expected3]
+    };
+    var Values = new float[FloatArrayMockThoughtData.Length];
+
+    Data.MarshalTo(Values);
+
+    Values.Should().Equal([Expected0, Expected1, Expected2, Expected3]);
+  }
+
+  [TestMethod]
+  public void UnmarshalFloatArray()
+  {
+    var Expected0 = Any.Float;
+    var Expected1 = Any.Float;
+    var Expected2 = Any.Float;
+    var Expected3 = Any.Float;
+    var Values = new[] { Expected0, Expected1, Expected2, Expected3 };
+    var Data = new FloatArrayMockThoughtData();
+
+    Data.MarshalFrom(Values);
+
+    Data.P2[0].Should().Be(Expected0);
+    Data.P2[1].Should().Be(Expected1);
+    Data.P2[2].Should().Be(Expected2);
+    Data.P2[3].Should().Be(Expected3);
+  }
 }
