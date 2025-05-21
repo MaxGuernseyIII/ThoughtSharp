@@ -70,7 +70,7 @@ public partial class GeneratedThoughtData
     public static BitwiseOneHotStringCodec S3Codec => new(7);
   }
 
-  internal enum MockPrivateEnum
+  enum MockPrivateEnum
   {
     Value1,
     Value2,
@@ -78,7 +78,7 @@ public partial class GeneratedThoughtData
   }
 
   [ThoughtData]
-  public partial class ComplexDataStructureMockThoughtData
+  partial class ComplexDataStructureMockThoughtData
   {
     public const int ImplicitlyEncodedStringLength = 40;
 
@@ -96,7 +96,7 @@ public partial class GeneratedThoughtData
     [ThoughtDataLength(ImplicitlyEncodedStringLength)]
     public string ImplicitlyEncodedString { get; set; }= "";
 
-    internal MockPrivateEnum SomeEnum;
+    public MockPrivateEnum SomeEnum;
   }
 
   [TestMethod]
