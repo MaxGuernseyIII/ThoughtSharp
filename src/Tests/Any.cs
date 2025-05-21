@@ -27,4 +27,13 @@ static class Any
   static readonly Random Core = new();
 
   public static float Float => Core.NextSingle();
+
+  public static int Int(int Boundary1, int Boundary2)
+  {
+    var Min = Math.Min(Boundary1, Boundary2);
+    var Max = Math.Max(Boundary1, Boundary2);
+    var Gap = 1 + (Max - Min);
+
+    return Min + Core.Next(Gap);
+  }
 }

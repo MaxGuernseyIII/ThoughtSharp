@@ -116,7 +116,7 @@ static class GeneratedTypeFormatter
           .Concat([Address.TypeName.Name]))) + ".g.cs";
   }
 
-  public static string FrameInPartialType(TypeAddress Address, string Content)
+  public static string FrameInPartialType(TypeAddress Address, string Content, string TypeSuffix = "")
   {
     var Lines = Content.Split(["\r\n", "\n"], StringSplitOptions.None);
     var OutputBuilder = new StringBuilder(5 * Content.Length);
@@ -134,10 +134,18 @@ static class GeneratedTypeFormatter
       IndentLevel += 1;
     }
 
-    foreach (var Type in Address.ContainingTypes.Concat([Address.TypeName]))
+    foreach (var Type in Address.ContainingTypes)
     {
       var Indent = GetIndentForLevel(IndentLevel);
       OutputBuilder.AppendLine($"{Indent}partial {Type.Keyword} {Type.Name}");
+      OutputBuilder.AppendLine($"{Indent}{{");
+
+      IndentLevel += 1;
+    }
+
+    {
+      var Indent = GetIndentForLevel(IndentLevel);
+      OutputBuilder.AppendLine($"{Indent}partial {Address.TypeName.Keyword} {Address.TypeName.Name}{TypeSuffix}");
       OutputBuilder.AppendLine($"{Indent}{{");
 
       IndentLevel += 1;
@@ -176,11 +184,13 @@ static class GeneratedTypeFormatter
   }
 }
 
-class ThoughtParameter(string Name, TypeAddress Type, int Length)
+class ThoughtParameter(string Name, TypeAddress Type, int? ExplicitCount)
 {
   public string Name { get; } = Name;
   public TypeAddress Type { get; } = Type;
-  public int Length { get; } = Length;
+  public int? ExplicitCount { get; } = ExplicitCount;
+
+  public int EffectiveCount => ExplicitCount ?? 1;
 }
 
 class ThoughtDataClass(
@@ -258,7 +268,7 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
           .ToImmutableArray();
 
         foreach (var Member in ValueSymbols.Where(M => !M.IsStatic))
-          Parameters.Add(new(Member.Name, TypeAddress.ForSymbol(Member.Type), GetLength(Member.Raw)));
+          Parameters.Add(new(Member.Name, TypeAddress.ForSymbol(Member.Type), GetExplicitLength(Member.Raw)));
 
         foreach (var Member in Symbol.GetMembers().Where(M => M.IsStatic).OfType<IPropertySymbol>())
           Codecs.Add(new(Member.Name));
@@ -273,17 +283,17 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
         InnerContext.AddSource(
           GeneratedTypeFormatter.GetFilename(ThoughtDataObject.Address),
           GeneratedTypeFormatter.FrameInPartialType(ThoughtDataObject.Address,
-            GenerateThoughtDataContent(ThoughtDataObject)));
+            GenerateThoughtDataContent(ThoughtDataObject), " : ThoughtData"));
       });
   }
 
-  int GetLength(ISymbol Member)
+  int? GetExplicitLength(ISymbol Member)
   {
     foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataLengthAttribute))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 
-    return 1;
+    return null;
   }
 
   static string GenerateThoughtDataContent(ThoughtDataClass ThoughtDataClass)
@@ -293,38 +303,65 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
 
     foreach (var Parameter in ThoughtDataClass.Parameters)
     {
-      var ParameterCodec = GetCodeNameFor(Parameter);
+      var ParameterCodec = GetCodecFieldNameFor(Parameter);
       if (CodecDictionary.ContainsKey(ParameterCodec))
         continue;
 
       ResultBuilder.AppendLine($"static SimpleCopyCodec {ParameterCodec} = new SimpleCopyCodec();");
     }
 
-    ResultBuilder.Append("public static readonly int Length = ");
-    var Delimiter = string.Empty;
-    var Terminator = "0;";
+
+    var LastValue = "0";
+    ThoughtParameter? LastParameter = null;
 
     foreach (var Parameter in ThoughtDataClass.Parameters)
     {
-      var ParameterCodec = GetCodeNameFor(Parameter);
-      ResultBuilder.Append(Delimiter);
-      ResultBuilder.Append($"({ParameterCodec}.Length * {Parameter.Length})");
+      var ParameterIndexField = GetIndexFieldNameFor(Parameter);
+      ResultBuilder.Append($"static readonly int {ParameterIndexField} = ");
+      WriteIndexValue(ResultBuilder, LastValue, LastParameter);
 
-      Delimiter = " + ";
-      Terminator = ";";
+      LastValue = ParameterIndexField;
+      LastParameter = Parameter;
     }
 
-    ResultBuilder.AppendLine(Terminator);
+    ResultBuilder.Append("public static int Length { get; } = ");
+    WriteIndexValue(ResultBuilder, LastValue, LastParameter);
 
-    var Index = 0;
+    ResultBuilder.AppendLine("public void MarshalTo(Span<float> Target)");
+    ResultBuilder.AppendLine("{");
+    foreach (var Parameter in ThoughtDataClass.Parameters)
+    foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
+    {
+      var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
+      ResultBuilder.AppendLine(
+        $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo({Parameter.Name}{Subscript}, Target[{GetIndexFieldNameFor(Parameter)}..({GetIndexFieldNameFor(Parameter)}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
 
-    foreach (var ThoughtParameter in ThoughtDataClass.Parameters) 
-      Index += ThoughtParameter.Length;
+    }
+
+    ResultBuilder.AppendLine("}");
+    ResultBuilder.AppendLine();
+    ResultBuilder.AppendLine("public void MarshalFrom(ReadOnlySpan<float> Target)");
+    ResultBuilder.AppendLine("{");
+    ResultBuilder.AppendLine("}");
+    ResultBuilder.AppendLine();
 
     return ResultBuilder.ToString();
   }
 
-  static string GetCodeNameFor(ThoughtParameter Parameter)
+  static void WriteIndexValue(StringBuilder ResultBuilder, string LastValue, ThoughtParameter? LastParameter)
+  {
+    ResultBuilder.Append($"{LastValue}");
+    if (LastParameter is not null)
+      ResultBuilder.Append($"+ {GetCodecFieldNameFor(LastParameter)}.Length * {LastParameter.EffectiveCount}");
+    ResultBuilder.AppendLine(";");
+  }
+
+  static string GetIndexFieldNameFor(ThoughtParameter Parameter)
+  {
+    return $"{Parameter.Name}Index";
+  }
+
+  static string GetCodecFieldNameFor(ThoughtParameter Parameter)
   {
     return $"{Parameter.Name}Codec";
   }

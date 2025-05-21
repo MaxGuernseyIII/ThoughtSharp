@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using Tests.Mocks;
+
 namespace Tests;
 
 using ThoughtSharp.Runtime;
@@ -63,9 +65,19 @@ public partial class GeneratedThoughtData
     FloatArrayMockThoughtData.Length.Should().Be(4);
     CodecMockThoughtData.Length.Should().Be(9);
   }
-}
 
-public class MockLengthCodec<T>(int Length) : ThoughtDataCodec<T>
-{
-  public int Length { get; } = Length;
+  [TestMethod]
+  public void MarshalSingleFloat()
+  {
+    var Values = new float[SingleFloatMockThoughtData.Length];
+    var Expected = Any.Float;
+    var Data = new SingleFloatMockThoughtData()
+    {
+      P1 = Expected
+    };
+
+    Data.MarshalTo(Values);
+
+    Values.Should().Equal([Expected]);
+  }
 }
