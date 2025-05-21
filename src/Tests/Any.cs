@@ -30,6 +30,9 @@ static class Any
 
   public static float Float => Core.NextSingle();
 
+  public static long Long => Core.Next();
+  public static bool Bool => Core.Next(2) == 1;
+
   public static int Int(int Boundary1, int Boundary2)
   {
     var Min = Math.Min(Boundary1, Boundary2);
@@ -49,5 +52,16 @@ static class Any
     }
 
     return ResultBuilder.ToString();
+  }
+
+  public static T EnumValue<T>()
+    where T : struct, Enum
+  {
+    return Of(Enum.GetValues<T>());
+  }
+
+  public static T Of<T>(IReadOnlyList<T> Options)
+  {
+    return Options[Core.Next(Options.Count)];
   }
 }

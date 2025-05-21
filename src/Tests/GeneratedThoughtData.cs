@@ -59,7 +59,7 @@ public partial class GeneratedThoughtData
   }
 
   [ThoughtData]
-  public partial class ThreeStrings
+  public partial class ThreeStringsMockThoughtData
   {
     public string S1 = "";
     public string S2 = "";
@@ -68,6 +68,30 @@ public partial class GeneratedThoughtData
     public static ASCIICodec S1Codec => new(20);
     public static ASCIICodec S2Codec => new(3);
     public static ASCIICodec S3Codec => new(7);
+  }
+
+  internal enum MockPrivateEnum
+  {
+    Value1,
+    Value2,
+    Value3
+  }
+
+  [ThoughtData]
+  public partial class ComplexDataStructureMockThoughtData
+  {
+    public bool SomeFlag { get; set; }
+    public int SomeInteger { get; set; }
+
+    [ThoughtDataCount(3)]
+    public long[] SomeLongs = [0,0,0];
+
+    public string EncodedString = "";
+    public static ASCIICodec EncodedStringCodec => new(20);
+
+    public float SomeFloat;
+
+    internal MockPrivateEnum SomeEnum;
   }
 
   [TestMethod]
@@ -145,11 +169,25 @@ public partial class GeneratedThoughtData
   [TestMethod]
   public void RoundTripStrings()
   {
-    RoundTripTest(new ThreeStrings()
+    RoundTripTest(new ThreeStringsMockThoughtData()
     {
-      S1 = Any.ASCIIString(ThreeStrings.S1Codec.Length).TrimEnd((char)0),
-      S2 = Any.ASCIIString(ThreeStrings.S2Codec.Length).TrimEnd((char)0),
-      S3 = Any.ASCIIString(ThreeStrings.S3Codec.Length).TrimEnd((char)0)
+      S1 = Any.ASCIIString(ThreeStringsMockThoughtData.S1Codec.Length).TrimEnd((char)0),
+      S2 = Any.ASCIIString(ThreeStringsMockThoughtData.S2Codec.Length).TrimEnd((char)0),
+      S3 = Any.ASCIIString(ThreeStringsMockThoughtData.S3Codec.Length).TrimEnd((char)0)
+    });
+  }
+
+  [TestMethod]
+  public void RoundTripComplexData()
+  {
+    RoundTripTest(new ComplexDataStructureMockThoughtData
+    {
+      EncodedString = Any.ASCIIString(ComplexDataStructureMockThoughtData.EncodedStringCodec.Length),
+      SomeEnum = Any.EnumValue<MockPrivateEnum>(),
+      SomeFlag = Any.Bool,
+      SomeFloat = Any.Float,
+      SomeInteger = Any.Int(0, 100),
+      SomeLongs = [ Any.Long, Any.Long, Any.Long ]
     });
   }
 

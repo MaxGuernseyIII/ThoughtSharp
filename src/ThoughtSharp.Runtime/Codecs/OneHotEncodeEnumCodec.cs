@@ -20,9 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+using System.Numerics;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public class ThoughtDataAttribute : Attribute
+namespace ThoughtSharp.Runtime.Codecs;
+
+public class OneHotEncodeEnumCodec<T, U> : ThoughtDataCodec<T>
+  where T : Enum
+  where U : unmanaged, INumber<U>, IBitwiseOperators<U, U, U>, IShiftOperators<U, int, U>
 {
+  readonly OneHotEncodeCodec<U> Inner = new();
+
+  public OneHotEncodeEnumCodec()
+  {
+    if (Enum.GetUnderlyingType(typeof(T)) != typeof(U))
+      throw new InvalidOperationException(
+        $"Cannot one-hot encode type {typeof(T)} to {typeof(U)} because its underlying type is {Enum.GetUnderlyingType(typeof(T))}");
+  }
+
+  public int Length => Inner.Length;
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  {
+    Inner.EncodeTo((U) (object) ObjectToEncode, Target);
+  }
+
+  public T DecodeFrom(ReadOnlySpan<float> Source)
+  {
+    return (T) (object) Inner.DecodeFrom(Source);
+  }
 }

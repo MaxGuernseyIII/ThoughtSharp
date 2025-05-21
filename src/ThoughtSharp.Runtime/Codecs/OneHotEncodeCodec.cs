@@ -20,19 +20,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Numerics;
+
 namespace ThoughtSharp.Runtime.Codecs;
 
-public class FloatCopyCodec : ThoughtDataCodec<float>
+public class OneHotEncodeCodec<T> : ThoughtDataCodec<T>
+  where T : unmanaged, INumber<T>, IBitwiseOperators<T, T, T>, IShiftOperators<T, int, T>
 {
-  public int Length => 1;
-
-  public void EncodeTo(float ObjectToEncode, Span<float> Target)
+  public int Length { get; } = typeof(T) switch
   {
-    Target[0] = ObjectToEncode;
+    var T when T == typeof(byte) => 8,
+    var T when T == typeof(sbyte) => 8,
+    var T when T == typeof(short) => 16,
+    var T when T == typeof(ushort) => 16,
+    var T when T == typeof(int) => 32,
+    var T when T == typeof(uint) => 32,
+    var T when T == typeof(long) => 64,
+    var T when T == typeof(ulong) => 64,
+    _ => throw new NotSupportedException($"Unsupported type {typeof(T)}")
+  };
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  {
+    for (var I = 0; I < Length; I++)
+    {
+      var BitMask = T.One << I;
+      var BitSet = (ObjectToEncode & BitMask) != T.Zero;
+      Target[I] = BitSet ? 1.0f : 0.0f;
+    }
   }
 
-  public float DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source)
   {
-    return Source[0];
+    var Result = T.Zero;
+
+    for (var Index = 0; Index < Length; Index++)
+      if (Source[Index] >= 0.5f)
+        Result |= T.One << Index;
+
+    return Result;
   }
 }

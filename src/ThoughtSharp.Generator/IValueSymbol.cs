@@ -26,8 +26,10 @@ namespace ThoughtSharp.Generator;
 
 interface IValueSymbol
 {
+  ISymbol Raw { get; }
+
   string Name { get; }
   ITypeSymbol Type { get; }
   bool IsStatic { get; }
-  ISymbol Raw { get; }
+  bool IsImplicitlyDeclared { get; }
 }

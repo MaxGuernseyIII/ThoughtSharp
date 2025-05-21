@@ -45,6 +45,8 @@ static class SymbolExtensions
 
     public bool IsStatic => Field.IsStatic;
 
+    public bool IsImplicitlyDeclared => Field.IsImplicitlyDeclared;
+
     public ISymbol Raw => Field;
   }
 
@@ -55,6 +57,8 @@ static class SymbolExtensions
     public ITypeSymbol Type => Property.Type;
 
     public bool IsStatic => Property.IsStatic;
+
+    public bool IsImplicitlyDeclared => Property.IsImplicitlyDeclared;
 
     public ISymbol Raw => Property;
   }

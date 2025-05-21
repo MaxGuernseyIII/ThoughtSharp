@@ -36,23 +36,84 @@ static class ThoughtDataModelBuilder
     var Symbol = (INamedTypeSymbol) InnerContext.TargetSymbol;
     var ValueSymbols = Symbol.GetMembers().Select(M => M.ToValueSymbolOrDefault())
       .OfType<IValueSymbol>()
+      .Where(M => !M.IsImplicitlyDeclared)
       .ToImmutableArray();
 
     foreach (var Member in ValueSymbols.Where(M => !M.IsStatic))
-      Parameters.Add(new(Member.Name, TypeAddress.ForSymbol(Member.Type), GetExplicitLength(Member.Raw)));
+      Parameters.Add(CreateParameterFor(Member));
 
-    foreach (var Member in Symbol.GetMembers().Where(M => M.IsStatic).OfType<IPropertySymbol>())
-      Codecs.Add(new(Member.Name));
+    foreach (var Member in ValueSymbols.Where(M => M.IsStatic))
+      Codecs.Add(CreateCodecFor(Member));
 
     return new(TypeAddress.ForSymbol(Symbol), [..Parameters], [..Codecs]);
   }
 
-  static int? GetExplicitLength(ISymbol Member)
+  static ThoughtParameterCodec CreateCodecFor(IValueSymbol Member)
+  {
+    return new(Member.Name);
+  }
+
+  static ThoughtParameter CreateParameterFor(IValueSymbol Member)
+  {
+    var ExplicitCount = GetExplicitCount(Member.Raw);
+    var EncodedType = ExplicitCount.HasValue
+      ? TryGetArrayType(Member.Type) ?? TryGetIndexableType(Member.Type) ?? Member.Type
+      : Member.Type;
+
+    var CodecType = GetCodecType(EncodedType);
+
+    return new(Member.Name, TypeAddress.ForSymbol(EncodedType), ExplicitCount, CodecType);
+  }
+
+  static string GetCodecType(ITypeSymbol EncodedType)
+  {
+    return EncodedType switch
+    {
+      {SpecialType: SpecialType.System_Single} => "CopyFloatCodec",
+      {SpecialType: SpecialType.System_Boolean} => "CopyBoolCodec",
+      {
+          SpecialType:
+          SpecialType.System_Byte or SpecialType.System_SByte or
+          SpecialType.System_Int16 or SpecialType.System_UInt16 or
+          SpecialType.System_Int32 or SpecialType.System_UInt32 or
+          SpecialType.System_Int64 or SpecialType.System_UInt64
+        } => $"OneHotEncodeCodec<{EncodedType.Name}>",
+      INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum => $"OneHotEncodeEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>",
+      _ => "UnknownCodec"
+    };
+  }
+
+  static int? GetExplicitCount(ISymbol Member)
   {
     foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataCountAttribute))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 
     return null;
+  }
+
+  static ITypeSymbol? TryGetArrayType(ITypeSymbol Symbol)
+  {
+    if (Symbol is not IArrayTypeSymbol ArrayType)
+      return null;
+
+    return ArrayType.ElementType;
+  }
+
+  static ITypeSymbol? TryGetIndexableType(ITypeSymbol Symbol)
+  {
+    var Indexer = Symbol
+      .GetMembers()
+      .OfType<IPropertySymbol>()
+      .FirstOrDefault(p =>
+        p.IsIndexer &&
+        p.Parameters.Length == 1 &&
+        p.Parameters[0].Type.SpecialType == SpecialType.System_Int32 &&
+        p is {GetMethod: not null, SetMethod: not null});
+
+    if (Indexer is null)
+      return null;
+
+    return Indexer.Type;
   }
 }

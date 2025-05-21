@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.CodeDom.Compiler;
+using System.Net;
 using System.Text;
 
 namespace ThoughtSharp.Generator;
@@ -28,10 +30,60 @@ static class GeneratedTypeFormatter
 {
   public static string GetFilename(TypeAddress Address)
   {
-    return "thought/" + string.Join(".",
+    return string.Join(".",
       Address.ContainingNamespaces.SelectMany(N => N.Split('.'))
         .Concat(Address.ContainingTypes.Select(T => T.Name)
           .Concat([Address.TypeName.Name]))) + ".g.cs";
+  }
+
+  public class TypeGenerationRequest(TypeAddress Type, Action<IndentedTextWriter> WriteBody)
+  {
+    public TypeAddress Type { get; } = Type;
+    public Action<IndentedTextWriter> WriteHeader { get; set; } = Ignore;
+    public Action<IndentedTextWriter> WriteAfterTypeName { get; set; } = Ignore;
+    public Action<IndentedTextWriter> WriteBody { get; } = WriteBody;
+
+    static void Ignore(IndentedTextWriter _) {}
+  }
+
+  public static void GenerateType(IndentedTextWriter Target, TypeGenerationRequest Request)
+  {
+    Request.WriteHeader(Target);
+
+    foreach (var Namespace in Request.Type.ContainingNamespaces)
+    {
+      Target.WriteLine($"namespace {Namespace}");
+      Target.WriteLine("{");
+      Target.Indent++;
+    }
+
+    foreach (var Type in Request.Type.ContainingTypes)
+    {
+      Target.WriteLine($"partial {Type.Keyword} {Type.Name}");
+      Target.WriteLine("{");
+      Target.Indent++;
+    }
+
+    Target.Write($"partial {Request.Type.TypeName.Keyword} {Request.Type.TypeName.Name}");
+    Request.WriteAfterTypeName(Target);
+    Target.WriteLine();
+    Target.WriteLine("{");
+
+    Target.Indent++;
+
+    Request.WriteBody(Target);
+
+    foreach (var _ in Request.Type.ContainingTypes.Concat([Request.Type.TypeName]))
+    {
+      Target.Indent--;
+      Target.WriteLine("}");
+    }
+
+    foreach (var _ in Request.Type.ContainingNamespaces)
+    {
+      Target.Indent--;
+      Target.WriteLine("}");
+    }
   }
 
   public static string FrameInPartialType(TypeAddress Address, string Content, string TypeSuffix = "")

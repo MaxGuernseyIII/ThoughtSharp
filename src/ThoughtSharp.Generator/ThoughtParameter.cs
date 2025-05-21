@@ -22,11 +22,12 @@
 
 namespace ThoughtSharp.Generator;
 
-class ThoughtParameter(string Name, TypeAddress Type, int? ExplicitCount)
+class ThoughtParameter(string Name, TypeAddress Type, int? ExplicitCount, string CodecType)
 {
   public string Name { get; } = Name;
-  public TypeAddress Type { get; } = Type;
   public int? ExplicitCount { get; } = ExplicitCount;
+  public TypeAddress Type { get; } = Type;
+  public string CodecType { get; } = CodecType;
 
   public int EffectiveCount => ExplicitCount ?? 1;
 }

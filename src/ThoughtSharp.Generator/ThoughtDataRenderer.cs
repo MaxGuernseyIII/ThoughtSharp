@@ -20,15 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Text;
+using System.CodeDom.Compiler;
 
 namespace ThoughtSharp.Generator;
 
 class ThoughtDataRenderer
 {
-  public static string GenerateThoughtDataContent(ThoughtDataClass ThoughtDataClass)
+  public static string GenerateThoughtDataContentToWriter(ThoughtDataClass ThoughtDataClass, IndentedTextWriter Target)
   {
-    var ResultBuilder = new StringBuilder();
     var CodecDictionary = ThoughtDataClass.Codecs.ToDictionary(C => C.Name);
 
     foreach (var Parameter in ThoughtDataClass.Parameters)
@@ -37,9 +36,8 @@ class ThoughtDataRenderer
       if (CodecDictionary.ContainsKey(ParameterCodec))
         continue;
 
-      ResultBuilder.AppendLine($"static FloatCopyCodec {ParameterCodec} = new();");
+      Target.WriteLine($"static {Parameter.CodecType} {ParameterCodec} = new();");
     }
-
 
     var LastValue = "0";
     ThoughtParameter? LastParameter = null;
@@ -47,54 +45,54 @@ class ThoughtDataRenderer
     foreach (var Parameter in ThoughtDataClass.Parameters)
     {
       var ParameterIndexField = GetIndexFieldNameFor(Parameter);
-      ResultBuilder.Append($"static readonly int {ParameterIndexField} = ");
-      WriteIndexValue(ResultBuilder, LastValue, LastParameter);
+      Target.Write($"static readonly int {ParameterIndexField} = ");
+      WriteIndexValue(Target, LastValue, LastParameter);
 
       LastValue = ParameterIndexField;
       LastParameter = Parameter;
     }
 
-    ResultBuilder.Append("public static int Length { get; } = ");
-    WriteIndexValue(ResultBuilder, LastValue, LastParameter);
+    Target.Write("public static int Length { get; } = ");
+    WriteIndexValue(Target, LastValue, LastParameter);
 
-    ResultBuilder.AppendLine("public void MarshalTo(Span<float> Target)");
-    ResultBuilder.AppendLine("{");
+    Target.WriteLine("public void MarshalTo(Span<float> Target)");
+    Target.WriteLine("{");
     foreach (var Parameter in ThoughtDataClass.Parameters)
     foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
-      var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " + (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
-      ResultBuilder.AppendLine(
+      var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
+      Target.WriteLine(
         $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo({Parameter.Name}{Subscript}, Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
-
     }
 
-    ResultBuilder.AppendLine("}");
-    ResultBuilder.AppendLine();
-    ResultBuilder.AppendLine("public void MarshalFrom(ReadOnlySpan<float> Target)");
-    ResultBuilder.AppendLine("{");
+    Target.WriteLine("}");
+    Target.WriteLine();
+    Target.WriteLine("public void MarshalFrom(ReadOnlySpan<float> Target)");
+    Target.WriteLine("{");
 
     foreach (var Parameter in ThoughtDataClass.Parameters)
     foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
-      var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " + (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
-      ResultBuilder.AppendLine(
+      var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
+      Target.WriteLine(
         $"  {Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
-
     }
-    ResultBuilder.AppendLine("}");
-    ResultBuilder.AppendLine();
 
-    return ResultBuilder.ToString();
+    Target.WriteLine("}");
+
+    return Target.ToString();
   }
 
-  static void WriteIndexValue(StringBuilder ResultBuilder, string LastValue, ThoughtParameter? LastParameter)
+  static void WriteIndexValue(IndentedTextWriter Target, string LastValue, ThoughtParameter? LastParameter)
   {
-    ResultBuilder.Append($"{LastValue}");
+    Target.Write($"{LastValue}");
     if (LastParameter is not null)
-      ResultBuilder.Append($"+ {GetCodecFieldNameFor(LastParameter)}.Length * {LastParameter.EffectiveCount}");
-    ResultBuilder.AppendLine(";");
+      Target.Write($"+ {GetCodecFieldNameFor(LastParameter)}.Length * {LastParameter.EffectiveCount}");
+    Target.WriteLine(";");
   }
 
   static string GetIndexFieldNameFor(ThoughtParameter Parameter)
@@ -109,6 +107,25 @@ class ThoughtDataRenderer
 
   public static string RenderThoughtDataClass(ThoughtDataClass ThoughtDataObject)
   {
-    return GeneratedTypeFormatter.FrameInPartialType(ThoughtDataObject.Address, ThoughtDataRenderer.GenerateThoughtDataContent(ThoughtDataObject), " : ThoughtData");
+    using var Underlying = new StringWriter();
+
+    {
+      using var Writer = new IndentedTextWriter(Underlying, "  ");
+      GeneratedTypeFormatter.GenerateType(Writer,
+        new(ThoughtDataObject.Address, W => { GenerateThoughtDataContentToWriter(ThoughtDataObject, W); })
+        {
+          WriteHeader = W =>
+          {
+            W.WriteLine("using ThoughtSharp.Runtime;");
+            W.WriteLine("using ThoughtSharp.Runtime.Codecs;");
+            W.WriteLine();
+          },
+          WriteAfterTypeName = W => { W.Write(" : ThoughtData"); }
+        });
+    }
+
+    Underlying.Close();
+
+    return Underlying.GetStringBuilder().ToString();
   }
 }

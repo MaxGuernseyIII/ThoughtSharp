@@ -22,7 +22,8 @@
 
 namespace ThoughtSharp.Runtime;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public class ThoughtDataAttribute : Attribute
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+public class ThoughtDataLengthAttribute(int Length) : Attribute
 {
+  public int Length { get; } = Length;
 }
