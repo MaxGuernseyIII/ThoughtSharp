@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using Tests.Mocks;
+using ThoughtSharp.Runtime.Codecs;
 
 namespace Tests;
 
@@ -55,6 +56,18 @@ public partial class GeneratedThoughtData
     public string SomeText = "";
 
     public static ThoughtDataCodec<string> SomeTextCodec => new MockLengthCodec<string>(9);
+  }
+
+  [ThoughtData]
+  public partial class ThreeStrings
+  {
+    public string S1 = "";
+    public string S2 = "";
+    public string S3 = "";
+
+    public static ASCIICodec S1Codec => new(20);
+    public static ASCIICodec S2Codec => new(3);
+    public static ASCIICodec S3Codec => new(7);
   }
 
   [TestMethod]
@@ -127,5 +140,29 @@ public partial class GeneratedThoughtData
     Data.P2[1].Should().Be(Expected1);
     Data.P2[2].Should().Be(Expected2);
     Data.P2[3].Should().Be(Expected3);
+  }
+
+  [TestMethod]
+  public void RoundTripStrings()
+  {
+    RoundTripTest(new ThreeStrings()
+    {
+      S1 = Any.ASCIIString(ThreeStrings.S1Codec.Length).TrimEnd((char)0),
+      S2 = Any.ASCIIString(ThreeStrings.S2Codec.Length).TrimEnd((char)0),
+      S3 = Any.ASCIIString(ThreeStrings.S3Codec.Length).TrimEnd((char)0)
+    });
+  }
+
+
+  void RoundTripTest<T>(T ToTest)
+    where T : ThoughtData, new()
+  {
+    var Buffer = new float[T.Length];
+    ToTest.MarshalTo(Buffer);
+    var Actual = new T();
+
+    Actual.MarshalFrom(Buffer);
+
+    Actual.Should().BeEquivalentTo(ToTest);
   }
 }

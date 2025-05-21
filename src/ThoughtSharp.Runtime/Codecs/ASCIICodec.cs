@@ -20,34 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Text;
+namespace ThoughtSharp.Runtime.Codecs;
 
-namespace Tests;
-
-static class Any
+public class ASCIICodec(int Length) : ThoughtDataCodec<string>
 {
-  static readonly Random Core = new();
+  public int Length { get; } = Length;
 
-  public static float Float => Core.NextSingle();
-
-  public static int Int(int Boundary1, int Boundary2)
+  public void EncodeTo(string ObjectToEncode, Span<float> Target)
   {
-    var Min = Math.Min(Boundary1, Boundary2);
-    var Max = Math.Max(Boundary1, Boundary2);
-    var Gap = 1 + (Max - Min);
+    var Padded = ObjectToEncode.PadRight(Length, (char) 0);
 
-    return Min + Core.Next(Gap);
+    foreach (var I in Enumerable.Range(0, Length))
+      Target[I] = Padded[I] & 127;
   }
 
-  public static string ASCIIString(int Length)
+  public string DecodeFrom(ReadOnlySpan<float> Source)
   {
-    var ResultBuilder = new StringBuilder();
+    var ResultBuffer = new char[Length];
 
-    foreach (var _ in Enumerable.Range(0, Length))
-    {
-      ResultBuilder.Append((char) Core.Next(128));
-    }
+    foreach (var I in Enumerable.Range(0, Length))
+      ResultBuffer[I] = (char) ((int) Source[I] & 127);
 
-    return ResultBuilder.ToString();
+    return new string(ResultBuffer).TrimEnd((char)0);
   }
 }
