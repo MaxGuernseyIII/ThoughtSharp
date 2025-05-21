@@ -24,5 +24,5 @@ namespace ThoughtSharp.Runtime;
 
 public static class AttributeUsages
 {
-  public const AttributeTargets Value = AttributeTargets.Field | AttributeTargets.Property;
+  public const AttributeTargets Value = AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter;
 }

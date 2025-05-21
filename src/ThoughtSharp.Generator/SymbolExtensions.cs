@@ -28,13 +28,30 @@ static class SymbolExtensions
 {
   public static IValueSymbol? ToValueSymbolOrDefault(this ISymbol ToAdapt)
   {
+
     if (ToAdapt is IFieldSymbol Field)
       return new FieldValueSymbol(Field);
 
     if (ToAdapt is IPropertySymbol Property)
       return new PropertyValueSymbolAdapter(Property);
 
+    if (ToAdapt is IParameterSymbol Parameter)
+      return new ParameterValueSymbolAdapter(Parameter);
+
     return null;
+  }
+
+  class ParameterValueSymbolAdapter(IParameterSymbol Parameter) : IValueSymbol
+  {
+    public ISymbol Raw => Parameter;
+
+    public string Name => Parameter.Name;
+
+    public ITypeSymbol Type => Parameter.Type;
+
+    public bool IsStatic => false;
+
+    public bool IsImplicitlyDeclared => false;
   }
 
   class FieldValueSymbol(IFieldSymbol Field) : IValueSymbol
