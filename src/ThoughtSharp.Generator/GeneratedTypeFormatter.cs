@@ -22,7 +22,6 @@
 
 using System.CodeDom.Compiler;
 using System.Net;
-using System.Text;
 
 namespace ThoughtSharp.Generator;
 
@@ -84,72 +83,5 @@ static class GeneratedTypeFormatter
       Target.Indent--;
       Target.WriteLine("}");
     }
-  }
-
-  public static string FrameInPartialType(TypeAddress Address, string Content, string TypeSuffix = "")
-  {
-    var Lines = Content.Split(["\r\n", "\n"], StringSplitOptions.None);
-    var OutputBuilder = new StringBuilder(5 * Content.Length);
-    OutputBuilder.AppendLine("using ThoughtSharp.Runtime;");
-    OutputBuilder.AppendLine("using ThoughtSharp.Runtime.Codecs;");
-    OutputBuilder.AppendLine();
-
-    var IndentLevel = 0;
-
-    foreach (var Namespace in Address.ContainingNamespaces)
-    {
-      var Indent = GetIndentForLevel(IndentLevel);
-      OutputBuilder.AppendLine($"{Indent}namespace {Namespace}");
-      OutputBuilder.AppendLine($"{Indent}{{");
-      IndentLevel += 1;
-    }
-
-    foreach (var Type in Address.ContainingTypes)
-    {
-      var Indent = GetIndentForLevel(IndentLevel);
-      OutputBuilder.AppendLine($"{Indent}partial {Type.Keyword} {Type.Name}");
-      OutputBuilder.AppendLine($"{Indent}{{");
-
-      IndentLevel += 1;
-    }
-
-    {
-      var Indent = GetIndentForLevel(IndentLevel);
-      OutputBuilder.AppendLine($"{Indent}partial {Address.TypeName.Keyword} {Address.TypeName.Name}{TypeSuffix}");
-      OutputBuilder.AppendLine($"{Indent}{{");
-
-      IndentLevel += 1;
-    }
-
-    {
-      var Indent = GetIndentForLevel(IndentLevel);
-
-      foreach (var Line in Lines)
-      {
-        OutputBuilder.Append(Indent);
-        OutputBuilder.AppendLine(Line);
-      }
-    }
-
-    foreach (var _ in Address.ContainingTypes.Concat([Address.TypeName]))
-    {
-      IndentLevel -= 1;
-      var Indent = GetIndentForLevel(IndentLevel);
-      OutputBuilder.AppendLine($"{Indent}}}");
-    }
-
-    foreach (var _ in Address.ContainingNamespaces)
-    {
-      IndentLevel -= 1;
-      var Indent = GetIndentForLevel(IndentLevel);
-      OutputBuilder.AppendLine($"{Indent}}}");
-    }
-
-    return OutputBuilder.ToString();
-  }
-
-  static string GetIndentForLevel(int Level)
-  {
-    return new(' ', 2 * Level);
   }
 }
