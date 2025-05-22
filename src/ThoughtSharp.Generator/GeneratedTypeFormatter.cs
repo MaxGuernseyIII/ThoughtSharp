@@ -39,6 +39,7 @@ static class GeneratedTypeFormatter
   {
     public TypeAddress Type { get; } = Type;
     public Action<IndentedTextWriter> WriteHeader { get; set; } = Ignore;
+    public Action<IndentedTextWriter> WriteBeforeTypeDeclaration { get; set; } = Ignore;
     public Action<IndentedTextWriter> WriteAfterTypeName { get; set; } = Ignore;
     public Action<IndentedTextWriter> WriteBody { get; } = WriteBody;
 
@@ -63,6 +64,7 @@ static class GeneratedTypeFormatter
       Target.Indent++;
     }
 
+    Request.WriteBeforeTypeDeclaration(Target);
     Target.Write($"partial {Request.Type.TypeName.Keyword} {Request.Type.TypeName.Name}");
     Request.WriteAfterTypeName(Target);
     Target.WriteLine();
