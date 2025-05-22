@@ -20,24 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using Microsoft.CodeAnalysis;
+using System.Numerics;
 
-namespace ThoughtSharp.Generator;
+namespace ThoughtSharp.Runtime.Codecs;
 
-class ThoughtParameter(
-  string Name,
-  TypeAddress Type,
-  string CodecType,
-  int? ExplicitCount,
-  int? ExplicitLength,
-  IReadOnlyDictionary<string, string> CodecConstructorArguments)
+// ReSharper disable once UnusedMember.Global
+public class NormalizeNumberCodec<T, U>(
+  T Minimum, 
+  T Maximum,
+  ThoughtDataCodec<U> Inner) : ThoughtDataCodec<T>
+  where T : IMultiplyOperators<T, U, U>, INumber<T>
+  where U : INumber<U>, IAdditionOperators<U, U, U>, IAdditionOperators<U, T, U>, ISubtractionOperators<U, T, U>, IMultiplyOperators<U, U, U>
 {
-  public string Name { get; } = Name;
-  public int? ExplicitCount { get; } = ExplicitCount;
-  public TypeAddress Type { get; } = Type;
-  public string CodecType { get; } = CodecType;
-  public int? ExplicitLength { get; } = ExplicitLength;
-  public IReadOnlyDictionary<string, string> CodecConstructorArguments { get; } = CodecConstructorArguments;
+  readonly U TargetTypedMinimum = Minimum * U.One;
+  readonly U TargetTypedMaximum = Maximum * U.One;
 
-  public int EffectiveCount => ExplicitCount ?? 1;
+  public int Length => Inner.Length;
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  {
+    var Value = (ObjectToEncode * U.One - TargetTypedMinimum) / (TargetTypedMaximum - TargetTypedMinimum);
+    Inner.EncodeTo(Value, Target);
+  }
+
+  public T DecodeFrom(ReadOnlySpan<float> Source)
+  {
+    return T.Zero;
+  }
 }

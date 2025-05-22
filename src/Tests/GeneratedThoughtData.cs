@@ -237,4 +237,25 @@ public partial class GeneratedThoughtData
 
     Actual.Should().BeEquivalentTo(ToTest);
   }
+
+  [ThoughtData]
+  public partial class DeclarativelyNormalizedMockThoughtData
+  {
+    [ThoughtDataBounds<float>(1, 6)]
+    public float ToNormalize;
+  }
+
+  [TestMethod]
+  public void NormalizeData()
+  {
+    var Data = new DeclarativelyNormalizedMockThoughtData()
+    {
+      ToNormalize = Any.Float
+    };
+
+    var Target = new float[DeclarativelyNormalizedMockThoughtData.Length];
+    Data.MarshalTo(Target);
+
+    Target[0].Should().BeApproximately((Data.ToNormalize - 1f) / 5f, 0.01f);
+  }
 }

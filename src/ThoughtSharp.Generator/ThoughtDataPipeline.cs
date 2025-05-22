@@ -31,6 +31,7 @@ static class ThoughtDataAttributeNames
   public const string ThoughtDataAttribute = "ThoughtSharp.Runtime." + DataAttributeName;
   public const string DataCountAttributeName = "ThoughtDataCountAttribute";
   public const string DataLengthAttributeName = "ThoughtDataLengthAttribute";
+  public const string DataBoundsAttributeName = "ThoughtDataBoundsAttribute";
 }
 
 static class ThoughtDataPipeline
@@ -46,7 +47,7 @@ static class ThoughtDataPipeline
   {
     var ThoughtDataPipeline = Context.SyntaxProvider.ForAttributeWithMetadataName(ThoughtDataAttributeNames.ThoughtDataAttribute,
       (Node, _) => Node is TypeDeclarationSyntax,
-      (InnerContext, _) => ThoughtDataModelBuilder.ConvertToModel(InnerContext));
+      (InnerContext, _) => ThoughtDataModelFactory.ConvertToModel(InnerContext));
     return ThoughtDataPipeline;
   }
 

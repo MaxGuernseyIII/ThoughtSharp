@@ -22,10 +22,11 @@
 
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace ThoughtSharp.Generator;
 
-static class ThoughtDataModelBuilder
+static class ThoughtDataModelFactory
 {
   public static ThoughtDataClass ConvertToModel(GeneratorAttributeSyntaxContext InnerContext)
   {
@@ -55,13 +56,56 @@ static class ThoughtDataModelBuilder
   {
     var ExplicitCount = GetExplicitCount(Member.Raw);
     var ExplicitLength = GetExplicitLength(Member.Raw);
+    var ExplicitBounds = GetExplicitBounds(Member.Raw);
     var EncodedType = ExplicitCount.HasValue
       ? TryGetArrayType(Member.Type) ?? TryGetIndexableType(Member.Type) ?? Member.Type
       : Member.Type;
 
+    var CodecConstructorArguments = new Dictionary<string, string>();
+    if (ExplicitLength is not null)
+      CodecConstructorArguments["Length"] = GetLiteralFor(ExplicitLength);
+
     var CodecType = GetCodecType(EncodedType, Member);
 
-    return new(Member.Name, TypeAddress.ForSymbol(EncodedType), CodecType, ExplicitCount, ExplicitLength);
+    if (ExplicitBounds is var (Minimum, Maximum))
+    {
+      CodecConstructorArguments["Minimum"] = GetLiteralFor(Minimum);
+      CodecConstructorArguments["Maximum"] = GetLiteralFor(Maximum);
+      CodecConstructorArguments["Inner"] = $"new {CodecType}()";
+      CodecType = $"NormalizeNumberCodec<{GetFullPath(EncodedType)}, float>";
+    }
+
+    return new(Member.Name, TypeAddress.ForSymbol(EncodedType), CodecType, ExplicitCount, ExplicitLength, CodecConstructorArguments);
+  }
+
+  static (object? Minimum, object? Maximum)? GetExplicitBounds(ISymbol Symbol)
+  {
+    foreach (var Attribute in Symbol.GetAttributes()
+               .Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataBoundsAttributeName))
+      return (Attribute.ConstructorArguments[0].Value, Attribute.ConstructorArguments[1].Value);
+
+    return null;
+  }
+
+  static string GetLiteralFor(object? Value)
+  {
+    var Expression = Value switch
+    {
+      null => SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression),
+      bool B => SyntaxFactory.LiteralExpression(
+        B ? SyntaxKind.TrueLiteralExpression : SyntaxKind.FalseLiteralExpression),
+      int I => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(I)),
+      long L => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(L)),
+      float F => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(F)),
+      double D => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(D)),
+      decimal M => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(M)),
+      byte B => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(B)),
+      string S => SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(S)),
+      char C => SyntaxFactory.LiteralExpression(SyntaxKind.CharacterLiteralExpression, SyntaxFactory.Literal(C)),
+      Enum E => SyntaxFactory.ParseExpression(E.GetType().FullName + "." + E),
+      _ => throw new NotSupportedException($"Literal generation not supported for type: {Value.GetType()}")
+    };
+    return Expression.NormalizeWhitespace().ToFullString();
   }
 
   static string GetCodecType(ITypeSymbol EncodedType, IValueSymbol Member)
@@ -71,17 +115,18 @@ static class ThoughtDataModelBuilder
       {SpecialType: SpecialType.System_Single} => "CopyFloatCodec",
       {SpecialType: SpecialType.System_Boolean} => "CopyBoolCodec",
       {
-          SpecialType:
-          SpecialType.System_Byte or SpecialType.System_SByte or
-          SpecialType.System_Int16 or SpecialType.System_UInt16 or
-          SpecialType.System_Int32 or SpecialType.System_UInt32 or
-          SpecialType.System_Int64 or SpecialType.System_UInt64 or
-          SpecialType.System_Char
-        } => GetIntLikeNumberCodec(EncodedType, Member),
-      INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum => $"BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>",
+        SpecialType:
+        SpecialType.System_Byte or SpecialType.System_SByte or
+        SpecialType.System_Int16 or SpecialType.System_UInt16 or
+        SpecialType.System_Int32 or SpecialType.System_UInt32 or
+        SpecialType.System_Int64 or SpecialType.System_UInt64 or
+        SpecialType.System_Char
+      } => GetIntLikeNumberCodec(EncodedType, Member),
+      INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum =>
+        $"BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>",
       {SpecialType: SpecialType.System_String} => GetStringCodec(Member),
-      var T when T.GetAttributes().Any(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataAttributeName) 
-        => "SubDataCodec<" + GetFullPath(T) +">",
+      var T when T.GetAttributes().Any(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataAttributeName)
+        => "SubDataCodec<" + GetFullPath(T) + ">",
       _ => "UnknownCodec"
     };
   }
@@ -110,7 +155,8 @@ static class ThoughtDataModelBuilder
 
   static int? GetExplicitLength(ISymbol Member)
   {
-    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataLengthAttributeName))
+    foreach (var Attribute in Member.GetAttributes()
+               .Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataLengthAttributeName))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 
@@ -119,7 +165,8 @@ static class ThoughtDataModelBuilder
 
   static int? GetExplicitCount(ISymbol Member)
   {
-    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataCountAttributeName))
+    foreach (var Attribute in Member.GetAttributes()
+               .Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataCountAttributeName))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 

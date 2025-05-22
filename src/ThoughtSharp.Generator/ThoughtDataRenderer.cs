@@ -26,7 +26,8 @@ namespace ThoughtSharp.Generator;
 
 class ThoughtDataRenderer
 {
-  public static string GenerateThoughtDataContentToWriter(ThoughtDataClass ThoughtDataClass, IndentedTextWriter Target)
+  public static string GenerateThoughtDataContentToWriter(
+    ThoughtDataClass ThoughtDataClass, IndentedTextWriter Target)
   {
     var CodecDictionary = ThoughtDataClass.Codecs.ToDictionary(C => C.Name);
 
@@ -36,9 +37,7 @@ class ThoughtDataRenderer
       if (CodecDictionary.ContainsKey(ParameterCodec))
         continue;
 
-      var Arguments = "";
-      if (Parameter.ExplicitLength is not null)
-        Arguments = $"Length: {Parameter.ExplicitLength}";
+      var Arguments = string.Join(", ", Parameter.CodecConstructorArguments.Select(Pair => $"{Pair.Key}: {Pair.Value}"));
 
       Target.WriteLine($"static {Parameter.CodecType} {ParameterCodec} = new({Arguments});");
     }
