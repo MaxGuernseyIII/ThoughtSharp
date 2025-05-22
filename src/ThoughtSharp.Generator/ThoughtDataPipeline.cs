@@ -25,10 +25,16 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ThoughtSharp.Generator;
 
+static class ThoughtDataAttributeNames
+{
+  public const string DataAttributeName = "ThoughtDataAttribute";
+  public const string ThoughtDataAttribute = "ThoughtSharp.Runtime." + DataAttributeName;
+  public const string DataCountAttributeName = "ThoughtDataCountAttribute";
+  public const string DataLengthAttributeName = "ThoughtDataLengthAttribute";
+}
+
 static class ThoughtDataPipeline
 {
-  const string ThoughtDataAttribute = "ThoughtSharp.Runtime.ThoughtDataAttribute";
-
   public static void Bind(IncrementalGeneratorInitializationContext Context)
   {
     var ThoughtDataPipeline = BindPipeline(Context);
@@ -38,7 +44,7 @@ static class ThoughtDataPipeline
 
   static IncrementalValuesProvider<ThoughtDataClass> BindPipeline(IncrementalGeneratorInitializationContext Context)
   {
-    var ThoughtDataPipeline = Context.SyntaxProvider.ForAttributeWithMetadataName(ThoughtDataAttribute,
+    var ThoughtDataPipeline = Context.SyntaxProvider.ForAttributeWithMetadataName(ThoughtDataAttributeNames.ThoughtDataAttribute,
       (Node, _) => Node is TypeDeclarationSyntax,
       (InnerContext, _) => ThoughtDataModelBuilder.ConvertToModel(InnerContext));
     return ThoughtDataPipeline;

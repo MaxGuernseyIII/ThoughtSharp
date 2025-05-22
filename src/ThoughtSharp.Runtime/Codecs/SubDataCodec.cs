@@ -20,9 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+namespace ThoughtSharp.Runtime.Codecs;
 
-public static class AttributeUsages
+public class SubDataCodec<T> : ThoughtDataCodec<T>
+  where T : ThoughtData, new()
 {
-  public const AttributeTargets Value = AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter;
+  public int Length => T.Length;
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  {
+    ObjectToEncode.MarshalTo(Target);
+  }
+
+  public T DecodeFrom(ReadOnlySpan<float> Source)
+  {
+    var Result = new T();
+    Result.MarshalFrom(Source);
+    return Result;
+  }
 }

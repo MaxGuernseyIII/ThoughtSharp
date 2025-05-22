@@ -27,9 +27,6 @@ namespace ThoughtSharp.Generator;
 
 static class ThoughtDataModelBuilder
 {
-  const string ThoughtDataCountAttribute = "ThoughtDataCountAttribute";
-  const string ThoughtDataLengthAttribute = "ThoughtDataLengthAttribute";
-
   public static ThoughtDataClass ConvertToModel(GeneratorAttributeSyntaxContext InnerContext)
   {
     var Codecs = new List<ThoughtParameterCodec>();
@@ -80,11 +77,25 @@ static class ThoughtDataModelBuilder
           SpecialType.System_Int32 or SpecialType.System_UInt32 or
           SpecialType.System_Int64 or SpecialType.System_UInt64 or
           SpecialType.System_Char
-        } => $"BitwiseOneHotNumberCodec<{EncodedType.Name}>",
+        } => GetIntLikeNumberCodec(EncodedType, Member),
       INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum => $"BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>",
       {SpecialType: SpecialType.System_String} => GetStringCodec(Member),
+      var T when T.GetAttributes().Any(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataAttributeName) 
+        => "SubDataCodec<" + GetFullPath(T) +">",
       _ => "UnknownCodec"
     };
+  }
+
+  static string GetFullPath(ITypeSymbol T)
+  {
+    return T.ToDisplayString(new SymbolDisplayFormat(
+      typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+      genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
+  }
+
+  static string GetIntLikeNumberCodec(ITypeSymbol EncodedType, IValueSymbol Member)
+  {
+    return $"BitwiseOneHotNumberCodec<{GetFullPath(EncodedType)}>";
   }
 
   static string GetStringCodec(IValueSymbol Member)
@@ -99,7 +110,7 @@ static class ThoughtDataModelBuilder
 
   static int? GetExplicitLength(ISymbol Member)
   {
-    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataLengthAttribute))
+    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataLengthAttributeName))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 
@@ -108,7 +119,7 @@ static class ThoughtDataModelBuilder
 
   static int? GetExplicitCount(ISymbol Member)
   {
-    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataCountAttribute))
+    foreach (var Attribute in Member.GetAttributes().Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataCountAttributeName))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 

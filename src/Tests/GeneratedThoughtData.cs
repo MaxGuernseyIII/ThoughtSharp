@@ -99,6 +99,15 @@ public partial class GeneratedThoughtData
     public MockPrivateEnum SomeEnum;
   }
 
+  [ThoughtData]
+  public partial class NestingMockThoughtData
+  {
+    public SingleFloatMockThoughtData First = new();
+    // ReSharper disable once RedundantNameQualifier
+    public Tests.GeneratedThoughtData.FloatArrayMockThoughtData Second = new();
+    public SingleFloatMockThoughtData Third = new();
+  }
+
   [TestMethod]
   public void LengthTest()
   {
@@ -194,6 +203,26 @@ public partial class GeneratedThoughtData
       SomeInteger = Any.Int(0, 100),
       SomeLongs = [ Any.Long, Any.Long, Any.Long ],
       ImplicitlyEncodedString = Any.ASCIIString(ComplexDataStructureMockThoughtData.ImplicitlyEncodedStringLength)
+    });
+  }
+
+  [TestMethod]
+  public void RoundTripNesting()
+  {
+    RoundTripTest(new NestingMockThoughtData
+    {
+      First =
+      {
+        P1 = Any.Float
+      },
+      Second =
+      {
+        P2=[ Any.Float, Any.Float, Any.Float, Any.Float ]
+      },
+      Third =
+      {
+        P1 = Any.Float
+      }
     });
   }
 

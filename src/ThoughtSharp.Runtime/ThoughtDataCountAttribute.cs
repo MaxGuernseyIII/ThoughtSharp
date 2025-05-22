@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-[AttributeUsage(AttributeUsages.Value)]
+[AttributeUsage(AttributeConstants.ValueTargets)]
 public class ThoughtDataCountAttribute(int Count) : Attribute
 {
   public int Count { get; } = Count;

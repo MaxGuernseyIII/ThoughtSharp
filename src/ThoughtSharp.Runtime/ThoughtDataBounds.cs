@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-[AttributeUsage(AttributeUsages.Value)]
+[AttributeUsage(AttributeConstants.ValueTargets)]
 public class ThoughtDataBounds<T>(T Edge1, T Edge2) : Attribute
 {
   public T Edge1 { get; } = Edge1;
