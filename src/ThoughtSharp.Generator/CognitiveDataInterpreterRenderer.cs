@@ -35,15 +35,15 @@ static class CognitiveDataInterpreterRenderer
       GeneratedTypeFormatter.GenerateType(Writer, new(Interpreter.DataClass.Address, W =>
       {
         var MethodIsAsync = Interpreter.Paths.Any(P => P.RequiresAwait);
-        var ReturnValue = MethodIsAsync ? "Task<Thought>" : "Thought";
+        var ReturnValue = MethodIsAsync ? "Task<Thought<bool>>" : "Thought<bool>";
 
         W.WriteLine($"public {ReturnValue} InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
         W.WriteLine("{");
         W.Indent++;
         if (MethodIsAsync)
-          W.WriteLine("return Thought.DoAsync(async R =>");
+          W.WriteLine("return Thought.ThinkAsync(async R =>");
         else
-          W.WriteLine("return Thought.Do(R =>");
+          W.WriteLine("return Thought.Think(R =>");
         W.Indent++;
         W.WriteLine("{");
         W.Indent++;
@@ -81,6 +81,8 @@ static class CognitiveDataInterpreterRenderer
 
         W.Indent--;
         W.WriteLine("}");
+        W.WriteLine();
+        W.WriteLine("return __MoreActions;");
         W.Indent--;
         W.WriteLine("}");
         W.Indent--;

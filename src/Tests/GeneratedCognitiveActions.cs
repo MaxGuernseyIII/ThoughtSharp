@@ -287,4 +287,18 @@ public partial class GeneratedCognitiveActions
 
     Invoked.Should().Be(true);
   }
+
+  [DataRow(false)]
+  [DataRow(true)]
+  [TestMethod]
+  public void ReturnsMoreActions(bool Expected)
+  {
+    var Actions = new MockMultipleChoicesWithParameters();
+    var Parameters = new MultipleChoicesWithParameters.__AllParameters();
+    Parameters.__MoreActions = Expected;
+
+    var Actual = Parameters.InterpretFor(Actions);
+
+    Actual.ConsumeDetached().Should().Be(Expected);
+  }
 }
