@@ -33,4 +33,10 @@ public partial class GeneratedCognitiveActions
     void Empty1();
     void Empty2();
   }
+
+  [CognitiveActions]
+  partial interface ActionWithParameters
+  {
+    void UsesParameters(float Parameter1, [CognitiveDataLength(5)] string Parameter2);
+  }
 }

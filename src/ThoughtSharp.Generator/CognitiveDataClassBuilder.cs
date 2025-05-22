@@ -54,7 +54,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 
     var CodecExpression = GetCodecExpression(EncodedType, Member);
 
-    return new(Member.Name, CodecExpression, $"CognitiveDataCodec<{EncodedType.GetFullPath()}>", ExplicitCount, Implied);
+    return new(Member.Name, CodecExpression, $"CognitiveDataCodec<{EncodedType.GetFullPath()}>", ExplicitCount, Implied, Member.Type.GetFullPath());
   }
 
   static (object Minimum, object Maximum)? GetImplicitBounds(ITypeSymbol MemberType)

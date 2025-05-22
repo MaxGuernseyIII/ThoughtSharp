@@ -45,6 +45,11 @@ class CognitiveDataClassRenderer
 
     foreach (var Parameter in CognitiveDataClass.Parameters)
     {
+      if (Parameter.Implied)
+      {
+        Target.WriteLine($"public {Parameter.FullType} {Parameter.Name};");
+      }
+
       var ParameterIndexField = GetIndexFieldNameFor(Parameter);
       Target.Write($"static readonly int {ParameterIndexField} = ");
       WriteIndexValue(Target, LastValue, LastParameter);
