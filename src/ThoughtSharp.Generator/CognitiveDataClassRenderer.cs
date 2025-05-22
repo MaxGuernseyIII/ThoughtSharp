@@ -84,6 +84,23 @@ class CognitiveDataClassRenderer
     }
 
     Target.WriteLine("}");
+    Target.WriteLine();
+    Target.WriteLine($"public static {CognitiveDataClass.Address.TypeName.FullName} UnmarshalFrom(ReadOnlySpan<float> Target)");
+    Target.WriteLine("{");
+    Target.WriteLine($"  var Result = new {CognitiveDataClass.Address.TypeName.FullName}();");
+    Target.WriteLine();
+
+    foreach (var Parameter in CognitiveDataClass.Parameters)
+    foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
+    {
+      var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
+      var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
+      Target.WriteLine(
+        $"  Result.{Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
+    }
+    Target.WriteLine("  return Result;");
+    Target.WriteLine("}");
 
     return Target.ToString();
   }

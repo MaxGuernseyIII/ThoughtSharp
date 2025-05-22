@@ -153,9 +153,7 @@ public partial class GeneratedCognitiveData
   {
     var Buffer = new float[T.Length];
     ToTest.MarshalTo(Buffer);
-    var Actual = new T();
-
-    Actual.MarshalFrom(Buffer);
+    var Actual = T.UnmarshalFrom(Buffer);
 
     Actual.Should().BeEquivalentTo(ToTest);
   }

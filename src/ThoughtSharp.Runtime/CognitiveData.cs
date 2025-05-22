@@ -28,4 +28,6 @@ public interface CognitiveData<T> where T : CognitiveData<T>
 
   void MarshalTo(Span<float> Target);
   void MarshalFrom(ReadOnlySpan<float> Source);
+
+  static abstract T UnmarshalFrom(ReadOnlySpan<float> Source);
 }
