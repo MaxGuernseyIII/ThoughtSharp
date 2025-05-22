@@ -25,26 +25,35 @@ using System.Numerics;
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
-public class NormalizeNumberCodec<T, U>(
-  T Minimum,
-  T Maximum,
-  ThoughtDataCodec<U> Inner) : ThoughtDataCodec<T>
+public class NormalizeNumberCodec<T, U> : ThoughtDataCodec<T>
   where T : INumber<T>
   where U : INumber<U>, IFloatingPoint<U>, IAdditionOperators<U, U, U>, IMultiplyOperators<U, U, U>
 {
-  readonly U TargetTypedMinimum = U.CreateChecked(Minimum);
-  readonly U TargetTypedMaximum = U.CreateChecked(Maximum);
+  readonly U TargetTypedMinimum;
+  readonly U Factor;
+  readonly ThoughtDataCodec<U> Inner;
+
+  public NormalizeNumberCodec(T Minimum,
+    T Maximum,
+    ThoughtDataCodec<U> Inner)
+  {
+    this.Inner = Inner;
+    TargetTypedMinimum = U.CreateChecked(Minimum);
+    Factor = U.CreateChecked(Maximum) - TargetTypedMinimum;
+  }
 
   public int Length => Inner.Length;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
-    var Value = (U.CreateChecked(ObjectToEncode) - TargetTypedMinimum) / (TargetTypedMaximum - TargetTypedMinimum);
+    var Value = (U.CreateChecked(ObjectToEncode) - TargetTypedMinimum) / Factor;
     Inner.EncodeTo(Value, Target);
   }
 
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
-    return T.Zero;
+    var Value = Inner.DecodeFrom(Source);
+
+    return T.CreateChecked(Value * Factor + TargetTypedMinimum);
   }
 }
