@@ -20,23 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using Microsoft.CodeAnalysis;
-
 namespace ThoughtSharp.Generator;
 
 class ThoughtParameter(
   string Name,
-  TypeAddress Type,
   string CodecType,
   int? ExplicitCount,
-  int? ExplicitLength,
   IReadOnlyDictionary<string, string> CodecConstructorArguments)
 {
   public string Name { get; } = Name;
   public int? ExplicitCount { get; } = ExplicitCount;
-  public TypeAddress Type { get; } = Type;
   public string CodecType { get; } = CodecType;
-  public int? ExplicitLength { get; } = ExplicitLength;
   public IReadOnlyDictionary<string, string> CodecConstructorArguments { get; } = CodecConstructorArguments;
 
   public int EffectiveCount => ExplicitCount ?? 1;

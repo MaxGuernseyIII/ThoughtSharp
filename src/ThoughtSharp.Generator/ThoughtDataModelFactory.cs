@@ -56,7 +56,7 @@ static class ThoughtDataModelFactory
   {
     var ExplicitCount = GetExplicitCount(Member.Raw);
     var ExplicitLength = GetExplicitLength(Member.Raw);
-    var ExplicitBounds = GetExplicitBounds(Member.Raw);
+    var Bounds = GetExplicitBounds(Member.Raw) ?? GetImplicitBounds(Member.Type);
     var EncodedType = ExplicitCount.HasValue
       ? TryGetArrayType(Member.Type) ?? TryGetIndexableType(Member.Type) ?? Member.Type
       : Member.Type;
@@ -67,7 +67,7 @@ static class ThoughtDataModelFactory
 
     var CodecType = GetCodecType(EncodedType, Member);
 
-    if (ExplicitBounds is var (Minimum, Maximum))
+    if (Bounds is var (Minimum, Maximum))
     {
       CodecConstructorArguments["Minimum"] = GetLiteralFor(Minimum);
       CodecConstructorArguments["Maximum"] = GetLiteralFor(Maximum);
@@ -75,14 +75,27 @@ static class ThoughtDataModelFactory
       CodecType = $"NormalizeNumberCodec<{GetFullPath(EncodedType)}, float>";
     }
 
-    return new(Member.Name, TypeAddress.ForSymbol(EncodedType), CodecType, ExplicitCount, ExplicitLength, CodecConstructorArguments);
+    return new(Member.Name, CodecType, ExplicitCount, CodecConstructorArguments);
   }
 
-  static (object? Minimum, object? Maximum)? GetExplicitBounds(ISymbol Symbol)
+  static (object Minimum, object Maximum)? GetImplicitBounds(ITypeSymbol MemberType)
+  {
+    return MemberType.SpecialType switch
+    {
+      SpecialType.System_SByte => (sbyte.MinValue, sbyte.MaxValue),
+      SpecialType.System_Byte => (byte.MinValue, byte.MaxValue),
+      SpecialType.System_Int16 => (short.MinValue, short.MaxValue),
+      SpecialType.System_UInt16 => (ushort.MinValue, ushort.MaxValue),
+      SpecialType.System_Char => (char.MinValue, char.MaxValue),
+      _ => null
+    };
+  }
+
+  static (object Minimum, object Maximum)? GetExplicitBounds(ISymbol Symbol)
   {
     foreach (var Attribute in Symbol.GetAttributes()
                .Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataBoundsAttributeName))
-      return (Attribute.ConstructorArguments[0].Value, Attribute.ConstructorArguments[1].Value);
+      return (Attribute.ConstructorArguments[0].Value!, Attribute.ConstructorArguments[1].Value!);
 
     return null;
   }
@@ -94,12 +107,17 @@ static class ThoughtDataModelFactory
       null => SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression),
       bool B => SyntaxFactory.LiteralExpression(
         B ? SyntaxKind.TrueLiteralExpression : SyntaxKind.FalseLiteralExpression),
+      short S => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(S)),
+      ushort S => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(S)),
       int I => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(I)),
+      uint I => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(I)),
       long L => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(L)),
+      ulong L => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(L)),
       float F => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(F)),
       double D => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(D)),
       decimal M => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(M)),
       byte B => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(B)),
+      sbyte B => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(B)),
       string S => SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(S)),
       char C => SyntaxFactory.LiteralExpression(SyntaxKind.CharacterLiteralExpression, SyntaxFactory.Literal(C)),
       Enum E => SyntaxFactory.ParseExpression(E.GetType().FullName + "." + E),

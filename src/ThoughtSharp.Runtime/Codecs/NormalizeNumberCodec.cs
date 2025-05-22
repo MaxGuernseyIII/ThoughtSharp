@@ -26,20 +26,20 @@ namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
 public class NormalizeNumberCodec<T, U>(
-  T Minimum, 
+  T Minimum,
   T Maximum,
   ThoughtDataCodec<U> Inner) : ThoughtDataCodec<T>
-  where T : IMultiplyOperators<T, U, U>, INumber<T>
-  where U : INumber<U>, IAdditionOperators<U, U, U>, IAdditionOperators<U, T, U>, ISubtractionOperators<U, T, U>, IMultiplyOperators<U, U, U>
+  where T : INumber<T>
+  where U : INumber<U>, IFloatingPoint<U>, IAdditionOperators<U, U, U>, IMultiplyOperators<U, U, U>
 {
-  readonly U TargetTypedMinimum = Minimum * U.One;
-  readonly U TargetTypedMaximum = Maximum * U.One;
+  readonly U TargetTypedMinimum = U.CreateChecked(Minimum);
+  readonly U TargetTypedMaximum = U.CreateChecked(Maximum);
 
   public int Length => Inner.Length;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
-    var Value = (ObjectToEncode * U.One - TargetTypedMinimum) / (TargetTypedMaximum - TargetTypedMinimum);
+    var Value = (U.CreateChecked(ObjectToEncode) - TargetTypedMinimum) / (TargetTypedMaximum - TargetTypedMinimum);
     Inner.EncodeTo(Value, Target);
   }
 

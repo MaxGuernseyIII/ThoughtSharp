@@ -258,4 +258,49 @@ public partial class GeneratedThoughtData
 
     Target[0].Should().BeApproximately((Data.ToNormalize - 1f) / 5f, 0.01f);
   }
+
+  [ThoughtData]
+  public partial class DefaultNormalizationMockThoughtData
+  {
+    public byte Byte;
+    public sbyte SByte;
+    public ushort UShort;
+    public short Short;
+    public char Char;
+  }
+
+  [TestMethod]
+  public void MinimumAutoBounds()
+  {
+    BoundsTest(new()
+    {
+      Byte = byte.MinValue,
+      SByte = sbyte.MinValue,
+      UShort = ushort.MinValue,
+      Short = short.MinValue,
+      Char = char.MinValue
+    }, 0);
+  }
+
+  [TestMethod]
+  public void MaximumAutoBounds()
+  {
+    BoundsTest(new()
+    {
+      Byte = byte.MaxValue,
+      SByte = sbyte.MaxValue,
+      UShort = ushort.MaxValue,
+      Short = short.MaxValue,
+      Char = char.MaxValue
+    }, 1);
+  }
+
+  void BoundsTest(DefaultNormalizationMockThoughtData Data, float Expected)
+  {
+    var Buffer = new float[DefaultNormalizationMockThoughtData.Length];
+    Data.MarshalTo(Buffer);
+
+    foreach (var F in Buffer) 
+      F.Should().BeApproximately(Expected, 0.01f);
+  }
 }
