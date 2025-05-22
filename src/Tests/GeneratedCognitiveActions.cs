@@ -39,4 +39,44 @@ public partial class GeneratedCognitiveActions
   {
     void UsesParameters(float Parameter1, [CognitiveDataLength(5)] string Parameter2);
   }
+
+  [CognitiveActions]
+  partial interface MultipleChoicesWithParameters
+  {
+    void Action1(float Parameter1, [CognitiveDataLength(5)] string Parameter2);
+    void Action2();
+    void Action3(int Parameter1, char Parameter2);
+  }
+
+  class MockMultipleChoicesWithParameters : MultipleChoicesWithParameters
+  {
+    public Action<float, string> Action1Handler { get; set; } = delegate { Assert.Fail("Action1 should be invoked"); };
+    public Action Action2Handler { get; set; } = delegate { Assert.Fail("Action2 should be invoked"); };
+    public Action<int, char> Action3Handler { get; set; } = delegate { Assert.Fail("Action3 should be invoked"); };
+
+    public void Action1(float Parameter1, string Parameter2)
+    {
+      Action1Handler(Parameter1, Parameter2);
+    }
+
+    public void Action2()
+    {
+      Action2Handler();
+    }
+
+    public void Action3(int Parameter1, char Parameter2)
+    {
+      Action3Handler(Parameter1, Parameter2);
+    }
+  }
+
+  [TestMethod]
+  public void InvokeNoAction()
+  {
+    var Choices = new MockMultipleChoicesWithParameters();
+
+    var P = new MultipleChoicesWithParameters.__AllParameters();
+
+    P.InterpretFor(Choices);
+  }
 }

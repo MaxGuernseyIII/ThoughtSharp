@@ -27,12 +27,12 @@ namespace ThoughtSharp.Generator;
 
 static class GeneratedTypeFormatter
 {
-  public static string GetFilename(TypeAddress Address)
+  public static string GetFilename(TypeAddress Address, string Suffix = "")
   {
     return string.Join(".",
       Address.ContainingNamespaces.SelectMany(N => N.Split('.'))
         .Concat(Address.ContainingTypes.Select(T => T.Name)
-          .Concat([Address.TypeName.Name]))) + ".g.cs";
+          .Concat([Address.TypeName.Name]))) + Suffix + ".g.cs";
   }
 
   public class TypeGenerationRequest(TypeAddress Type, Action<IndentedTextWriter> WriteBody)
