@@ -37,9 +37,7 @@ class ThoughtDataRenderer
       if (CodecDictionary.ContainsKey(ParameterCodec))
         continue;
 
-      var Arguments = string.Join(", ", Parameter.CodecConstructorArguments.Select(Pair => $"{Pair.Key}: {Pair.Value}"));
-
-      Target.WriteLine($"static {Parameter.CodecType} {ParameterCodec} = new({Arguments});");
+      Target.WriteLine($"static readonly {Parameter.CodecType} {ParameterCodec} = {Parameter.CodecExpression};");
     }
 
     var LastValue = "0";

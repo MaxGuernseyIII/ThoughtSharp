@@ -20,18 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Generator;
+using System.Numerics;
 
-class ThoughtParameter(
-  string Name,
-  string CodecExpression,
-  string CodecType,
-  int? ExplicitCount)
+namespace ThoughtSharp.Runtime.Codecs;
+
+public class NormalizingCodec<T>(ThoughtDataCodec<T> Inner, T Minimum, T Maximum) : ThoughtDataCodec<T>
+  where T : IFloatingPoint<T>, ISubtractionOperators<T, T, T>, IAdditionOperators<T, T, T>, IMultiplyOperators<T, T, T>
 {
-  public string Name { get; } = Name;
-  public string CodecExpression { get; } = CodecExpression;
-  public int? ExplicitCount { get; } = ExplicitCount;
-  public string CodecType { get; } = CodecType;
+  readonly T Size = Maximum - Minimum;
+  public int Length => Inner.Length;
 
-  public int EffectiveCount => ExplicitCount ?? 1;
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  {
+    var Normalized = (ObjectToEncode - Minimum) / Size;
+    Inner.EncodeTo(Normalized, Target);
+  }
+
+  public T DecodeFrom(ReadOnlySpan<float> Source)
+  {
+    var Normalized = Inner.DecodeFrom(Source);
+
+    return Minimum + Normalized * Size;
+  }
 }

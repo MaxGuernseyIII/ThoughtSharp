@@ -20,18 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Generator;
+using System.Numerics;
 
-class ThoughtParameter(
-  string Name,
-  string CodecExpression,
-  string CodecType,
-  int? ExplicitCount)
+namespace ThoughtSharp.Runtime.Codecs;
+
+public class NumberToFloatingPointCodec<T, U>(ThoughtDataCodec<U> Inner) : ThoughtDataCodec<T>
+  where T : INumber<T>
+  where U : IFloatingPoint<U>
 {
-  public string Name { get; } = Name;
-  public string CodecExpression { get; } = CodecExpression;
-  public int? ExplicitCount { get; } = ExplicitCount;
-  public string CodecType { get; } = CodecType;
+  public int Length => Inner.Length;
 
-  public int EffectiveCount => ExplicitCount ?? 1;
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  {
+    var ObjectOfInnerType = U.CreateChecked(ObjectToEncode);
+    Inner.EncodeTo(ObjectOfInnerType, Target);
+  }
+
+  public T DecodeFrom(ReadOnlySpan<float> Source)
+  {
+    var ObjectOfInnerType = Inner.DecodeFrom(Source);
+    return T.CreateChecked(ObjectOfInnerType);
+  }
 }

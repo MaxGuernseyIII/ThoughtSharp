@@ -55,27 +55,13 @@ static class ThoughtDataModelFactory
   static ThoughtParameter CreateParameterFor(IValueSymbol Member)
   {
     var ExplicitCount = GetExplicitCount(Member.Raw);
-    var ExplicitLength = GetExplicitLength(Member.Raw);
-    var Bounds = GetExplicitBounds(Member.Raw) ?? GetImplicitBounds(Member.Type);
     var EncodedType = ExplicitCount.HasValue
       ? TryGetArrayType(Member.Type) ?? TryGetIndexableType(Member.Type) ?? Member.Type
       : Member.Type;
 
-    var CodecConstructorArguments = new Dictionary<string, string>();
-    if (ExplicitLength is not null)
-      CodecConstructorArguments["Length"] = GetLiteralFor(ExplicitLength);
-
-    var CodecType = GetCodecType(EncodedType, Member);
-
-    if (Bounds is var (Minimum, Maximum))
-    {
-      CodecConstructorArguments["Minimum"] = GetLiteralFor(Minimum);
-      CodecConstructorArguments["Maximum"] = GetLiteralFor(Maximum);
-      CodecConstructorArguments["Inner"] = "new CopyFloatCodec()";
-      CodecType = $"NormalizeNumberCodec<{GetFullPath(EncodedType)}, float>";
-    }
-
-    return new(Member.Name, CodecType, ExplicitCount, CodecConstructorArguments);
+    var CodecExpression = GetCodecExpression(EncodedType, Member);
+    
+    return new(Member.Name, CodecExpression, $"ThoughtDataCodec<{GetFullPath(EncodedType)}>", ExplicitCount);
   }
 
   static (object Minimum, object Maximum)? GetImplicitBounds(ITypeSymbol MemberType)
@@ -126,12 +112,12 @@ static class ThoughtDataModelFactory
     return Expression.NormalizeWhitespace().ToFullString();
   }
 
-  static string GetCodecType(ITypeSymbol EncodedType, IValueSymbol Member)
+  static string GetCodecExpression(ITypeSymbol EncodedType, IValueSymbol Member)
   {
     return EncodedType switch
     {
-      {SpecialType: SpecialType.System_Single} => "CopyFloatCodec",
-      {SpecialType: SpecialType.System_Boolean} => "CopyBoolCodec",
+      {SpecialType: SpecialType.System_Single} => GetFloatCodecExpression(Member),
+      {SpecialType: SpecialType.System_Boolean} => "new CopyBoolCodec()",
       {
         SpecialType:
         SpecialType.System_Byte or SpecialType.System_SByte or
@@ -141,12 +127,21 @@ static class ThoughtDataModelFactory
         SpecialType.System_Char
       } => GetIntLikeNumberCodec(EncodedType, Member),
       INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum =>
-        $"BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>",
+        $"new BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>()",
       {SpecialType: SpecialType.System_String} => GetStringCodec(Member),
       var T when T.GetAttributes().Any(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataAttributeName)
-        => "SubDataCodec<" + GetFullPath(T) + ">",
-      _ => "UnknownCodec"
+        => "new SubDataCodec<" + GetFullPath(T) + ">()",
+      _ => "new UnknownCodec()"
     };
+  }
+
+  static string GetFloatCodecExpression(IValueSymbol Member)
+  {
+    var ExplicitBounds = GetExplicitBounds(Member.Raw);
+    if (ExplicitBounds is var (Minimum, Maximum))
+      return $"new NormalizingCodec<float>(Inner: new CopyFloatCodec(), Minimum: {GetLiteralFor(Minimum)}, Maximum: {GetLiteralFor(Maximum)})";
+
+    return "new CopyFloatCodec()";
   }
 
   static string GetFullPath(ITypeSymbol T)
@@ -158,7 +153,12 @@ static class ThoughtDataModelFactory
 
   static string GetIntLikeNumberCodec(ITypeSymbol EncodedType, IValueSymbol Member)
   {
-    return $"BitwiseOneHotNumberCodec<{GetFullPath(EncodedType)}>";
+    var Bounds = GetExplicitBounds(Member.Raw) ?? GetImplicitBounds(EncodedType);
+
+    if (Bounds is var (Minimum, Maximum))
+      return $"new NumberToFloatingPointCodec<{GetFullPath(EncodedType)}, float>(Inner: new RoundingCodec<float>(Inner: new NormalizingCodec<float>(Inner: new CopyFloatCodec(),Minimum: {GetLiteralFor(Minimum)},Maximum: {GetLiteralFor(Maximum)})))";
+
+    return $"new BitwiseOneHotNumberCodec<{GetFullPath(EncodedType)}>()";
   }
 
   static string GetStringCodec(IValueSymbol Member)
@@ -168,7 +168,7 @@ static class ThoughtDataModelFactory
     if (Length is null)
       return "UnknownCodec";
 
-    return "BitwiseOneHotStringCodec";
+    return $"new BitwiseOneHotStringCodec({GetLiteralFor(Length)})";
   }
 
   static int? GetExplicitLength(ISymbol Member)

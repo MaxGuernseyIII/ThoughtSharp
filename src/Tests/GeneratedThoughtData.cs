@@ -165,7 +165,7 @@ public partial class GeneratedThoughtData
   {
     var Data = new DeclarativelyNormalizedMockThoughtData
     {
-      ToNormalize = Any.Float
+      ToNormalize = Any.Float * 5 + 1
     };
 
     var Target = new float[DeclarativelyNormalizedMockThoughtData.Length];
@@ -189,7 +189,7 @@ public partial class GeneratedThoughtData
   [TestMethod]
   public void MinimumAutoBounds()
   {
-    BoundsTest(new()
+    BoundsMarshallingTest(new()
     {
       Byte = byte.MinValue,
       SByte = sbyte.MinValue,
@@ -202,7 +202,7 @@ public partial class GeneratedThoughtData
   [TestMethod]
   public void MaximumAutoBounds()
   {
-    BoundsTest(new()
+    BoundsMarshallingTest(new()
     {
       Byte = byte.MaxValue,
       SByte = sbyte.MaxValue,
@@ -212,13 +212,38 @@ public partial class GeneratedThoughtData
     }, 1);
   }
 
-  void BoundsTest(DefaultNormalizationMockThoughtData Data, float Expected)
+  [TestMethod]
+  public void AutoBoundsRounding()
+  {
+    BoundsUnmarshallingTest(new()
+    {
+      Byte = byte.MaxValue,
+      SByte = sbyte.MaxValue,
+      UShort = ushort.MaxValue,
+      Short = short.MaxValue,
+      Char = char.MaxValue
+    }, 0.9999999f);
+  }
+
+  void BoundsMarshallingTest(DefaultNormalizationMockThoughtData Data, float Expected)
   {
     var Buffer = new float[DefaultNormalizationMockThoughtData.Length];
     Data.MarshalTo(Buffer);
 
     foreach (var F in Buffer)
       F.Should().BeApproximately(Expected, 0.01f);
+  }
+
+  void BoundsUnmarshallingTest(DefaultNormalizationMockThoughtData Data, float Value)
+  {
+    var Buffer = new float[DefaultNormalizationMockThoughtData.Length];
+    for (var I = 0; I < Buffer.Length; ++I)
+      Buffer[I] = Value;
+
+    var NewData = new DefaultNormalizationMockThoughtData();
+    NewData.MarshalFrom(Buffer);
+
+    NewData.Should().BeEquivalentTo(Data);
   }
 
   [ThoughtData]
