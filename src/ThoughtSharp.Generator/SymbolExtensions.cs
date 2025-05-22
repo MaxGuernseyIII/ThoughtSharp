@@ -81,7 +81,7 @@ static class SymbolExtensions
     public ISymbol Raw => Property;
   }
 
-  public static string GetLiteralExpressionFor(this object? Value)
+  public static string ToLiteralExpression(this object? Value)
   {
     var Expression = Value switch
     {

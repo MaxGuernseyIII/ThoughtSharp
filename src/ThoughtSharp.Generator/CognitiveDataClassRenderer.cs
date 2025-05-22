@@ -37,7 +37,7 @@ class CognitiveDataClassRenderer
       if (CodecDictionary.ContainsKey(ParameterCodec))
         continue;
 
-      Target.WriteLine($"static readonly {Parameter.CodecType} {ParameterCodec} = {Parameter.CodecExpression};");
+      Target.WriteLine($"static readonly CognitiveDataCodec<{Parameter.FullType}> {ParameterCodec} = {Parameter.CodecExpression};");
     }
 
     var LastValue = "0";

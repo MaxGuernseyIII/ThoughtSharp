@@ -41,9 +41,9 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   }
 
   public void AddCompilerDefinedParameter(
-    string Name, string CodecExpression, string CodecType, int? ExplicitCount, string FullType)
+    string Name, string CodecExpression, int? ExplicitCount, string FullType)
   {
-    Parameters.Add(new(Name, CodecExpression, CodecType, ExplicitCount, true, FullType));
+    Parameters.Add(new(Name, CodecExpression, ExplicitCount, true, FullType));
   }
 
   public static CognitiveParameterCodec CreateCodecFor(IValueSymbol Member)
@@ -60,7 +60,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 
     var CodecExpression = GetCodecExpression(EncodedType, Member);
 
-    return new(Member.Name, CodecExpression, $"CognitiveDataCodec<{EncodedType.GetFullPath()}>", ExplicitCount, Implied,
+    return new(Member.Name, CodecExpression, ExplicitCount, Implied,
       Member.Type.GetFullPath());
   }
 
@@ -80,7 +80,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   static (object Minimum, object Maximum)? GetExplicitBounds(ISymbol Symbol)
   {
     foreach (var Attribute in Symbol.GetAttributes()
-               .Where(A => A.AttributeClass?.Name == CognitiveDataAttributeNames.DataBoundsAttributeName))
+               .Where(A => A.AttributeClass?.Name == CognitiveAttributeNames.DataBoundsAttributeName))
       return (Attribute.ConstructorArguments[0].Value!, Attribute.ConstructorArguments[1].Value!);
 
     return null;
@@ -103,7 +103,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
       INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum =>
         $"new BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>()",
       {SpecialType: SpecialType.System_String} => GetStringCodec(Member),
-      var T when T.GetAttributes().Any(A => A.AttributeClass?.Name == CognitiveDataAttributeNames.DataAttributeName)
+      var T when T.GetAttributes().Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.DataAttributeName)
         => "new SubDataCodec<" + T.GetFullPath() + ">()",
       _ => "new UnknownCodec()"
     };
@@ -114,7 +114,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     var ExplicitBounds = GetExplicitBounds(Member.Raw);
     if (ExplicitBounds is var (Minimum, Maximum))
       return
-        $"new NormalizingCodec<float>(Inner: new CopyFloatCodec(), Minimum: {Minimum.GetLiteralExpressionFor()}, Maximum: {Maximum.GetLiteralExpressionFor()})";
+        $"new NormalizingCodec<float>(Inner: new CopyFloatCodec(), Minimum: {Minimum.ToLiteralExpression()}, Maximum: {Maximum.ToLiteralExpression()})";
 
     return "new CopyFloatCodec()";
   }
@@ -125,9 +125,14 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 
     if (Bounds is var (Minimum, Maximum))
       return
-        $"new NumberToFloatingPointCodec<{EncodedType.GetFullPath()}, float>(Inner: new RoundingCodec<float>(Inner: new NormalizingCodec<float>(Inner: new CopyFloatCodec(),Minimum: {Minimum.GetLiteralExpressionFor()},Maximum: {Maximum.GetLiteralExpressionFor()})))";
+        GetBoundedIntLikeCodecName(EncodedType.GetFullPath(), Minimum, Maximum);
 
     return $"new BitwiseOneHotNumberCodec<{EncodedType.GetFullPath()}>()";
+  }
+
+  public static string GetBoundedIntLikeCodecName(string TypeName, object Minimum, object Maximum)
+  {
+    return $"new NumberToFloatingPointCodec<{TypeName}, float>(Inner: new RoundingCodec<float>(Inner: new NormalizingCodec<float>(Inner: new CopyFloatCodec(),Minimum: {Minimum.ToLiteralExpression()},Maximum: {Maximum.ToLiteralExpression()})))";
   }
 
   static string GetStringCodec(IValueSymbol Member)
@@ -137,13 +142,13 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     if (Length is null)
       return "UnknownCodec";
 
-    return $"new BitwiseOneHotStringCodec({Length.GetLiteralExpressionFor()})";
+    return $"new BitwiseOneHotStringCodec({Length.ToLiteralExpression()})";
   }
 
   static int? GetExplicitLength(ISymbol Member)
   {
     foreach (var Attribute in Member.GetAttributes()
-               .Where(A => A.AttributeClass?.Name == CognitiveDataAttributeNames.DataLengthAttributeName))
+               .Where(A => A.AttributeClass?.Name == CognitiveAttributeNames.DataLengthAttributeName))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 
@@ -153,7 +158,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   static int? GetExplicitCount(ISymbol Member)
   {
     foreach (var Attribute in Member.GetAttributes()
-               .Where(A => A.AttributeClass?.Name == CognitiveDataAttributeNames.DataCountAttributeName))
+               .Where(A => A.AttributeClass?.Name == CognitiveAttributeNames.DataCountAttributeName))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 

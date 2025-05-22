@@ -39,7 +39,7 @@ public partial class GeneratedChoices
       new(new(), new() {Parameter = Any.Float})
     ];
     ushort NextPosition = 0;
-    CognitiveCategory<MockPayload, MockData> Category = new MockCategory();
+    CognitiveCategory<MockPayload, MockData> Category = new MockCategory(Options);
     var Buffer = new float[MockCategory.EncodeLength];
     var ReferenceBuffer = GetReferenceBuffer(Options, NextPosition, 3, 3, true);
     Options[0].Descriptor.MarshalTo(Buffer[..]);
@@ -60,7 +60,7 @@ public partial class GeneratedChoices
   }
 
   [CognitiveCategory<MockPayload, MockData>(3)]
-  class MockCategory
+  partial class MockCategory
   {
   }
 

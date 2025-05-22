@@ -22,14 +22,14 @@
 
 namespace ThoughtSharp.Generator;
 
-static class CognitiveDataAttributeNames
+internal class CognitiveCategoryModel(
+  TypeAddress CategoryType,
+  TypeAddress PayloadType,
+  TypeAddress DescriptorType,
+  ushort Count)
 {
-  public const string Namespace = "ThoughtSharp.Runtime.";
-  public const string DataAttributeName = "CognitiveDataAttribute";
-  public const string ActionsAttributeName = "CognitiveActionsAttribute";
-  public const string FullDataAttribute = Namespace + DataAttributeName;
-  public const string FullActionsAttribute = Namespace + ActionsAttributeName;
-  public const string DataCountAttributeName = "CognitiveDataCountAttribute";
-  public const string DataLengthAttributeName = "CognitiveDataLengthAttribute";
-  public const string DataBoundsAttributeName = "CognitiveDataBoundsAttribute";
+  public TypeAddress CategoryType { get; } = CategoryType;
+  public TypeAddress PayloadType { get; } = PayloadType;
+  public TypeAddress DescriptorType { get; } = DescriptorType;
+  public ushort Count { get; } = Count;
 }

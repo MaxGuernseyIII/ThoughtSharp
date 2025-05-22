@@ -22,18 +22,16 @@
 
 namespace ThoughtSharp.Generator;
 
-class CognitiveParameter(
-  string Name,
-  string CodecExpression,
-  int? ExplicitCount,
-  bool Implied,
-  string FullType)
+static class CognitiveAttributeNames
 {
-  public string Name { get; } = Name;
-  public string CodecExpression { get; } = CodecExpression;
-  public int? ExplicitCount { get; } = ExplicitCount;
-  public bool Implied { get; } = Implied;
-  public string FullType { get; } = FullType;
-
-  public int EffectiveCount => ExplicitCount ?? 1;
+  public const string Namespace = "ThoughtSharp.Runtime.";
+  public const string DataAttributeName = "CognitiveDataAttribute";
+  public const string ActionsAttributeName = "CognitiveActionsAttribute";
+  public const string CategoryAttributeName = "CognitiveCategoryAttribute";
+  public const string FullDataAttribute = Namespace + DataAttributeName;
+  public const string FullActionsAttribute = Namespace + ActionsAttributeName;
+  public const string FullCategoryAttribute = Namespace + CategoryAttributeName + "`2";
+  public const string DataCountAttributeName = "CognitiveDataCountAttribute";
+  public const string DataLengthAttributeName = "CognitiveDataLengthAttribute";
+  public const string DataBoundsAttributeName = "CognitiveDataBoundsAttribute";
 }
