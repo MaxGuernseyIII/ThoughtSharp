@@ -40,6 +40,11 @@ class TypeAddress
   public IReadOnlyList<TypeIdentifier> ContainingTypes { get; }
   public TypeIdentifier TypeName { get; }
 
+  public TypeAddress GetNested(TypeIdentifier NestedType)
+  {
+    return new(ContainingNamespaces, [..ContainingTypes, TypeName], NestedType);
+  }
+
   public static TypeAddress ForSymbol(ITypeSymbol Symbol)
   {
     var ContainingNamespaces = new List<string>();
