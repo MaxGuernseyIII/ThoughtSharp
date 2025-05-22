@@ -27,9 +27,11 @@ namespace ThoughtSharp.Generator;
 class CognitiveDataClass(
   TypeAddress Address,
   IReadOnlyList<CognitiveParameter> Parameters,
-  ImmutableArray<CognitiveParameterCodec> Codecs)
+  ImmutableArray<CognitiveParameterCodec> Codecs,
+  bool IsPublic)
 {
   public TypeAddress Address { get; } = Address;
   public IReadOnlyList<CognitiveParameter> Parameters { get; } = Parameters;
   public ImmutableArray<CognitiveParameterCodec> Codecs { get; } = Codecs;
+  public bool IsPublic { get; } = IsPublic;
 }

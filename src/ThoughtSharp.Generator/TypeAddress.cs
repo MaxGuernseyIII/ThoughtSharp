@@ -40,7 +40,7 @@ class TypeAddress
   public IReadOnlyList<TypeIdentifier> ContainingTypes { get; }
   public TypeIdentifier TypeName { get; }
 
-  public string FullName => string.Join(".", ContainingNamespaces.Concat(ContainingTypes.Select(T => T.FullName)));
+  public string FullName => string.Join(".", ContainingNamespaces.Concat(ContainingTypes.Select(T => T.FullName)).Concat([TypeName.FullName]));
 
   public TypeAddress GetNested(TypeIdentifier NestedType)
   {

@@ -46,9 +46,15 @@ static class CognitiveDataPipeline
       var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(M => M.ReturnsVoid || M.ReturnType.OriginalDefinition.ToDisplayString() == "System.Threading.Tasks.Task");
       var Results = new List<CognitiveDataClass>();
 
+      var CompleteDataTypeAddress = TargetType.GetNested(TypeIdentifier.Explicit("class", "__AllParameters"));
+      var CompleteDataBuilder = new CognitiveDataClassBuilder(CompleteDataTypeAddress)
+      {
+        IsPublic = true
+      };
+      CompleteDataBuilder.AddCompilerDefinedParameter("__ActionCode", "new BitwiseOneHotNumberCodec<short>()", $"CognitiveDataCodec<short>", null, "short");
       foreach (var Method in Methods)
       {
-        var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("class", Method.Name + "Parameters"));
+        var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("class", $"{Method.Name}Parameters"));
         var Builder = new CognitiveDataClassBuilder(MethodType)
         {
           IsPublic = true
@@ -58,7 +64,10 @@ static class CognitiveDataPipeline
           Builder.AddParameterValue(Parameter, true);
 
         Results.Add(Builder.Build());
+        CompleteDataBuilder.AddCompilerDefinedParameter(Method.Name, $"new SubDataCodec<{MethodType.FullName}>()", $"CognitiveDataCodec<{MethodType.FullName}>", null, MethodType.FullName);
       }
+
+      Results.Add(CompleteDataBuilder.Build());
 
       return Results;
     });

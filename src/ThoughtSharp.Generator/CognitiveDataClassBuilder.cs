@@ -32,12 +32,18 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 
   public CognitiveDataClass Build()
   {
-    return new(TypeAddress, [..Parameters], [..Codecs]);
+    return new(TypeAddress, [..Parameters], [..Codecs], IsPublic);
   }
 
   public void AddParameterValue(IValueSymbol Member, bool Implied = false)
   {
     Parameters.Add(CreateParameterFor(Member, Implied));
+  }
+
+  public void AddCompilerDefinedParameter(
+    string Name, string CodecExpression, string CodecType, int? ExplicitCount, string FullType)
+  {
+    Parameters.Add(new(Name, CodecExpression, CodecType, ExplicitCount, true, FullType));
   }
 
   public static CognitiveParameterCodec CreateCodecFor(IValueSymbol Member)
@@ -54,7 +60,8 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 
     var CodecExpression = GetCodecExpression(EncodedType, Member);
 
-    return new(Member.Name, CodecExpression, $"CognitiveDataCodec<{EncodedType.GetFullPath()}>", ExplicitCount, Implied, Member.Type.GetFullPath());
+    return new(Member.Name, CodecExpression, $"CognitiveDataCodec<{EncodedType.GetFullPath()}>", ExplicitCount, Implied,
+      Member.Type.GetFullPath());
   }
 
   static (object Minimum, object Maximum)? GetImplicitBounds(ITypeSymbol MemberType)
