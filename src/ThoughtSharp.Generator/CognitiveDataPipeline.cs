@@ -95,7 +95,7 @@ static class CognitiveDataPipeline
       using var StringWriter = new StringWriter();
 
       {
-        using var Writer = new IndentedTextWriter(StringWriter);
+        using var Writer = new IndentedTextWriter(StringWriter, "  ");
         GeneratedTypeFormatter.GenerateType(Writer, new(Interpreter.DataClass.Address, W =>
         {
           W.WriteLine($"public void InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
@@ -105,19 +105,23 @@ static class CognitiveDataPipeline
           W.WriteLine("{");
           W.Indent++;
 
+          W.WriteLine("case 0: break;");
           var PathId = 1;
           foreach (var Path in Interpreter.Paths)
           {
             W.WriteLine($"case {PathId}:");
             W.Indent++;
 
-            W.WriteLine($"ToInterpret.{Path.MethodName}({string.Join(", ", Path.ParametersClass.Parameters.Select(_ =>"default"))});");
+            W.WriteLine($"ToInterpret.{Path.MethodName}({string.Join(", ", 
+              Path.ParametersClass.Parameters.Select(P => $"{Path.MethodName}.{P.Name}"))});");
 
             W.WriteLine("break;");
             W.Indent--;
 
             PathId++;
           }
+
+          W.WriteLine(@"default: throw new InvalidOperationException($""Unknown action code: {__ActionCode}"");");
 
           W.Indent--;
           W.WriteLine("}");

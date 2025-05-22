@@ -82,6 +82,38 @@ public partial class GeneratedCognitiveActions
   }
 
   [TestMethod]
+  public void InvokeFirstAction()
+  {
+    var Invoked = false;
+    var Captured1 = 0f;
+    var Captured2 = string.Empty;
+    var Choices = new MockMultipleChoicesWithParameters()
+    {
+      Action1Handler = (T1, T2) =>
+      {
+        Invoked = true;
+        Captured1 = T1;
+        Captured2 = T2;
+      },
+    };
+    var P = new MultipleChoicesWithParameters.__AllParameters()
+    {
+      __ActionCode = 1,
+      Action1 = new()
+      {
+        Parameter1 = Any.Float,
+        Parameter2 = Any.ASCIIString(5)
+      }
+    };
+
+    P.InterpretFor(Choices);
+
+    Invoked.Should().BeTrue();
+    Captured1.Should().Be((float)P.Action1.Parameter1);
+    Captured2.Should().Be(P.Action1.Parameter2);
+  }
+
+  [TestMethod]
   public void InvokeSecondAction()
   {
     var Invoked = false;
@@ -100,5 +132,17 @@ public partial class GeneratedCognitiveActions
     P.InterpretFor(Choices);
 
     Invoked.Should().BeTrue();
+  }
+
+  [TestMethod]
+  public void InvokeMissingActionSecondAction()
+  {
+    var Choices = new MockMultipleChoicesWithParameters();
+    var P = new MultipleChoicesWithParameters.__AllParameters()
+    {
+      __ActionCode = 4
+    };
+
+    P.Invoking(Parameters => Parameters.InterpretFor(Choices)).Should().Throw<InvalidOperationException>();
   }
 }
