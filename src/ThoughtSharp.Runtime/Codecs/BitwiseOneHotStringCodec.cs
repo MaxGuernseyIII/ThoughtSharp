@@ -22,6 +22,7 @@
 
 namespace ThoughtSharp.Runtime.Codecs;
 
+// ReSharper disable once UnusedMember.Global
 public class BitwiseOneHotStringCodec(int Length) : ThoughtDataCodec<string>
 {
   static readonly BitwiseOneHotNumberCodec<char> Inner = new();

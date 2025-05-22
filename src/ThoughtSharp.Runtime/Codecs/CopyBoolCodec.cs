@@ -22,6 +22,7 @@
 
 namespace ThoughtSharp.Runtime.Codecs;
 
+// ReSharper disable once UnusedMember.Global
 public class CopyBoolCodec : ThoughtDataCodec<bool>
 {
   public int Length => 1;

@@ -24,6 +24,7 @@ using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
 
+// ReSharper disable once UnusedMember.Global
 public class BitwiseOneHotNumberCodec<T> : ThoughtDataCodec<T>
   where T : unmanaged, INumber<T>, IBitwiseOperators<T, T, T>, IShiftOperators<T, int, T>
 {
