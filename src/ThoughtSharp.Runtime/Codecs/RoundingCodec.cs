@@ -36,8 +36,6 @@ public class RoundingCodec<T>(ThoughtDataCodec<T> Inner) : ThoughtDataCodec<T>
 
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
-    var Decoded = Inner.DecodeFrom(Source);
-    var Rounded = T.Round(Decoded);
-    return Rounded;
+    return T.Round(Inner.DecodeFrom(Source));
   }
 }
