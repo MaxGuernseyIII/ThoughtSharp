@@ -34,14 +34,19 @@ public class Reasoning
 
   public T Consume<T>(Thought<T> Subthought)
   {
+    Incorporate(Subthought);
+
+    return Subthought.Product;
+  }
+
+  public void Incorporate<T>(Thought<T> Subthought)
+  {
     if (Subthought.Container is not null)
       throw new InvalidOperationException("A Thought can only be used in one line of reasoning");
 
     UsedSubthoughts.Add(Subthought);
     Subthought.Container = this;
     Weights[Subthought] = 1f;
-
-    return Subthought.Product;
   }
 
   public void SetWeight(Thought Subthought, float Weight)
