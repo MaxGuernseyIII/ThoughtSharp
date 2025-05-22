@@ -42,6 +42,8 @@ static class CognitiveActionsModelFactory
     var InterpreterBuilder = new CognitiveDataInterpreterBuilder(TargetType);
     CompleteDataBuilder.AddCompilerDefinedParameter("__ActionCode", "new BitwiseOneHotNumberCodec<short>()",
       "CognitiveDataCodec<short>", null, "short");
+    CompleteDataBuilder.AddCompilerDefinedParameter("__MoreActions", "new CopyBoolCodec()",
+      "CognitiveDataCodec<bool>", null, "bool");
     foreach (var Method in Methods)
     {
       var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("class", $"{Method.Name}Parameters"));
@@ -55,8 +57,12 @@ static class CognitiveActionsModelFactory
 
       var ThisDataClass = ThisDataClassBuilder.Build();
       CognitiveDataClasses.Add(ThisDataClass);
-      CompleteDataBuilder.AddCompilerDefinedParameter(Method.Name, $"new SubDataCodec<{MethodType.FullName}>()",
-        $"CognitiveDataCodec<{MethodType.FullName}>", null, MethodType.FullName);
+      CompleteDataBuilder.AddCompilerDefinedParameter(
+        Method.Name, 
+        $"new SubDataCodec<{MethodType.FullName}>()",
+        $"CognitiveDataCodec<{MethodType.FullName}>", 
+        null, 
+        MethodType.FullName);
       InterpreterBuilder.AssociateMethodWithDataClass(Method, ThisDataClass);
     }
 
