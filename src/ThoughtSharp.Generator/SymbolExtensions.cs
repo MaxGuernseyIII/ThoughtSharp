@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace ThoughtSharp.Generator;
 
@@ -78,5 +79,31 @@ static class SymbolExtensions
     public bool IsImplicitlyDeclared => Property.IsImplicitlyDeclared;
 
     public ISymbol Raw => Property;
+  }
+
+  public static string GetLiteralExpressionFor(this object? Value)
+  {
+    var Expression = Value switch
+    {
+      null => SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression),
+      bool B => SyntaxFactory.LiteralExpression(
+        B ? SyntaxKind.TrueLiteralExpression : SyntaxKind.FalseLiteralExpression),
+      short S => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(S)),
+      ushort S => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(S)),
+      int I => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(I)),
+      uint I => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(I)),
+      long L => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(L)),
+      ulong L => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(L)),
+      float F => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(F)),
+      double D => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(D)),
+      decimal M => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(M)),
+      byte B => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(B)),
+      sbyte B => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(B)),
+      string S => SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(S)),
+      char C => SyntaxFactory.LiteralExpression(SyntaxKind.CharacterLiteralExpression, SyntaxFactory.Literal(C)),
+      Enum E => SyntaxFactory.ParseExpression(E.GetType().FullName + "." + E),
+      _ => throw new NotSupportedException($"Literal generation not supported for type: {Value.GetType()}")
+    };
+    return Expression.NormalizeWhitespace().ToFullString();
   }
 }

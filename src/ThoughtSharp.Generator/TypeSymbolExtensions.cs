@@ -20,31 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
 
-static class ThoughtDataModelFactory
+public static class TypeSymbolExtensions
 {
-  public static ThoughtDataClass ConvertToModel(GeneratorAttributeSyntaxContext InnerContext)
+  public static string GetFullPath(this ITypeSymbol T)
   {
-    var Symbol = (INamedTypeSymbol) InnerContext.TargetSymbol;
-    var TypeAddress = Generator.TypeAddress.ForSymbol(Symbol);
-    var Builder = new ThoughtDataClassBuilder();
-
-    var ValueSymbols = Symbol.GetMembers().Select(M => M.ToValueSymbolOrDefault())
-      .OfType<IValueSymbol>()
-      .Where(M => !M.IsImplicitlyDeclared)
-      .ToImmutableArray();
-
-    foreach (var Member in ValueSymbols.Where(M => !M.IsStatic))
-      Builder.AddParameterValue(Member);
-
-    foreach (var Member in ValueSymbols.Where(M => M.IsStatic))
-      Builder.AddCodecValue(Member);
-
-    Builder.TypeAddress = TypeAddress;
-    return Builder.Build();
+    return T.ToDisplayString(new SymbolDisplayFormat(
+      typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+      genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
   }
 }
