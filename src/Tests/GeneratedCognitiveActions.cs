@@ -301,4 +301,18 @@ public partial class GeneratedCognitiveActions
 
     Actual.ConsumeDetached().Should().Be(Expected);
   }
+
+  [DataRow(false)]
+  [DataRow(true)]
+  [TestMethod]
+  public async Task AsyncReturnsMoreActions(bool Expected)
+  {
+    var Actions = new MockAsyncThoughtfulAction();
+    var Parameters = new AsyncThoughtfulAction.__AllParameters();
+    Parameters.__MoreActions = Expected;
+
+    var Actual = await Parameters.InterpretFor(Actions);
+
+    Actual.ConsumeDetached().Should().Be(Expected);
+  }
 }
