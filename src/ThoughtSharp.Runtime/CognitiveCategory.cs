@@ -22,11 +22,14 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface CognitiveData<out T> where T : CognitiveData<T>
+public interface CognitiveCategory<TPayload, TDescriptor>
+  where TDescriptor : CognitiveData<TDescriptor>
 {
-  static abstract int Length { get; }
+  static abstract int EncodeLength { get; }
+  static abstract int DecodeLength { get; }
 
-  void MarshalTo(Span<float> Target);
+  IReadOnlyList<CognitiveOption<TPayload, TDescriptor>> AllOptions { get; }
 
-  static abstract T UnmarshalFrom(ReadOnlySpan<float> Source);
+  void EncodeBatch(Span<float> EncodingTarget, ref ushort NextPosition, out bool IsLastBatch);
+  CognitiveOption<TPayload, TDescriptor> Interpret(ReadOnlySpan<float> Choice);
 }

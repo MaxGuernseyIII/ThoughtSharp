@@ -22,11 +22,8 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface CognitiveData<out T> where T : CognitiveData<T>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+public class CognitiveCategoryAttribute<TPayload, TDescriptor>(int BatchSize) : Attribute
+  where TDescriptor : CognitiveData<TDescriptor>
 {
-  static abstract int Length { get; }
-
-  void MarshalTo(Span<float> Target);
-
-  static abstract T UnmarshalFrom(ReadOnlySpan<float> Source);
 }

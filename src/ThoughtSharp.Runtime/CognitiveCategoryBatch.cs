@@ -20,13 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using ThoughtSharp.Runtime.Codecs;
+
 namespace ThoughtSharp.Runtime;
-
-public interface CognitiveData<out T> where T : CognitiveData<T>
-{
-  static abstract int Length { get; }
-
-  void MarshalTo(Span<float> Target);
-
-  static abstract T UnmarshalFrom(ReadOnlySpan<float> Source);
-}

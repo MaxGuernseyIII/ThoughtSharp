@@ -22,11 +22,5 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface CognitiveData<out T> where T : CognitiveData<T>
-{
-  static abstract int Length { get; }
-
-  void MarshalTo(Span<float> Target);
-
-  static abstract T UnmarshalFrom(ReadOnlySpan<float> Source);
-}
+public record CognitiveOption<TPayload, TDescriptor>(TPayload Payload, TDescriptor Descriptor)
+  where TDescriptor : CognitiveData<TDescriptor>;
