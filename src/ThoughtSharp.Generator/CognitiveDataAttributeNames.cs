@@ -20,30 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
-
 namespace ThoughtSharp.Generator;
 
-static class CognitiveDataClassModelFactory
+static class CognitiveDataAttributeNames
 {
-  public static CognitiveDataClass ConvertDataClassToModel(GeneratorAttributeSyntaxContext InnerContext)
-  {
-    var Symbol = (INamedTypeSymbol) InnerContext.TargetSymbol;
-    var TypeAddress = Generator.TypeAddress.ForSymbol(Symbol);
-    var Builder = new CognitiveDataClassBuilder(TypeAddress);
-
-    var ValueSymbols = Symbol.GetMembers().Select(M => M.ToValueSymbolOrDefault())
-      .OfType<IValueSymbol>()
-      .Where(M => !M.IsImplicitlyDeclared)
-      .ToImmutableArray();
-
-    foreach (var Member in ValueSymbols.Where(M => !M.IsStatic))
-      Builder.AddParameterValue(Member);
-
-    foreach (var Member in ValueSymbols.Where(M => M.IsStatic))
-      Builder.AddCodecValue(Member);
-
-    return Builder.Build();
-  }
+  public const string Namespace = "ThoughtSharp.Runtime.";
+  public const string DataAttributeName = "CognitiveDataAttribute";
+  public const string ActionsAttributeName = "CognitiveActionsAttribute";
+  public const string FullDataAttribute = Namespace + DataAttributeName;
+  public const string FullActionsAttribute = Namespace + ActionsAttributeName;
+  public const string DataCountAttributeName = "CognitiveDataCountAttribute";
+  public const string DataLengthAttributeName = "CognitiveDataLengthAttribute";
+  public const string DataBoundsAttributeName = "CognitiveDataBoundsAttribute";
 }

@@ -25,33 +25,55 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ThoughtSharp.Generator;
 
-static class CognitiveDataAttributeNames
-{
-  public const string DataAttributeName = "CognitiveDataAttribute";
-  public const string FullDataAttribute = "ThoughtSharp.Runtime." + DataAttributeName;
-  public const string DataCountAttributeName = "CognitiveDataCountAttribute";
-  public const string DataLengthAttributeName = "CognitiveDataLengthAttribute";
-  public const string DataBoundsAttributeName = "CognitiveDataBoundsAttribute";
-}
-
 static class CognitiveDataPipeline
 {
   public static void Bind(IncrementalGeneratorInitializationContext Context)
   {
-    var Pipeline = BindPipeline(Context);
-
-    BindRendering(Context, Pipeline);
+    BindRenderingOfCognitiveDataClasses(Context, GetExplicitCognitiveDataClasses(Context));
+    BindRenderingOfCognitiveDataClasses(Context, GetCognitiveDataClassesImpliedInActions(Context));
   }
 
-  static IncrementalValuesProvider<CognitiveDataClass> BindPipeline(IncrementalGeneratorInitializationContext Context)
+  static IncrementalValuesProvider<CognitiveDataClass> GetCognitiveDataClassesImpliedInActions(IncrementalGeneratorInitializationContext Context)
   {
-    var Pipeline = Context.SyntaxProvider.ForAttributeWithMetadataName(CognitiveDataAttributeNames.FullDataAttribute,
-      (Node, _) => Node is TypeDeclarationSyntax,
-      (InnerContext, _) => CognitiveDataClassModelFactory.ConvertToModel(InnerContext));
-    return Pipeline;
+    return Context.SyntaxProvider.ForAttributeWithMetadataName(
+      CognitiveDataAttributeNames.FullActionsAttribute,
+      (Node, _) => Node is InterfaceDeclarationSyntax,
+      (InnerContext, _) => InnerContext
+    ).SelectMany((C, _) =>
+    {
+      var NamedType = (INamedTypeSymbol)C.TargetSymbol;
+      var TargetType = TypeAddress.ForSymbol(NamedType);
+      var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(M => M.ReturnsVoid || M.ReturnType.OriginalDefinition.ToDisplayString() == "System.Threading.Tasks.Task");
+      var Results = new List<CognitiveDataClass>();
+
+      foreach (var Method in Methods)
+      {
+        var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("class", Method.Name + "Parameters"));
+        var Builder = new CognitiveDataClassBuilder(MethodType)
+        {
+          IsPublic = true
+        };
+
+        foreach (var Parameter in Method.Parameters.Select(P => P.ToValueSymbolOrDefault()!)) 
+          Builder.AddParameterValue(Parameter, true);
+      }
+
+      return Results;
+    });
   }
 
-  static void BindRendering(IncrementalGeneratorInitializationContext Context,
+  static IncrementalValuesProvider<CognitiveDataClass> GetExplicitCognitiveDataClasses(IncrementalGeneratorInitializationContext Context)
+  {
+    var FindCognitiveDataClasses = Context.SyntaxProvider.ForAttributeWithMetadataName(CognitiveDataAttributeNames.FullDataAttribute,
+      (Node, _) => Node is TypeDeclarationSyntax,
+      (InnerContext, _) => CognitiveDataClassModelFactory.ConvertDataClassToModel(InnerContext));
+
+    
+    return FindCognitiveDataClasses;
+  }
+
+  static void BindRenderingOfCognitiveDataClasses(
+    IncrementalGeneratorInitializationContext Context,
     IncrementalValuesProvider<CognitiveDataClass> Pipeline)
   {
     Context.RegisterSourceOutput(

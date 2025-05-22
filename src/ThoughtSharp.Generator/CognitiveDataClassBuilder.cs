@@ -28,15 +28,16 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 {
   readonly List<CognitiveParameterCodec> Codecs = [];
   readonly List<CognitiveParameter> Parameters = [];
+  public bool IsPublic { get; set; }
 
   public CognitiveDataClass Build()
   {
     return new(TypeAddress, [..Parameters], [..Codecs]);
   }
 
-  public void AddParameterValue(IValueSymbol Member)
+  public void AddParameterValue(IValueSymbol Member, bool Implied = false)
   {
-    Parameters.Add(CreateParameterFor(Member));
+    Parameters.Add(CreateParameterFor(Member, Implied));
   }
 
   public static CognitiveParameterCodec CreateCodecFor(IValueSymbol Member)
@@ -44,7 +45,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     return new(Member.Name);
   }
 
-  public static CognitiveParameter CreateParameterFor(IValueSymbol Member, bool Implied = false)
+  public static CognitiveParameter CreateParameterFor(IValueSymbol Member, bool Implied)
   {
     var ExplicitCount = GetExplicitCount(Member.Raw);
     var EncodedType = ExplicitCount.HasValue

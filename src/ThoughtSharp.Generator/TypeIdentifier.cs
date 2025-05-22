@@ -74,13 +74,17 @@ class TypeIdentifier
     return new(GetTypeKeyword(Symbol), Symbol.Name, Arguments);
   }
 
-  static string GetTypeKeyword(ITypeSymbol symbol)
+  public static TypeIdentifier Explicit(
+    string Keyword, string Name, params TypeAddress[] TypeParameters)
+    => new(Keyword, Name, TypeParameters);
+
+  static string GetTypeKeyword(ITypeSymbol Symbol)
   {
-    return symbol.TypeKind switch
+    return Symbol.TypeKind switch
     {
-      TypeKind.Class when symbol.IsRecord => "record",
+      TypeKind.Class when Symbol.IsRecord => "record",
       TypeKind.Class => "class",
-      TypeKind.Struct when symbol.IsRecord => "record struct",
+      TypeKind.Struct when Symbol.IsRecord => "record struct",
       TypeKind.Struct => "struct",
       TypeKind.Interface => "interface",
       TypeKind.Enum => "enum",
