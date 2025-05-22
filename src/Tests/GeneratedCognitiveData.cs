@@ -59,9 +59,8 @@ public partial class GeneratedCognitiveData
   {
     var Expected = Any.Float;
     var Values = new[] {Expected};
-    var Data = new SingleFloatMockThoughtData();
 
-    Data.MarshalFrom(Values);
+    var Data = SingleFloatMockThoughtData.UnmarshalFrom(Values);
 
     Data.P1.Should().Be(Expected);
   }
@@ -92,9 +91,7 @@ public partial class GeneratedCognitiveData
     var Expected2 = Any.Float;
     var Expected3 = Any.Float;
     var Values = new[] {Expected0, Expected1, Expected2, Expected3};
-    var Data = new FloatArrayMockThoughtData();
-
-    Data.MarshalFrom(Values);
+    var Data = FloatArrayMockThoughtData.UnmarshalFrom(Values);
 
     Data.P2[0].Should().Be(Expected0);
     Data.P2[1].Should().Be(Expected1);
@@ -177,9 +174,7 @@ public partial class GeneratedCognitiveData
   {
     var Target = new float[DeclarativelyNormalizedMockThoughtData.Length];
     Target[0] = Any.Float;
-    var Data = new DeclarativelyNormalizedMockThoughtData();
-
-    Data.MarshalFrom(Target);
+    var Data = DeclarativelyNormalizedMockThoughtData.UnmarshalFrom(Target);
 
     Data.ToNormalize.Should().BeApproximately(Target[0] * 5 + 1, 0.01f);
   }
@@ -238,8 +233,7 @@ public partial class GeneratedCognitiveData
     for (var I = 0; I < Buffer.Length; ++I)
       Buffer[I] = Value;
 
-    var NewData = new DefaultNormalizationMockThoughtData();
-    NewData.MarshalFrom(Buffer);
+    var NewData = DefaultNormalizationMockThoughtData.UnmarshalFrom(Buffer);
 
     NewData.Should().BeEquivalentTo(Data);
   }

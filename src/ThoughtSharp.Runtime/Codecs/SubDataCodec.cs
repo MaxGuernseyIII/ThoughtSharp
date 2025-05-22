@@ -35,8 +35,6 @@ public class SubDataCodec<T> : CognitiveDataCodec<T>
 
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
-    var Result = new T();
-    Result.MarshalFrom(Source);
-    return Result;
+    return T.UnmarshalFrom(Source);
   }
 }
