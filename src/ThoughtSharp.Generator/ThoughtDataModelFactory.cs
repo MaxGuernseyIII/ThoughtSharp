@@ -71,7 +71,7 @@ static class ThoughtDataModelFactory
     {
       CodecConstructorArguments["Minimum"] = GetLiteralFor(Minimum);
       CodecConstructorArguments["Maximum"] = GetLiteralFor(Maximum);
-      CodecConstructorArguments["Inner"] = $"new {CodecType}()";
+      CodecConstructorArguments["Inner"] = "new CopyFloatCodec()";
       CodecType = $"NormalizeNumberCodec<{GetFullPath(EncodedType)}, float>";
     }
 
