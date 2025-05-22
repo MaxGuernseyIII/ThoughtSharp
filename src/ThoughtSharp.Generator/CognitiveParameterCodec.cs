@@ -20,16 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-
 namespace ThoughtSharp.Generator;
 
-class ThoughtDataClass(
-  TypeAddress Address,
-  IReadOnlyList<ThoughtParameter> Parameters,
-  ImmutableArray<ThoughtParameterCodec> Codecs)
+class CognitiveParameterCodec(string Name)
 {
-  public TypeAddress Address { get; } = Address;
-  public IReadOnlyList<ThoughtParameter> Parameters { get; } = Parameters;
-  public ImmutableArray<ThoughtParameterCodec> Codecs { get; } = Codecs;
+  public string Name { get; } = Name;
 }

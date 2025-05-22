@@ -24,14 +24,14 @@ using System.CodeDom.Compiler;
 
 namespace ThoughtSharp.Generator;
 
-class ThoughtDataRenderer
+class CognitiveDataClassRenderer
 {
-  public static string GenerateThoughtDataContentToWriter(
-    ThoughtDataClass ThoughtDataClass, IndentedTextWriter Target)
+  public static string GenerateCognitiveDataClassContentToWriter(
+    CognitiveDataClass CognitiveDataClass, IndentedTextWriter Target)
   {
-    var CodecDictionary = ThoughtDataClass.Codecs.ToDictionary(C => C.Name);
+    var CodecDictionary = CognitiveDataClass.Codecs.ToDictionary(C => C.Name);
 
-    foreach (var Parameter in ThoughtDataClass.Parameters)
+    foreach (var Parameter in CognitiveDataClass.Parameters)
     {
       var ParameterCodec = GetCodecFieldNameFor(Parameter);
       if (CodecDictionary.ContainsKey(ParameterCodec))
@@ -41,9 +41,9 @@ class ThoughtDataRenderer
     }
 
     var LastValue = "0";
-    ThoughtParameter? LastParameter = null;
+    CognitiveParameter? LastParameter = null;
 
-    foreach (var Parameter in ThoughtDataClass.Parameters)
+    foreach (var Parameter in CognitiveDataClass.Parameters)
     {
       var ParameterIndexField = GetIndexFieldNameFor(Parameter);
       Target.Write($"static readonly int {ParameterIndexField} = ");
@@ -58,7 +58,7 @@ class ThoughtDataRenderer
 
     Target.WriteLine("public void MarshalTo(Span<float> Target)");
     Target.WriteLine("{");
-    foreach (var Parameter in ThoughtDataClass.Parameters)
+    foreach (var Parameter in CognitiveDataClass.Parameters)
     foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
@@ -73,7 +73,7 @@ class ThoughtDataRenderer
     Target.WriteLine("public void MarshalFrom(ReadOnlySpan<float> Target)");
     Target.WriteLine("{");
 
-    foreach (var Parameter in ThoughtDataClass.Parameters)
+    foreach (var Parameter in CognitiveDataClass.Parameters)
     foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
@@ -88,7 +88,7 @@ class ThoughtDataRenderer
     return Target.ToString();
   }
 
-  static void WriteIndexValue(IndentedTextWriter Target, string LastValue, ThoughtParameter? LastParameter)
+  static void WriteIndexValue(IndentedTextWriter Target, string LastValue, CognitiveParameter? LastParameter)
   {
     Target.Write($"{LastValue}");
     if (LastParameter is not null)
@@ -96,24 +96,24 @@ class ThoughtDataRenderer
     Target.WriteLine(";");
   }
 
-  static string GetIndexFieldNameFor(ThoughtParameter Parameter)
+  static string GetIndexFieldNameFor(CognitiveParameter Parameter)
   {
     return $"{Parameter.Name}Index";
   }
 
-  static string GetCodecFieldNameFor(ThoughtParameter Parameter)
+  static string GetCodecFieldNameFor(CognitiveParameter Parameter)
   {
     return $"{Parameter.Name}Codec";
   }
 
-  public static string RenderThoughtDataClass(ThoughtDataClass ThoughtDataObject)
+  public static string RenderCognitiveDataClass(CognitiveDataClass CognitiveDataObject)
   {
     using var Underlying = new StringWriter();
 
     {
       using var Writer = new IndentedTextWriter(Underlying, "  ");
       GeneratedTypeFormatter.GenerateType(Writer,
-        new(ThoughtDataObject.Address, W => { GenerateThoughtDataContentToWriter(ThoughtDataObject, W); })
+        new(CognitiveDataObject.Address, W => { GenerateCognitiveDataClassContentToWriter(CognitiveDataObject, W); })
         {
           WriteHeader = W =>
           {
@@ -121,7 +121,7 @@ class ThoughtDataRenderer
             W.WriteLine("using ThoughtSharp.Runtime.Codecs;");
             W.WriteLine();
           },
-          WriteAfterTypeName = W => { W.Write(" : ThoughtData"); }
+          WriteAfterTypeName = W => { W.Write($" : CognitiveData<{CognitiveDataObject.Address.TypeName.FullName}>"); }
         });
     }
 

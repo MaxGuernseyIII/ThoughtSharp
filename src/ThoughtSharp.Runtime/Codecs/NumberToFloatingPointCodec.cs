@@ -24,7 +24,7 @@ using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
 
-public class NumberToFloatingPointCodec<T, U>(ThoughtDataCodec<U> Inner) : ThoughtDataCodec<T>
+public class NumberToFloatingPointCodec<T, U>(CognitiveDataCodec<U> Inner) : CognitiveDataCodec<T>
   where T : INumber<T>
   where U : IFloatingPoint<U>
 {

@@ -25,17 +25,17 @@ using System.Numerics;
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
-public class NormalizeNumberCodec<T, U> : ThoughtDataCodec<T>
+public class NormalizeNumberCodec<T, U> : CognitiveDataCodec<T>
   where T : INumber<T>
   where U : INumber<U>, IFloatingPoint<U>, IAdditionOperators<U, U, U>, IMultiplyOperators<U, U, U>
 {
   readonly U TargetTypedMinimum;
   readonly U Factor;
-  readonly ThoughtDataCodec<U> Inner;
+  readonly CognitiveDataCodec<U> Inner;
 
   public NormalizeNumberCodec(T Minimum,
     T Maximum,
-    ThoughtDataCodec<U> Inner)
+    CognitiveDataCodec<U> Inner)
   {
     this.Inner = Inner;
     TargetTypedMinimum = U.CreateChecked(Minimum);

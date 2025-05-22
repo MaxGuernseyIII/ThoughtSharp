@@ -25,7 +25,7 @@ using System.Numerics;
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
-public class BitwiseOneHotNumberCodec<T> : ThoughtDataCodec<T>
+public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
   where T : unmanaged, INumber<T>, IBitwiseOperators<T, T, T>, IShiftOperators<T, int, T>
 {
   public int Length { get; } = typeof(T) switch

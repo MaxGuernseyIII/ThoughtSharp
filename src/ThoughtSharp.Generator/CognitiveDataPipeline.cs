@@ -25,42 +25,42 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ThoughtSharp.Generator;
 
-static class ThoughtDataAttributeNames
+static class CognitiveDataAttributeNames
 {
-  public const string DataAttributeName = "ThoughtDataAttribute";
-  public const string ThoughtDataAttribute = "ThoughtSharp.Runtime." + DataAttributeName;
-  public const string DataCountAttributeName = "ThoughtDataCountAttribute";
-  public const string DataLengthAttributeName = "ThoughtDataLengthAttribute";
-  public const string DataBoundsAttributeName = "ThoughtDataBoundsAttribute";
+  public const string DataAttributeName = "CognitiveDataAttribute";
+  public const string FullDataAttribute = "ThoughtSharp.Runtime." + DataAttributeName;
+  public const string DataCountAttributeName = "CognitiveDataCountAttribute";
+  public const string DataLengthAttributeName = "CognitiveDataLengthAttribute";
+  public const string DataBoundsAttributeName = "CognitiveDataBoundsAttribute";
 }
 
-static class ThoughtDataPipeline
+static class CognitiveDataPipeline
 {
   public static void Bind(IncrementalGeneratorInitializationContext Context)
   {
-    var ThoughtDataPipeline = BindPipeline(Context);
+    var Pipeline = BindPipeline(Context);
 
-    BindRendering(Context, ThoughtDataPipeline);
+    BindRendering(Context, Pipeline);
   }
 
-  static IncrementalValuesProvider<ThoughtDataClass> BindPipeline(IncrementalGeneratorInitializationContext Context)
+  static IncrementalValuesProvider<CognitiveDataClass> BindPipeline(IncrementalGeneratorInitializationContext Context)
   {
-    var ThoughtDataPipeline = Context.SyntaxProvider.ForAttributeWithMetadataName(ThoughtDataAttributeNames.ThoughtDataAttribute,
+    var Pipeline = Context.SyntaxProvider.ForAttributeWithMetadataName(CognitiveDataAttributeNames.FullDataAttribute,
       (Node, _) => Node is TypeDeclarationSyntax,
-      (InnerContext, _) => ThoughtDataModelFactory.ConvertToModel(InnerContext));
-    return ThoughtDataPipeline;
+      (InnerContext, _) => CognitiveDataClassModelFactory.ConvertToModel(InnerContext));
+    return Pipeline;
   }
 
   static void BindRendering(IncrementalGeneratorInitializationContext Context,
-    IncrementalValuesProvider<ThoughtDataClass> ThoughtDataPipeline)
+    IncrementalValuesProvider<CognitiveDataClass> Pipeline)
   {
     Context.RegisterSourceOutput(
-      ThoughtDataPipeline,
-      (InnerContext, ThoughtDataClass) =>
+      Pipeline,
+      (InnerContext, CognitiveDataClass) =>
       {
         InnerContext.AddSource(
-          GeneratedTypeFormatter.GetFilename(ThoughtDataClass.Address),
-          ThoughtDataRenderer.RenderThoughtDataClass(ThoughtDataClass));
+          GeneratedTypeFormatter.GetFilename(CognitiveDataClass.Address),
+          CognitiveDataClassRenderer.RenderCognitiveDataClass(CognitiveDataClass));
       });
   }
 }

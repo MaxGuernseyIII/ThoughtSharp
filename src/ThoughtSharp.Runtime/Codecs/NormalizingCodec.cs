@@ -24,7 +24,7 @@ using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
 
-public class NormalizingCodec<T>(ThoughtDataCodec<T> Inner, T Minimum, T Maximum) : ThoughtDataCodec<T>
+public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maximum) : CognitiveDataCodec<T>
   where T : IFloatingPoint<T>, ISubtractionOperators<T, T, T>, IAdditionOperators<T, T, T>, IMultiplyOperators<T, T, T>
 {
   readonly T Size = Maximum - Minimum;

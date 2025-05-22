@@ -23,7 +23,7 @@
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
-public class CopyFloatCodec : ThoughtDataCodec<float>
+public class CopyFloatCodec : CognitiveDataCodec<float>
 {
   public int Length => 1;
 

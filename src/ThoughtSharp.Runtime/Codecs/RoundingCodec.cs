@@ -24,7 +24,7 @@ using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
 
-public class RoundingCodec<T>(ThoughtDataCodec<T> Inner) : ThoughtDataCodec<T>
+public class RoundingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<T>
   where T : IFloatingPoint<T>
 {
   public int Length => Inner.Length;

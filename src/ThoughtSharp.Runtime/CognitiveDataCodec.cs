@@ -1,6 +1,6 @@
 ﻿namespace ThoughtSharp.Runtime;
 
-public interface ThoughtDataCodec<T>
+public interface CognitiveDataCodec<T>
 {
   int Length { get; }
 

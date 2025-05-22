@@ -22,7 +22,18 @@
 
 namespace ThoughtSharp.Generator;
 
-class ThoughtParameterCodec(string Name)
+class CognitiveParameter(
+  string Name,
+  string CodecExpression,
+  string CodecType,
+  int? ExplicitCount,
+  bool Implied)
 {
   public string Name { get; } = Name;
+  public string CodecExpression { get; } = CodecExpression;
+  public int? ExplicitCount { get; } = ExplicitCount;
+  public bool Implied { get; } = Implied;
+  public string CodecType { get; } = CodecType;
+
+  public int EffectiveCount => ExplicitCount ?? 1;
 }

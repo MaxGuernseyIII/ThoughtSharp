@@ -20,30 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Generator;
-
-static class ThoughtDataModelFactory
+[AttributeUsage(AttributeConstants.ValueTargets)]
+public class CognitiveDataBoundsAttribute<T>(T Edge1, T Edge2) : Attribute
 {
-  public static ThoughtDataClass ConvertToModel(GeneratorAttributeSyntaxContext InnerContext)
-  {
-    var Symbol = (INamedTypeSymbol) InnerContext.TargetSymbol;
-    var TypeAddress = Generator.TypeAddress.ForSymbol(Symbol);
-    var Builder = new ThoughtDataClassBuilder(TypeAddress);
-
-    var ValueSymbols = Symbol.GetMembers().Select(M => M.ToValueSymbolOrDefault())
-      .OfType<IValueSymbol>()
-      .Where(M => !M.IsImplicitlyDeclared)
-      .ToImmutableArray();
-
-    foreach (var Member in ValueSymbols.Where(M => !M.IsStatic))
-      Builder.AddParameterValue(Member);
-
-    foreach (var Member in ValueSymbols.Where(M => M.IsStatic))
-      Builder.AddCodecValue(Member);
-
-    return Builder.Build();
-  }
+  public T Edge1 { get; } = Edge1;
+  public T Edge2 { get; } = Edge2;
 }

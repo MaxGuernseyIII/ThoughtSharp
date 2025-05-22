@@ -22,8 +22,10 @@
 
 namespace ThoughtSharp.Runtime;
 
-[AttributeUsage(AttributeConstants.ValueTargets)]
-public class ThoughtDataCountAttribute(int Count) : Attribute
+public interface CognitiveData<T> where T : CognitiveData<T>
 {
-  public int Count { get; } = Count;
+  static abstract int Length { get; }
+
+  void MarshalTo(Span<float> Target);
+  void MarshalFrom(ReadOnlySpan<float> Source);
 }

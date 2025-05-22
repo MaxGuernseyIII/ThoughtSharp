@@ -24,12 +24,12 @@ using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
 
-class ThoughtDataClassBuilder(TypeAddress TypeAddress)
+class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 {
-  readonly List<ThoughtParameterCodec> Codecs = [];
-  readonly List<ThoughtParameter> Parameters = [];
+  readonly List<CognitiveParameterCodec> Codecs = [];
+  readonly List<CognitiveParameter> Parameters = [];
 
-  public ThoughtDataClass Build()
+  public CognitiveDataClass Build()
   {
     return new(TypeAddress, [..Parameters], [..Codecs]);
   }
@@ -39,12 +39,12 @@ class ThoughtDataClassBuilder(TypeAddress TypeAddress)
     Parameters.Add(CreateParameterFor(Member));
   }
 
-  public static ThoughtParameterCodec CreateCodecFor(IValueSymbol Member)
+  public static CognitiveParameterCodec CreateCodecFor(IValueSymbol Member)
   {
     return new(Member.Name);
   }
 
-  public static ThoughtParameter CreateParameterFor(IValueSymbol Member, bool Implied = false)
+  public static CognitiveParameter CreateParameterFor(IValueSymbol Member, bool Implied = false)
   {
     var ExplicitCount = GetExplicitCount(Member.Raw);
     var EncodedType = ExplicitCount.HasValue
@@ -53,7 +53,7 @@ class ThoughtDataClassBuilder(TypeAddress TypeAddress)
 
     var CodecExpression = GetCodecExpression(EncodedType, Member);
 
-    return new(Member.Name, CodecExpression, $"ThoughtDataCodec<{EncodedType.GetFullPath()}>", ExplicitCount, Implied);
+    return new(Member.Name, CodecExpression, $"CognitiveDataCodec<{EncodedType.GetFullPath()}>", ExplicitCount, Implied);
   }
 
   static (object Minimum, object Maximum)? GetImplicitBounds(ITypeSymbol MemberType)
@@ -72,7 +72,7 @@ class ThoughtDataClassBuilder(TypeAddress TypeAddress)
   static (object Minimum, object Maximum)? GetExplicitBounds(ISymbol Symbol)
   {
     foreach (var Attribute in Symbol.GetAttributes()
-               .Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataBoundsAttributeName))
+               .Where(A => A.AttributeClass?.Name == CognitiveDataAttributeNames.DataBoundsAttributeName))
       return (Attribute.ConstructorArguments[0].Value!, Attribute.ConstructorArguments[1].Value!);
 
     return null;
@@ -95,7 +95,7 @@ class ThoughtDataClassBuilder(TypeAddress TypeAddress)
       INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum =>
         $"new BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>()",
       {SpecialType: SpecialType.System_String} => GetStringCodec(Member),
-      var T when T.GetAttributes().Any(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataAttributeName)
+      var T when T.GetAttributes().Any(A => A.AttributeClass?.Name == CognitiveDataAttributeNames.DataAttributeName)
         => "new SubDataCodec<" + T.GetFullPath() + ">()",
       _ => "new UnknownCodec()"
     };
@@ -135,7 +135,7 @@ class ThoughtDataClassBuilder(TypeAddress TypeAddress)
   static int? GetExplicitLength(ISymbol Member)
   {
     foreach (var Attribute in Member.GetAttributes()
-               .Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataLengthAttributeName))
+               .Where(A => A.AttributeClass?.Name == CognitiveDataAttributeNames.DataLengthAttributeName))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 
@@ -145,7 +145,7 @@ class ThoughtDataClassBuilder(TypeAddress TypeAddress)
   static int? GetExplicitCount(ISymbol Member)
   {
     foreach (var Attribute in Member.GetAttributes()
-               .Where(A => A.AttributeClass?.Name == ThoughtDataAttributeNames.DataCountAttributeName))
+               .Where(A => A.AttributeClass?.Name == CognitiveDataAttributeNames.DataCountAttributeName))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 

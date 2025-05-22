@@ -29,6 +29,6 @@ public class ThoughtSharpGenerator : IIncrementalGenerator
 {
   public void Initialize(IncrementalGeneratorInitializationContext Context)
   {
-    ThoughtDataPipeline.Bind(Context);
+    CognitiveDataPipeline.Bind(Context);
   }
 }

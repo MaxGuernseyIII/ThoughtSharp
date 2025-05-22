@@ -20,20 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Generator;
+namespace ThoughtSharp.Runtime;
 
-class ThoughtParameter(
-  string Name,
-  string CodecExpression,
-  string CodecType,
-  int? ExplicitCount,
-  bool Implied)
+[AttributeUsage(AttributeConstants.ValueTargets)]
+public class CognitiveDataCountAttribute(int Count) : Attribute
 {
-  public string Name { get; } = Name;
-  public string CodecExpression { get; } = CodecExpression;
-  public int? ExplicitCount { get; } = ExplicitCount;
-  public bool Implied { get; } = Implied;
-  public string CodecType { get; } = CodecType;
-
-  public int EffectiveCount => ExplicitCount ?? 1;
+  public int Count { get; } = Count;
 }

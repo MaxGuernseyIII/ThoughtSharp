@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
+using System.Text;
 using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
@@ -31,12 +32,38 @@ class TypeIdentifier
   {
     this.Keyword = Keyword;
     this.Name = Name;
+    FullName = ComputeFullName(TypeParameters, Name);
     this.TypeParameters = TypeParameters;
   }
 
   public string Keyword { get; }
   public string Name { get; }
   public IReadOnlyList<TypeAddress> TypeParameters { get; }
+
+  public string FullName { get; }
+
+  static string ComputeFullName(IReadOnlyList<TypeAddress> IReadOnlyList, string Value)
+  {
+    var ResultBuilder = new StringBuilder();
+
+    ResultBuilder.Append(Value);
+
+    var Delimiter = "<";
+    var Terminator = "";
+
+    foreach (var TypeParameter in IReadOnlyList)
+    {
+      ResultBuilder.Append(Delimiter);
+      ResultBuilder.Append(TypeParameter.FullName);
+
+      Terminator = ">";
+      Delimiter = ", ";
+    }
+
+    ResultBuilder.AppendLine(Terminator);
+
+    return ResultBuilder.ToString();
+  }
 
   public static TypeIdentifier ForSymbol(ITypeSymbol Symbol)
   {

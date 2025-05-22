@@ -25,7 +25,7 @@ using System.Numerics;
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
-public class BitwiseOneHotEnumCodec<T, U> : ThoughtDataCodec<T>
+public class BitwiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
   where T : Enum
   where U : unmanaged, INumber<U>, IBitwiseOperators<U, U, U>, IShiftOperators<U, int, U>
 {

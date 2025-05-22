@@ -20,20 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime.Codecs;
+namespace ThoughtSharp.Runtime;
 
-// ReSharper disable once UnusedMember.Global
-public class CopyBoolCodec : CognitiveDataCodec<bool>
+[AttributeUsage(AttributeTargets.Interface)]
+public class CognitiveActionsAttribute : Attribute
 {
-  public int Length => 1;
 
-  public void EncodeTo(bool ObjectToEncode, Span<float> Target)
-  {
-    Target[0] = ObjectToEncode ? 1 : 0;
-  }
-
-  public bool DecodeFrom(ReadOnlySpan<float> Source)
-  {
-    return Source[0] > .5;
-  }
 }

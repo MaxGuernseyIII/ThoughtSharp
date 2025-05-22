@@ -20,20 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime.Codecs;
+using System.Collections.Immutable;
 
-// ReSharper disable once UnusedMember.Global
-public class CopyBoolCodec : CognitiveDataCodec<bool>
+namespace ThoughtSharp.Generator;
+
+class CognitiveDataClass(
+  TypeAddress Address,
+  IReadOnlyList<CognitiveParameter> Parameters,
+  ImmutableArray<CognitiveParameterCodec> Codecs)
 {
-  public int Length => 1;
-
-  public void EncodeTo(bool ObjectToEncode, Span<float> Target)
-  {
-    Target[0] = ObjectToEncode ? 1 : 0;
-  }
-
-  public bool DecodeFrom(ReadOnlySpan<float> Source)
-  {
-    return Source[0] > .5;
-  }
+  public TypeAddress Address { get; } = Address;
+  public IReadOnlyList<CognitiveParameter> Parameters { get; } = Parameters;
+  public ImmutableArray<CognitiveParameterCodec> Codecs { get; } = Codecs;
 }

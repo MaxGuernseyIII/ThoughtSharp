@@ -23,8 +23,8 @@
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
-public class SubDataCodec<T> : ThoughtDataCodec<T>
-  where T : ThoughtData, new()
+public class SubDataCodec<T> : CognitiveDataCodec<T>
+  where T : CognitiveData<T>, new()
 {
   public int Length => T.Length;
 

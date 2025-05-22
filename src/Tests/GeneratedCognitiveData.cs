@@ -28,7 +28,7 @@ using ThoughtSharp.Runtime.Codecs;
 namespace Tests;
 
 [TestClass]
-public partial class GeneratedThoughtData
+public partial class GeneratedCognitiveData
 {
   [TestMethod]
   public void LengthTest()
@@ -149,7 +149,7 @@ public partial class GeneratedThoughtData
   }
 
   void RoundTripTest<T>(T ToTest)
-    where T : ThoughtData, new()
+    where T : CognitiveData<T>, new()
   {
     var Buffer = new float[T.Length];
     ToTest.MarshalTo(Buffer);
@@ -246,32 +246,32 @@ public partial class GeneratedThoughtData
     NewData.Should().BeEquivalentTo(Data);
   }
 
-  [ThoughtData]
+  [CognitiveData]
   public partial class EmptyMockThoughtData
   {
   }
 
-  [ThoughtData]
+  [CognitiveData]
   public partial class SingleFloatMockThoughtData
   {
     public float P1;
   }
 
-  [ThoughtData]
+  [CognitiveData]
   public partial class FloatArrayMockThoughtData
   {
-    [ThoughtDataCount(4)] public float[] P2 = [0, 0, 0, 0];
+    [CognitiveDataCount(4)] public float[] P2 = [0, 0, 0, 0];
   }
 
-  [ThoughtData]
+  [CognitiveData]
   public partial class CodecMockThoughtData
   {
     public string SomeText = "";
 
-    public static ThoughtDataCodec<string> SomeTextCodec => new MockLengthCodec<string>(9);
+    public static CognitiveDataCodec<string> SomeTextCodec => new MockLengthCodec<string>(9);
   }
 
-  [ThoughtData]
+  [CognitiveData]
   public partial class ThreeStringsMockThoughtData
   {
     public string S1 = "";
@@ -290,7 +290,7 @@ public partial class GeneratedThoughtData
     Value3
   }
 
-  [ThoughtData]
+  [CognitiveData]
   partial class ComplexDataStructureMockThoughtData
   {
     public const int ImplicitlyEncodedStringLength = 40;
@@ -301,17 +301,17 @@ public partial class GeneratedThoughtData
 
     public float SomeFloat;
 
-    [ThoughtDataCount(3)] public long[] SomeLongs = [0, 0, 0];
+    [CognitiveDataCount(3)] public long[] SomeLongs = [0, 0, 0];
 
     public bool SomeFlag { get; set; }
     public int SomeInteger { get; set; }
     public static BitwiseOneHotStringCodec EncodedStringCodec => new(20);
 
-    [ThoughtDataLength(ImplicitlyEncodedStringLength)]
+    [CognitiveDataLength(ImplicitlyEncodedStringLength)]
     public string ImplicitlyEncodedString { get; set; } = "";
   }
 
-  [ThoughtData]
+  [CognitiveData]
   public partial class NestingMockThoughtData
   {
     public SingleFloatMockThoughtData First = new();
@@ -321,13 +321,13 @@ public partial class GeneratedThoughtData
     public SingleFloatMockThoughtData Third = new();
   }
 
-  [ThoughtData]
+  [CognitiveData]
   public partial class DeclarativelyNormalizedMockThoughtData
   {
-    [ThoughtDataBounds<float>(1, 6)] public float ToNormalize;
+    [CognitiveDataBounds<float>(1, 6)] public float ToNormalize;
   }
 
-  [ThoughtData]
+  [CognitiveData]
   public partial class DefaultNormalizationMockThoughtData
   {
     public byte Byte;
