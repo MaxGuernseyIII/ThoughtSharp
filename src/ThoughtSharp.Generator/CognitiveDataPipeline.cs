@@ -98,7 +98,11 @@ static class CognitiveDataPipeline
         using var Writer = new IndentedTextWriter(StringWriter, "  ");
         GeneratedTypeFormatter.GenerateType(Writer, new(Interpreter.DataClass.Address, W =>
         {
-          W.WriteLine($"public void InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
+          W.WriteLine($"public Thought InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
+          W.WriteLine("{");
+          W.Indent++;
+          W.WriteLine("return Thought.Do(R =>");
+          W.Indent++;
           W.WriteLine("{");
           W.Indent++;
           W.WriteLine("switch (__ActionCode)");
@@ -127,7 +131,18 @@ static class CognitiveDataPipeline
           W.WriteLine("}");
           W.Indent--;
           W.WriteLine("}");
-        }));
+          W.Indent--;
+          W.WriteLine(");");
+          W.Indent--;
+          W.WriteLine("}");
+        })
+        {
+          WriteHeader = W =>
+          {
+            W.WriteLine("using ThoughtSharp.Runtime;");
+            W.WriteLine();
+          }
+        });
       }
 
       StringWriter.Close();
