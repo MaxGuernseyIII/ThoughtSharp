@@ -56,6 +56,8 @@ static class CognitiveDataPipeline
 
         foreach (var Parameter in Method.Parameters.Select(P => P.ToValueSymbolOrDefault()!)) 
           Builder.AddParameterValue(Parameter, true);
+
+        Results.Add(Builder.Build());
       }
 
       return Results;

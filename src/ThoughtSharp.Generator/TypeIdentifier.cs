@@ -60,7 +60,7 @@ class TypeIdentifier
       Delimiter = ", ";
     }
 
-    ResultBuilder.AppendLine(Terminator);
+    ResultBuilder.Append(Terminator);
 
     return ResultBuilder.ToString();
   }

@@ -20,16 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using Microsoft.CodeAnalysis;
+using ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Generator;
+namespace Tests;
 
-public static class TypeSymbolExtensions
+[TestClass]
+public partial class GeneratedCognitiveActions
 {
-  public static string GetFullPath(this ITypeSymbol T)
+  [CognitiveActions]
+  partial interface BasicAction
   {
-    return T.ToDisplayString(new SymbolDisplayFormat(
-      typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-      genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters)).Trim();
+    void Empty1();
+    void Empty2();
   }
 }
