@@ -42,9 +42,10 @@ static class CognitiveDataPipeline
       (InnerContext, _) => InnerContext
     ).Select((C, _) =>
     {
-      var NamedType = (INamedTypeSymbol)C.TargetSymbol;
+      var NamedType = (INamedTypeSymbol) C.TargetSymbol;
       var TargetType = TypeAddress.ForSymbol(NamedType);
-      var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(M => M.ReturnsVoid || M.ReturnType.OriginalDefinition.ToDisplayString() == "System.Threading.Tasks.Task");
+      var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(M =>
+        M.ReturnsVoid || M.ReturnType.OriginalDefinition.ToDisplayString() == "System.Threading.Tasks.Task");
       var CognitiveDataClasses = new List<CognitiveDataClass>();
 
       var CompleteDataTypeAddress = TargetType.GetNested(TypeIdentifier.Explicit("class", "__AllParameters"));
@@ -53,7 +54,8 @@ static class CognitiveDataPipeline
         IsPublic = true
       };
       var InterpreterBuilder = new CognitiveDataInterpreterBuilder(TargetType);
-      CompleteDataBuilder.AddCompilerDefinedParameter("__ActionCode", "new BitwiseOneHotNumberCodec<short>()", $"CognitiveDataCodec<short>", null, "short");
+      CompleteDataBuilder.AddCompilerDefinedParameter("__ActionCode", "new BitwiseOneHotNumberCodec<short>()",
+        "CognitiveDataCodec<short>", null, "short");
       foreach (var Method in Methods)
       {
         var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("class", $"{Method.Name}Parameters"));
@@ -62,12 +64,13 @@ static class CognitiveDataPipeline
           IsPublic = true
         };
 
-        foreach (var Parameter in Method.Parameters.Select(P => P.ToValueSymbolOrDefault()!)) 
+        foreach (var Parameter in Method.Parameters.Select(P => P.ToValueSymbolOrDefault()!))
           ThisDataClassBuilder.AddParameterValue(Parameter, true);
 
         var ThisDataClass = ThisDataClassBuilder.Build();
         CognitiveDataClasses.Add(ThisDataClass);
-        CompleteDataBuilder.AddCompilerDefinedParameter(Method.Name, $"new SubDataCodec<{MethodType.FullName}>()", $"CognitiveDataCodec<{MethodType.FullName}>", null, MethodType.FullName);
+        CompleteDataBuilder.AddCompilerDefinedParameter(Method.Name, $"new SubDataCodec<{MethodType.FullName}>()",
+          $"CognitiveDataCodec<{MethodType.FullName}>", null, MethodType.FullName);
         InterpreterBuilder.AssociateMethodWithDataClass(Method.Name, ThisDataClass);
       }
 
@@ -79,11 +82,12 @@ static class CognitiveDataPipeline
     });
 
     BindRenderingOfCognitiveDataClasses(Context, RawProvider.SelectMany((Items, _) => Items.CognitiveDataClasses));
-    BindRenderingOfCognitiveDataInterpreters(Context, RawProvider.Select((Items, _) => Items.CognitiveInterpreterClass));
+    BindRenderingOfCognitiveDataInterpreters(Context,
+      RawProvider.Select((Items, _) => Items.CognitiveInterpreterClass));
   }
 
   static void BindRenderingOfCognitiveDataInterpreters(
-    IncrementalGeneratorInitializationContext Context, 
+    IncrementalGeneratorInitializationContext Context,
     IncrementalValuesProvider<CognitiveDataInterpreter> Interpreters)
   {
     Context.RegisterSourceOutput(Interpreters, (Target, Interpreter) =>
@@ -94,14 +98,38 @@ static class CognitiveDataPipeline
         using var Writer = new IndentedTextWriter(StringWriter);
         GeneratedTypeFormatter.GenerateType(Writer, new(Interpreter.DataClass.Address, W =>
         {
-          W.WriteLine($"public void InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret) {{ }}");
+          W.WriteLine($"public void InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
+          W.WriteLine("{");
+          W.Indent++;
+          W.WriteLine("switch (__ActionCode)");
+          W.WriteLine("{");
+          W.Indent++;
+
+          var PathId = 1;
+          foreach (var Path in Interpreter.Paths)
+          {
+            W.WriteLine($"case {PathId}:");
+            W.Indent++;
+
+            W.WriteLine($"ToInterpret.{Path.MethodName}({string.Join(", ", Path.ParametersClass.Parameters.Select(_ =>"default"))});");
+
+            W.WriteLine("break;");
+            W.Indent--;
+
+            PathId++;
+          }
+
+          W.Indent--;
+          W.WriteLine("}");
+          W.Indent--;
+          W.WriteLine("}");
         }));
       }
 
       StringWriter.Close();
 
       Target.AddSource(
-        GeneratedTypeFormatter.GetFilename(Interpreter.DataClass.Address, "__interpreters__"), 
+        GeneratedTypeFormatter.GetFilename(Interpreter.DataClass.Address, "__interpreters__"),
         StringWriter.GetStringBuilder().ToString());
     });
   }
@@ -111,13 +139,15 @@ static class CognitiveDataPipeline
     BindRenderingOfCognitiveDataClasses(Context, GetExplicitCognitiveDataClasses(Context));
   }
 
-  static IncrementalValuesProvider<CognitiveDataClass> GetExplicitCognitiveDataClasses(IncrementalGeneratorInitializationContext Context)
+  static IncrementalValuesProvider<CognitiveDataClass> GetExplicitCognitiveDataClasses(
+    IncrementalGeneratorInitializationContext Context)
   {
-    var FindCognitiveDataClasses = Context.SyntaxProvider.ForAttributeWithMetadataName(CognitiveDataAttributeNames.FullDataAttribute,
+    var FindCognitiveDataClasses = Context.SyntaxProvider.ForAttributeWithMetadataName(
+      CognitiveDataAttributeNames.FullDataAttribute,
       (Node, _) => Node is TypeDeclarationSyntax,
       (InnerContext, _) => CognitiveDataClassModelFactory.ConvertDataClassToModel(InnerContext));
 
-    
+
     return FindCognitiveDataClasses;
   }
 

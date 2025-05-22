@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using FluentAssertions;
 using ThoughtSharp.Runtime;
 
 namespace Tests;
@@ -78,5 +79,26 @@ public partial class GeneratedCognitiveActions
     var P = new MultipleChoicesWithParameters.__AllParameters();
 
     P.InterpretFor(Choices);
+  }
+
+  [TestMethod]
+  public void InvokeSecondAction()
+  {
+    var Invoked = false;
+    var Choices = new MockMultipleChoicesWithParameters()
+    {
+      Action2Handler = delegate
+      {
+        Invoked = true;
+      }
+    };
+    var P = new MultipleChoicesWithParameters.__AllParameters()
+    {
+      __ActionCode = 2
+    };
+
+    P.InterpretFor(Choices);
+
+    Invoked.Should().BeTrue();
   }
 }

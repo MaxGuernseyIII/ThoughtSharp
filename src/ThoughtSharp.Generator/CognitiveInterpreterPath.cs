@@ -22,8 +22,8 @@
 
 namespace ThoughtSharp.Generator;
 
-class CognitiveInterpreterPath(string MethodName, CognitiveDataClass Parameters)
+class CognitiveInterpreterPath(string MethodName, CognitiveDataClass ParametersClass)
 {
   public string MethodName { get; } = MethodName;
-  public CognitiveDataClass Parameters { get; } = Parameters;
+  public CognitiveDataClass ParametersClass { get; } = ParametersClass;
 }
