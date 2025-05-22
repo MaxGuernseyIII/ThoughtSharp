@@ -145,4 +145,79 @@ public partial class GeneratedCognitiveActions
 
     P.Invoking(Parameters => Parameters.InterpretFor(Choices)).Should().Throw<InvalidOperationException>();
   }
+
+  [CognitiveActions]
+  partial interface AsyncThoughtfulAction
+  {
+    Task<Thought> Action();
+  }
+
+  [CognitiveActions]
+  partial interface AsyncThoughtlessAction
+  {
+    Task Action();
+  }
+
+  [CognitiveActions]
+  partial interface SynchronousThoughtfulAction
+  {
+    Thought Action();
+  }
+
+  class MockAsyncThoughtfulAction : AsyncThoughtfulAction
+  {
+    public Func<Task<Thought>> ActionHandler { get; set; }= delegate
+    {
+      return Task.FromResult(Thought.Do(_ => Assert.Fail("Action should not be invoked")));
+    };
+
+
+    public Task<Thought> Action()
+    {
+      return ActionHandler();
+    }
+  }
+
+  [TestMethod]
+  public async Task InvokeAsyncThoughtfulAction()
+  {
+    var Invoked = false;
+    MockAsyncThoughtfulAction Action = new()
+    {
+      ActionHandler = delegate
+      {
+        Invoked = true;
+        return Task.FromResult(Thought.Do(_ => { }));
+      }
+    };
+    var P = new AsyncThoughtfulAction.__AllParameters()
+    {
+      __ActionCode = 1
+    };
+
+    await P.InterpretFor(Action);
+
+    Invoked.Should().Be(true);
+  }
+
+  [TestMethod]
+  public async Task AsynchronousThoughtfulActionConnectsThoughtToParent()
+  {
+    var ActualReward = 0f;
+    var ChildThought = Thought.Capture(new object(), R => ActualReward += R);
+    MockAsyncThoughtfulAction Action = new()
+    {
+      ActionHandler = () => Task.FromResult<Thought>(ChildThought)
+    };
+    var P = new AsyncThoughtfulAction.__AllParameters()
+    {
+      __ActionCode = 1
+    };
+    var ParentThought = await P.InterpretFor(Action);
+    var ExpectedReward = Any.Float;
+
+    ParentThought.ApplyReward(ExpectedReward);
+
+    ActualReward.Should().Be(ExpectedReward);
+  }
 }

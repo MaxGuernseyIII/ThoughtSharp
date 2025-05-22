@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.CodeDom.Compiler;
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -37,53 +38,71 @@ static class CognitiveDataPipeline
   static void RenderActionsClasses(IncrementalGeneratorInitializationContext Context)
   {
     var RawProvider = Context.SyntaxProvider.ForAttributeWithMetadataName(
-      CognitiveDataAttributeNames.FullActionsAttribute,
-      (Node, _) => Node is InterfaceDeclarationSyntax,
-      (InnerContext, _) => InnerContext
-    ).Select((C, _) =>
-    {
-      var NamedType = (INamedTypeSymbol) C.TargetSymbol;
-      var TargetType = TypeAddress.ForSymbol(NamedType);
-      var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(M =>
-        M.ReturnsVoid || M.ReturnType.OriginalDefinition.ToDisplayString() == "System.Threading.Tasks.Task");
-      var CognitiveDataClasses = new List<CognitiveDataClass>();
+        CognitiveDataAttributeNames.FullActionsAttribute,
+        (Node, _) => Node is InterfaceDeclarationSyntax,
+        (InnerContext, _) => InnerContext
+      ).Combine(Context.CompilationProvider)
+      .Select((Pair, _) =>
+      {
+        var (C, Compilation) = Pair;
+        var NamedType = (INamedTypeSymbol) C.TargetSymbol;
+        var TargetType = TypeAddress.ForSymbol(NamedType);
+        var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(M => IsValidThoughtAction(M, Compilation));
+        var CognitiveDataClasses = new List<CognitiveDataClass>();
 
-      var CompleteDataTypeAddress = TargetType.GetNested(TypeIdentifier.Explicit("class", "__AllParameters"));
-      var CompleteDataBuilder = new CognitiveDataClassBuilder(CompleteDataTypeAddress)
-      {
-        IsPublic = true
-      };
-      var InterpreterBuilder = new CognitiveDataInterpreterBuilder(TargetType);
-      CompleteDataBuilder.AddCompilerDefinedParameter("__ActionCode", "new BitwiseOneHotNumberCodec<short>()",
-        "CognitiveDataCodec<short>", null, "short");
-      foreach (var Method in Methods)
-      {
-        var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("class", $"{Method.Name}Parameters"));
-        var ThisDataClassBuilder = new CognitiveDataClassBuilder(MethodType)
+        var CompleteDataTypeAddress = TargetType.GetNested(TypeIdentifier.Explicit("class", "__AllParameters"));
+        var CompleteDataBuilder = new CognitiveDataClassBuilder(CompleteDataTypeAddress)
         {
           IsPublic = true
         };
+        var InterpreterBuilder = new CognitiveDataInterpreterBuilder(TargetType);
+        CompleteDataBuilder.AddCompilerDefinedParameter("__ActionCode", "new BitwiseOneHotNumberCodec<short>()",
+          "CognitiveDataCodec<short>", null, "short");
+        foreach (var Method in Methods)
+        {
+          var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("class", $"{Method.Name}Parameters"));
+          var ThisDataClassBuilder = new CognitiveDataClassBuilder(MethodType)
+          {
+            IsPublic = true
+          };
 
-        foreach (var Parameter in Method.Parameters.Select(P => P.ToValueSymbolOrDefault()!))
-          ThisDataClassBuilder.AddParameterValue(Parameter, true);
+          foreach (var Parameter in Method.Parameters.Select(P => P.ToValueSymbolOrDefault()!))
+            ThisDataClassBuilder.AddParameterValue(Parameter, true);
 
-        var ThisDataClass = ThisDataClassBuilder.Build();
-        CognitiveDataClasses.Add(ThisDataClass);
-        CompleteDataBuilder.AddCompilerDefinedParameter(Method.Name, $"new SubDataCodec<{MethodType.FullName}>()",
-          $"CognitiveDataCodec<{MethodType.FullName}>", null, MethodType.FullName);
-        InterpreterBuilder.AssociateMethodWithDataClass(Method.Name, ThisDataClass);
-      }
+          var ThisDataClass = ThisDataClassBuilder.Build();
+          CognitiveDataClasses.Add(ThisDataClass);
+          CompleteDataBuilder.AddCompilerDefinedParameter(Method.Name, $"new SubDataCodec<{MethodType.FullName}>()",
+            $"CognitiveDataCodec<{MethodType.FullName}>", null, MethodType.FullName);
+          InterpreterBuilder.AssociateMethodWithDataClass(Method, ThisDataClass);
+        }
 
-      var CognitiveDataClass = CompleteDataBuilder.Build();
-      CognitiveDataClasses.Add(CognitiveDataClass);
-      InterpreterBuilder.ParametersClass = CognitiveDataClass;
+        var CognitiveDataClass = CompleteDataBuilder.Build();
+        CognitiveDataClasses.Add(CognitiveDataClass);
+        InterpreterBuilder.ParametersClass = CognitiveDataClass;
 
-      return (CognitiveDataClasses, CognitiveInterpreterClass: InterpreterBuilder.Build());
-    });
+        return (CognitiveDataClasses, CognitiveInterpreterClass: InterpreterBuilder.Build());
+      });
 
     BindRenderingOfCognitiveDataClasses(Context, RawProvider.SelectMany((Items, _) => Items.CognitiveDataClasses));
     BindRenderingOfCognitiveDataInterpreters(Context,
       RawProvider.Select((Items, _) => Items.CognitiveInterpreterClass));
+  }
+
+  static bool IsValidThoughtAction(IMethodSymbol M, Compilation Compilation)
+  {
+    if (M.ReturnsVoid)
+      return true;
+
+    if (M.ReturnType.IsThoughtType())
+      return true;
+
+    if (M.ReturnType.IsTaskType())
+      return true;
+
+    if (M.ReturnType.IsTaskOfThoughtType())
+      return true;
+
+    return false;
   }
 
   static void BindRenderingOfCognitiveDataInterpreters(
@@ -98,10 +117,16 @@ static class CognitiveDataPipeline
         using var Writer = new IndentedTextWriter(StringWriter, "  ");
         GeneratedTypeFormatter.GenerateType(Writer, new(Interpreter.DataClass.Address, W =>
         {
-          W.WriteLine($"public Thought InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
+          var MethodIsAsync = Interpreter.Paths.Any(P => P.RequiresAwait);
+          var ReturnValue = MethodIsAsync ? "Task<Thought>" : "Thought";
+
+          W.WriteLine($"public {ReturnValue} InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
           W.WriteLine("{");
           W.Indent++;
-          W.WriteLine("return Thought.Do(R =>");
+          if (MethodIsAsync)
+            W.WriteLine("return Thought.DoAsync(async R =>");
+          else
+            W.WriteLine("return Thought.Do(R =>");
           W.Indent++;
           W.WriteLine("{");
           W.Indent++;
@@ -116,8 +141,18 @@ static class CognitiveDataPipeline
             W.WriteLine($"case {PathId}:");
             W.Indent++;
 
-            W.WriteLine($"ToInterpret.{Path.MethodName}({string.Join(", ", 
-              Path.ParametersClass.Parameters.Select(P => $"{Path.MethodName}.{P.Name}"))});");
+            if (Path.IsThoughtful)
+              W.Write("R.Incorporate(");
+
+            if (Path.RequiresAwait)
+              W.Write("await ");
+
+            W.Write($"ToInterpret.{Path.MethodName}({string.Join(", ",
+              Path.ParametersClass.Parameters.Select(P => $"{Path.MethodName}.{P.Name}"))})");
+            if (Path.IsThoughtful)
+              W.Write(")");
+
+            W.WriteLine(";");
 
             W.WriteLine("break;");
             W.Indent--;

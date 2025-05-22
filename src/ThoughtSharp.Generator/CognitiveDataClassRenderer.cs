@@ -98,7 +98,7 @@ class CognitiveDataClassRenderer
   {
     Target.Write($"{LastValue}");
     if (LastParameter is not null)
-      Target.Write($"+ {GetCodecFieldNameFor(LastParameter)}.Length * {LastParameter.EffectiveCount}");
+      Target.Write($" + {GetCodecFieldNameFor(LastParameter)}.Length * {LastParameter.EffectiveCount}");
     Target.WriteLine(";");
   }
 

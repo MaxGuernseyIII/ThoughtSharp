@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
 
@@ -34,8 +35,8 @@ class CognitiveDataInterpreterBuilder(TypeAddress ToInterpretType)
     return new(ToInterpretType, ParametersClass!, Paths.ToImmutableArray());
   }
 
-  public void AssociateMethodWithDataClass(string MethodName, CognitiveDataClass Parameters)
+  public void AssociateMethodWithDataClass(IMethodSymbol Method, CognitiveDataClass Parameters)
   {
-    Paths.Add(new(MethodName, Parameters));
+    Paths.Add(new(Method.Name, Parameters, Method.ReturnType.RequiresAwait(), Method.ReturnType.IsThoughtful()));
   }
 }

@@ -39,7 +39,7 @@ public class Reasoning
     return Subthought.Product;
   }
 
-  public void Incorporate<T>(Thought<T> Subthought)
+  public void Incorporate(Thought Subthought)
   {
     if (Subthought.Container is not null)
       throw new InvalidOperationException("A Thought can only be used in one line of reasoning");

@@ -32,4 +32,27 @@ public static class TypeSymbolExtensions
       typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
       genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters)).Trim();
   }
+
+  public static bool IsThoughtType(this ITypeSymbol Type)
+  {
+    return IsType(Type, "ThoughtSharp.Runtime.Thought");
+  }
+
+  public static bool IsTaskType(this ITypeSymbol Type)
+  {
+    return IsType(Type, "System.Threading.Tasks.Task");
+  }
+
+  public static bool IsTaskOfThoughtType(this ITypeSymbol Type)
+  {
+    return IsType(Type, "System.Threading.Tasks.Task<ThoughtSharp.Runtime.Thought>");
+  }
+
+  public static bool RequiresAwait(this ITypeSymbol Type) => Type.IsTaskType() || Type.IsTaskOfThoughtType();
+  public static bool IsThoughtful(this ITypeSymbol Type) => Type.IsThoughtType() || Type.IsTaskOfThoughtType();
+
+  static bool IsType(ITypeSymbol Type, string Name)
+  {
+    return Type.GetFullPath() == Name;
+  }
 }

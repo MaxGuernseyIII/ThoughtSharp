@@ -22,8 +22,14 @@
 
 namespace ThoughtSharp.Generator;
 
-class CognitiveInterpreterPath(string MethodName, CognitiveDataClass ParametersClass)
+class CognitiveInterpreterPath(
+  string MethodName,
+  CognitiveDataClass ParametersClass,
+  bool RequiresAwait,
+  bool IsThoughtful)
 {
   public string MethodName { get; } = MethodName;
   public CognitiveDataClass ParametersClass { get; } = ParametersClass;
+  public bool RequiresAwait { get; } = RequiresAwait;
+  public bool IsThoughtful { get; } = IsThoughtful;
 }
