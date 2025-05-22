@@ -31,7 +31,7 @@ static class ThoughtDataModelFactory
   {
     var Symbol = (INamedTypeSymbol) InnerContext.TargetSymbol;
     var TypeAddress = Generator.TypeAddress.ForSymbol(Symbol);
-    var Builder = new ThoughtDataClassBuilder();
+    var Builder = new ThoughtDataClassBuilder(TypeAddress);
 
     var ValueSymbols = Symbol.GetMembers().Select(M => M.ToValueSymbolOrDefault())
       .OfType<IValueSymbol>()
@@ -44,7 +44,6 @@ static class ThoughtDataModelFactory
     foreach (var Member in ValueSymbols.Where(M => M.IsStatic))
       Builder.AddCodecValue(Member);
 
-    Builder.TypeAddress = TypeAddress;
     return Builder.Build();
   }
 }

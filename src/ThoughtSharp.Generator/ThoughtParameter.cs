@@ -26,11 +26,13 @@ class ThoughtParameter(
   string Name,
   string CodecExpression,
   string CodecType,
-  int? ExplicitCount)
+  int? ExplicitCount,
+  bool Implied)
 {
   public string Name { get; } = Name;
   public string CodecExpression { get; } = CodecExpression;
   public int? ExplicitCount { get; } = ExplicitCount;
+  public bool Implied { get; } = Implied;
   public string CodecType { get; } = CodecType;
 
   public int EffectiveCount => ExplicitCount ?? 1;

@@ -24,11 +24,10 @@ using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
 
-class ThoughtDataClassBuilder
+class ThoughtDataClassBuilder(TypeAddress TypeAddress)
 {
-  public List<ThoughtParameter> Parameters { get; } = [];
-  public List<ThoughtParameterCodec> Codecs { get; } = [];
-  public TypeAddress TypeAddress { get; set; } = null!;
+  readonly List<ThoughtParameterCodec> Codecs = [];
+  readonly List<ThoughtParameter> Parameters = [];
 
   public ThoughtDataClass Build()
   {
@@ -45,7 +44,7 @@ class ThoughtDataClassBuilder
     return new(Member.Name);
   }
 
-  public static ThoughtParameter CreateParameterFor(IValueSymbol Member)
+  public static ThoughtParameter CreateParameterFor(IValueSymbol Member, bool Implied = false)
   {
     var ExplicitCount = GetExplicitCount(Member.Raw);
     var EncodedType = ExplicitCount.HasValue
@@ -54,7 +53,7 @@ class ThoughtDataClassBuilder
 
     var CodecExpression = GetCodecExpression(EncodedType, Member);
 
-    return new(Member.Name, CodecExpression, $"ThoughtDataCodec<{EncodedType.GetFullPath()}>", ExplicitCount);
+    return new(Member.Name, CodecExpression, $"ThoughtDataCodec<{EncodedType.GetFullPath()}>", ExplicitCount, Implied);
   }
 
   static (object Minimum, object Maximum)? GetImplicitBounds(ITypeSymbol MemberType)
@@ -130,7 +129,7 @@ class ThoughtDataClassBuilder
     if (Length is null)
       return "UnknownCodec";
 
-    return $"new BitwiseOneHotStringCodec({SymbolExtensions.GetLiteralExpressionFor(Length)})";
+    return $"new BitwiseOneHotStringCodec({Length.GetLiteralExpressionFor()})";
   }
 
   static int? GetExplicitLength(ISymbol Member)
