@@ -38,17 +38,36 @@ public partial class GeneratedChoices
       new(new(), new() {Parameter = Any.Float}),
       new(new(), new() {Parameter = Any.Float})
     ];
-    ushort NextPosition = 0;
-    CognitiveCategory<MockPayload, MockData> Category = new MockCategory(Options);
-    var Buffer = new float[MockCategory.EncodeLength];
-    var ReferenceBuffer = GetReferenceBuffer(Options, NextPosition, 3, 3, true);
-    Options[0].Descriptor.MarshalTo(Buffer[..]);
+    var Category = new MockCategory(Options);
+    
+    var Batches = Category.ToInputBatches();
 
-    Category.EncodeBatch(Buffer, ref NextPosition, out var IsLastBatch);
-
-    NextPosition.Should().Be(3);
-    IsLastBatch.Should().Be(true);
-    Buffer.Should().Equal(ReferenceBuffer);
+    Batches.Should().BeEquivalentTo<MockCategory.Input>([
+      new()
+      {
+        IsFinalBatch = true,
+        Items = [
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 0,
+            Descriptor = Options[0].Descriptor
+          },
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 1,
+            Descriptor = Options[1].Descriptor
+          },
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 2,
+            Descriptor = Options[2].Descriptor
+          },
+        ]
+      }
+    ]);
   }
 
   class MockPayload;

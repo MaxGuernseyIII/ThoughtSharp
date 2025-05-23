@@ -41,9 +41,9 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   }
 
   public void AddCompilerDefinedParameter(
-    string Name, string CodecExpression, int? ExplicitCount, string FullType)
+    string Name, string CodecExpression, int? ExplicitCount, string FullType, string? Initializer = null)
   {
-    Parameters.Add(new(Name, CodecExpression, ExplicitCount, true, FullType));
+    Parameters.Add(new(Name, CodecExpression, ExplicitCount, true, FullType, Initializer));
   }
 
   public static CognitiveParameterCodec CreateCodecFor(IValueSymbol Member)
@@ -61,7 +61,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     var CodecExpression = GetCodecExpression(EncodedType, Member);
 
     return new(Member.Name, CodecExpression, ExplicitCount, Implied,
-      Member.Type.GetFullPath());
+      EncodedType.GetFullPath(), null);
   }
 
   static (object Minimum, object Maximum)? GetImplicitBounds(ITypeSymbol MemberType)
@@ -132,7 +132,8 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 
   public static string GetBoundedIntLikeCodecName(string TypeName, object Minimum, object Maximum)
   {
-    return $"new NumberToFloatingPointCodec<{TypeName}, float>(Inner: new RoundingCodec<float>(Inner: new NormalizingCodec<float>(Inner: new CopyFloatCodec(),Minimum: {Minimum.ToLiteralExpression()},Maximum: {Maximum.ToLiteralExpression()})))";
+    return
+      $"new NumberToFloatingPointCodec<{TypeName}, float>(Inner: new RoundingCodec<float>(Inner: new NormalizingCodec<float>(Inner: new CopyFloatCodec(),Minimum: {Minimum.ToLiteralExpression()},Maximum: {Maximum.ToLiteralExpression()})))";
   }
 
   static string GetStringCodec(IValueSymbol Member)
@@ -193,5 +194,28 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   public void AddCodecValue(IValueSymbol Member)
   {
     Codecs.Add(CreateCodecFor(Member));
+  }
+
+  public void AddCompilerDefinedSubDataArrayParameter(string Name, string TypeName, int Count)
+  {
+    AddCompilerDefinedParameter(Name, $"new SubDataCodec<{TypeName}>()", Count, $"{TypeName}",
+      $"new {TypeName}[{Count.ToLiteralExpression()}]");
+  }
+
+  public void AddCompilerDefinedSubDataParameter(string Name, string TypeName)
+  {
+    AddCompilerDefinedParameter(Name, $"new SubDataCodec<{TypeName}>()", null, TypeName, "new()");
+  }
+
+  public void AddCompilerDefinedBoolParameter(string Name)
+  {
+    AddCompilerDefinedParameter(Name, "new CopyBoolCodec()", null, "bool");
+  }
+
+  public void AddCompilerDefinedBoundedIntLikeParameter<T>(string Name, T MinValue, T MaxValue)
+    where T : notnull
+  {
+    var TypeName = typeof(T).FullName!;
+    AddCompilerDefinedParameter(Name, GetBoundedIntLikeCodecName(TypeName, MinValue, MaxValue), null, TypeName);
   }
 }

@@ -25,11 +25,5 @@ namespace ThoughtSharp.Runtime;
 public interface CognitiveCategory<TPayload, TDescriptor>
   where TDescriptor : CognitiveData<TDescriptor>
 {
-  static abstract int EncodeLength { get; }
-  static abstract int DecodeLength { get; }
-
   IReadOnlyList<CognitiveOption<TPayload, TDescriptor>> AllOptions { get; }
-
-  void EncodeBatch(Span<float> EncodingTarget, ref ushort NextPosition, out bool IsLastBatch);
-  CognitiveOption<TPayload, TDescriptor> Interpret(ReadOnlySpan<float> Choice);
 }

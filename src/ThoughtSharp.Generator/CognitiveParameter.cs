@@ -27,13 +27,15 @@ class CognitiveParameter(
   string CodecExpression,
   int? ExplicitCount,
   bool Implied,
-  string FullType)
+  string FullType,
+  string? Initializer)
 {
   public string Name { get; } = Name;
   public string CodecExpression { get; } = CodecExpression;
   public int? ExplicitCount { get; } = ExplicitCount;
   public bool Implied { get; } = Implied;
   public string FullType { get; } = FullType;
+  public string? Initializer { get; } = Initializer;
 
   public int EffectiveCount => ExplicitCount ?? 1;
 }

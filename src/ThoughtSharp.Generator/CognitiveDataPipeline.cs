@@ -48,25 +48,36 @@ static class CognitiveDataPipeline
           .First(A => A.AttributeClass?.Name == CognitiveAttributeNames.CategoryAttributeName);
         var PayloadType = Attribute.AttributeClass!.TypeArguments[0];
         var DescriptorType = Attribute.AttributeClass!.TypeArguments[1];
-        var Count = Convert.ToUInt16(Attribute.ConstructorArguments[0]);
+        var Count = Convert.ToUInt16(Attribute.ConstructorArguments[0].Value);
         var TypeName = TypeAddress.ForSymbol(Type);
 
         var DataObjects = new List<CognitiveDataClass>();
         var DescriptorTypeAddress = TypeAddress.ForSymbol(DescriptorType);
-        var ItemType = TypeName.GetNested(TypeIdentifier.Explicit("class", "Item"));
-        var ItemBuilder = new CognitiveDataClassBuilder(ItemType);
-        ItemBuilder.AddCompilerDefinedParameter("IsHot", "new CopyBoolCodec()", null, "bool");
-        ItemBuilder.AddCompilerDefinedParameter("Descriptor", $"new SubDataCodec<{DescriptorTypeAddress.FullName}>()", null, DescriptorTypeAddress.FullName);
+        var ItemClassName = "InputItem";
+        var ItemType = TypeName.GetNested(TypeIdentifier.Explicit("class", ItemClassName));
+        var ItemBuilder = new CognitiveDataClassBuilder(ItemType)
+        {
+          IsPublic = true
+        };
+        ItemBuilder.AddCompilerDefinedBoolParameter("IsHot");
+        ItemBuilder.AddCompilerDefinedBoundedIntLikeParameter("ItemNumber", ushort.MinValue, ushort.MaxValue);
+        ItemBuilder.AddCompilerDefinedSubDataParameter("Descriptor", DescriptorTypeAddress.FullName);
         DataObjects.Add(ItemBuilder.Build());
         var QuestionBuilder =
-          new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Question")));
-        QuestionBuilder.AddCompilerDefinedParameter("Items", "new SubDataCodec<Item>()", Count, "Item");
-        QuestionBuilder.AddCompilerDefinedParameter("IsLastBatch", "new CopyBoolCodec()", null, "bool");
+          new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Input")))
+          {
+            IsPublic = true
+          };
+        QuestionBuilder.AddCompilerDefinedSubDataArrayParameter("Items", ItemClassName, Count);
+        QuestionBuilder.AddCompilerDefinedBoolParameter("IsFinalBatch");
         DataObjects.Add(QuestionBuilder.Build());
 
         var Answer =
-          new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Answer")));
-        Answer.AddCompilerDefinedParameter("Selection", CognitiveDataClassBuilder.GetBoundedIntLikeCodecName("ushort", ushort.MinValue, ushort.MaxValue), null, "ushort");
+          new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Output")))
+          {
+            IsPublic = true
+          };
+        Answer.AddCompilerDefinedBoundedIntLikeParameter("Selection", ushort.MinValue, ushort.MaxValue);
         DataObjects.Add(Answer.Build());
 
         return (new CognitiveCategoryModel(TypeName, TypeAddress.ForSymbol(PayloadType), DescriptorTypeAddress, Count), DataObjects.ToImmutableArray());
@@ -92,7 +103,67 @@ static class CognitiveDataPipeline
 
       GeneratedTypeFormatter.GenerateType(Writer, new(Model.CategoryType, W =>
       {
-        W.WriteLine($"public static int EncodeLength = {Model.DescriptorType.FullName}.Length");
+        W.WriteLine($"public IReadOnlyList<CognitiveOption{TypeParameters}> AllOptions {{ get; }} = Options;");
+        W.WriteLine();
+
+        W.WriteLine($"public IReadOnlyList<Input> ToInputBatches()");
+        W.WriteLine("{");
+        W.Indent++;
+        W.WriteLine("var Batches = new List<Input>();");
+        W.WriteLine("ushort CurrentIndex = 0;");
+        W.WriteLine();
+
+        W.WriteLine("while(AllOptions.Count > CurrentIndex)");
+        W.WriteLine("{");
+        W.Indent++;
+        W.WriteLine("var Batch = new Input();");
+        W.WriteLine($"for (ushort I = 0; I < {Model.Count.ToLiteralExpression()}; ++I, ++CurrentIndex)");
+        W.WriteLine("{");
+        W.Indent++;
+        W.WriteLine("if (CurrentIndex < AllOptions.Count)");
+        W.WriteLine("{");
+        W.Indent++;
+        W.WriteLine("Batch.Items[I] = new()");
+        W.WriteLine("{");
+        W.Indent++;
+        W.WriteLine("IsHot = true,");
+        W.WriteLine("ItemNumber = CurrentIndex,");
+        W.WriteLine("Descriptor = AllOptions[CurrentIndex].Descriptor");
+        W.Indent--;
+        W.WriteLine("};");
+        W.Indent--;
+        W.WriteLine("}");
+        W.WriteLine("else");
+        W.WriteLine("{");
+        W.Indent++;
+        W.WriteLine("Batch.Items[I] = new()");
+        W.WriteLine("{");
+        W.Indent++;
+        W.WriteLine("IsHot = false,");
+        W.WriteLine("ItemNumber = 0,");
+        W.WriteLine("Descriptor = new()");
+        W.Indent--;
+        W.WriteLine("};");
+        W.Indent--;
+        W.WriteLine("}");
+        W.Indent--;
+        W.WriteLine("}");
+        W.WriteLine("Batches.Add(Batch);");
+        W.WriteLine($"CurrentIndex += {Model.Count.ToLiteralExpression()};");
+        W.Indent--;
+        W.WriteLine("}");
+        W.WriteLine();
+        W.WriteLine("if (Batches.Any())");
+        W.WriteLine("{");
+        W.Indent++;
+        W.WriteLine("Batches.Last().IsFinalBatch = true;");
+        W.Indent--;
+        W.WriteLine("}");
+        W.WriteLine();
+        W.WriteLine("return Batches;");
+        W.Indent--;
+        W.WriteLine("}");
+
       })
       {
         WriteHeader = W =>

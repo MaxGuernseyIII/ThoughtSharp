@@ -26,4 +26,5 @@ namespace ThoughtSharp.Runtime;
 public class CognitiveCategoryAttribute<TPayload, TDescriptor>(int BatchSize) : Attribute
   where TDescriptor : CognitiveData<TDescriptor>
 {
+  public int BatchSize { get; } = BatchSize;
 }
