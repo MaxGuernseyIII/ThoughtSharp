@@ -116,7 +116,6 @@ static class CognitiveCategoryRenderer
 
     public void GenerateHeader(IndentedTextWriter W)
     {
-      var _ = this;
       W.WriteLine("using ThoughtSharp.Runtime;");
       W.WriteLine();
     }
