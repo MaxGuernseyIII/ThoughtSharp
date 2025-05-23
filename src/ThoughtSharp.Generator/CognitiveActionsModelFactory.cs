@@ -34,20 +34,29 @@ static class CognitiveActionsModelFactory
     var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(IsValidThoughtAction);
     var CognitiveDataClasses = new List<CognitiveDataClass>();
 
-    var CompleteDataTypeAddress = TargetType.GetNested(TypeIdentifier.Explicit("class", "__AllParameters"));
+    var CompleteDataTypeAddress = TargetType.GetNested(TypeIdentifier.Explicit("struct", "Output"));
     var CompleteDataBuilder = new CognitiveDataClassBuilder(CompleteDataTypeAddress)
     {
-      IsPublic = true
+      IsPublic = true,
+      ExplicitConstructor = true
     };
+    var OutputParametersTypeAddress = CompleteDataTypeAddress.GetNested(TypeIdentifier.Explicit("struct", "OutputParameters"));
+    var CompleteParametersDataBuilder = new CognitiveDataClassBuilder(OutputParametersTypeAddress)
+    {
+      IsPublic = true,
+      ExplicitConstructor = true
+    };
+    CompleteDataBuilder.AddCompilerDefinedSubDataParameter("Parameters", "OutputParameters");
     var InterpreterBuilder = new CognitiveDataInterpreterBuilder(TargetType);
-    CompleteDataBuilder.AddCompilerDefinedBoundedIntLikeParameter("__ActionCode", ushort.MinValue, ushort.MaxValue);
-    CompleteDataBuilder.AddCompilerDefinedBoolParameter("__MoreActions");
+    CompleteDataBuilder.AddCompilerDefinedBoundedIntLikeParameter("ActionCode", ushort.MinValue, ushort.MaxValue);
+    CompleteDataBuilder.AddCompilerDefinedBoolParameter("MoreActions");
     foreach (var Method in Methods)
     {
-      var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("class", $"{Method.Name}Parameters"));
+      var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("struct", $"{Method.Name}Parameters"));
       var ThisDataClassBuilder = new CognitiveDataClassBuilder(MethodType)
       {
-        IsPublic = true
+        IsPublic = true,
+        ExplicitConstructor = true
       };
 
       foreach (var Parameter in Method.Parameters.Select(P => P.ToValueSymbolOrDefault()!))
@@ -55,13 +64,14 @@ static class CognitiveActionsModelFactory
 
       var ThisDataClass = ThisDataClassBuilder.Build();
       CognitiveDataClasses.Add(ThisDataClass);
-      CompleteDataBuilder.AddCompilerDefinedSubDataParameter(Method.Name, MethodType.FullName);
+      CompleteParametersDataBuilder.AddCompilerDefinedSubDataParameter(Method.Name, MethodType.FullName);
       InterpreterBuilder.AssociateMethodWithDataClass(Method, ThisDataClass);
     }
 
     var CognitiveDataClass = CompleteDataBuilder.Build();
     CognitiveDataClasses.Add(CognitiveDataClass);
     InterpreterBuilder.ParametersClass = CognitiveDataClass;
+    CognitiveDataClasses.Add(CompleteParametersDataBuilder.Build());
 
     return (CognitiveDataClasses, CognitiveInterpreterClass: InterpreterBuilder.Build());
   }

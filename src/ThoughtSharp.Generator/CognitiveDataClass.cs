@@ -28,10 +28,12 @@ class CognitiveDataClass(
   TypeAddress Address,
   IReadOnlyList<CognitiveParameter> Parameters,
   ImmutableArray<CognitiveParameterCodec> Codecs,
-  bool IsPublic)
+  bool IsPublic,
+  bool ExplicitConstructor)
 {
   public TypeAddress Address { get; } = Address;
   public IReadOnlyList<CognitiveParameter> Parameters { get; } = Parameters;
   public ImmutableArray<CognitiveParameterCodec> Codecs { get; } = Codecs;
   public bool IsPublic { get; } = IsPublic;
+  public bool ExplicitConstructor { get; } = ExplicitConstructor;
 }

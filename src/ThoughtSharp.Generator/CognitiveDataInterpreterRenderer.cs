@@ -40,6 +40,10 @@ static class CognitiveDataInterpreterRenderer
         W.WriteLine($"public {ReturnValue} InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
         W.WriteLine("{");
         W.Indent++;
+        W.WriteLine("var ActionCode = this.ActionCode;");
+        W.WriteLine("var MoreActions = this.MoreActions;");
+        W.WriteLine("var Parameters = this.Parameters;");
+        W.WriteLine();
         if (MethodIsAsync)
           W.WriteLine("return Thought.ThinkAsync(async R =>");
         else
@@ -47,7 +51,7 @@ static class CognitiveDataInterpreterRenderer
         W.Indent++;
         W.WriteLine("{");
         W.Indent++;
-        W.WriteLine("switch (__ActionCode)");
+        W.WriteLine("switch (ActionCode)");
         W.WriteLine("{");
         W.Indent++;
 
@@ -65,7 +69,7 @@ static class CognitiveDataInterpreterRenderer
             W.Write("await ");
 
           W.Write($"ToInterpret.{Path.MethodName}({string.Join(", ",
-            Path.ParametersClass.Parameters.Select(P => $"{Path.MethodName}.{P.Name}"))})");
+            Path.ParametersClass.Parameters.Select(P => $"Parameters.{Path.MethodName}.{P.Name}"))})");
           if (Path.IsThoughtful)
             W.Write(")");
 
@@ -77,12 +81,12 @@ static class CognitiveDataInterpreterRenderer
           PathId++;
         }
 
-        W.WriteLine(@"default: throw new InvalidOperationException($""Unknown action code: {__ActionCode}"");");
+        W.WriteLine(@"default: throw new InvalidOperationException($""Unknown action code: {ActionCode}"");");
 
         W.Indent--;
         W.WriteLine("}");
         W.WriteLine();
-        W.WriteLine("return __MoreActions;");
+        W.WriteLine("return MoreActions;");
         W.Indent--;
         W.WriteLine("}");
         W.Indent--;

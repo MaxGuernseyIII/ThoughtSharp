@@ -29,6 +29,9 @@ class CognitiveDataClassRenderer
   public static string GenerateCognitiveDataClassContentToWriter(
     CognitiveDataClass CognitiveDataClass, IndentedTextWriter Target)
   {
+    if (CognitiveDataClass.ExplicitConstructor)
+      Target.Write($"public {CognitiveDataClass.Address.TypeName.Name}() {{ }}");
+
     var CodecDictionary = CognitiveDataClass.Codecs.ToDictionary(C => C.Name);
 
     foreach (var Parameter in CognitiveDataClass.Parameters)

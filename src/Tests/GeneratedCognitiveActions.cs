@@ -76,7 +76,7 @@ public partial class GeneratedCognitiveActions
   {
     var Choices = new MockMultipleChoicesWithParameters();
 
-    var P = new MultipleChoicesWithParameters.__AllParameters();
+    var P = new MultipleChoicesWithParameters.Output();
 
     P.InterpretFor(Choices);
   }
@@ -96,21 +96,24 @@ public partial class GeneratedCognitiveActions
         Captured2 = T2;
       },
     };
-    var P = new MultipleChoicesWithParameters.__AllParameters()
+    var P = new MultipleChoicesWithParameters.Output()
     {
-      __ActionCode = 1,
-      Action1 = new()
+      ActionCode = 1,
+      Parameters = new()
       {
-        Parameter1 = Any.Float,
-        Parameter2 = Any.ASCIIString(5)
+        Action1 = new()
+        {
+          Parameter1 = Any.Float,
+          Parameter2 = Any.ASCIIString(5)
+        }
       }
     };
 
     P.InterpretFor(Choices);
 
     Invoked.Should().BeTrue();
-    Captured1.Should().Be((float)P.Action1.Parameter1);
-    Captured2.Should().Be(P.Action1.Parameter2);
+    Captured1.Should().Be((float)P.Parameters.Action1.Parameter1);
+    Captured2.Should().Be(P.Parameters.Action1.Parameter2);
   }
 
   [TestMethod]
@@ -124,9 +127,9 @@ public partial class GeneratedCognitiveActions
         Invoked = true;
       }
     };
-    var P = new MultipleChoicesWithParameters.__AllParameters()
+    var P = new MultipleChoicesWithParameters.Output()
     {
-      __ActionCode = 2
+      ActionCode = 2
     };
 
     P.InterpretFor(Choices);
@@ -138,9 +141,9 @@ public partial class GeneratedCognitiveActions
   public void InvokeMissingActionSecondAction()
   {
     var Choices = new MockMultipleChoicesWithParameters();
-    var P = new MultipleChoicesWithParameters.__AllParameters()
+    var P = new MultipleChoicesWithParameters.Output()
     {
-      __ActionCode = 4
+      ActionCode = 4
     };
 
     P.Invoking(Parameters => Parameters.InterpretFor(Choices)).Should().Throw<InvalidOperationException>();
@@ -190,9 +193,9 @@ public partial class GeneratedCognitiveActions
         return Task.FromResult(Thought.Do(_ => { }));
       }
     };
-    var P = new AsyncThoughtfulAction.__AllParameters()
+    var P = new AsyncThoughtfulAction.Output()
     {
-      __ActionCode = 1
+      ActionCode = 1
     };
 
     await P.InterpretFor(Action);
@@ -209,9 +212,9 @@ public partial class GeneratedCognitiveActions
     {
       ActionHandler = () => Task.FromResult<Thought>(ChildThought)
     };
-    var P = new AsyncThoughtfulAction.__AllParameters()
+    var P = new AsyncThoughtfulAction.Output()
     {
-      __ActionCode = 1
+      ActionCode = 1
     };
     var ParentThought = await P.InterpretFor(Action);
     var ExpectedReward = Any.Float;
@@ -223,7 +226,7 @@ public partial class GeneratedCognitiveActions
 
   class MockSynchronousThoughtfulAction : SynchronousThoughtfulAction
   {
-    public Func<Thought> ActionHandler { get; set; } = delegate
+    public Func<Thought> ActionHandler { get; init; } = delegate
     {
       return Thought.Do(_ => Assert.Fail("Action should not be invoked"));
     };
@@ -243,9 +246,9 @@ public partial class GeneratedCognitiveActions
     {
       ActionHandler = () => ChildThought
     };
-    var P = new SynchronousThoughtfulAction.__AllParameters()
+    var P = new SynchronousThoughtfulAction.Output()
     {
-      __ActionCode = 1
+      ActionCode = 1
     };
     var ParentThought = P.InterpretFor(Action);
     var ExpectedReward = Any.Float;
@@ -278,9 +281,9 @@ public partial class GeneratedCognitiveActions
         return Task.CompletedTask;
       }
     };
-    var P = new AsyncThoughtlessAction.__AllParameters()
+    var P = new AsyncThoughtlessAction.Output()
     {
-      __ActionCode = 1
+      ActionCode = 1
     };
 
     await P.InterpretFor(Action);
@@ -294,8 +297,8 @@ public partial class GeneratedCognitiveActions
   public void ReturnsMoreActions(bool Expected)
   {
     var Actions = new MockMultipleChoicesWithParameters();
-    var Parameters = new MultipleChoicesWithParameters.__AllParameters();
-    Parameters.__MoreActions = Expected;
+    var Parameters = new MultipleChoicesWithParameters.Output();
+    Parameters.MoreActions = Expected;
 
     var Actual = Parameters.InterpretFor(Actions);
 
@@ -308,8 +311,8 @@ public partial class GeneratedCognitiveActions
   public async Task AsyncReturnsMoreActions(bool Expected)
   {
     var Actions = new MockAsyncThoughtfulAction();
-    var Parameters = new AsyncThoughtfulAction.__AllParameters();
-    Parameters.__MoreActions = Expected;
+    var Parameters = new AsyncThoughtfulAction.Output();
+    Parameters.MoreActions = Expected;
 
     var Actual = await Parameters.InterpretFor(Actions);
 

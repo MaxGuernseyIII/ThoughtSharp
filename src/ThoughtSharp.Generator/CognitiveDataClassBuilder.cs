@@ -29,10 +29,11 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   readonly List<CognitiveParameterCodec> Codecs = [];
   readonly List<CognitiveParameter> Parameters = [];
   public bool IsPublic { get; set; }
+  public bool ExplicitConstructor { get; set; }
 
   public CognitiveDataClass Build()
   {
-    return new(TypeAddress, [..Parameters], [..Codecs], IsPublic);
+    return new(TypeAddress, [..Parameters], [..Codecs], IsPublic, ExplicitConstructor);
   }
 
   public void AddParameterValue(IValueSymbol Member, bool Implied = false)
