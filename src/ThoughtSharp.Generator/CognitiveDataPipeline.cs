@@ -149,7 +149,6 @@ static class CognitiveDataPipeline
         W.Indent--;
         W.WriteLine("}");
         W.WriteLine("Batches.Add(Batch);");
-        W.WriteLine($"CurrentIndex += {Model.Count.ToLiteralExpression()};");
         W.Indent--;
         W.WriteLine("}");
         W.WriteLine();

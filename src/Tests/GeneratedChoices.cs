@@ -39,7 +39,7 @@ public partial class GeneratedChoices
       new(new(), new() {Parameter = Any.Float})
     ];
     var Category = new MockCategory(Options);
-    
+
     var Batches = Category.ToInputBatches();
 
     Batches.Should().BeEquivalentTo<MockCategory.Input>([
@@ -67,6 +67,114 @@ public partial class GeneratedChoices
           },
         ]
       }
+    ]);
+  }
+
+  [TestMethod]
+  public void EncodeOnlyPartialBatch()
+  {
+    IReadOnlyList<CognitiveOption<MockPayload, MockData>> Options =
+    [
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+    ];
+    var Category = new MockCategory(Options);
+
+    var Batches = Category.ToInputBatches();
+
+    Batches.Should().BeEquivalentTo<MockCategory.Input>([
+      new()
+      {
+        IsFinalBatch = true,
+        Items = [
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 0,
+            Descriptor = Options[0].Descriptor
+          },
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 1,
+            Descriptor = Options[1].Descriptor
+          },
+          new()
+          {
+            IsHot = false,
+            ItemNumber = 0,
+            Descriptor = new()
+          }
+        ]
+      }
+    ]);
+  }
+
+  [TestMethod]
+  public void EncodeMultipleFullBatches()
+  {
+    IReadOnlyList<CognitiveOption<MockPayload, MockData>> Options =
+    [
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+    ];
+    var Category = new MockCategory(Options);
+
+    var Batches = Category.ToInputBatches();
+
+    Batches.Should().BeEquivalentTo<MockCategory.Input>([
+      new()
+      {
+        IsFinalBatch = false,
+        Items = [
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 0,
+            Descriptor = Options[0].Descriptor
+          },
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 1,
+            Descriptor = Options[1].Descriptor
+          },
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 2,
+            Descriptor = Options[2].Descriptor
+          }
+        ]
+      },
+      new()
+      {
+        IsFinalBatch = true,
+        Items = [
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 3,
+            Descriptor = Options[3].Descriptor
+          },
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 4,
+            Descriptor = Options[4].Descriptor
+          },
+          new()
+          {
+            IsHot = true,
+            ItemNumber = 5,
+            Descriptor = Options[5].Descriptor
+          }
+        ]
+      },
     ]);
   }
 
