@@ -32,6 +32,71 @@ static class CognitiveDataPipeline
     RenderExplicitDataClasses(Context);
     RenderActionsClasses(Context);
     RenderCategories(Context);
+    RenderMinds(Context);
+  }
+
+  static void RenderMinds(IncrementalGeneratorInitializationContext Context)
+  {
+    var RawSource = Context.SyntaxProvider.ForAttributeWithMetadataName(CognitiveAttributeNames.FullMindAttribute,
+      (Node, _) => Node is TypeDeclarationSyntax,
+      (C, _) => MindModelFactory.MakeMindModel(C));
+
+    BindRenderingOfMindModels(Context, RawSource.Select((Pair, _) => Pair.Result));
+    BindRenderingOfCognitiveDataClasses(Context, RawSource.SelectMany((Pair, _) => Pair.AssociatedDataTypes));
+  }
+
+  static void BindRenderingOfMindModels(IncrementalGeneratorInitializationContext Context,
+    IncrementalValuesProvider<MindModel> IncrementalValuesProvider)
+  {
+    Context.RegisterSourceOutput(
+      IncrementalValuesProvider,
+      (C, M) =>
+      {
+        C.AddSource(
+          GeneratedTypeFormatter.GetFilename(M.TypeName),
+          GeneratedTypeFormatter.GenerateType(new(M.TypeName)
+          {
+            WriteHeader = W =>
+            {
+              W.WriteLine("using ThoughtSharp.Runtime;");
+              W.WriteLine();
+            },
+            WriteAfterTypeName = W=>
+            {
+              W.Write("(Brain Brain)");
+            },
+            WriteBody = W =>
+            {
+              ushort OperationCode = 1;
+              foreach (var MakeOperation in M.MakeOperations)
+              {
+                W.WriteLine($"public partial Thought<{MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
+                W.WriteLine("{");
+                W.Indent++;
+                W.WriteLine("var InputObject = new Input();");
+                W.WriteLine($"InputObject.OperationCode = {OperationCode.ToLiteralExpression()};");
+
+                foreach (var Parameter in MakeOperation.Parameters)
+                {
+                  W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {Parameter.Name};");
+                }
+
+                W.WriteLine("var InputBuffer = new float[Input.Length];");
+                W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+                W.WriteLine();
+                W.WriteLine("var Inference = Brain.MakeInference(InputBuffer);");
+                W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+
+                W.WriteLine($"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name});");
+                W.Indent--;
+                W.WriteLine("}");
+
+                OperationCode++;
+              }
+            }
+          })
+        );
+      });
   }
 
   static void RenderCategories(IncrementalGeneratorInitializationContext Context)
@@ -43,7 +108,8 @@ static class CognitiveDataPipeline
     BindRenderingOfCognitiveDataClasses(Context, RawSource.SelectMany((Pair, _) => Pair.AssociatedData));
   }
 
-  static void BindRenderingOfCognitiveCategories(IncrementalGeneratorInitializationContext Context, IncrementalValuesProvider<CognitiveCategoryModel> ModelsProvider)
+  static void BindRenderingOfCognitiveCategories(IncrementalGeneratorInitializationContext Context,
+    IncrementalValuesProvider<CognitiveCategoryModel> ModelsProvider)
   {
     Context.RegisterSourceOutput(ModelsProvider, (C, M) =>
     {
@@ -61,10 +127,10 @@ static class CognitiveDataPipeline
   static void RenderActionsClasses(IncrementalGeneratorInitializationContext Context)
   {
     var RawProvider = Context.SyntaxProvider.ForAttributeWithMetadataName(
-        CognitiveAttributeNames.FullActionsAttribute,
-        (Node, _) => Node is InterfaceDeclarationSyntax,
-        (InnerContext, _) => InnerContext
-      ).Select((C, _) => CognitiveActionsModelFactory.MakeModelsForCognitiveActions(C));
+      CognitiveAttributeNames.FullActionsAttribute,
+      (Node, _) => Node is InterfaceDeclarationSyntax,
+      (InnerContext, _) => InnerContext
+    ).Select((C, _) => CognitiveActionsModelFactory.MakeModelsForCognitiveActions(C));
 
     BindRenderingOfCognitiveDataClasses(Context, RawProvider.SelectMany((Items, _) => Items.CognitiveDataClasses));
     BindRenderingOfCognitiveDataInterpreters(Context,

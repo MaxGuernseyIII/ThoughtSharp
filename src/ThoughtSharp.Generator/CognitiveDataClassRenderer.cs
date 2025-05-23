@@ -30,7 +30,7 @@ class CognitiveDataClassRenderer
     CognitiveDataClass CognitiveDataClass, IndentedTextWriter Target)
   {
     if (CognitiveDataClass.ExplicitConstructor)
-      Target.Write($"public {CognitiveDataClass.Address.TypeName.Name}() {{ }}");
+      Target.WriteLine($"public {CognitiveDataClass.Address.TypeName.Name}() {{ }}");
 
     var CodecDictionary = CognitiveDataClass.Codecs.ToDictionary(C => C.Name);
 
@@ -129,8 +129,9 @@ class CognitiveDataClassRenderer
     {
       using var Writer = new IndentedTextWriter(Underlying, "  ");
       GeneratedTypeFormatter.GenerateType(Writer,
-        new(CognitiveDataObject.Address, W => { GenerateCognitiveDataClassContentToWriter(CognitiveDataObject, W); })
+        new(CognitiveDataObject.Address)
         {
+          WriteBody = W => { GenerateCognitiveDataClassContentToWriter(CognitiveDataObject, W); },
           WriteHeader = W =>
           {
             W.WriteLine("using ThoughtSharp.Runtime;");

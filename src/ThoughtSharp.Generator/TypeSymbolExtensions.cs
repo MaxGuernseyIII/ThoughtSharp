@@ -21,16 +21,40 @@
 // SOFTWARE.
 
 using Microsoft.CodeAnalysis;
+using System.Xml.Linq;
 
 namespace ThoughtSharp.Generator;
 
 public static class TypeSymbolExtensions
 {
+  //public static bool IsCognitiveData(this ITypeSymbol T)
+  //{
+  //  if (T.GetAttributes().Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.))
+  //    return true;
+
+  //  if (T.Name == "CognitiveData")
+  //    return true;
+
+  //  if (T.BaseType?.IsCognitiveData() ?? false)
+  //    return true;
+
+  //  if (T.AllInterfaces.Any(I => I.IsCognitiveData()))
+  //    return true;
+
+  //  return false;
+  //}
+
   public static string GetFullPath(this ITypeSymbol T)
   {
     return T.ToDisplayString(new SymbolDisplayFormat(
       typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
       genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters)).Trim();
+  }
+
+  public static bool IsThoughtTypeWithPayload(this ITypeSymbol Type)
+  {
+    var FullPath = Type.GetFullPath();
+    return FullPath.StartsWith("ThoughtSharp.Runtime.Thought<");
   }
 
   public static bool IsThoughtType(this ITypeSymbol Type)

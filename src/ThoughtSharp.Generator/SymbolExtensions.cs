@@ -106,4 +106,19 @@ static class SymbolExtensions
     };
     return Expression.NormalizeWhitespace().ToFullString();
   }
+
+  public static CognitiveDataClass GetParametersDataModel(this IMethodSymbol Method, TypeAddress MethodType)
+  {
+    var ThisDataClassBuilder = new CognitiveDataClassBuilder(MethodType)
+    {
+      IsPublic = true,
+      ExplicitConstructor = true
+    };
+
+    foreach (var Parameter in Method.Parameters.Select(P => P.ToValueSymbolOrDefault()!))
+      ThisDataClassBuilder.AddParameterValue(Parameter, true);
+
+    var ThisDataClass = ThisDataClassBuilder.Build();
+    return ThisDataClass;
+  }
 }

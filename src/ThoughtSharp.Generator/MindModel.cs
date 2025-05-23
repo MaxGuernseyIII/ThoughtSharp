@@ -22,20 +22,8 @@
 
 namespace ThoughtSharp.Generator;
 
-static class CognitiveAttributeNames
+class MindModel(TypeAddress TypeName, IReadOnlyList<MindMakeOperationModel> MakeOperations)
 {
-  public const string Namespace = "ThoughtSharp.Runtime.";
-  public const string DataAttributeName = "CognitiveDataAttribute";
-  public const string ActionsAttributeName = "CognitiveActionsAttribute";
-  public const string CategoryAttributeName = "CognitiveCategoryAttribute";
-  public const string FullDataAttribute = Namespace + DataAttributeName;
-  public const string FullActionsAttribute = Namespace + ActionsAttributeName;
-  public const string FullCategoryAttribute = Namespace + CategoryAttributeName + "`2";
-  public const string FullMindAttribute = Namespace + MindAttributeName;
-  public const string MindAttributeName = "MindAttribute";
-  public const string UseAttributeName = "UseAttribute";
-  public const string MakeAttributeName = "MakeAttribute";
-  public const string DataCountAttributeName = "CognitiveDataCountAttribute";
-  public const string DataLengthAttributeName = "CognitiveDataLengthAttribute";
-  public const string DataBoundsAttributeName = "CognitiveDataBoundsAttribute";
+  public TypeAddress TypeName { get; } = TypeName;
+  public IReadOnlyList<MindMakeOperationModel> MakeOperations { get; } = MakeOperations;
 }

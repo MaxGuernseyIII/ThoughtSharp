@@ -20,22 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Generator;
+using FluentAssertions;
+using ThoughtSharp.Runtime;
 
-static class CognitiveAttributeNames
+namespace Tests.Mocks;
+
+class MockBrain(int InputLength, int OutputLength) : Brain
 {
-  public const string Namespace = "ThoughtSharp.Runtime.";
-  public const string DataAttributeName = "CognitiveDataAttribute";
-  public const string ActionsAttributeName = "CognitiveActionsAttribute";
-  public const string CategoryAttributeName = "CognitiveCategoryAttribute";
-  public const string FullDataAttribute = Namespace + DataAttributeName;
-  public const string FullActionsAttribute = Namespace + ActionsAttributeName;
-  public const string FullCategoryAttribute = Namespace + CategoryAttributeName + "`2";
-  public const string FullMindAttribute = Namespace + MindAttributeName;
-  public const string MindAttributeName = "MindAttribute";
-  public const string UseAttributeName = "UseAttribute";
-  public const string MakeAttributeName = "MakeAttribute";
-  public const string DataCountAttributeName = "CognitiveDataCountAttribute";
-  public const string DataLengthAttributeName = "CognitiveDataLengthAttribute";
-  public const string DataBoundsAttributeName = "CognitiveDataBoundsAttribute";
+  public Func<float[], Inference> MakeInferenceFunc = Parameters => new MockInference(new float[OutputLength]);
+
+  public Inference MakeInference(float[] Parameters)
+  {
+    Parameters.Length.Should().Be(InputLength);
+
+    return MakeInferenceFunc(Parameters);
+  }
 }

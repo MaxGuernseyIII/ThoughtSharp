@@ -53,18 +53,9 @@ static class CognitiveActionsModelFactory
     foreach (var Method in Methods)
     {
       var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("struct", $"{Method.Name}Parameters"));
-      var ThisDataClassBuilder = new CognitiveDataClassBuilder(MethodType)
-      {
-        IsPublic = true,
-        ExplicitConstructor = true
-      };
-
-      foreach (var Parameter in Method.Parameters.Select(P => P.ToValueSymbolOrDefault()!))
-        ThisDataClassBuilder.AddParameterValue(Parameter, true);
-
-      var ThisDataClass = ThisDataClassBuilder.Build();
-      CognitiveDataClasses.Add(ThisDataClass);
+      var ThisDataClass = Method.GetParametersDataModel(MethodType);
       CompleteParametersDataBuilder.AddCompilerDefinedSubDataParameter(Method.Name, MethodType.FullName);
+      CognitiveDataClasses.Add(ThisDataClass);
       InterpreterBuilder.AssociateMethodWithDataClass(Method, ThisDataClass);
     }
 

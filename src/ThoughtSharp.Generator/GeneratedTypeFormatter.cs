@@ -35,15 +35,30 @@ static class GeneratedTypeFormatter
           .Concat([Address.TypeName.Name]))) + Suffix + ".g.cs";
   }
 
-  public class TypeGenerationRequest(TypeAddress Type, Action<IndentedTextWriter> WriteBody)
+  public class TypeGenerationRequest(TypeAddress Type)
   {
     public TypeAddress Type { get; } = Type;
     public Action<IndentedTextWriter> WriteHeader { get; set; } = Ignore;
     public Action<IndentedTextWriter> WriteBeforeTypeDeclaration { get; set; } = Ignore;
     public Action<IndentedTextWriter> WriteAfterTypeName { get; set; } = Ignore;
-    public Action<IndentedTextWriter> WriteBody { get; } = WriteBody;
+    public Action<IndentedTextWriter> WriteBody { get; set; } = Ignore;
 
     static void Ignore(IndentedTextWriter _) {}
+  }
+
+  public static string GenerateType(TypeGenerationRequest Request)
+  {
+    using var StringWriter = new StringWriter();
+
+    {
+      var IndentedWriter = new IndentedTextWriter(StringWriter);
+
+      GenerateType(IndentedWriter, Request);
+    }
+
+    StringWriter.Close();
+
+    return StringWriter.ToString();
   }
 
   public static void GenerateType(IndentedTextWriter Target, TypeGenerationRequest Request)

@@ -63,7 +63,7 @@ static class Any
       ResultBuilder.Append((char)Core.Next(char.MaxValue));
     }
 
-    return ResultBuilder.ToString();
+    return ResultBuilder.ToString().TrimEnd((char) 0);
   }
 
   public static T EnumValue<T>()

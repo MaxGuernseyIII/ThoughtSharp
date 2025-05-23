@@ -28,6 +28,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 {
   readonly List<CognitiveParameterCodec> Codecs = [];
   readonly List<CognitiveParameter> Parameters = [];
+  public TypeAddress TypeAddress { get; } = TypeAddress;
   public bool IsPublic { get; set; }
   public bool ExplicitConstructor { get; set; }
 
@@ -60,9 +61,28 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
       : Member.Type;
 
     var CodecExpression = GetCodecExpression(EncodedType, Member);
+    var Initializer = GetInitializerExpression(Member, ExplicitCount);
 
     return new(Member.Name, CodecExpression, ExplicitCount, Implied,
-      EncodedType.GetFullPath(), null);
+      EncodedType.GetFullPath(), Initializer);
+  }
+
+  static string GetInitializerExpression(IValueSymbol Member, int? ExplicitCount)
+  {
+    var CoreExpression = Member.Type.SpecialType switch
+    {
+      SpecialType.System_Boolean or SpecialType.System_Byte or SpecialType.System_SByte or SpecialType.System_UInt16
+        or SpecialType.System_Int16 or SpecialType.System_UInt32 or SpecialType.System_Int64
+        or SpecialType.System_UInt64 =>
+        "default",
+      SpecialType.System_String => "string.Empty",
+      _ => "new()",
+    };
+
+    if (ExplicitCount is not null)
+      return $"[{string.Join(", ", Enumerable.Range(0, ExplicitCount.Value).Select(_ => CoreExpression))}]";
+
+    return CoreExpression;
   }
 
   static (object Minimum, object Maximum)? GetImplicitBounds(ITypeSymbol MemberType)
@@ -218,5 +238,10 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   {
     var TypeName = typeof(T).FullName!;
     AddCompilerDefinedParameter(Name, GetBoundedIntLikeCodecName(TypeName, MinValue, MaxValue), null, TypeName);
+  }
+
+  public void AddCompilerDefinedSubDataParameter(string Name, CognitiveDataClassBuilder SubDataBuilder)
+  {
+    AddCompilerDefinedSubDataParameter(Name, SubDataBuilder.TypeAddress.FullName);
   }
 }

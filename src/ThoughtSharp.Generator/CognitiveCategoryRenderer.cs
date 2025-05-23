@@ -166,8 +166,9 @@ static class CognitiveCategoryRenderer
     {
       using var Writer = new IndentedTextWriter(StringWriter, "  ");
 
-      GeneratedTypeFormatter.GenerateType(Writer, new(Model.CategoryType, RenderingOperation.GenerateBody)
+      GeneratedTypeFormatter.GenerateType(Writer, new(Model.CategoryType)
       {
+        WriteBody = RenderingOperation.GenerateBody,
         WriteHeader = RenderingOperation.GenerateHeader,
         WriteAfterTypeName = RenderingOperation.AdornTypeName
       });

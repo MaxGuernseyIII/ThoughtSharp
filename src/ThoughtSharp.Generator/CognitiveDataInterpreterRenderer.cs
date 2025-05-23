@@ -32,69 +32,70 @@ static class CognitiveDataInterpreterRenderer
 
     {
       using var Writer = new IndentedTextWriter(StringWriter, "  ");
-      GeneratedTypeFormatter.GenerateType(Writer, new(Interpreter.DataClass.Address, W =>
+      GeneratedTypeFormatter.GenerateType(Writer, new(Interpreter.DataClass.Address)
       {
-        var MethodIsAsync = Interpreter.Paths.Any(P => P.RequiresAwait);
-        var ReturnValue = MethodIsAsync ? "Task<Thought<bool>>" : "Thought<bool>";
-
-        W.WriteLine($"public {ReturnValue} InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("var ActionCode = this.ActionCode;");
-        W.WriteLine("var MoreActions = this.MoreActions;");
-        W.WriteLine("var Parameters = this.Parameters;");
-        W.WriteLine();
-        if (MethodIsAsync)
-          W.WriteLine("return Thought.ThinkAsync(async R =>");
-        else
-          W.WriteLine("return Thought.Think(R =>");
-        W.Indent++;
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("switch (ActionCode)");
-        W.WriteLine("{");
-        W.Indent++;
-
-        W.WriteLine("case 0: break;");
-        var PathId = 1;
-        foreach (var Path in Interpreter.Paths)
+        WriteBody = W =>
         {
-          W.WriteLine($"case {PathId}:");
+          var MethodIsAsync = Interpreter.Paths.Any(P => P.RequiresAwait);
+          var ReturnValue = MethodIsAsync ? "Task<Thought<bool>>" : "Thought<bool>";
+
+          W.WriteLine($"public {ReturnValue} InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
+          W.WriteLine("{");
+          W.Indent++;
+          W.WriteLine("var ActionCode = this.ActionCode;");
+          W.WriteLine("var MoreActions = this.MoreActions;");
+          W.WriteLine("var Parameters = this.Parameters;");
+          W.WriteLine();
+          if (MethodIsAsync)
+            W.WriteLine("return Thought.ThinkAsync(async R =>");
+          else
+            W.WriteLine("return Thought.Think(R =>");
+          W.Indent++;
+          W.WriteLine("{");
+          W.Indent++;
+          W.WriteLine("switch (ActionCode)");
+          W.WriteLine("{");
           W.Indent++;
 
-          if (Path.IsThoughtful)
-            W.Write("R.Incorporate(");
+          W.WriteLine("case 0: break;");
+          var PathId = 1;
+          foreach (var Path in Interpreter.Paths)
+          {
+            W.WriteLine($"case {PathId}:");
+            W.Indent++;
 
-          if (Path.RequiresAwait)
-            W.Write("await ");
+            if (Path.IsThoughtful)
+              W.Write("R.Incorporate(");
 
-          W.Write($"ToInterpret.{Path.MethodName}({string.Join(", ",
-            Path.ParametersClass.Parameters.Select(P => $"Parameters.{Path.MethodName}.{P.Name}"))})");
-          if (Path.IsThoughtful)
-            W.Write(")");
+            if (Path.RequiresAwait)
+              W.Write("await ");
 
-          W.WriteLine(";");
+            W.Write($"ToInterpret.{Path.MethodName}({string.Join(", ",
+              Path.ParametersClass.Parameters.Select(P => $"Parameters.{Path.MethodName}.{P.Name}"))})");
+            if (Path.IsThoughtful)
+              W.Write(")");
 
-          W.WriteLine("break;");
+            W.WriteLine(";");
+
+            W.WriteLine("break;");
+            W.Indent--;
+
+            PathId++;
+          }
+
+          W.WriteLine(@"default: throw new InvalidOperationException($""Unknown action code: {ActionCode}"");");
+
           W.Indent--;
-
-          PathId++;
-        }
-
-        W.WriteLine(@"default: throw new InvalidOperationException($""Unknown action code: {ActionCode}"");");
-
-        W.Indent--;
-        W.WriteLine("}");
-        W.WriteLine();
-        W.WriteLine("return MoreActions;");
-        W.Indent--;
-        W.WriteLine("}");
-        W.Indent--;
-        W.WriteLine(");");
-        W.Indent--;
-        W.WriteLine("}");
-      })
-      {
+          W.WriteLine("}");
+          W.WriteLine();
+          W.WriteLine("return MoreActions;");
+          W.Indent--;
+          W.WriteLine("}");
+          W.Indent--;
+          W.WriteLine(");");
+          W.Indent--;
+          W.WriteLine("}");
+        },
         WriteHeader = W =>
         {
           W.WriteLine("using ThoughtSharp.Runtime;");
