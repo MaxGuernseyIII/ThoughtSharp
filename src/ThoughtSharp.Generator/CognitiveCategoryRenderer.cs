@@ -46,62 +46,93 @@ static class CognitiveCategoryRenderer
 
     void GenerateToInputBatchesMethod(IndentedTextWriter W)
     {
-      W.WriteLine("public IReadOnlyList<Input> ToInputBatches()");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("var Batches = new List<Input>();");
-      W.WriteLine("ushort CurrentIndex = 0;");
-      W.WriteLine();
+      MethodHeader();
+      DefineVariables();
+      Spacer();
+      BatchesGenerationLoop();
+      Spacer();
+      SetLastBatch();
+      MethodFooter();
 
-      W.WriteLine("while(AllOptions.Count > CurrentIndex)");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("var Batch = new Input();");
-      W.WriteLine($"for (ushort I = 0; I < {Model.Count.ToLiteralExpression()}; ++I, ++CurrentIndex)");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("if (CurrentIndex < AllOptions.Count)");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("Batch.Items[I] = new()");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("IsHot = true,");
-      W.WriteLine("ItemNumber = CurrentIndex,");
-      W.WriteLine("Descriptor = AllOptions[CurrentIndex].Descriptor");
-      W.Indent--;
-      W.WriteLine("};");
-      W.Indent--;
-      W.WriteLine("}");
-      W.WriteLine("else");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("Batch.Items[I] = new()");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("IsHot = false,");
-      W.WriteLine("ItemNumber = 0,");
-      W.WriteLine("Descriptor = new()");
-      W.Indent--;
-      W.WriteLine("};");
-      W.Indent--;
-      W.WriteLine("}");
-      W.Indent--;
-      W.WriteLine("}");
-      W.WriteLine("Batches.Add(Batch);");
-      W.Indent--;
-      W.WriteLine("}");
-      W.WriteLine();
-      W.WriteLine("if (Batches.Any())");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("Batches.Last().IsFinalBatch = true;");
-      W.Indent--;
-      W.WriteLine("}");
-      W.WriteLine();
-      W.WriteLine("return Batches;");
-      W.Indent--;
-      W.WriteLine("}");
+      void MethodHeader()
+      {
+        W.WriteLine("public IReadOnlyList<Input> ToInputBatches()");
+        Open();
+      }
+
+      void SetLastBatch()
+      {
+        W.WriteLine("if (Batches.Any())");
+        Open();
+        W.WriteLine("Batches.Last().IsFinalBatch = true;");
+        Close();
+      }
+
+      void MethodFooter()
+      {
+        Spacer();
+        W.WriteLine("return Batches;");
+        Close();
+      }
+
+      void Spacer()
+      {
+        W.WriteLine();
+      }
+
+      void Open()
+      {
+        W.WriteLine("{");
+        W.Indent++;
+      }
+
+      void Close(string Suffix = "")
+      {
+        W.Indent--;
+        W.Write("}");
+        W.WriteLine(Suffix);
+      }
+
+      void DefineVariables()
+      {
+        W.WriteLine("var Batches = new List<Input>();");
+        W.WriteLine("ushort CurrentIndex = 0;");
+      }
+
+      void BatchesGenerationLoop()
+      {
+        W.WriteLine("while(AllOptions.Count > CurrentIndex)");
+        Open();
+        W.WriteLine("var Batch = new Input();");
+        SingleBatchGenerationLoop();
+        W.WriteLine("Batches.Add(Batch);");
+        Close();
+      }
+
+      void SingleBatchGenerationLoop()
+      {
+        W.WriteLine($"for (ushort I = 0; I < {Model.Count.ToLiteralExpression()}; ++I, ++CurrentIndex)");
+        Open();
+        W.WriteLine("if (CurrentIndex < AllOptions.Count)");
+        Open();
+        W.WriteLine("Batch.Items[I] = new()");
+        Open();
+        W.WriteLine("IsHot = true,");
+        W.WriteLine("ItemNumber = CurrentIndex,");
+        W.WriteLine("Descriptor = AllOptions[CurrentIndex].Descriptor");
+        Close(";");
+        Close();
+        W.WriteLine("else");
+        Open();
+        W.WriteLine("Batch.Items[I] = new()");
+        Open();
+        W.WriteLine("IsHot = false,");
+        W.WriteLine("ItemNumber = 0,");
+        W.WriteLine("Descriptor = new()");
+        Close(";");
+        Close();
+        Close();
+      }
     }
 
     void GenerateInterpretMethod(IndentedTextWriter W)
