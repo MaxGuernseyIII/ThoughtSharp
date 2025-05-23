@@ -271,6 +271,26 @@ public partial class GeneratedChoices
     ]);
   }
 
+  [TestMethod]
+  public void MakeSelection()
+  {
+    var Category = new MockCategory([
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float}),
+    ]);
+    var Index = (ushort) Any.Int(0, Category.AllOptions.Count - 1);
+    var Output = new MockCategory.Output() {Selection = Index};
+
+    var Selection = Category.Interpret(Output);
+
+    Selection.Should().BeSameAs(Category.AllOptions[Index].Payload);
+  }
+
   class MockPayload;
 
   [CognitiveData]

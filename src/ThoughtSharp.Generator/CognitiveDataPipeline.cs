@@ -20,9 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.CodeDom.Compiler;
-using System.Collections.Immutable;
-using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -37,150 +34,23 @@ static class CognitiveDataPipeline
     RenderCategories(Context);
   }
 
-  private static void RenderCategories(IncrementalGeneratorInitializationContext Context)
+  static void RenderCategories(IncrementalGeneratorInitializationContext Context)
   {
     var RawSource = Context.SyntaxProvider.ForAttributeWithMetadataName(CognitiveAttributeNames.FullCategoryAttribute,
       (Node, _) => Node is TypeDeclarationSyntax,
-      (C, _) =>
-      {
-        var Type = (INamedTypeSymbol)C.TargetSymbol;
-        var Attribute = Type.GetAttributes()
-          .First(A => A.AttributeClass?.Name == CognitiveAttributeNames.CategoryAttributeName);
-        var PayloadType = Attribute.AttributeClass!.TypeArguments[0];
-        var DescriptorType = Attribute.AttributeClass!.TypeArguments[1];
-        var Count = Convert.ToUInt16(Attribute.ConstructorArguments[0].Value);
-        var TypeName = TypeAddress.ForSymbol(Type);
-
-        var DataObjects = new List<CognitiveDataClass>();
-        var DescriptorTypeAddress = TypeAddress.ForSymbol(DescriptorType);
-        var ItemClassName = "InputItem";
-        var ItemType = TypeName.GetNested(TypeIdentifier.Explicit("class", ItemClassName));
-        var ItemBuilder = new CognitiveDataClassBuilder(ItemType)
-        {
-          IsPublic = true
-        };
-        ItemBuilder.AddCompilerDefinedBoolParameter("IsHot");
-        ItemBuilder.AddCompilerDefinedBoundedIntLikeParameter("ItemNumber", ushort.MinValue, ushort.MaxValue);
-        ItemBuilder.AddCompilerDefinedSubDataParameter("Descriptor", DescriptorTypeAddress.FullName);
-        DataObjects.Add(ItemBuilder.Build());
-        var QuestionBuilder =
-          new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Input")))
-          {
-            IsPublic = true
-          };
-        QuestionBuilder.AddCompilerDefinedSubDataArrayParameter("Items", ItemClassName, Count);
-        QuestionBuilder.AddCompilerDefinedBoolParameter("IsFinalBatch");
-        DataObjects.Add(QuestionBuilder.Build());
-
-        var Answer =
-          new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Output")))
-          {
-            IsPublic = true
-          };
-        Answer.AddCompilerDefinedBoundedIntLikeParameter("Selection", ushort.MinValue, ushort.MaxValue);
-        DataObjects.Add(Answer.Build());
-
-        return (new CognitiveCategoryModel(TypeName, TypeAddress.ForSymbol(PayloadType), DescriptorTypeAddress, Count), DataObjects.ToImmutableArray());
-      }
-    );
-    Context.RegisterSourceOutput(RawSource.Select((Pair, _) => Pair.Item1), (C, M) =>
-    {
-      C.AddSource(
-        GeneratedTypeFormatter.GetFilename(M.CategoryType),
-        GenerateCategoryType(M)
-        );
-    });
-    BindRenderingOfCognitiveDataClasses(Context, RawSource.SelectMany((Pair, _) => Pair.Item2));
+      (C, _) => CognitiveCategoryModelFactory.ConvertToCognitiveCategoryAndAssociatedData(C));
+    BindRenderingOfCognitiveCategories(Context, RawSource.Select((Pair, _) => Pair.Category));
+    BindRenderingOfCognitiveDataClasses(Context, RawSource.SelectMany((Pair, _) => Pair.AssociatedData));
   }
 
-  private static string GenerateCategoryType(CognitiveCategoryModel Model)
+  static void BindRenderingOfCognitiveCategories(IncrementalGeneratorInitializationContext Context, IncrementalValuesProvider<CognitiveCategoryModel> ModelsProvider)
   {
-    var TypeParameters = $"<{Model.PayloadType.FullName}, {Model.DescriptorType.FullName}>";
-    using var StringWriter = new StringWriter();
-
+    Context.RegisterSourceOutput(ModelsProvider, (C, M) =>
     {
-      using var Writer = new IndentedTextWriter(StringWriter, "  ");
-
-      GeneratedTypeFormatter.GenerateType(Writer, new(Model.CategoryType, W =>
-      {
-        W.WriteLine($"public IReadOnlyList<CognitiveOption{TypeParameters}> AllOptions {{ get; }} = Options;");
-        W.WriteLine();
-
-        W.WriteLine($"public IReadOnlyList<Input> ToInputBatches()");
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("var Batches = new List<Input>();");
-        W.WriteLine("ushort CurrentIndex = 0;");
-        W.WriteLine();
-
-        W.WriteLine("while(AllOptions.Count > CurrentIndex)");
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("var Batch = new Input();");
-        W.WriteLine($"for (ushort I = 0; I < {Model.Count.ToLiteralExpression()}; ++I, ++CurrentIndex)");
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("if (CurrentIndex < AllOptions.Count)");
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("Batch.Items[I] = new()");
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("IsHot = true,");
-        W.WriteLine("ItemNumber = CurrentIndex,");
-        W.WriteLine("Descriptor = AllOptions[CurrentIndex].Descriptor");
-        W.Indent--;
-        W.WriteLine("};");
-        W.Indent--;
-        W.WriteLine("}");
-        W.WriteLine("else");
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("Batch.Items[I] = new()");
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("IsHot = false,");
-        W.WriteLine("ItemNumber = 0,");
-        W.WriteLine("Descriptor = new()");
-        W.Indent--;
-        W.WriteLine("};");
-        W.Indent--;
-        W.WriteLine("}");
-        W.Indent--;
-        W.WriteLine("}");
-        W.WriteLine("Batches.Add(Batch);");
-        W.Indent--;
-        W.WriteLine("}");
-        W.WriteLine();
-        W.WriteLine("if (Batches.Any())");
-        W.WriteLine("{");
-        W.Indent++;
-        W.WriteLine("Batches.Last().IsFinalBatch = true;");
-        W.Indent--;
-        W.WriteLine("}");
-        W.WriteLine();
-        W.WriteLine("return Batches;");
-        W.Indent--;
-        W.WriteLine("}");
-
-      })
-      {
-        WriteHeader = W =>
-        {
-          W.WriteLine("using ThoughtSharp.Runtime;");
-          W.WriteLine();
-        },
-        WriteAfterTypeName = W =>
-        {
-          W.WriteLine($"(IReadOnlyList<CognitiveOption{TypeParameters}> Options)");
-          W.Write($"  : CognitiveCategory{TypeParameters}");
-        }
-      });
-    }
-
-    StringWriter.Close();
-
-    return StringWriter.ToString();
+      C.AddSource(
+        GeneratedTypeFormatter.GetFilename(M.CategoryType), CognitiveCategoryRenderer.GenerateCategoryType(M)
+      );
+    });
   }
 
   static void RenderExplicitDataClasses(IncrementalGeneratorInitializationContext Context)
