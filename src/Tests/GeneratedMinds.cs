@@ -251,6 +251,19 @@ public partial class GeneratedMinds
     ActualCapture.Captured.Should().Equal(State);
   }
 
+  [TestMethod]
+  public void UseSynchronousActionSurfaceCapturesStateFromOutput()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var State = Any.FloatArray(StatefulMind.StateCount);
+    var Mind = new StatefulMind(Brain);
+    SetOutputState(Brain, State);
+
+    Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 100), Any.Int(0, 100));
+
+    Mind.SomeState.Should().Equal(State);
+  }
+
   static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,
     float? ExpectedSomeOtherData)
   {

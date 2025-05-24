@@ -128,6 +128,7 @@ static class MindRenderer
     W.WriteLine();
     W.WriteLine("var Inference = Brain.MakeInference(InputBuffer);");
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+    W.WriteLine("CopyStateFrom(ref OutputObject);");
     W.WriteLine();
     W.WriteLine("return Thought.Think(R =>");
     W.WriteLine("{");
