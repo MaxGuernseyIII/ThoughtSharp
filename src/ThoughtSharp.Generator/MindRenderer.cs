@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using System.CodeDom.Compiler;
-using System.Runtime.InteropServices;
 
 namespace ThoughtSharp.Generator;
 
@@ -41,21 +40,25 @@ static class MindRenderer
       {
         ushort OperationCode = 1;
 
-        RenderStateCopyMethods(W, M);
+        RenderStateCopyMembers(W, M);
 
         foreach (var MakeOperation in M.MakeOperations)
-          RenderMakeMethod(W, MakeOperation, OperationCode++);
+          RenderMakeMethod(W, M, MakeOperation, OperationCode++);
 
         foreach (var UseOperation in M.UseOperations) 
-          RenderUseMethod(W, UseOperation, OperationCode++);
+          RenderUseMethod(W, M, UseOperation, OperationCode++);
 
         foreach (var ChooseOperation in M.ChooseOperations)
-          RenderChooseMethod(W, ChooseOperation, OperationCode++);
+          RenderChooseMethod(W, M, ChooseOperation, OperationCode++);
       }
     });
   }
 
-  static void RenderChooseMethod(IndentedTextWriter W, MindChooseOperationModel ChooseOperation, ushort OpCode)
+  static void RenderChooseMethod(
+    IndentedTextWriter W, 
+    MindModel MindModel, 
+    MindChooseOperationModel ChooseOperation,
+    ushort OpCode)
   {
     W.WriteLine($"public partial {ChooseOperation.ReturnType} {ChooseOperation.Name}({string.Join(", ", ChooseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
@@ -65,33 +68,32 @@ static class MindRenderer
     W.WriteLine("}");
   }
 
-  static void RenderStateCopyMethods(IndentedTextWriter W, MindModel Model)
+  static void RenderStateCopyMembers(IndentedTextWriter W, MindModel Model)
   {
-    W.WriteLine("void CopyStateTo(ref Input InputObject)");
-    W.WriteLine("{");
-    W.Indent++;
-    foreach (var State in Model.States)
-      W.WriteLine($"InputObject.Parameters.{State.Name}.Value = {State.Name};");
-    W.Indent--;
-    W.WriteLine("}");
-
-    W.WriteLine("void CopyStateFrom(ref readonly Output OutputObject)");
-    W.WriteLine("{");
-    W.Indent++;
-    foreach (var State in Model.States)
-      W.WriteLine($"{State.Name} = OutputObject.Parameters.{State.Name}.Value;");
-    W.Indent--;
-    W.WriteLine("}");
-
     W.WriteLine("static readonly IReadOnlyList<Range> StateRanges = [");
     W.Indent++;
-    foreach (var State in Model.States) 
+    foreach (var State in Model.States)
       W.WriteLine($"(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index)..(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index + Output.OutputParameters.{State.Name}Parameters.Length)");
     W.WriteLine("];");
     W.Indent--;
   }
 
-  static void RenderMakeMethod(IndentedTextWriter W, MindMakeOperationModel MakeOperation, ushort OperationCode)
+  static void RenderMakeInference(IndentedTextWriter W, MindModel Model)
+  {
+    foreach (var State in Model.States)
+      W.WriteLine($"InputObject.Parameters.{State.Name}.Value = {State.Name};");
+
+    W.WriteLine("var InputBuffer = new float[Input.Length];");
+    W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+    W.WriteLine();
+    W.WriteLine("var Inference = Brain.MakeInference(InputBuffer);");
+    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+
+    foreach (var State in Model.States)
+      W.WriteLine($"{State.Name} = OutputObject.Parameters.{State.Name}.Value;");
+  }
+
+  static void RenderMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation, ushort OperationCode)
   {
     W.WriteLine(
       $"public partial Thought<{MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
@@ -103,13 +105,7 @@ static class MindRenderer
     foreach (var Parameter in MakeOperation.Parameters)
       W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {Parameter.Name};");
 
-    W.WriteLine("CopyStateTo(ref InputObject);");
-    W.WriteLine("var InputBuffer = new float[Input.Length];");
-    W.WriteLine("InputObject.MarshalTo(InputBuffer);");
-    W.WriteLine();
-    W.WriteLine("var Inference = Brain.MakeInference(InputBuffer);");
-    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
-    W.WriteLine("CopyStateFrom(ref OutputObject);");
+    RenderMakeInference(W, Model);
     W.WriteLine();
 
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
@@ -122,7 +118,11 @@ static class MindRenderer
     W.WriteLine("}");
   }
 
-  static void RenderUseMethod(IndentedTextWriter W, MindUseOperationModel UseOperation, ushort OperationCode)
+  static void RenderUseMethod(
+    IndentedTextWriter W, 
+    MindModel Model, 
+    MindUseOperationModel UseOperation,
+    ushort OperationCode)
   {
     var InputParameters = UseOperation.Parameters.Where(P => P.AssociatedInterpreter is null);
     var ActionSurfaces = UseOperation.Parameters.Where(P => P.AssociatedInterpreter is not null);
@@ -142,14 +142,7 @@ static class MindRenderer
     foreach (var Parameter in InputParameters)
       W.WriteLine($"InputObject.Parameters.{UseOperation.Name}.{Parameter.Name} = {Parameter.Name};");
     W.WriteLine();
-    W.WriteLine("CopyStateTo(ref InputObject);");
-    W.WriteLine("var InputBuffer = new float[Input.Length];");
-    W.WriteLine("InputObject.MarshalTo(InputBuffer);");
-    W.WriteLine();
-    W.WriteLine("var Inference = Brain.MakeInference(InputBuffer);");
-    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
-    W.WriteLine("CopyStateFrom(ref OutputObject);");
-    W.WriteLine();
+    RenderMakeInference(W, Model);
     W.WriteLine();
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{UseOperation.Name}Index;");
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{UseOperation.Name}Parameters.Length;");
