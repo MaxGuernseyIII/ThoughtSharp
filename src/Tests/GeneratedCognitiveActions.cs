@@ -205,8 +205,8 @@ public partial class GeneratedCognitiveActions
   [TestMethod]
   public async Task AsynchronousThoughtfulActionConnectsThoughtToParent()
   {
-    var ActualReward = 0f;
-    var ChildThought = Thought.Capture(new object(), R => ActualReward += R);
+    var Training = new MockTrainingPolicy();
+    var ChildThought = Thought.Capture(new object(), Training);
     MockAsyncThoughtfulAction Action = new()
     {
       ActionHandler = () => Task.FromResult<Thought>(ChildThought)
@@ -218,9 +218,9 @@ public partial class GeneratedCognitiveActions
     var ParentThought = await P.InterpretFor(Action);
     var ExpectedReward = Any.Float;
 
-    ParentThought.ApplyReward(ExpectedReward);
+    ParentThought.ApplyIncentive(ExpectedReward);
 
-    ActualReward.Should().Be(ExpectedReward);
+    Training.OutputReward.Should().Be(ExpectedReward);
   }
 
   class MockSynchronousThoughtfulAction : SynchronousThoughtfulAction
@@ -239,8 +239,8 @@ public partial class GeneratedCognitiveActions
   [TestMethod]
   public void SynchronousThoughtfulActionConnectsThoughtToParent()
   {
-    var ActualReward = 0f;
-    var ChildThought = Thought.Capture(new object(), R => ActualReward += R);
+    var Training = new MockTrainingPolicy();
+    var ChildThought = Thought.Capture(new object(), Training);
     MockSynchronousThoughtfulAction Action = new()
     {
       ActionHandler = () => ChildThought
@@ -252,9 +252,9 @@ public partial class GeneratedCognitiveActions
     var ParentThought = P.InterpretFor(Action);
     var ExpectedReward = Any.Float;
 
-    ParentThought.ApplyReward(ExpectedReward);
+    ParentThought.ApplyIncentive(ExpectedReward);
 
-    ActualReward.Should().Be(ExpectedReward);
+    Training.OutputReward.Should().Be(ExpectedReward);
   }
 
   class MockAsynchronousThoughtlessAction : AsyncThoughtlessAction

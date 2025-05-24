@@ -24,13 +24,13 @@ namespace ThoughtSharp.Runtime;
 
 public abstract class Thought
 {
-  readonly Action<float>? Reward;
+  readonly TrainingPolicy? TrainingPolicy;
   readonly IReadOnlyDictionary<Thought, float> Weights;
 
   // prevents foreign inheritors
-  internal Thought(Reasoning LineOfReasoning, Action<float>? Reward)
+  internal Thought(Reasoning LineOfReasoning, TrainingPolicy? TrainingPolicy)
   {
-    this.Reward = Reward;
+    this.TrainingPolicy = TrainingPolicy;
     Children = LineOfReasoning.Children;
     Weights = LineOfReasoning.ChildrenWeights;
   }
@@ -40,9 +40,9 @@ public abstract class Thought
   public Thought? Parent => Container?.Parent;
   public IReadOnlyList<Thought> Children { get; }
 
-  public static Thought<T> Capture<T>(T Product, Action<float>? Reward = null)
+  public static Thought<T> Capture<T>(T Product, TrainingPolicy? Training = null)
   {
-    return new(Product, new(), Reward);
+    return new(Product, new(), Training);
   }
 
   public static Thought<T> Think<T>(Func<Reasoning, T> Produce)
@@ -88,12 +88,12 @@ public abstract class Thought
   //  1. get a graph of thoughts bucketed into time-ordered lists by Mind
   //  2. apply reward to both state and output for all be last thought for a Mind
   //  3. apply reward to output only for the last thought for a Mind
-  public void ApplyReward(float RewardToApply)
+  public void ApplyIncentive(float Reward)
   {
-    Reward?.Invoke(RewardToApply);
+    TrainingPolicy?.IncentivizeOutput(Reward);
 
     foreach (var Child in Children)
-      Child.ApplyReward(RewardToApply * Weights[Child]);
+      Child.ApplyIncentive(Reward * Weights[Child]);
   }
 }
 
@@ -101,8 +101,8 @@ public sealed class Thought<T> : Thought
 {
   internal readonly T Product;
 
-  internal Thought(T Product, Reasoning LineOfReasoning, Action<float>? Reward)
-    : base(LineOfReasoning, Reward)
+  internal Thought(T Product, Reasoning LineOfReasoning, TrainingPolicy? TrainingPolicy)
+    : base(LineOfReasoning, TrainingPolicy)
   {
     this.Product = Product;
   }

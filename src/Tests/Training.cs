@@ -32,13 +32,13 @@ public class Training
   [TestMethod]
   public void CapturedThoughtTraining()
   {
-    float TotalRewardApplied = 0;
-    var T = Thought.Capture(new MockProduct(), R => TotalRewardApplied += R);
+    var MockTrainingPolicy = new MockTrainingPolicy();
+    var T = Thought.Capture(new MockProduct(), MockTrainingPolicy);
     var RewardToApply = Any.Float;
 
-    T.ApplyReward(RewardToApply);
+    T.ApplyIncentive(RewardToApply);
 
-    TotalRewardApplied.Should().Be(RewardToApply);
+    MockTrainingPolicy.OutputReward.Should().Be(RewardToApply);
   }
 
   [TestMethod]
@@ -57,25 +57,25 @@ public class Training
     var RewardToApply = Any.Float;
     var UnweightedRewardAmount = MeasureDistributedRewardAmount(RewardToApply);
 
+    var Policy = new MockTrainingPolicy();
     float Weight = Any.Float;
-    float TotalRewardApplied = 0;
     Thought.Do(R =>
     {
-      var Subthought = Thought.Capture(new MockProduct(), Reward => TotalRewardApplied += Reward);
+      var Subthought = Thought.Capture(new MockProduct(), Policy);
       R.Consume(Subthought);
       R.SetWeight(Subthought, Weight);
-    }).ApplyReward(RewardToApply);
+    }).ApplyIncentive(RewardToApply);
 
-    TotalRewardApplied.Should().BeApproximately(UnweightedRewardAmount * Weight, 0.0001f);
+    Policy.OutputReward.Should().BeApproximately(UnweightedRewardAmount * Weight, 0.0001f);
   }
 
   static float MeasureDistributedRewardAmount(float RewardToApply)
   {
-    float TotalRewardApplied = 0;
+    var Policy = new MockTrainingPolicy();
     Thought.Do(R =>
     {
-      R.Consume(Thought.Capture(new MockProduct(), Reward => TotalRewardApplied += Reward));
-    }).ApplyReward(RewardToApply);
-    return TotalRewardApplied;
+      R.Consume(Thought.Capture(new MockProduct(), Policy));
+    }).ApplyIncentive(RewardToApply);
+    return Policy.OutputReward;
   }
 }
