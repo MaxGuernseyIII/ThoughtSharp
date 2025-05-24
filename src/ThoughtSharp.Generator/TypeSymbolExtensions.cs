@@ -79,4 +79,14 @@ public static class TypeSymbolExtensions
   {
     return Type.GetFullPath() == Name;
   }
+
+  public static int? GetExplicitCount(this ISymbol Member)
+  {
+    foreach (var Attribute in Member.GetAttributes()
+               .Where(A => A.AttributeClass?.Name == CognitiveAttributeNames.DataCountAttributeName))
+      if (Attribute.ConstructorArguments[0].Value is int Result)
+        return Result;
+
+    return null;
+  }
 }

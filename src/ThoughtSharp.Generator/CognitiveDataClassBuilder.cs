@@ -37,9 +37,30 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     return new(TypeAddress, [..Parameters], [..Codecs], IsPublic, ExplicitConstructor);
   }
 
-  public void AddParameterValue(IValueSymbol Member, bool Implied = false)
+  public void AddParameterValue(IValueSymbol Member, bool Implied = false, string? NameOverride = null)
   {
-    Parameters.Add(CreateParameterFor(Member, Implied));
+    var Result = CreateParameterFor(Member, Implied, NameOverride);
+    AddParameter(Result);
+  }
+
+  void AddParameter(CognitiveParameter Parameter)
+  {
+    Parameters.Add(Parameter);
+  }
+
+  static CognitiveParameter CreateParameterFor(IValueSymbol Member, bool Implied, string? NameOverride)
+  {
+    var ExplicitCount = Member.Raw.GetExplicitCount();
+    var EncodedType = ExplicitCount.HasValue
+      ? TryGetArrayType(Member.Type) ?? TryGetIndexableType(Member.Type) ?? Member.Type
+      : Member.Type;
+
+    var CodecExpression = GetCodecExpression(EncodedType, Member);
+    var Initializer = GetInitializerExpression(Member, ExplicitCount);
+    var Result = new CognitiveParameter(
+      NameOverride ?? Member.Name, CodecExpression, ExplicitCount, Implied,
+      EncodedType.GetFullPath(), Initializer);
+    return Result;
   }
 
   public void AddCompilerDefinedParameter(
@@ -51,20 +72,6 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   public static CognitiveParameterCodec CreateCodecFor(IValueSymbol Member)
   {
     return new(Member.Name);
-  }
-
-  public static CognitiveParameter CreateParameterFor(IValueSymbol Member, bool Implied)
-  {
-    var ExplicitCount = GetExplicitCount(Member.Raw);
-    var EncodedType = ExplicitCount.HasValue
-      ? TryGetArrayType(Member.Type) ?? TryGetIndexableType(Member.Type) ?? Member.Type
-      : Member.Type;
-
-    var CodecExpression = GetCodecExpression(EncodedType, Member);
-    var Initializer = GetInitializerExpression(Member, ExplicitCount);
-
-    return new(Member.Name, CodecExpression, ExplicitCount, Implied,
-      EncodedType.GetFullPath(), Initializer);
   }
 
   static string GetInitializerExpression(IValueSymbol Member, int? ExplicitCount)
@@ -171,16 +178,6 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   {
     foreach (var Attribute in Member.GetAttributes()
                .Where(A => A.AttributeClass?.Name == CognitiveAttributeNames.DataLengthAttributeName))
-      if (Attribute.ConstructorArguments[0].Value is int Result)
-        return Result;
-
-    return null;
-  }
-
-  static int? GetExplicitCount(ISymbol Member)
-  {
-    foreach (var Attribute in Member.GetAttributes()
-               .Where(A => A.AttributeClass?.Name == CognitiveAttributeNames.DataCountAttributeName))
       if (Attribute.ConstructorArguments[0].Value is int Result)
         return Result;
 

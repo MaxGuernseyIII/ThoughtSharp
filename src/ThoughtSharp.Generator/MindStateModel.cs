@@ -22,9 +22,7 @@
 
 namespace ThoughtSharp.Generator;
 
-class MindModel(TypeAddress TypeName, IReadOnlyList<MindMakeOperationModel> MakeOperations, IReadOnlyList<MindStateModel> States)
+class MindStateModel(string Name)
 {
-  public TypeAddress TypeName { get; } = TypeName;
-  public IReadOnlyList<MindMakeOperationModel> MakeOperations { get; } = MakeOperations;
-  public IReadOnlyList<MindStateModel> States { get; } = States;
+  public string Name { get; } = Name;
 }

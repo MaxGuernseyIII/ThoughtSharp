@@ -76,4 +76,14 @@ static class Any
   {
     return Options[Core.Next(Options.Count)];
   }
+
+  public static float[] FloatArray(int Count)
+  {
+    var Result = new float[Count];
+
+    for (var I = 0; I < Count; ++I)
+      Result[I] = Float;
+
+    return Result;
+  }
 }

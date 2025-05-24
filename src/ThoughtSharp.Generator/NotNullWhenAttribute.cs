@@ -20,11 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Generator;
+// ReSharper disable once CheckNamespace
+namespace System.Diagnostics.CodeAnalysis;
 
-class MindModel(TypeAddress TypeName, IReadOnlyList<MindMakeOperationModel> MakeOperations, IReadOnlyList<MindStateModel> States)
+[AttributeUsage(AttributeTargets.Parameter)]
+sealed class NotNullWhenAttribute(bool ReturnValue) : Attribute
 {
-  public TypeAddress TypeName { get; } = TypeName;
-  public IReadOnlyList<MindMakeOperationModel> MakeOperations { get; } = MakeOperations;
-  public IReadOnlyList<MindStateModel> States { get; } = States;
+  public bool ReturnValue { get; } = ReturnValue;
 }

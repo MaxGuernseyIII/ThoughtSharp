@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
@@ -31,68 +31,55 @@ static class MindModelFactory
   public static (MindModel Result, List<CognitiveDataClass> AssociatedDataTypes) MakeMindModel(
     GeneratorAttributeSyntaxContext C)
   {
-    var AssociatedDataTypes = new List<CognitiveDataClass>();
     var Type = (INamedTypeSymbol) C.TargetSymbol;
+    var PossibleGenerationTargets = Type.GetMembers().ToImmutableArray();
     var TypeName = TypeAddress.ForSymbol(Type);
 
-    var InputBuilder = new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("struct", "Input")))
-    {
-      IsPublic = true,
-      ExplicitConstructor = true
-    };
-    var InputParametersBuilder =
-      new CognitiveDataClassBuilder(
-        InputBuilder.TypeAddress.GetNested(TypeIdentifier.Explicit("struct", "InputParameters")))
-      {
-        IsPublic = true,
-        ExplicitConstructor = true
-      };
-    InputBuilder.AddCompilerDefinedBoundedIntLikeParameter("OperationCode", ushort.MinValue, ushort.MaxValue);
-    InputBuilder.AddCompilerDefinedSubDataParameter("Parameters", InputParametersBuilder);
-    var OutputBuilder = new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("struct", "Output")))
-    {
-      IsPublic = true,
-      ExplicitConstructor = true
-    };
-    var OutputParametersBuilder =
-      new CognitiveDataClassBuilder(
-        OutputBuilder.TypeAddress.GetNested(TypeIdentifier.Explicit("struct", "OutputParameters")))
-      {
-        IsPublic = true,
-        ExplicitConstructor = true
-      };
-    OutputBuilder.AddCompilerDefinedSubDataParameter("Parameters", OutputParametersBuilder);
+    var MindModelBuilder = Generator.MindModelBuilder.Create(TypeName);
 
-    var PossibleGenerationTargets = Type.GetMembers()
-      .OfType<IMethodSymbol>()
-      .Where(M => M is {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public})
-      .ToImmutableArray();
-
-    var MakeOperations = new List<MindMakeOperationModel>();
-    
-    foreach (var MakeMethod in PossibleGenerationTargets
-               .Where(M => M.GetAttributes()
-                 .Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.MakeAttributeName))
-               .Where(M => M.ReturnType.IsThoughtTypeWithPayload())
-             )
+    foreach (var Member in PossibleGenerationTargets)
     {
-      var InputDataModel = MakeMethod.GetParametersDataModel(
-        InputParametersBuilder.TypeAddress.GetNested(TypeIdentifier.Explicit("struct",
-          $"{MakeMethod.Name}Parameters")));
-      InputParametersBuilder.AddCompilerDefinedSubDataParameter(MakeMethod.Name, InputDataModel.Address.FullName);
-      var ProductType = ((INamedTypeSymbol)MakeMethod.ReturnType).TypeArguments[0];
-      OutputParametersBuilder.AddCompilerDefinedSubDataParameter(MakeMethod.Name, ProductType.GetFullPath());
-      AssociatedDataTypes.Add(InputDataModel);
-
-      MakeOperations.Add(new(MakeMethod.Name, ProductType.GetFullPath(), [..MakeMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath()))]));
+      if (TryGetStateValue(Member, out var StateValue))
+        MindModelBuilder.AddStateValueFor(StateValue);
+      else if (TryGetMakeMethod(Member, out var MakeMethod))
+        MindModelBuilder.AddMakeMethodFor(MakeMethod);
     }
 
-    AssociatedDataTypes.Add(InputBuilder.Build());
-    AssociatedDataTypes.Add(InputParametersBuilder.Build());
-    AssociatedDataTypes.Add(OutputBuilder.Build());
-    AssociatedDataTypes.Add(OutputParametersBuilder.Build());
+    var Result = MindModelBuilder.Build();
+    return (Result, MindModelBuilder.AssociatedDataTypes);
+  }
 
-    var Result = new MindModel(TypeName, [..MakeOperations]);
-    return (Result, AssociatedDataTypes);
+  static bool TryGetStateValue(ISymbol S, [NotNullWhen(true)] out IValueSymbol? Result)
+  {
+    var Value = S.ToValueSymbolOrDefault();
+    if (Value is
+        {
+          IsStatic: false,
+          IsImplicitlyDeclared: false
+        } &&
+        Value.Raw.GetAttributes().Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.StateAttributeName))
+    {
+      Result = Value;
+      return true;
+    }
+
+    Result = null;
+    return false;
+  }
+
+  static bool TryGetMakeMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Method)
+  {
+    if (
+      S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M &&
+      M.GetAttributes()
+        .Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.MakeAttributeName) &&
+      M.ReturnType.IsThoughtTypeWithPayload())
+    {
+      Method = M;
+      return true;
+    }
+
+    Method = null;
+    return false;
   }
 }

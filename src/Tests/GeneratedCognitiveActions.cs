@@ -174,7 +174,6 @@ public partial class GeneratedCognitiveActions
       return Task.FromResult(Thought.Do(_ => Assert.Fail("Action should not be invoked")));
     };
 
-
     public Task<Thought> Action()
     {
       return ActionHandler();

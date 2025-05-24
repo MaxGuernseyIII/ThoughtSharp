@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
@@ -73,6 +74,35 @@ public partial class GeneratedMinds
     Actual.Should().BeEquivalentTo(ExpectedOutput);
   }
 
+  [TestMethod]
+  public void StateIsCopiedIntoMakeInput()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    float[] OriginalState = Any.FloatArray(StatefulMind.StateCount);
+    var Mind = new StatefulMind(Brain)
+    {
+      SomeState = OriginalState
+    };
+    float[]? Actual = null;
+
+    var CoreMakeInference = Brain.MakeInferenceFunc;
+    Brain.MakeInferenceFunc = Parameters =>
+    {
+      var CapturedInput = StatefulMind.Input.UnmarshalFrom(Parameters);
+      Actual = CapturedInput.Parameters.SomeState.Value;
+
+      return CoreMakeInference(Parameters);
+    };
+
+    Mind.MakeSimpleOutput(new()
+    {
+      P1 = Any.Float,
+      P2 = Any.Float
+    }).ConsumeDetached();
+
+    Actual.Should().BeEquivalentTo(OriginalState);
+  }
+
   float[] MakeReferenceFloats<T>(T ToPersist) where T : CognitiveData<T>
   {
     var Result = new float[T.Length];
@@ -98,6 +128,17 @@ public partial class GeneratedMinds
   [Mind]
   partial class SimpleMakeMockMind
   {
+    [Make]
+    public partial Thought<SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
+  }
+
+  [Mind]
+  partial class StatefulMind
+  {
+    public const int StateCount = 128;
+    [CognitiveDataCount(StateCount), State] 
+    public float[] SomeState = new float[128];
+
     [Make]
     public partial Thought<SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
   }

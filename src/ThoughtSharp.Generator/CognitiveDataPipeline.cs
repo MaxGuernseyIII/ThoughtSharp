@@ -53,48 +53,7 @@ static class CognitiveDataPipeline
       (C, M) =>
       {
         C.AddSource(
-          GeneratedTypeFormatter.GetFilename(M.TypeName),
-          GeneratedTypeFormatter.GenerateType(new(M.TypeName)
-          {
-            WriteHeader = W =>
-            {
-              W.WriteLine("using ThoughtSharp.Runtime;");
-              W.WriteLine();
-            },
-            WriteAfterTypeName = W=>
-            {
-              W.Write("(Brain Brain)");
-            },
-            WriteBody = W =>
-            {
-              ushort OperationCode = 1;
-              foreach (var MakeOperation in M.MakeOperations)
-              {
-                W.WriteLine($"public partial Thought<{MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
-                W.WriteLine("{");
-                W.Indent++;
-                W.WriteLine("var InputObject = new Input();");
-                W.WriteLine($"InputObject.OperationCode = {OperationCode.ToLiteralExpression()};");
-
-                foreach (var Parameter in MakeOperation.Parameters)
-                {
-                  W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {Parameter.Name};");
-                }
-
-                W.WriteLine("var InputBuffer = new float[Input.Length];");
-                W.WriteLine("InputObject.MarshalTo(InputBuffer);");
-                W.WriteLine();
-                W.WriteLine("var Inference = Brain.MakeInference(InputBuffer);");
-                W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
-
-                W.WriteLine($"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name});");
-                W.Indent--;
-                W.WriteLine("}");
-
-                OperationCode++;
-              }
-            }
-          })
+          GeneratedTypeFormatter.GetFilename(M.TypeName), MindRenderer.Render(M)
         );
       });
   }

@@ -20,11 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Generator;
+namespace ThoughtSharp.Runtime;
 
-class MindModel(TypeAddress TypeName, IReadOnlyList<MindMakeOperationModel> MakeOperations, IReadOnlyList<MindStateModel> States)
-{
-  public TypeAddress TypeName { get; } = TypeName;
-  public IReadOnlyList<MindMakeOperationModel> MakeOperations { get; } = MakeOperations;
-  public IReadOnlyList<MindStateModel> States { get; } = States;
-}
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+public class StateAttribute : Attribute;
