@@ -192,11 +192,11 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void UseActionSurface()
+  public void UseActionSurfaceOperation1()
   {
     var ExpectedSomeData = Any.Float;
-    float? ExpectedSomeOtherData = null;
-    var Selection = new SynchronousActionSurface.Output()
+
+    TestSynchronousUseMethod(new()
     {
       ActionCode = 1,
       MoreActions = false,
@@ -207,9 +207,39 @@ public partial class GeneratedMinds
           SomeData = ExpectedSomeData
         }
       }
-    };
+    }, ExpectedSomeData, null);
+  }
 
+  [TestMethod]
+  public void UseActionSurfaceOperation2()
+  {
+    var ExpectedSomeOtherDataData = Any.Float;
+
+    TestSynchronousUseMethod(new()
+    {
+      ActionCode = 2,
+      MoreActions = false,
+      Parameters =
+      {
+        DoSomething2 =
+        {
+          SomeOtherData = ExpectedSomeOtherDataData
+        }
+      }
+    }, null, ExpectedSomeOtherDataData);
+  }
+
+  static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData, float? ExpectedSomeOtherData)
+  {
     var Surface = new MockSynchronousSurface();
+    ExecuteSynchronousUseOperation(Selection, Surface);
+
+    Surface.SomeData.Should().Be(ExpectedSomeData);
+    Surface.SomeOtherData.Should().Be(ExpectedSomeOtherData);
+  }
+
+  static bool ExecuteSynchronousUseOperation(SynchronousActionSurface.Output Selection, MockSynchronousSurface Surface)
+  {
     var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
     var Mind = new StatefulMind(Brain);
     var ExpectedInput = new StatefulMind.Input
@@ -239,10 +269,7 @@ public partial class GeneratedMinds
     var More = Mind.SynchronousUseSomeInterface(Surface, 
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument1,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument2).ConsumeDetached();
-
-    More.Should().Be(false);
-    Surface.SomeData.Should().Be(ExpectedSomeData);
-    Surface.SomeOtherData.Should().Be(ExpectedSomeOtherData);
+    return More;
   }
 
   [CognitiveData]
