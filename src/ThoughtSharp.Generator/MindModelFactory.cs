@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
@@ -38,12 +39,12 @@ static class MindModelFactory
     var MindModelBuilder = Generator.MindModelBuilder.Create(TypeName);
 
     foreach (var Member in PossibleGenerationTargets)
-    {
       if (TryGetStateValue(Member, out var StateValue))
         MindModelBuilder.AddStateValueFor(StateValue);
       else if (TryGetMakeMethod(Member, out var MakeMethod))
         MindModelBuilder.AddMakeMethodFor(MakeMethod);
-    }
+      else if (TryGetUseMethod(Member, out var UseMethod))
+        MindModelBuilder.AddUseMethodFor(UseMethod);
 
     var Result = MindModelBuilder.Build();
     return (Result, MindModelBuilder.AssociatedDataTypes);
@@ -66,6 +67,23 @@ static class MindModelFactory
     Result = null;
     return false;
   }
+
+  static bool TryGetUseMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Result)
+  {
+    if (
+      S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M &&
+      M.GetAttributes()
+        .Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.UseAttributeName) &&
+      CognitiveActionRules.IsValidThoughtResult(M))
+    {
+      Result = M;
+      return true;
+    }
+
+    Result = null;
+    return false;
+  }
+
 
   static bool TryGetMakeMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Method)
   {

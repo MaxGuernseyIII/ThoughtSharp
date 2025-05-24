@@ -22,14 +22,8 @@
 
 namespace ThoughtSharp.Generator;
 
-class MindModel(
-  TypeAddress TypeName,
-  IReadOnlyList<MindStateModel> States,
-  IReadOnlyList<MindMakeOperationModel> MakeOperations,
-  IReadOnlyList<MindUseOperationModel> UseOperations)
+class MindUseOperationModel(string Name, IReadOnlyList<(string Name, string TypeName, bool IsActionSurface)> Parameters)
 {
-  public TypeAddress TypeName { get; } = TypeName;
-  public IReadOnlyList<MindStateModel> States { get; } = States;
-  public IReadOnlyList<MindMakeOperationModel> MakeOperations { get; } = MakeOperations;
-  public IReadOnlyList<MindUseOperationModel> UseOperations { get; } = UseOperations;
+  public string Name { get; } = Name;
+  public IReadOnlyList<(string Name, string TypeName, bool IsActionSurface)> Parameters { get; } = Parameters;
 }

@@ -50,11 +50,16 @@ public static class TypeSymbolExtensions
       typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
       genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters)).Trim();
   }
+  public static string GetFullPathWithoutTypeParameters(this ITypeSymbol T)
+  {
+    return T.ToDisplayString(new SymbolDisplayFormat(
+      typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+      genericsOptions: SymbolDisplayGenericsOptions.None)).Trim();
+  }
 
   public static bool IsThoughtTypeWithPayload(this ITypeSymbol Type)
   {
-    var FullPath = Type.GetFullPath();
-    return FullPath.StartsWith("ThoughtSharp.Runtime.Thought<");
+    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", _ => true);
   }
 
   public static bool IsThoughtType(this ITypeSymbol Type)
@@ -69,7 +74,38 @@ public static class TypeSymbolExtensions
 
   public static bool IsTaskOfThoughtType(this ITypeSymbol Type)
   {
-    return IsType(Type, "System.Threading.Tasks.Task<ThoughtSharp.Runtime.Thought>");
+    return Type.IsTaskOf(IsThoughtType);
+  }
+
+  public static bool IsBooleanType(this ITypeSymbol Type)
+  {
+    return Type.SpecialType == SpecialType.System_Boolean;
+  }
+
+  static bool IsGenericOf(this ITypeSymbol Type, string Name, params Func<ITypeSymbol, bool>[] ArgumentConstraints)
+  {
+    if (Type is not INamedTypeSymbol Named)
+      return false;
+
+    var ExpectedLength = ArgumentConstraints.Length;
+    if (Named.TypeArguments.Length != ExpectedLength)
+      return false;
+
+    for (var I = 0; I < ExpectedLength; ++I)
+      if (!ArgumentConstraints[I](Named.TypeArguments[I]))
+        return false;
+
+    return true;
+  }
+
+  public static bool IsThoughtOfBooleanType(this ITypeSymbol Type)
+  {
+    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", IsBooleanType);
+  }
+
+  public static bool IsTaskOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> PayloadRequirement)
+  {
+    return Type.IsGenericOf("System.Threading.Task", PayloadRequirement);
   }
 
   public static bool RequiresAwait(this ITypeSymbol Type) => Type.IsTaskType() || Type.IsTaskOfThoughtType();

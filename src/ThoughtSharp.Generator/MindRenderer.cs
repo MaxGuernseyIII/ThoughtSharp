@@ -44,6 +44,11 @@ static class MindRenderer
 
         foreach (var MakeOperation in M.MakeOperations)
           RenderMakeMethod(W, MakeOperation, OperationCode++);
+
+        foreach (var UseOperation in M.UseOperations)
+        {
+          RenderUseMethod(W, UseOperation, OperationCode++);
+        }
       }
     });
   }
@@ -101,6 +106,39 @@ static class MindRenderer
     W.WriteLine("var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
 
     W.WriteLine($"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name}.Value, TrainingPolicy);");
+    W.Indent--;
+    W.WriteLine("}");
+  }
+
+  static void RenderUseMethod(IndentedTextWriter W, MindUseOperationModel UseOperation, ushort OperationCode)
+  {
+    W.WriteLine($"public partial Thought<bool> {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine("var InputObject = new Input();");
+    W.WriteLine($"InputObject.OperationCode = {OperationCode.ToLiteralExpression()};");
+    W.WriteLine();
+
+    foreach (var Parameter in UseOperation.Parameters.Where(P => !P.IsActionSurface))
+      W.WriteLine($"InputObject.Parameters.{UseOperation.Name}.{Parameter.Name} = {Parameter.Name};");
+    W.WriteLine();
+    W.WriteLine("var InputBuffer = new float[Input.Length];");
+    W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+    W.WriteLine();
+    W.WriteLine("var Inference = Brain.MakeInference(InputBuffer);");
+    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+    W.WriteLine();
+    W.WriteLine("return Thought.Think(R =>");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine("var MoreActions = false;");
+    W.WriteLine();
+    foreach (var Parameter in UseOperation.Parameters.Where(P => P.IsActionSurface))
+      W.WriteLine($"MoreActions = MoreActions || R.Consume(OutputObject.Parameters.{UseOperation.Name}.{Parameter.Name}.InterpretFor({Parameter.Name}));");
+    W.WriteLine();
+    W.WriteLine("return MoreActions;");
+    W.Indent--;
+    W.WriteLine("});");
     W.Indent--;
     W.WriteLine("}");
   }

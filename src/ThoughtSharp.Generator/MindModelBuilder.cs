@@ -60,6 +60,7 @@ class MindModelBuilder
     };
     OutputBuilder.AddCompilerDefinedSubDataParameter("Parameters", OutputParametersBuilder);
     MakeOperations = [];
+    UseOperations = [];
     StateModels = [];
   }
 
@@ -70,6 +71,7 @@ class MindModelBuilder
   CognitiveDataClassBuilder OutputBuilder { get; }
   CognitiveDataClassBuilder OutputParametersBuilder { get; }
   List<MindMakeOperationModel> MakeOperations { get; }
+  List<MindUseOperationModel> UseOperations { get; }
   List<MindStateModel> StateModels { get; }
 
   public static MindModelBuilder Create(TypeAddress TypeName)
@@ -84,7 +86,7 @@ class MindModelBuilder
     AssociatedDataTypes.Add(OutputBuilder.Build());
     AssociatedDataTypes.Add(OutputParametersBuilder.Build());
 
-    return new(TypeName, [..MakeOperations], [..StateModels]);
+    return new(TypeName, [..StateModels], [..MakeOperations], [.. UseOperations]);
   }
 
   public void AddMakeMethodFor(IMethodSymbol MakeMethod)
@@ -104,6 +106,31 @@ class MindModelBuilder
 
     MakeOperations.Add(new(MakeMethod.Name, ProductType.GetFullPath(),
       [..MakeMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath()))]));
+  }
+
+  public void AddUseMethodFor(IMethodSymbol UseMethod)
+  {
+    var ThisInputDataModel = UseMethod.GetParametersDataModel(GetInputParametersClassName(UseMethod), (Parameter, _) => IsActionSurfaceCParameter(Parameter));
+    AssociatedDataTypes.Add(ThisInputDataModel);
+    InputParametersBuilder.AddCompilerDefinedSubDataParameter(UseMethod.Name, ThisInputDataModel.Address.FullName);
+
+    var ThisOutputModelBuilder = new CognitiveDataClassBuilder(GetOutputParametersClassName(UseMethod))
+    {
+      IsPublic = true,
+      ExplicitConstructor = true
+    };
+    OutputParametersBuilder.AddCompilerDefinedSubDataParameter(UseMethod.Name, ThisOutputModelBuilder);
+    foreach (var ActionSurface in UseMethod.Parameters.Where(IsActionSurfaceCParameter)) 
+      ThisOutputModelBuilder.AddCompilerDefinedSubDataParameter(ActionSurface.Name, ActionSurface.Type.GetFullPath() + ".Output");
+    AssociatedDataTypes.Add(ThisOutputModelBuilder.Build());
+
+    UseOperations.Add(new(UseMethod.Name, [..UseMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath(), IsActionSurfaceCParameter(P)))]));
+
+    static bool IsActionSurfaceCParameter(IParameterSymbol Parameter)
+    {
+      return Parameter.Type.GetAttributes()
+        .Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.ActionsAttributeName);
+    }
   }
 
   public void AddStateValueFor(IValueSymbol StateValue)

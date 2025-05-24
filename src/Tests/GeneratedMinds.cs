@@ -40,7 +40,11 @@ public partial class GeneratedMinds
       P1 = Any.Float,
       P2 = Any.Float
     };
-    var ExpectedBrainInput = MakeReferenceFloats(new SimpleMakeMockMind.Input
+    var ExpectedOutput = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+    Brain.SetOutputForOnlyInput(new SimpleMakeMockMind.Input
     {
       OperationCode = 1,
       Parameters =
@@ -50,12 +54,7 @@ public partial class GeneratedMinds
           Simple1 = InputToMakeCall
         }
       }
-    });
-    var ExpectedOutput = new SimpleOutputData
-    {
-      R1 = Any.Float
-    };
-    var StipulatedBrainOutput = MakeReferenceFloats(new SimpleMakeMockMind.Output
+    }, new SimpleMakeMockMind.Output
     {
       Parameters =
       {
@@ -65,12 +64,6 @@ public partial class GeneratedMinds
         }
       }
     });
-    Brain.MakeInferenceFunc = Parameters =>
-    {
-      Parameters.Should().BeEquivalentTo(ExpectedBrainInput);
-
-      return new MockInference(StipulatedBrainOutput);
-    };
 
     var Actual = Mind.MakeSimpleOutput(InputToMakeCall).ConsumeDetached();
 
@@ -179,13 +172,73 @@ public partial class GeneratedMinds
     ]);
   }
 
-  float[] MakeReferenceFloats<T>(T ToPersist) where T : CognitiveData<T>
+  class MockSynchronousSurface : SynchronousActionSurface
   {
-    var Result = new float[T.Length];
+    public float SomeData;
+    public float SomeOtherData;
 
-    ToPersist.MarshalTo(Result);
+    public void DoSomething1(float SomeData)
+    {
+      (this.SomeData, this.SomeOtherData) = (SomeData, 0);
+    }
 
-    return Result;
+    public Thought DoSomething2(float SomeOtherData)
+    {
+      return Thought.Do(_ =>
+      {
+        (this.SomeData, this.SomeOtherData) = (0, SomeOtherData);
+      });
+    }
+  }
+
+  [TestMethod]
+  public void UseActionSurface()
+  {
+    var Surface = new MockSynchronousSurface();
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Mind = new StatefulMind(Brain);
+    var ExpectedInput = new StatefulMind.Input
+    {
+      OperationCode = 2,
+      Parameters =
+      {
+        SynchronousUseSomeInterface =
+        {
+          Argument1 = Any.Int(0, 100),
+          Argument2 = Any.Int(0, 10000)
+        }
+      }
+    };
+    var StipulatedOutput = new StatefulMind.Output
+    {
+      Parameters =
+      {
+        SynchronousUseSomeInterface =
+        {
+          Surface =
+          {
+            ActionCode = 1,
+            MoreActions = false,
+            Parameters =
+            {
+              DoSomething1 =
+              {
+                SomeData = Any.Float
+              }
+            }
+          }
+        }
+      }
+    };
+    Brain.SetOutputForOnlyInput(ExpectedInput, StipulatedOutput);
+    var More = Mind.SynchronousUseSomeInterface(Surface, 
+      ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument1,
+      ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument2).ConsumeDetached();
+
+    More.Should().Be(false);
+    Surface.SomeData.Should().Be(StipulatedOutput.Parameters.SynchronousUseSomeInterface
+      .Surface.Parameters.DoSomething1
+      .SomeData);
   }
 
   [CognitiveData]
@@ -208,6 +261,13 @@ public partial class GeneratedMinds
     public partial Thought<SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
   }
 
+  [CognitiveActions]
+  partial interface SynchronousActionSurface
+  {
+    void DoSomething1(float SomeData);
+    Thought DoSomething2(float SomeOtherData);
+  }
+
   [Mind]
   partial class StatefulMind
   {
@@ -217,5 +277,8 @@ public partial class GeneratedMinds
 
     [Make]
     public partial Thought<SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
+
+    [Use]
+    public partial Thought<bool> SynchronousUseSomeInterface(SynchronousActionSurface Surface, int Argument1, int Argument2);
   }
 }
