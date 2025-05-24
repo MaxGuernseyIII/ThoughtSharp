@@ -484,7 +484,9 @@ public partial class GeneratedMinds
       }
     });
 
-    var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg);
+    var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg).ConsumeDetached();
+
+    Result.Should().BeSameAs(Category.Interpret(StipulatedOutput));
   }
 
   static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,
