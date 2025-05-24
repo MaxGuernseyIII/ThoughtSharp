@@ -86,12 +86,15 @@ partial class Thought
     public readonly struct RewardNode(Thought Thought, TrainingPolicy TrainingPolicy, float Weight)
     {
       public Thought Thought { get; } = Thought;
-      public TrainingPolicy TrainingPolicy { get; } = TrainingPolicy;
-      public float Weight { get; } = Weight;
 
       public void IncentivizeOutput(float Reward)
       {
         TrainingPolicy.IncentivizeOutput(Reward * Weight);
+      }
+
+      public void IncentivizeOutputAndState(float Reward)
+      {
+        TrainingPolicy.IncentivizeOutputAndState(Reward * Weight);
       }
     }
   }

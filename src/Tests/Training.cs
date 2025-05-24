@@ -90,7 +90,7 @@ public class Training
     var RewardToApply = Any.Float;
     var UnweightedRewards = MeasureDistributedRewardAmount(RewardToApply, Mind);
 
-    var Policy = new MockTrainingPolicy();
+    var Policy = new MockTrainingPolicy() { Mind = Mind };
     var Weight = Any.Float;
     Thought.Do(R =>
     {
@@ -103,10 +103,55 @@ public class Training
     Policy.StateReward.Should().BeApproximately(UnweightedRewards.StateReward * Weight, 0.0001f);
   }
 
+  [TestMethod]
+  public void DistributiveApplicationForMindAssociatedContributingThoughts()
+  {
+    var Mind = new MockMind();
+    var RewardToApply = Any.Float;
+
+    var TotalRewardApplied = MeasureDistributedRewardAmountForContributingThought(RewardToApply, Mind);
+
+    TotalRewardApplied.OutputReward.Should().Be(RewardToApply);
+    TotalRewardApplied.StateReward.Should().Be(RewardToApply);
+  }
+
+  [TestMethod]
+  public void WeightedDistributionMindAssociatedContributingThoughts()
+  {
+    var Mind = new MockMind();
+    var RewardToApply = Any.Float;
+    var UnweightedRewards = MeasureDistributedRewardAmountForContributingThought(RewardToApply, Mind);
+
+    var Policy = new MockTrainingPolicy() { Mind = Mind};
+    var Weight = Any.Float;
+    Thought.Do(R =>
+    {
+      var Subthought = Thought.Capture(new MockProduct(), Policy);
+      R.Consume(Subthought);
+      R.SetWeight(Subthought, Weight);
+
+      R.Consume(Thought.Capture(new MockProduct(), new MockTrainingPolicy() {Mind = Mind}));
+    }).ApplyIncentive(RewardToApply);
+
+    Policy.OutputReward.Should().BeApproximately(UnweightedRewards.OutputReward * Weight, 0.0001f);
+    Policy.StateReward.Should().BeApproximately(UnweightedRewards.StateReward * Weight, 0.0001f);
+  }
+
   static MockTrainingPolicy MeasureDistributedRewardAmount(float RewardToApply, Mind? Mind = null)
   {
     var Policy = new MockTrainingPolicy {Mind = Mind};
     Thought.Do(R => { R.Consume(Thought.Capture(new MockProduct(), Policy)); }).ApplyIncentive(RewardToApply);
+    return Policy;
+  }
+
+  static MockTrainingPolicy MeasureDistributedRewardAmountForContributingThought(float RewardToApply, Mind? Mind = null)
+  {
+    var Policy = new MockTrainingPolicy {Mind = Mind};
+    Thought.Do(R =>
+    {
+      R.Consume(Thought.Capture(new MockProduct(), Policy));
+      R.Consume(Thought.Capture(new MockProduct(), new MockTrainingPolicy { Mind = Mind }));
+    }).ApplyIncentive(RewardToApply);
     return Policy;
   }
 }

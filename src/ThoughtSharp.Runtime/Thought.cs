@@ -97,8 +97,10 @@ public abstract partial class Thought
 
     foreach (var (_, Sequence) in ThoughtGraph.RewardedWithMind)
     {
-      foreach (var Rewarded in Sequence) 
-        Rewarded.IncentivizeOutput(Reward);
+      foreach (var Rewarded in Sequence[..^1]) 
+        Rewarded.IncentivizeOutputAndState(Reward);
+
+      Sequence[^1].IncentivizeOutput(Reward);
     }
   }
 }
