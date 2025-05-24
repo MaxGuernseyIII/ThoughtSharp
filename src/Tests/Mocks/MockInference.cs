@@ -20,11 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
 class MockInference(float[] Floats) : Inference
 {
+  public readonly List<(float Reward, ImmutableArray<Range> Ranges)> Incentives = [];
+
   public ReadOnlySpan<float> Result => Floats;
+
+  public void Incentivize(float Reward, params ReadOnlySpan<Range> Ranges)
+  {
+    Incentives.Add((Reward, [..Ranges]));
+  }
 }
