@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
@@ -79,16 +78,7 @@ public partial class GeneratedMinds
     {
       SomeState = OriginalState
     };
-    float[]? Actual = null;
-
-    var CoreMakeInference = Brain.MakeInferenceFunc;
-    Brain.MakeInferenceFunc = Parameters =>
-    {
-      var CapturedInput = StatefulMind.Input.UnmarshalFrom(Parameters);
-      Actual = CapturedInput.Parameters.SomeState.Value;
-
-      return CoreMakeInference(Parameters);
-    };
+    var ActualCapture = CaptureInputState(Brain);
 
     Mind.MakeSimpleOutput(new()
     {
@@ -96,7 +86,22 @@ public partial class GeneratedMinds
       P2 = Any.Float
     }).ConsumeDetached();
 
-    Actual.Should().BeEquivalentTo(OriginalState);
+    ActualCapture.Captured.Should().BeEquivalentTo(OriginalState);
+  }
+
+  static Capture<float[]> CaptureInputState(MockBrain Brain)
+  {
+    var ActualCapture = new Capture<float[]>();
+
+    var CoreMakeInference = Brain.MakeInferenceFunc;
+    Brain.MakeInferenceFunc = Parameters =>
+    {
+      var CapturedInput = StatefulMind.Input.UnmarshalFrom(Parameters);
+      ActualCapture.Captured = CapturedInput.Parameters.SomeState.Value;
+
+      return CoreMakeInference(Parameters);
+    };
+    return ActualCapture;
   }
 
   [TestMethod]
@@ -106,6 +111,19 @@ public partial class GeneratedMinds
     var FinalState = Any.FloatArray(StatefulMind.StateCount);
     var Mind = new StatefulMind(Brain);
 
+    SetOutputState(Brain, FinalState);
+
+    Mind.MakeSimpleOutput(new()
+    {
+      P1 = Any.Float,
+      P2 = Any.Float
+    }).ConsumeDetached();
+
+    Mind.SomeState.Should().BeEquivalentTo(FinalState);
+  }
+
+  static void SetOutputState(MockBrain Brain, float[] FinalState)
+  {
     Brain.MakeInferenceFunc = Parameters =>
     {
       var Output = new StatefulMind.Output();
@@ -115,14 +133,6 @@ public partial class GeneratedMinds
 
       return new MockInference(Buffer);
     };
-
-    Mind.MakeSimpleOutput(new()
-    {
-      P1 = Any.Float,
-      P2 = Any.Float
-    }).ConsumeDetached();
-
-    Mind.SomeState.Should().BeEquivalentTo(FinalState);
   }
 
   [TestMethod]
@@ -141,7 +151,7 @@ public partial class GeneratedMinds
                       StatefulMind.Output.OutputParameters.MakeSimpleOutputIndex;
     var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.MakeSimpleOutputParameters.Length;
     Inference.Incentives.Should().BeEquivalentTo([
-      (Reward, new[] { OutputStart..OutputEnd })
+      (Reward, new[] {OutputStart..OutputEnd})
     ]);
   }
 
@@ -154,7 +164,7 @@ public partial class GeneratedMinds
     var T = Thought.Do(R =>
     {
       R.Consume(Mind.MakeSimpleOutput(new()));
-      R.Incorporate(Thought.Capture(new object(), new MockTrainingPolicy() { Mind = Mind }));
+      R.Incorporate(Thought.Capture(new object(), new MockTrainingPolicy {Mind = Mind}));
     });
     var Reward = Any.PositiveOrNegativeFloat;
 
@@ -168,27 +178,8 @@ public partial class GeneratedMinds
                      StatefulMind.Output.OutputParameters.SomeStateIndex;
     var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
     Inference.Incentives.Should().BeEquivalentTo([
-      (Reward, new[] { OutputStart..OutputEnd, StateStart..StateEnd })
+      (Reward, new[] {OutputStart..OutputEnd, StateStart..StateEnd})
     ]);
-  }
-
-  class MockSynchronousSurface : SynchronousActionSurface
-  {
-    public float? SomeData;
-    public float? SomeOtherData;
-
-    public void DoSomething1(float SomeData)
-    {
-      this.SomeData = SomeData;
-    }
-
-    public Thought DoSomething2(float SomeOtherData)
-    {
-      return Thought.Do(_ =>
-      {
-        this.SomeOtherData = SomeOtherData;
-      });
-    }
   }
 
   [TestMethod]
@@ -237,14 +228,31 @@ public partial class GeneratedMinds
     var Surface = new MockSynchronousSurface();
     var ActualMore = ExecuteSynchronousUseOperation(new()
     {
-      ActionCode = (ushort)Any.Int(0, 2),
+      ActionCode = (ushort) Any.Int(0, 2),
       MoreActions = ExpectedMore
     }, Surface);
 
     ActualMore.Should().Be(ExpectedMore);
   }
 
-  static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData, float? ExpectedSomeOtherData)
+  [TestMethod]
+  public void UseSynchronousActionSurfaceFeedsStateAsInput()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var State = Any.FloatArray(StatefulMind.StateCount);
+    var Mind = new StatefulMind(Brain)
+    {
+      SomeState = State
+    };
+    var ActualCapture = CaptureInputState(Brain);
+
+    Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 100), Any.Int(0, 100));
+
+    ActualCapture.Captured.Should().Equal(State);
+  }
+
+  static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,
+    float? ExpectedSomeOtherData)
   {
     var Surface = new MockSynchronousSurface();
     ExecuteSynchronousUseOperation(Selection, Surface);
@@ -256,7 +264,6 @@ public partial class GeneratedMinds
   static bool ExecuteSynchronousUseOperation(SynchronousActionSurface.Output Selection, MockSynchronousSurface Surface)
   {
     var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var Mind = new StatefulMind(Brain);
     var ExpectedInput = new StatefulMind.Input
     {
       OperationCode = 2,
@@ -281,10 +288,33 @@ public partial class GeneratedMinds
       }
     };
     Brain.SetOutputForOnlyInput(ExpectedInput, StipulatedOutput);
-    var More = Mind.SynchronousUseSomeInterface(Surface, 
+    var Thought1 = new StatefulMind(Brain).SynchronousUseSomeInterface(Surface,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument1,
-      ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument2).ConsumeDetached();
+      ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument2);
+    var Thought = Thought1;
+    var More = Thought.ConsumeDetached();
     return More;
+  }
+
+  class Capture<T>
+  {
+    public T? Captured { get; set; }
+  }
+
+  class MockSynchronousSurface : SynchronousActionSurface
+  {
+    public float? SomeData;
+    public float? SomeOtherData;
+
+    public void DoSomething1(float SomeData)
+    {
+      this.SomeData = SomeData;
+    }
+
+    public Thought DoSomething2(float SomeOtherData)
+    {
+      return Thought.Do(_ => { this.SomeOtherData = SomeOtherData; });
+    }
   }
 
   [CognitiveData]
@@ -318,13 +348,15 @@ public partial class GeneratedMinds
   partial class StatefulMind
   {
     public const int StateCount = 128;
-    [CognitiveDataCount(StateCount), State] 
+
+    [CognitiveDataCount(StateCount)] [State]
     public float[] SomeState = new float[128];
 
     [Make]
     public partial Thought<SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
 
     [Use]
-    public partial Thought<bool> SynchronousUseSomeInterface(SynchronousActionSurface Surface, int Argument1, int Argument2);
+    public partial Thought<bool> SynchronousUseSomeInterface(SynchronousActionSurface Surface, int Argument1,
+      int Argument2);
   }
 }

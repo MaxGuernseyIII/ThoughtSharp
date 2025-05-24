@@ -122,6 +122,7 @@ static class MindRenderer
     foreach (var Parameter in UseOperation.Parameters.Where(P => !P.IsActionSurface))
       W.WriteLine($"InputObject.Parameters.{UseOperation.Name}.{Parameter.Name} = {Parameter.Name};");
     W.WriteLine();
+    W.WriteLine("CopyStateTo(ref InputObject);");
     W.WriteLine("var InputBuffer = new float[Input.Length];");
     W.WriteLine("InputObject.MarshalTo(InputBuffer);");
     W.WriteLine();
