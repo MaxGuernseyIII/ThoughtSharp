@@ -174,19 +174,19 @@ public partial class GeneratedMinds
 
   class MockSynchronousSurface : SynchronousActionSurface
   {
-    public float SomeData;
-    public float SomeOtherData;
+    public float? SomeData;
+    public float? SomeOtherData;
 
     public void DoSomething1(float SomeData)
     {
-      (this.SomeData, this.SomeOtherData) = (SomeData, 0);
+      this.SomeData = SomeData;
     }
 
     public Thought DoSomething2(float SomeOtherData)
     {
       return Thought.Do(_ =>
       {
-        (this.SomeData, this.SomeOtherData) = (0, SomeOtherData);
+        this.SomeOtherData = SomeOtherData;
       });
     }
   }
@@ -194,6 +194,21 @@ public partial class GeneratedMinds
   [TestMethod]
   public void UseActionSurface()
   {
+    var ExpectedSomeData = Any.Float;
+    float? ExpectedSomeOtherData = null;
+    var Selection = new SynchronousActionSurface.Output()
+    {
+      ActionCode = 1,
+      MoreActions = false,
+      Parameters =
+      {
+        DoSomething1 =
+        {
+          SomeData = ExpectedSomeData
+        }
+      }
+    };
+
     var Surface = new MockSynchronousSurface();
     var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
     var Mind = new StatefulMind(Brain);
@@ -209,24 +224,14 @@ public partial class GeneratedMinds
         }
       }
     };
+
     var StipulatedOutput = new StatefulMind.Output
     {
       Parameters =
       {
         SynchronousUseSomeInterface =
         {
-          Surface =
-          {
-            ActionCode = 1,
-            MoreActions = false,
-            Parameters =
-            {
-              DoSomething1 =
-              {
-                SomeData = Any.Float
-              }
-            }
-          }
+          Surface = Selection
         }
       }
     };
@@ -236,9 +241,8 @@ public partial class GeneratedMinds
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument2).ConsumeDetached();
 
     More.Should().Be(false);
-    Surface.SomeData.Should().Be(StipulatedOutput.Parameters.SynchronousUseSomeInterface
-      .Surface.Parameters.DoSomething1
-      .SomeData);
+    Surface.SomeData.Should().Be(ExpectedSomeData);
+    Surface.SomeOtherData.Should().Be(ExpectedSomeOtherData);
   }
 
   [CognitiveData]
