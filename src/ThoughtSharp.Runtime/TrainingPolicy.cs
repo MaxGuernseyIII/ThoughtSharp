@@ -26,5 +26,5 @@ public interface TrainingPolicy
 {
   void IncentivizeOutput(float Reward);
   void IncentivizeOutputAndState(float Reward);
-  Mind? Mind { get; set; }
+  Mind? Mind { get; }
 }

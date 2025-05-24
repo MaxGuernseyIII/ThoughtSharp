@@ -35,7 +35,7 @@ static class MindRenderer
         W.WriteLine("using ThoughtSharp.Runtime;");
         W.WriteLine();
       },
-      WriteAfterTypeName = W => { W.Write("(Brain Brain)"); },
+      WriteAfterTypeName = W => { W.Write("(Brain Brain) : Mind"); },
       WriteBody = W =>
       {
         ushort OperationCode = 1;
@@ -88,7 +88,11 @@ static class MindRenderer
     W.WriteLine("CopyStateFrom(ref OutputObject);");
     W.WriteLine();
 
-    W.WriteLine($"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name});");
+    W.WriteLine($"var Start = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
+    W.WriteLine($"var End = Start + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
+    W.WriteLine("var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [Start..End], []);");
+
+    W.WriteLine($"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name}.Value, TrainingPolicy);");
     W.Indent--;
     W.WriteLine("}");
   }

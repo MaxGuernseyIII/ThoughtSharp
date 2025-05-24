@@ -33,6 +33,8 @@ static class Any
   public static long Long => Core.Next();
   public static bool Bool => Core.Next(2) == 1;
 
+  public static float PositiveOrNegativeFloat => Core.NextSingle() * 2 - 1;
+
   public static int Int(int Boundary1, int Boundary2)
   {
     var Min = Math.Min(Boundary1, Boundary2);

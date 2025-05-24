@@ -40,7 +40,7 @@ class CognitiveDataClassRenderer
       if (CodecDictionary.ContainsKey(ParameterCodec))
         continue;
 
-      Target.WriteLine($"static readonly CognitiveDataCodec<{Parameter.FullType}> {ParameterCodec} = {Parameter.CodecExpression};");
+      Target.WriteLine($"internal static readonly CognitiveDataCodec<{Parameter.FullType}> {ParameterCodec} = {Parameter.CodecExpression};");
     }
 
     var LastValue = "0";
@@ -58,7 +58,7 @@ class CognitiveDataClassRenderer
       }
 
       var ParameterIndexField = GetIndexFieldNameFor(Parameter);
-      Target.Write($"static readonly int {ParameterIndexField} = ");
+      Target.Write($"internal static readonly int {ParameterIndexField} = ");
       WriteIndexValue(Target, LastValue, LastParameter);
 
       LastValue = ParameterIndexField;

@@ -89,11 +89,18 @@ class MindModelBuilder
 
   public void AddMakeMethodFor(IMethodSymbol MakeMethod)
   {
-    var ThisDataModel = MakeMethod.GetParametersDataModel(GetInputParametersClassName(MakeMethod));
-    AssociatedDataTypes.Add(ThisDataModel);
-    InputParametersBuilder.AddCompilerDefinedSubDataParameter(MakeMethod.Name, ThisDataModel.Address.FullName);
+    var ThisInputDataModel = MakeMethod.GetParametersDataModel(GetInputParametersClassName(MakeMethod));
+    AssociatedDataTypes.Add(ThisInputDataModel);
+    InputParametersBuilder.AddCompilerDefinedSubDataParameter(MakeMethod.Name, ThisInputDataModel.Address.FullName);
     var ProductType = ((INamedTypeSymbol) MakeMethod.ReturnType).TypeArguments[0];
-    OutputParametersBuilder.AddCompilerDefinedSubDataParameter(MakeMethod.Name, ProductType.GetFullPath());
+    var ThisOutputModelBuilder = new CognitiveDataClassBuilder(GetOutputParametersClassName(MakeMethod))
+    {
+      IsPublic = true,
+      ExplicitConstructor = true
+    };
+    OutputParametersBuilder.AddCompilerDefinedSubDataParameter(MakeMethod.Name, ThisOutputModelBuilder);
+    ThisOutputModelBuilder.AddCompilerDefinedSubDataParameter("Value", ProductType.GetFullPath());
+    AssociatedDataTypes.Add(ThisOutputModelBuilder.Build());
 
     MakeOperations.Add(new(MakeMethod.Name, ProductType.GetFullPath(),
       [..MakeMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath()))]));

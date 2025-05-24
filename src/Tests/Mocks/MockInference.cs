@@ -27,11 +27,11 @@ namespace Tests.Mocks;
 
 class MockInference(float[] Floats) : Inference
 {
-  public readonly List<(float Reward, ImmutableArray<Range> Ranges)> Incentives = [];
+  public readonly List<(float Reward, IReadOnlyList<Range> Ranges)> Incentives = [];
 
   public ReadOnlySpan<float> Result => Floats;
 
-  public void Incentivize(float Reward, params ReadOnlySpan<Range> Ranges)
+  public void Incentivize(float Reward, params IReadOnlyList<Range> Ranges)
   {
     Incentives.Add((Reward, [..Ranges]));
   }

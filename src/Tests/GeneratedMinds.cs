@@ -59,7 +59,10 @@ public partial class GeneratedMinds
     {
       Parameters =
       {
-        MakeSimpleOutput = ExpectedOutput
+        MakeSimpleOutput =
+        {
+          Value = ExpectedOutput
+        }
       }
     });
     Brain.MakeInferenceFunc = Parameters =>
@@ -127,6 +130,26 @@ public partial class GeneratedMinds
     }).ConsumeDetached();
 
     Mind.SomeState.Should().BeEquivalentTo(FinalState);
+  }
+
+  [TestMethod]
+  public void TrainingAsOutputThought()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Mind = new StatefulMind(Brain);
+
+    var Thought = Mind.MakeSimpleOutput(new());
+    var Reward = Any.PositiveOrNegativeFloat;
+
+    Thought.ApplyIncentive(Reward);
+
+    var Inference = Brain.MockInferences.Single();
+    var OutputStart = StatefulMind.Output.ParametersIndex +
+                StatefulMind.Output.OutputParameters.MakeSimpleOutputIndex;
+    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.MakeSimpleOutputParameters.Length;
+    Inference.Incentives.Should().BeEquivalentTo([
+      (Reward, new[] { OutputStart..OutputEnd })
+    ]);
   }
 
   float[] MakeReferenceFloats<T>(T ToPersist) where T : CognitiveData<T>

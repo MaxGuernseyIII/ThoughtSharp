@@ -25,14 +25,30 @@ using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-class MockBrain(int InputLength, int OutputLength) : Brain
+class MockBrain : Brain
 {
-  public Func<float[], Inference> MakeInferenceFunc = Parameters => new MockInference(new float[OutputLength]);
+  public List<MockInference> MockInferences = [];
+  public Func<float[], Inference> MakeInferenceFunc;
+
+  readonly int InputLength;
+
+  public MockBrain(int InputLength, int OutputLength)
+  {
+    this.InputLength = InputLength;
+    MakeInferenceFunc = _ =>
+    {
+      var MockInference = new MockInference(new float[OutputLength]);
+      MockInferences.Add(MockInference);
+      return MockInference;
+    };
+  }
 
   public Inference MakeInference(float[] Parameters)
   {
     Parameters.Length.Should().Be(InputLength);
 
-    return MakeInferenceFunc(Parameters);
+    var Result = MakeInferenceFunc(Parameters);
+
+    return Result;
   }
 }
