@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
@@ -45,6 +44,8 @@ static class MindModelFactory
         MindModelBuilder.AddMakeMethodFor(MakeMethod);
       else if (TryGetUseMethod(Member, out var UseMethod))
         MindModelBuilder.AddUseMethodFor(UseMethod);
+      else if (TryGetChooseMethod(Member, out var ChooseMethod))
+        MindModelBuilder.AddChooseMethodFor(ChooseMethod);
 
     var Result = MindModelBuilder.Build();
     return (Result, MindModelBuilder.AssociatedDataTypes);
@@ -58,7 +59,7 @@ static class MindModelFactory
           IsStatic: false,
           IsImplicitlyDeclared: false
         } &&
-        Value.Raw.GetAttributes().Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.StateAttributeName))
+        Value.Raw.HasAttribute(CognitiveAttributeNames.StateAttributeName))
     {
       Result = Value;
       return true;
@@ -71,9 +72,8 @@ static class MindModelFactory
   static bool TryGetUseMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Result)
   {
     if (
-      S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M &&
-      M.GetAttributes()
-        .Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.UseAttributeName) &&
+      S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M && 
+      M.HasAttribute(CognitiveAttributeNames.UseAttributeName) &&
       CognitiveActionRules.IsValidThoughtResult(M))
     {
       Result = M;
@@ -84,14 +84,27 @@ static class MindModelFactory
     return false;
   }
 
-
   static bool TryGetMakeMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Method)
   {
     if (
-      S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M &&
-      M.GetAttributes()
-        .Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.MakeAttributeName) &&
+      S is IMethodSymbol { IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public } M &&
+      M.HasAttribute(CognitiveAttributeNames.MakeAttributeName) &&
       M.ReturnType.IsThoughtTypeWithPayload())
+    {
+      Method = M;
+      return true;
+    }
+
+    Method = null;
+    return false;
+  }
+
+  static bool TryGetChooseMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Method)
+  {
+    if (
+      S is IMethodSymbol { IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public } M &&
+      M.HasAttribute(CognitiveAttributeNames.ChooseAttributeName) &&
+      M.Parameters.Count(P => P.Type.HasAttribute(CognitiveAttributeNames.CategoryAttributeName)) == 1)
     {
       Method = M;
       return true;

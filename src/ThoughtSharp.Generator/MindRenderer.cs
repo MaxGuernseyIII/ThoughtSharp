@@ -46,12 +46,23 @@ static class MindRenderer
         foreach (var MakeOperation in M.MakeOperations)
           RenderMakeMethod(W, MakeOperation, OperationCode++);
 
-        foreach (var UseOperation in M.UseOperations)
-        {
+        foreach (var UseOperation in M.UseOperations) 
           RenderUseMethod(W, UseOperation, OperationCode++);
-        }
+
+        foreach (var ChooseOperation in M.ChooseOperations)
+          RenderChooseMethod(W, ChooseOperation, OperationCode++);
       }
     });
+  }
+
+  static void RenderChooseMethod(IndentedTextWriter W, MindChooseOperationModel ChooseOperation, ushort OpCode)
+  {
+    W.WriteLine($"public partial {ChooseOperation.ReturnType} {ChooseOperation.Name}({string.Join(", ", ChooseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine("return default!;");
+    W.Indent--;
+    W.WriteLine("}");
   }
 
   static void RenderStateCopyMethods(IndentedTextWriter W, MindModel Model)

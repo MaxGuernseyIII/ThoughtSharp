@@ -214,10 +214,10 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     Codecs.Add(CreateCodecFor(Member));
   }
 
-  public void AddCompilerDefinedSubDataArrayParameter(string Name, string TypeName, int Count)
+  public void AddCompilerDefinedSubDataArrayParameter(string Name, string TypeName, int Count, string ItemInitializer)
   {
     AddCompilerDefinedParameter(Name, $"new SubDataCodec<{TypeName}>()", Count, $"{TypeName}",
-      $"new {TypeName}[{Count.ToLiteralExpression()}]");
+      $"[{string.Join(", ", Enumerable.Range(0, Count).Select(_ => ItemInitializer))}]");
   }
 
   public void AddCompilerDefinedSubDataParameter(string Name, string TypeName)

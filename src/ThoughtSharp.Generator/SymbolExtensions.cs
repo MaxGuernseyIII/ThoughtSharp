@@ -134,4 +134,10 @@ static class SymbolExtensions
       return false;
     }
   }
+
+  public static bool HasAttribute(this ISymbol S, string Name)
+  {
+    return S.GetAttributes()
+      .Any(A => A.AttributeClass?.Name == Name);
+  }
 }

@@ -64,7 +64,9 @@ static class CognitiveCategoryRenderer
       {
         W.WriteLine("if (Batches.Any())");
         Open();
-        W.WriteLine("Batches.Last().IsFinalBatch = true;");
+        W.WriteLine("var LastBatch = Batches[^1];");
+        W.WriteLine("LastBatch.IsFinalBatch = true;");
+        W.WriteLine("Batches[^1] = LastBatch;");
         Close();
       }
 

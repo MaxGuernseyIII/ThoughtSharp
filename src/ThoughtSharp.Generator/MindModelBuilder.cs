@@ -61,6 +61,7 @@ class MindModelBuilder
     OutputBuilder.AddCompilerDefinedSubDataParameter("Parameters", OutputParametersBuilder);
     MakeOperations = [];
     UseOperations = [];
+    ChooseOperations = [];
     StateModels = [];
   }
 
@@ -72,6 +73,7 @@ class MindModelBuilder
   CognitiveDataClassBuilder OutputParametersBuilder { get; }
   List<MindMakeOperationModel> MakeOperations { get; }
   List<MindUseOperationModel> UseOperations { get; }
+  List<MindChooseOperationModel> ChooseOperations { get; }
   List<MindStateModel> StateModels { get; }
 
   public static MindModelBuilder Create(TypeAddress TypeName)
@@ -86,7 +88,7 @@ class MindModelBuilder
     AssociatedDataTypes.Add(OutputBuilder.Build());
     AssociatedDataTypes.Add(OutputParametersBuilder.Build());
 
-    return new(TypeName, [..StateModels], [..MakeOperations], [.. UseOperations]);
+    return new(TypeName, [..StateModels], [..MakeOperations], [.. UseOperations], [..ChooseOperations]);
   }
 
   public void AddMakeMethodFor(IMethodSymbol MakeMethod)
@@ -131,8 +133,46 @@ class MindModelBuilder
 
     static bool IsActionSurfaceParameter(IParameterSymbol Parameter)
     {
-      return Parameter.Type.GetAttributes()
-        .Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.ActionsAttributeName);
+      return Parameter.Type.HasAttribute(CognitiveAttributeNames.ActionsAttributeName);
+    }
+  }
+
+  public void AddChooseMethodFor(IMethodSymbol ChooseMethod)
+  {
+    string CategoryParameter = "...UNKNOWN!";
+
+    var ThisInputDataModel = ChooseMethod.GetParametersDataModel(GetInputParametersClassName(ChooseMethod), (Parameter, Builder) =>
+    {
+      if (!IsCategoryParameter(Parameter))
+        return false;
+
+      CategoryParameter = Parameter.Name;
+
+      Builder.AddCompilerDefinedSubDataParameter(Parameter.Name, Parameter.Type.GetFullPath() + ".Input");
+
+      return true;
+    });
+    AssociatedDataTypes.Add(ThisInputDataModel);
+    InputParametersBuilder.AddCompilerDefinedSubDataParameter(ChooseMethod.Name, ThisInputDataModel.Address.FullName);
+
+    var ThisOutputModelBuilder = new CognitiveDataClassBuilder(GetOutputParametersClassName(ChooseMethod))
+    {
+      IsPublic = true,
+      ExplicitConstructor = true
+    };
+    OutputParametersBuilder.AddCompilerDefinedSubDataParameter(ChooseMethod.Name, ThisOutputModelBuilder);
+
+    AssociatedDataTypes.Add(ThisOutputModelBuilder.Build());
+
+    ChooseOperations.Add(new(
+      ChooseMethod.Name, 
+      ChooseMethod.ReturnType.GetFullPath(),
+      [..ChooseMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath()))],
+      CategoryParameter
+      ));
+    static bool IsCategoryParameter(IParameterSymbol Parameter)
+    {
+      return Parameter.Type.HasAttribute(CognitiveAttributeNames.CategoryAttributeName);
     }
   }
 

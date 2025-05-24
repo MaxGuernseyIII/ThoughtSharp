@@ -625,5 +625,23 @@ public partial class GeneratedMinds
       int Argument1,
       SynchronousActionSurface SynchronousSurface,
       int Argument2);
+
+    [Choose]
+    public partial MockSelectable ChooseItems(MockCategory Category, float ArgumentA, float Argument2, float AThirdArg);
+  }
+
+  class MockSelectable;
+
+  [CognitiveData]
+  partial class MockDescriptor
+  {
+    public float P1;
+    public float P2;
+  }
+
+  [CognitiveCategory<MockSelectable, MockDescriptor>(3)]
+  partial class MockCategory
+  {
+
   }
 }

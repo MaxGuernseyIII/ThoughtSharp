@@ -125,4 +125,41 @@ public static class TypeSymbolExtensions
 
     return null;
   }
+
+  public static (ITypeSymbol PayloadType, ITypeSymbol DescriptorType, ushort Count) GetCognitiveCategoryData(
+    this INamedTypeSymbol Type)
+  {
+    return ConvertAttributeToCognitiveCategoryData(Type.GetAttributes()
+      .First(IsCognitiveCategoryAttribute));
+  }
+
+  static (ITypeSymbol PayloadType, ITypeSymbol DescriptorType, ushort Count) ConvertAttributeToCognitiveCategoryData(
+    AttributeData Attribute)
+  {
+    var PayloadType = Attribute.AttributeClass!.TypeArguments[0];
+    var DescriptorType = Attribute.AttributeClass!.TypeArguments[1];
+    var Count = Convert.ToUInt16(Attribute.ConstructorArguments[0].Value);
+    return (PayloadType, DescriptorType, Count);
+  }
+
+  public static bool TryGetCognitiveCategoryData(
+    this INamedTypeSymbol Type,
+    out (ITypeSymbol PayloadType, ITypeSymbol DescriptorType, ushort Count)? Result)
+  {
+    var Attribute = Type.GetAttributes().FirstOrDefault(IsCognitiveCategoryAttribute);
+
+    if (Attribute != null)
+    {
+      Result = ConvertAttributeToCognitiveCategoryData(Attribute);
+      return true;
+    }
+
+    Result = null;
+    return false;
+  }
+
+  static bool IsCognitiveCategoryAttribute(AttributeData A)
+  {
+    return A.AttributeClass?.Name == CognitiveAttributeNames.CategoryAttributeName;
+  }
 }

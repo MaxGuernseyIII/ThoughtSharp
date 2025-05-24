@@ -27,15 +27,12 @@ namespace ThoughtSharp.Generator;
 
 static class CognitiveCategoryModelFactory
 {
-  public static (CognitiveCategoryModel Category, ImmutableArray<CognitiveDataClass> AssociatedData) ConvertToCognitiveCategoryAndAssociatedData(
-    GeneratorAttributeSyntaxContext C)
+  public static (CognitiveCategoryModel Category, ImmutableArray<CognitiveDataClass> AssociatedData)
+    ConvertToCognitiveCategoryAndAssociatedData(
+      GeneratorAttributeSyntaxContext C)
   {
-    var Type = (INamedTypeSymbol)C.TargetSymbol;
-    var Attribute = Type.GetAttributes()
-      .First(A => A.AttributeClass?.Name == CognitiveAttributeNames.CategoryAttributeName);
-    var PayloadType = Attribute.AttributeClass!.TypeArguments[0];
-    var DescriptorType = Attribute.AttributeClass!.TypeArguments[1];
-    var Count = Convert.ToUInt16(Attribute.ConstructorArguments[0].Value);
+    var Type = (INamedTypeSymbol) C.TargetSymbol;
+    var (PayloadType, DescriptorType, Count) = Type.GetCognitiveCategoryData();
     var TypeName = TypeAddress.ForSymbol(Type);
 
     var DataObjects = new List<CognitiveDataClass>();
@@ -44,7 +41,8 @@ static class CognitiveCategoryModelFactory
     var ItemType = TypeName.GetNested(TypeIdentifier.Explicit("class", ItemClassName));
     var ItemBuilder = new CognitiveDataClassBuilder(ItemType)
     {
-      IsPublic = true
+      IsPublic = true,
+      ExplicitConstructor = true
     };
     ItemBuilder.AddCompilerDefinedBoolParameter("IsHot");
     ItemBuilder.AddCompilerDefinedBoundedIntLikeParameter("ItemNumber", ushort.MinValue, ushort.MaxValue);
@@ -53,20 +51,23 @@ static class CognitiveCategoryModelFactory
     var QuestionBuilder =
       new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Input")))
       {
-        IsPublic = true
+        IsPublic = true,
+        ExplicitConstructor = true
       };
-    QuestionBuilder.AddCompilerDefinedSubDataArrayParameter("Items", ItemClassName, Count);
+    QuestionBuilder.AddCompilerDefinedSubDataArrayParameter("Items", ItemClassName, Count, "new()");
     QuestionBuilder.AddCompilerDefinedBoolParameter("IsFinalBatch");
     DataObjects.Add(QuestionBuilder.Build());
 
     var Answer =
       new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Output")))
       {
-        IsPublic = true
+        IsPublic = true,
+        ExplicitConstructor = true
       };
     Answer.AddCompilerDefinedBoundedIntLikeParameter("Selection", ushort.MinValue, ushort.MaxValue);
     DataObjects.Add(Answer.Build());
 
-    return (Category:new CognitiveCategoryModel(TypeName, TypeAddress.ForSymbol(PayloadType), DescriptorTypeAddress, Count), AssociatedData:DataObjects.ToImmutableArray());
+    return (Category: new(TypeName, TypeAddress.ForSymbol(PayloadType), DescriptorTypeAddress, Count),
+      AssociatedData: [..DataObjects]);
   }
 }
