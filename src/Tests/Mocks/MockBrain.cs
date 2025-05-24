@@ -56,15 +56,26 @@ class MockBrain : Brain
     where TInput : CognitiveData<TInput>
     where TOutput : CognitiveData<TOutput>
   {
-    var ExpectedBrainInput = MakeReferenceFloats(ExpectedInput);
-    var StipulatedBrainOutput = MakeReferenceFloats(StipulatedOutput);
+    SetOutputsForInputs([(ExpectedInput, StipulatedOutput)]);
+  }
+
+  public void SetOutputsForInputs<TInput, TOutput>(IReadOnlyList<(TInput ExpectedInput, TOutput StipulatedOutput)> Sequence)
+    where TInput : CognitiveData<TInput>
+    where TOutput : CognitiveData<TOutput>
+  {
+    var Queue = new Queue<(TInput ExpectedInput, TOutput StipulatedOutput)>(Sequence);
+
     MakeInferenceFunc = Parameters =>
     {
+      var (ExpectedInput, StipulatedOutput) = Queue.Dequeue();
+      var ExpectedBrainInput = MakeReferenceFloats(ExpectedInput);
+      var StipulatedBrainOutput = MakeReferenceFloats(StipulatedOutput);
+
       Parameters.Should().BeEquivalentTo(ExpectedBrainInput);
 
       return new MockInference(StipulatedBrainOutput);
-    }; 
-    
+    };
+
     static float[] MakeReferenceFloats<T>(T ToPersist) where T : CognitiveData<T>
     {
       var Result = new float[T.Length];

@@ -444,13 +444,14 @@ public partial class GeneratedMinds
   [TestMethod]
   public void ChooseFromSmallBatchOfOptions()
   {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var Mind = new StatefulMind(Brain);
     var Options1 = new CognitiveOption<MockSelectable, MockDescriptor>(new(), new() {P1 = Any.Float, P2 = Any.Float});
     var Options2 = new CognitiveOption<MockSelectable, MockDescriptor>(new(), new() {P1 = Any.Float, P2 = Any.Float});
     var Options3 = new CognitiveOption<MockSelectable, MockDescriptor>(new(), new() {P1 = Any.Float, P2 = Any.Float});
 
     var Category = new MockCategory([Options1, Options2, Options3]);
+
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Mind = new StatefulMind(Brain);
     var SelectedIndex = (ushort) Any.Int(0, 2);
 
     var StipulatedOutput = new MockCategory.Output(){
