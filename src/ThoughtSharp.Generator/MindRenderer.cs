@@ -63,6 +63,9 @@ static class MindRenderer
     W.WriteLine($"public partial {ChooseOperation.ReturnType} {ChooseOperation.Name}({string.Join(", ", ChooseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
+    RenderInputObjectForOpCode(W, OpCode);
+
+
     W.WriteLine("return default!;");
     W.Indent--;
     W.WriteLine("}");

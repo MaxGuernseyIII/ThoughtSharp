@@ -441,6 +441,52 @@ public partial class GeneratedMinds
     ]);
   }
 
+  [TestMethod]
+  public void ChooseFromSmallBatchOfOptions()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Mind = new StatefulMind(Brain);
+    var Options1 = new CognitiveOption<MockSelectable, MockDescriptor>(new(), new() {P1 = Any.Float, P2 = Any.Float});
+    var Options2 = new CognitiveOption<MockSelectable, MockDescriptor>(new(), new() {P1 = Any.Float, P2 = Any.Float});
+    var Options3 = new CognitiveOption<MockSelectable, MockDescriptor>(new(), new() {P1 = Any.Float, P2 = Any.Float});
+
+    var Category = new MockCategory([Options1, Options2, Options3]);
+    var SelectedIndex = (ushort) Any.Int(0, 2);
+
+    var StipulatedOutput = new MockCategory.Output(){
+      Selection = SelectedIndex
+    };
+    var ArgumentA = Any.Float;
+    var Argument2 = Any.Float;
+    var AThirdArg = Any.Float;
+    Brain.SetOutputForOnlyInput(new StatefulMind.Input()
+    {
+      OperationCode = 4,
+      Parameters =
+      {
+        ChooseItems =
+        {
+          ArgumentA = ArgumentA,
+          Argument2 = Argument2,
+          AThirdArg = AThirdArg,
+          Category = Category.ToInputBatches().Single()
+        }
+      }
+    }, new StatefulMind.Output()
+    {
+      Parameters =
+      {
+        ChooseItems =
+        {
+          Category =
+          StipulatedOutput
+        }
+      }
+    });
+
+    var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg);
+  }
+
   static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,
     float? ExpectedSomeOtherData)
   {
@@ -627,7 +673,7 @@ public partial class GeneratedMinds
       int Argument2);
 
     [Choose]
-    public partial MockSelectable ChooseItems(MockCategory Category, float ArgumentA, float Argument2, float AThirdArg);
+    public partial Thought<MockSelectable> ChooseItems(MockCategory Category, float ArgumentA, float Argument2, float AThirdArg);
   }
 
   class MockSelectable;

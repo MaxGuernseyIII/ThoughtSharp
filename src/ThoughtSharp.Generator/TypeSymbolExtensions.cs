@@ -82,6 +82,11 @@ public static class TypeSymbolExtensions
     return Type.SpecialType == SpecialType.System_Boolean;
   }
 
+  public static bool IsThoughtOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> ArgumentConstraint)
+  {
+    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", ArgumentConstraint);
+  }
+
   static bool IsGenericOf(this ITypeSymbol Type, string Name, params Func<ITypeSymbol, bool>[] ArgumentConstraints)
   {
     if (Type is not INamedTypeSymbol Named)
@@ -105,7 +110,7 @@ public static class TypeSymbolExtensions
 
   public static bool IsTaskOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> PayloadRequirement)
   {
-    return Type.IsGenericOf("System.Threading.Task", PayloadRequirement);
+    return Type.IsGenericOf("System.Threading.Tasks.Task", PayloadRequirement);
   }
 
   public static bool RequiresAwait(this ITypeSymbol Type) => Type.IsTaskType() || Type.IsTaskOfThoughtType();
@@ -114,6 +119,11 @@ public static class TypeSymbolExtensions
   static bool IsType(ITypeSymbol Type, string Name)
   {
     return Type.GetFullPath() == Name;
+  }
+
+  public static bool IsEquivalentTo(this ITypeSymbol Type, ITypeSymbol Other)
+  {
+    return Type.GetFullPath() == Other.GetFullPath();
   }
 
   public static int? GetExplicitCount(this ISymbol Member)
@@ -143,7 +153,7 @@ public static class TypeSymbolExtensions
   }
 
   public static bool TryGetCognitiveCategoryData(
-    this INamedTypeSymbol Type,
+    this ITypeSymbol Type,
     out (ITypeSymbol PayloadType, ITypeSymbol DescriptorType, ushort Count)? Result)
   {
     var Attribute = Type.GetAttributes().FirstOrDefault(IsCognitiveCategoryAttribute);

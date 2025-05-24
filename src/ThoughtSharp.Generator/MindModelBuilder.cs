@@ -139,14 +139,14 @@ class MindModelBuilder
 
   public void AddChooseMethodFor(IMethodSymbol ChooseMethod)
   {
-    string CategoryParameter = "...UNKNOWN!";
+    IParameterSymbol CategoryParameter = null!;
 
     var ThisInputDataModel = ChooseMethod.GetParametersDataModel(GetInputParametersClassName(ChooseMethod), (Parameter, Builder) =>
     {
       if (!IsCategoryParameter(Parameter))
         return false;
 
-      CategoryParameter = Parameter.Name;
+      CategoryParameter = Parameter;
 
       Builder.AddCompilerDefinedSubDataParameter(Parameter.Name, Parameter.Type.GetFullPath() + ".Input");
 
@@ -161,14 +161,14 @@ class MindModelBuilder
       ExplicitConstructor = true
     };
     OutputParametersBuilder.AddCompilerDefinedSubDataParameter(ChooseMethod.Name, ThisOutputModelBuilder);
-
+    ThisOutputModelBuilder.AddCompilerDefinedSubDataParameter(CategoryParameter.Name, CategoryParameter.Type.GetFullPath() + ".Output");
     AssociatedDataTypes.Add(ThisOutputModelBuilder.Build());
 
     ChooseOperations.Add(new(
       ChooseMethod.Name, 
       ChooseMethod.ReturnType.GetFullPath(),
       [..ChooseMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath()))],
-      CategoryParameter
+      CategoryParameter.Name
       ));
     static bool IsCategoryParameter(IParameterSymbol Parameter)
     {

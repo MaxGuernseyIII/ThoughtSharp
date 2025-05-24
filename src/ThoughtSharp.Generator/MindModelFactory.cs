@@ -103,11 +103,20 @@ static class MindModelFactory
   {
     if (
       S is IMethodSymbol { IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public } M &&
-      M.HasAttribute(CognitiveAttributeNames.ChooseAttributeName) &&
-      M.Parameters.Count(P => P.Type.HasAttribute(CognitiveAttributeNames.CategoryAttributeName)) == 1)
+      M.HasAttribute(CognitiveAttributeNames.ChooseAttributeName)
+      )
     {
-      Method = M;
-      return true;
+      var CognitiveCategories =
+        M.Parameters.Select(P => (Hit:P.Type.TryGetCognitiveCategoryData(out var CategoryData), CategoryData)).Where(P => P.Hit);
+      if (CognitiveCategories.Count() == 1 )
+      {
+        var PayloadType = CognitiveCategories.Single().CategoryData!.Value.PayloadType;
+        if (M.ReturnType.IsThoughtOf(T => T.IsEquivalentTo(PayloadType)))
+        {
+          Method = M;
+          return true;
+        }
+      }
     }
 
     Method = null;
