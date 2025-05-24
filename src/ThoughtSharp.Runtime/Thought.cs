@@ -91,8 +91,17 @@ public abstract partial class Thought
   //  3. apply reward to output only for the last thought for a Mind
   public void ApplyIncentive(float Reward)
   {
-    foreach (var Rewarded in ThoughtGraph.For(this).RewardedWithoutMind) 
-      Rewarded.TrainingPolicy.IncentivizeOutput(Reward * Rewarded.Weight);
+    var ThoughtGraph = Thought.ThoughtGraph.For(this);
+    foreach (var Rewarded in ThoughtGraph.RewardedWithoutMind) 
+      Rewarded.IncentivizeOutput(Reward);
+
+    foreach (var (_, Sequence) in ThoughtGraph.RewardedWithMind)
+    {
+      foreach (var Rewarded in Sequence)
+      {
+        Rewarded.IncentivizeOutput(Reward);
+      }
+    }
   }
 }
 

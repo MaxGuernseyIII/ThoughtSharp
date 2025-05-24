@@ -22,7 +22,7 @@
 
 using ThoughtSharp.Runtime;
 
-namespace Tests;
+namespace Tests.Mocks;
 
 public class MockTrainingPolicy : TrainingPolicy
 {

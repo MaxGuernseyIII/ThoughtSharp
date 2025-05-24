@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using FluentAssertions;
+using Tests.Mocks;
 using ThoughtSharp.Runtime;
 
 namespace Tests;

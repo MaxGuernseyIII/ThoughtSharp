@@ -88,6 +88,11 @@ partial class Thought
       public Thought Thought { get; } = Thought;
       public TrainingPolicy TrainingPolicy { get; } = TrainingPolicy;
       public float Weight { get; } = Weight;
+
+      public void IncentivizeOutput(float Reward)
+      {
+        TrainingPolicy.IncentivizeOutput(Reward * Weight);
+      }
     }
   }
 }
