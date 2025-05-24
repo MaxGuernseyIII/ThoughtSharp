@@ -26,10 +26,16 @@ namespace ThoughtSharp.Generator;
 
 static class CognitiveActionsModelFactory
 {
-  public static (List<CognitiveDataClass> CognitiveDataClasses, CognitiveDataInterpreter CognitiveInterpreterClass) MakeModelsForCognitiveActions(
-    GeneratorAttributeSyntaxContext C)
+  public static (List<CognitiveDataClass> CognitiveDataClasses, CognitiveDataInterpreter CognitiveInterpreterClass)
+    MakeModelsForCognitiveActions(
+      GeneratorAttributeSyntaxContext C)
   {
-    var NamedType = (INamedTypeSymbol) C.TargetSymbol;
+    return ConvertToInterpreter((INamedTypeSymbol) C.TargetSymbol);
+  }
+
+  public static (List<CognitiveDataClass> CognitiveDataClasses, CognitiveDataInterpreter CognitiveInterpreterClass) ConvertToInterpreter(
+    INamedTypeSymbol NamedType)
+  {
     var TargetType = TypeAddress.ForSymbol(NamedType);
     var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(CognitiveActionRules.IsValidThoughtAction);
     var CognitiveDataClasses = new List<CognitiveDataClass>();
@@ -40,7 +46,8 @@ static class CognitiveActionsModelFactory
       IsPublic = true,
       ExplicitConstructor = true
     };
-    var OutputParametersTypeAddress = CompleteDataTypeAddress.GetNested(TypeIdentifier.Explicit("struct", "OutputParameters"));
+    var OutputParametersTypeAddress =
+      CompleteDataTypeAddress.GetNested(TypeIdentifier.Explicit("struct", "OutputParameters"));
     var CompleteParametersDataBuilder = new CognitiveDataClassBuilder(OutputParametersTypeAddress)
     {
       IsPublic = true,
@@ -93,6 +100,9 @@ static class CognitiveActionRules
       return false;
 
     if (M.ReturnType.IsThoughtOfBooleanType())
+      return true;
+
+    if (M.ReturnType.IsTaskOf(T => T.IsThoughtOfBooleanType()))
       return true;
 
     return false;

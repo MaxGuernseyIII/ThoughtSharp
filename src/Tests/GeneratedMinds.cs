@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Net.Http.Headers;
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
@@ -136,7 +137,7 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void TrainingAsOutputThought()
+  public void TrainingOfMakeAsOutputThought()
   {
     var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
     var Mind = new StatefulMind(Brain);
@@ -156,7 +157,7 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void TrainingAsContributingThought()
+  public void TrainingOfMakeAsContributingThought()
   {
     var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
     var Mind = new StatefulMind(Brain);
@@ -264,6 +265,53 @@ public partial class GeneratedMinds
     Mind.SomeState.Should().Equal(State);
   }
 
+  [TestMethod]
+  public void TrainingOfUseAsOutputThought()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Mind = new StatefulMind(Brain);
+
+    var Thought = Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100));
+    var Reward = Any.PositiveOrNegativeFloat;
+
+    Thought.ApplyIncentive(Reward);
+
+    var Inference = Brain.MockInferences.Single();
+    var OutputStart = StatefulMind.Output.ParametersIndex +
+                      StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceIndex;
+    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceParameters.Length;
+    Inference.Incentives.Should().BeEquivalentTo([
+      (Reward, new[] {OutputStart..OutputEnd})
+    ]);
+  }
+
+  [TestMethod]
+  public void TrainingOfUseAsContributingThought()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Mind = new StatefulMind(Brain);
+
+    var T = Thought.Do(R =>
+    {
+      R.Consume(Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100)));
+      R.Incorporate(Thought.Capture(new object(), new MockTrainingPolicy { Mind = Mind }));
+    });
+    var Reward = Any.PositiveOrNegativeFloat;
+
+    T.ApplyIncentive(Reward);
+
+    var Inference = Brain.MockInferences.Single();
+    var OutputStart = StatefulMind.Output.ParametersIndex +
+                      StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceIndex;
+    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceParameters.Length;
+    var StateStart = StatefulMind.Output.ParametersIndex +
+                     StatefulMind.Output.OutputParameters.SomeStateIndex;
+    var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
+    Inference.Incentives.Should().BeEquivalentTo([
+      (Reward, new[] {OutputStart..OutputEnd, StateStart..StateEnd})
+    ]);
+  }
+
   static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,
     float? ExpectedSomeOtherData)
   {
@@ -357,6 +405,13 @@ public partial class GeneratedMinds
     Thought DoSomething2(float SomeOtherData);
   }
 
+  [CognitiveActions]
+  partial interface AsynchronousActionSurface
+  {
+    void DoSomething1(float SomeData);
+    Task<Thought> DoSomething2(float SomeOtherData);
+  }
+
   [Mind]
   partial class StatefulMind
   {
@@ -369,7 +424,16 @@ public partial class GeneratedMinds
     public partial Thought<SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
 
     [Use]
-    public partial Thought<bool> SynchronousUseSomeInterface(SynchronousActionSurface Surface, int Argument1,
+    public partial Thought<bool> SynchronousUseSomeInterface(
+      SynchronousActionSurface Surface,
+      int Argument1,
+      int Argument2);
+
+    [Use]
+    public partial Task<Thought<bool>> AsynchronousUseSomeInterface(
+      AsynchronousActionSurface Surface,
+      int Argument1,
+      SynchronousActionSurface SynchronousSurface,
       int Argument2);
   }
 }

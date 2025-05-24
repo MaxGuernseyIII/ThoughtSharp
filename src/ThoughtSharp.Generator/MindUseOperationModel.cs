@@ -22,8 +22,10 @@
 
 namespace ThoughtSharp.Generator;
 
-class MindUseOperationModel(string Name, IReadOnlyList<(string Name, string TypeName, bool IsActionSurface)> Parameters)
+class MindUseOperationModel(
+  string Name, 
+  IReadOnlyList<(string Name, string TypeName, CognitiveDataInterpreter? AssociatedInterpreter)> Parameters)
 {
   public string Name { get; } = Name;
-  public IReadOnlyList<(string Name, string TypeName, bool IsActionSurface)> Parameters { get; } = Parameters;
+  public IReadOnlyList<(string Name, string TypeName, CognitiveDataInterpreter? AssociatedInterpreter)> Parameters { get; } = Parameters;
 }

@@ -46,11 +46,11 @@ public abstract partial class Thought
     return new(Product, new(), Training);
   }
 
-  public static Thought<T> Think<T>(Func<Reasoning, T> Produce)
+  public static Thought<T> Think<T>(Func<Reasoning, T> Produce, TrainingPolicy? Policy = null)
   {
     var Reasoning = new Reasoning();
     var Product = Produce(Reasoning);
-    var Result = new Thought<T>(Product, Reasoning, null);
+    var Result = new Thought<T>(Product, Reasoning, Policy);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -64,11 +64,11 @@ public abstract partial class Thought
     });
   }
 
-  public static async Task<Thought<T>> ThinkAsync<T>(Func<Reasoning, Task<T>> Produce)
+  public static async Task<Thought<T>> ThinkAsync<T>(Func<Reasoning, Task<T>> Produce, TrainingPolicy? Policy = null)
   {
     var Reasoning = new Reasoning();
     var Product = await Produce(Reasoning);
-    var Result = new Thought<T>(Product, Reasoning, null);
+    var Result = new Thought<T>(Product, Reasoning, Policy);
     Reasoning.Parent = Result;
     return Result;
   }

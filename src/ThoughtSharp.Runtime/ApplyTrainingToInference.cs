@@ -38,7 +38,9 @@ class ApplyTrainingToInference(
 
   public void IncentivizeOutputAndState(float Reward)
   {
-    Target.Incentivize(Reward, OutputAndStateRanges);
+    var IReadOnlyList = OutputAndStateRanges.ToArray();
+
+    Target.Incentivize(Reward, IReadOnlyList);
   }
 
   public Mind? Mind { get; } = Mind;

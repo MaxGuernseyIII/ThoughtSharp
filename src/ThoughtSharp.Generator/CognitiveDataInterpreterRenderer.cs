@@ -36,7 +36,7 @@ static class CognitiveDataInterpreterRenderer
       {
         WriteBody = W =>
         {
-          var MethodIsAsync = Interpreter.Paths.Any(P => P.RequiresAwait);
+          var MethodIsAsync = Interpreter.RequiresAwait;
           var ReturnValue = MethodIsAsync ? "Task<Thought<bool>>" : "Thought<bool>";
 
           W.WriteLine($"public {ReturnValue} InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");

@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.CodeDom.Compiler;
+using System.Runtime.InteropServices;
 
 namespace ThoughtSharp.Generator;
 
@@ -112,14 +113,22 @@ static class MindRenderer
 
   static void RenderUseMethod(IndentedTextWriter W, MindUseOperationModel UseOperation, ushort OperationCode)
   {
-    W.WriteLine($"public partial Thought<bool> {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
+    var InputParameters = UseOperation.Parameters.Where(P => P.AssociatedInterpreter is null);
+    var ActionSurfaces = UseOperation.Parameters.Where(P => P.AssociatedInterpreter is not null);
+
+    var ReturnType = "Thought<bool>";
+    var MethodIsAsync = ActionSurfaces.Any(A => A.AssociatedInterpreter!.RequiresAwait);
+    if (MethodIsAsync)
+      ReturnType = $"Task<{ReturnType}>";
+
+    W.WriteLine($"public partial {ReturnType} {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
     W.WriteLine("var InputObject = new Input();");
     W.WriteLine($"InputObject.OperationCode = {OperationCode.ToLiteralExpression()};");
     W.WriteLine();
 
-    foreach (var Parameter in UseOperation.Parameters.Where(P => !P.IsActionSurface))
+    foreach (var Parameter in InputParameters)
       W.WriteLine($"InputObject.Parameters.{UseOperation.Name}.{Parameter.Name} = {Parameter.Name};");
     W.WriteLine();
     W.WriteLine("CopyStateTo(ref InputObject);");
@@ -130,17 +139,27 @@ static class MindRenderer
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
     W.WriteLine("CopyStateFrom(ref OutputObject);");
     W.WriteLine();
-    W.WriteLine("return Thought.Think(R =>");
+    W.WriteLine();
+    W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{UseOperation.Name}Index;");
+    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{UseOperation.Name}Parameters.Length;");
+    W.WriteLine();
+
+    W.WriteLine("var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
+    var (ThoughtMethod, Async) = MethodIsAsync ? ("ThinkAsync", "async ") : ("Think", "");
+    W.WriteLine($"return Thought.{ThoughtMethod}({Async}R =>");
     W.WriteLine("{");
     W.Indent++;
     W.WriteLine("var MoreActions = false;");
     W.WriteLine();
-    foreach (var Parameter in UseOperation.Parameters.Where(P => P.IsActionSurface))
-      W.WriteLine($"MoreActions = MoreActions || R.Consume(OutputObject.Parameters.{UseOperation.Name}.{Parameter.Name}.InterpretFor({Parameter.Name}));");
+    foreach (var Parameter in ActionSurfaces)
+    {
+      var Unwrap = Parameter.AssociatedInterpreter!.RequiresAwait ? "await " : "";
+      W.WriteLine($"MoreActions = MoreActions || R.Consume({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{Parameter.Name}.InterpretFor({Parameter.Name}));");
+    }
     W.WriteLine();
     W.WriteLine("return MoreActions;");
     W.Indent--;
-    W.WriteLine("});");
+    W.WriteLine("}, TrainingPolicy);");
     W.Indent--;
     W.WriteLine("}");
   }

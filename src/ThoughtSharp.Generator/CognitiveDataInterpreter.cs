@@ -29,4 +29,6 @@ class CognitiveDataInterpreter(TypeAddress ToInterpretType, CognitiveDataClass D
   public TypeAddress ToInterpretType { get; } = ToInterpretType;
   public CognitiveDataClass DataClass { get; } = DataClass;
   public IReadOnlyList<CognitiveInterpreterPath> Paths { get; } = Paths;
+
+  public bool RequiresAwait => Paths.Any(P => P.RequiresAwait);
 }

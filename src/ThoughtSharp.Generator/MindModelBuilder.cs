@@ -110,7 +110,7 @@ class MindModelBuilder
 
   public void AddUseMethodFor(IMethodSymbol UseMethod)
   {
-    var ThisInputDataModel = UseMethod.GetParametersDataModel(GetInputParametersClassName(UseMethod), (Parameter, _) => IsActionSurfaceCParameter(Parameter));
+    var ThisInputDataModel = UseMethod.GetParametersDataModel(GetInputParametersClassName(UseMethod), (Parameter, _) => IsActionSurfaceParameter(Parameter));
     AssociatedDataTypes.Add(ThisInputDataModel);
     InputParametersBuilder.AddCompilerDefinedSubDataParameter(UseMethod.Name, ThisInputDataModel.Address.FullName);
 
@@ -120,13 +120,16 @@ class MindModelBuilder
       ExplicitConstructor = true
     };
     OutputParametersBuilder.AddCompilerDefinedSubDataParameter(UseMethod.Name, ThisOutputModelBuilder);
-    foreach (var ActionSurface in UseMethod.Parameters.Where(IsActionSurfaceCParameter)) 
+    foreach (var ActionSurface in UseMethod.Parameters.Where(IsActionSurfaceParameter)) 
       ThisOutputModelBuilder.AddCompilerDefinedSubDataParameter(ActionSurface.Name, ActionSurface.Type.GetFullPath() + ".Output");
     AssociatedDataTypes.Add(ThisOutputModelBuilder.Build());
 
-    UseOperations.Add(new(UseMethod.Name, [..UseMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath(), IsActionSurfaceCParameter(P)))]));
+    UseOperations.Add(new(UseMethod.Name, [..UseMethod.Parameters.Select(P => (
+      P.Name, 
+      P.Type.GetFullPath(), 
+      IsActionSurfaceParameter(P) ? CognitiveActionsModelFactory.ConvertToInterpreter((INamedTypeSymbol)P.Type).CognitiveInterpreterClass : null))]));
 
-    static bool IsActionSurfaceCParameter(IParameterSymbol Parameter)
+    static bool IsActionSurfaceParameter(IParameterSymbol Parameter)
     {
       return Parameter.Type.GetAttributes()
         .Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.ActionsAttributeName);
