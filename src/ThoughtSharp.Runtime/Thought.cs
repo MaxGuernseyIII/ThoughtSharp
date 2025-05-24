@@ -22,9 +22,8 @@
 
 namespace ThoughtSharp.Runtime;
 
-public abstract class Thought
+public abstract partial class Thought
 {
-  readonly TrainingPolicy? TrainingPolicy;
   readonly IReadOnlyDictionary<Thought, float> Weights;
 
   // prevents foreign inheritors
@@ -34,6 +33,8 @@ public abstract class Thought
     Children = LineOfReasoning.Children;
     Weights = LineOfReasoning.ChildrenWeights;
   }
+
+  internal TrainingPolicy? TrainingPolicy { get; set; }
 
   internal Reasoning? Container { get; set; }
 
@@ -90,10 +91,8 @@ public abstract class Thought
   //  3. apply reward to output only for the last thought for a Mind
   public void ApplyIncentive(float Reward)
   {
-    TrainingPolicy?.IncentivizeOutput(Reward);
-
-    foreach (var Child in Children)
-      Child.ApplyIncentive(Reward * Weights[Child]);
+    foreach (var Rewarded in ThoughtGraph.For(this).RewardedWithoutMind) 
+      Rewarded.TrainingPolicy.IncentivizeOutput(Reward * Rewarded.Weight);
   }
 }
 
