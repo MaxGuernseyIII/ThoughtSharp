@@ -86,7 +86,7 @@ public abstract partial class Thought
   }
 
   // TODO: this needs to be rebuilt to...
-  //  1. get a graph of thoughts bucketed into time-ordered lists by Mind
+  //  1. [x] get a graph of thoughts bucketed into time-ordered lists by Mind
   //  2. apply reward to both state and output for all be last thought for a Mind
   //  3. apply reward to output only for the last thought for a Mind
   public void ApplyIncentive(float Reward)
