@@ -229,7 +229,7 @@ public partial class GeneratedMinds
     var Surface = new MockSynchronousSurface();
     var ActualMore = ExecuteSynchronousUseOperation(new()
     {
-      ActionCode = (ushort) Any.Int(0, 2),
+      ActionCode = (ushort)Any.Int(0, 2),
       MoreActions = ExpectedMore
     }, Surface);
 
@@ -266,7 +266,7 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void TrainingOfUseAsOutputThought()
+  public void TrainingOfSynchronousUseAsOutputThought()
   {
     var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
     var Mind = new StatefulMind(Brain);
@@ -286,7 +286,7 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void TrainingOfUseAsContributingThought()
+  public void TrainingOfSynchronousUseAsContributingThought()
   {
     var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
     var Mind = new StatefulMind(Brain);
@@ -304,6 +304,135 @@ public partial class GeneratedMinds
     var OutputStart = StatefulMind.Output.ParametersIndex +
                       StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceIndex;
     var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceParameters.Length;
+    var StateStart = StatefulMind.Output.ParametersIndex +
+                     StatefulMind.Output.OutputParameters.SomeStateIndex;
+    var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
+    Inference.Incentives.Should().BeEquivalentTo([
+      (Reward, new[] {OutputStart..OutputEnd, StateStart..StateEnd})
+    ]);
+  }
+
+  [TestMethod]
+  public async Task UseAsynchronousActionSurfaceOperation1()
+  {
+    var ExpectedSomeData = Any.Float;
+
+    await TestAsynchronousUseMethod(new()
+    {
+      ActionCode = 1,
+      MoreActions = false,
+      Parameters =
+      {
+        DoSomething1 =
+        {
+          SomeData = ExpectedSomeData
+        }
+      }
+    }, ExpectedSomeData, null);
+  }
+
+  [TestMethod]
+  public async Task UseAsynchronousActionSurfaceOperation2()
+  {
+    var ExpectedSomeOtherDataData = Any.Float;
+
+    await TestAsynchronousUseMethod(new()
+    {
+      ActionCode = 2,
+      MoreActions = false,
+      Parameters =
+      {
+        DoSomething2 =
+        {
+          SomeOtherData = ExpectedSomeOtherDataData
+        }
+      }
+    }, null, ExpectedSomeOtherDataData);
+  }
+
+  [DataRow(true)]
+  [DataRow(false)]
+  [TestMethod]
+  public async Task UseAsynchronousActionSurfaceReturnsMore(bool ExpectedMore)
+  {
+    var Surface = new MockAsynchronousSurface();
+    var ActualMore = await ExecuteAsynchronousUseOperation(new()
+    {
+      ActionCode = (ushort)Any.Int(0, 2),
+      MoreActions = ExpectedMore
+    }, Surface);
+
+    ActualMore.Should().Be(ExpectedMore);
+  }
+
+  [TestMethod]
+  public async Task UseAsynchronousActionSurfaceFeedsStateAsInput()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var State = Any.FloatArray(StatefulMind.StateCount);
+    var Mind = new StatefulMind(Brain)
+    {
+      SomeState = State
+    };
+    var ActualCapture = CaptureInputState(Brain);
+
+    await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 100), new MockSynchronousSurface(), Any.Int(0, 100));
+
+    ActualCapture.Captured.Should().Equal(State);
+  }
+
+  [TestMethod]
+  public async Task UseAsynchronousActionSurfaceCapturesStateFromOutput()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var State = Any.FloatArray(StatefulMind.StateCount);
+    var Mind = new StatefulMind(Brain);
+    SetOutputState(Brain, State);
+
+    await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 100), new MockSynchronousSurface(), Any.Int(0, 100));
+
+    Mind.SomeState.Should().Equal(State);
+  }
+
+  [TestMethod]
+  public async Task TrainingOfUseAsOutputThought()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Mind = new StatefulMind(Brain);
+
+    var Thought = await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 10), new MockSynchronousSurface(), Any.Int(-100, 100));
+    var Reward = Any.PositiveOrNegativeFloat;
+
+    Thought.ApplyIncentive(Reward);
+
+    var Inference = Brain.MockInferences.Single();
+    var OutputStart = StatefulMind.Output.ParametersIndex +
+                      StatefulMind.Output.OutputParameters.AsynchronousUseSomeInterfaceIndex;
+    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.AsynchronousUseSomeInterfaceParameters.Length;
+    Inference.Incentives.Should().BeEquivalentTo([
+      (Reward, new[] {OutputStart..OutputEnd})
+    ]);
+  }
+
+  [TestMethod]
+  public async Task TrainingOfUseAsContributingThought()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Mind = new StatefulMind(Brain);
+
+    var T = await Thought.DoAsync(async R =>
+    {
+      R.Consume(await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 10), new MockSynchronousSurface(), Any.Int(-100, 100)));
+      R.Incorporate(Thought.Capture(new object(), new MockTrainingPolicy { Mind = Mind }));
+    });
+    var Reward = Any.PositiveOrNegativeFloat;
+
+    T.ApplyIncentive(Reward);
+
+    var Inference = Brain.MockInferences.Single();
+    var OutputStart = StatefulMind.Output.ParametersIndex +
+                      StatefulMind.Output.OutputParameters.AsynchronousUseSomeInterfaceIndex;
+    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.AsynchronousUseSomeInterfaceParameters.Length;
     var StateStart = StatefulMind.Output.ParametersIndex +
                      StatefulMind.Output.OutputParameters.SomeStateIndex;
     var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
@@ -357,6 +486,51 @@ public partial class GeneratedMinds
     return More;
   }
 
+  static async Task TestAsynchronousUseMethod(AsynchronousActionSurface.Output Selection, float? ExpectedSomeData,
+    float? ExpectedSomeOtherData)
+  {
+    var Surface = new MockAsynchronousSurface();
+    await ExecuteAsynchronousUseOperation(Selection, Surface);
+
+    Surface.SomeData.Should().Be(ExpectedSomeData);
+    Surface.SomeOtherData.Should().Be(ExpectedSomeOtherData);
+  }
+
+  static async Task<bool> ExecuteAsynchronousUseOperation(AsynchronousActionSurface.Output Selection, MockAsynchronousSurface Surface)
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var ExpectedInput = new StatefulMind.Input
+    {
+      OperationCode = 3,
+      Parameters =
+      {
+        AsynchronousUseSomeInterface =
+        {
+          Argument1 = Any.Int(0, 100),
+          Argument2 = Any.Int(0, 10000)
+        }
+      }
+    };
+
+    var StipulatedOutput = new StatefulMind.Output
+    {
+      Parameters =
+      {
+        AsynchronousUseSomeInterface =
+        {
+          Surface = Selection
+        }
+      }
+    };
+    Brain.SetOutputForOnlyInput(ExpectedInput, StipulatedOutput);
+    var Thought = await new StatefulMind(Brain).AsynchronousUseSomeInterface(Surface,
+      ExpectedInput.Parameters.AsynchronousUseSomeInterface.Argument1, 
+      new MockSynchronousSurface(),
+      ExpectedInput.Parameters.AsynchronousUseSomeInterface.Argument2);
+    var More = Thought.ConsumeDetached();
+    return More;
+  }
+
   class Capture<T>
   {
     public T? Captured { get; set; }
@@ -375,6 +549,22 @@ public partial class GeneratedMinds
     public Thought DoSomething2(float SomeOtherData)
     {
       return Thought.Do(_ => { this.SomeOtherData = SomeOtherData; });
+    }
+  }
+
+  class MockAsynchronousSurface : AsynchronousActionSurface
+  {
+    public float? SomeData;
+    public float? SomeOtherData;
+
+    public void DoSomething1(float SomeData)
+    {
+      this.SomeData = SomeData;
+    }
+
+    public Task<Thought> DoSomething2(float SomeOtherData)
+    {
+      return Task.FromResult(Thought.Do(_ => { this.SomeOtherData = SomeOtherData; }));
     }
   }
 
