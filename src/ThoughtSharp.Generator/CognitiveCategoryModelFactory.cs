@@ -59,7 +59,7 @@ static class CognitiveCategoryModelFactory
     DataObjects.Add(QuestionBuilder.Build());
 
     var Answer =
-      new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Output")))
+      new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("struct", "Output")))
       {
         IsPublic = true,
         ExplicitConstructor = true
