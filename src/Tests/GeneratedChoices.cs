@@ -21,8 +21,8 @@
 // SOFTWARE.
 
 using FluentAssertions;
+using FluentAssertions.Primitives;
 using ThoughtSharp.Runtime;
-using ThoughtSharp.Runtime.Codecs;
 
 namespace Tests;
 
@@ -42,7 +42,7 @@ public partial class GeneratedChoices
 
     var Batches = Category.ToInputBatches();
 
-    Batches.Should().BeEquivalentTo<MockCategory.Input>([
+    Batches.Should().MarshalToSameTensor<MockCategory.Input>([
       new()
       {
         IsFinalBatch = true,
@@ -82,7 +82,7 @@ public partial class GeneratedChoices
 
     var Batches = Category.ToInputBatches();
 
-    Batches.Should().BeEquivalentTo<MockCategory.Input>([
+    Batches.Should().MarshalToSameTensor<MockCategory.Input>([
       new()
       {
         IsFinalBatch = true,
@@ -126,7 +126,7 @@ public partial class GeneratedChoices
 
     var Batches = Category.ToInputBatches();
 
-    Batches.Should().BeEquivalentTo<MockCategory.Input>([
+    Batches.Should().MarshalToSameTensor<MockCategory.Input>([
       new()
       {
         IsFinalBatch = false,
@@ -195,7 +195,7 @@ public partial class GeneratedChoices
 
     var Batches = Category.ToInputBatches();
 
-    Batches.Should().BeEquivalentTo<MockCategory.Input>([
+    Batches.Should().MarshalToSameTensor<MockCategory.Input>([
       new()
       {
         IsFinalBatch = false,
@@ -300,42 +300,5 @@ public partial class GeneratedChoices
   }
 
   [CognitiveCategory<MockPayload, MockData>(3)]
-  partial class MockCategory
-  {
-  }
-
-  float[] GetReferenceBuffer<TPayload, TDescriptor>(
-    IReadOnlyList<CognitiveOption<TPayload, TDescriptor>> Options,
-    ushort First,
-    int BatchSize,
-    int Count,
-    bool IsLast) 
-    where TDescriptor : CognitiveData<TDescriptor>
-  {
-    var ItemNumberCodec = new NumberToFloatingPointCodec<short, float>(
-      new RoundingCodec<float>(new NormalizingCodec<float>(new CopyFloatCodec(), ushort.MinValue, ushort.MaxValue)));
-    var BoolCodec = new CopyBoolCodec();
-    var DescriptorCodec = new SubDataCodec<TDescriptor>();
-    var ItemSize = ItemNumberCodec.Length + BoolCodec.Length + DescriptorCodec.Length;
-
-    var Result = new float[ItemSize * Count + BoolCodec.Length];
-
-    foreach (var I in Enumerable.Range(0, Count))
-    {
-      var ItemIsHot = I < BatchSize;
-      var ItemOffset = I*ItemSize;
-      BoolCodec.EncodeTo(ItemIsHot, Result[ItemOffset..]);
-      ItemOffset += BoolCodec.Length;
-      if (!ItemIsHot)
-        continue;
-
-      ItemNumberCodec.EncodeTo((short) (First + I), Result[ItemOffset..]);
-      ItemOffset += ItemNumberCodec.Length;
-      DescriptorCodec.EncodeTo(Options[I].Descriptor, Result[ItemOffset..]);
-    }
-
-    BoolCodec.EncodeTo(IsLast, Result[(Count * ItemSize)..]);
-
-    return Result;
-  }
+  partial class MockCategory;
 }

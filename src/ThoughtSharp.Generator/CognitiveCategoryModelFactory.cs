@@ -49,7 +49,7 @@ static class CognitiveCategoryModelFactory
     ItemBuilder.AddCompilerDefinedSubDataParameter("Descriptor", DescriptorTypeAddress.FullName);
     DataObjects.Add(ItemBuilder.Build());
     var QuestionBuilder =
-      new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("class", "Input")))
+      new CognitiveDataClassBuilder(TypeName.GetNested(TypeIdentifier.Explicit("struct", "Input")))
       {
         IsPublic = true,
         ExplicitConstructor = true
