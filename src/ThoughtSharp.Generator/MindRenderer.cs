@@ -99,8 +99,7 @@ static class MindRenderer
       $"public partial Thought<{MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
-    W.WriteLine("var InputObject = new Input();");
-    W.WriteLine($"InputObject.OperationCode = {OperationCode.ToLiteralExpression()};");
+    RenderInputObjectForOpCode(W, OperationCode);
 
     foreach (var Parameter in MakeOperation.Parameters)
       W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {Parameter.Name};");
@@ -135,8 +134,7 @@ static class MindRenderer
     W.WriteLine($"public partial {ReturnType} {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
-    W.WriteLine("var InputObject = new Input();");
-    W.WriteLine($"InputObject.OperationCode = {OperationCode.ToLiteralExpression()};");
+    RenderInputObjectForOpCode(W, OperationCode);
     W.WriteLine();
 
     foreach (var Parameter in InputParameters)
@@ -166,5 +164,11 @@ static class MindRenderer
     W.WriteLine("}, TrainingPolicy);");
     W.Indent--;
     W.WriteLine("}");
+  }
+
+  static void RenderInputObjectForOpCode(IndentedTextWriter W, ushort OperationCode)
+  {
+    W.WriteLine("var InputObject = new Input();");
+    W.WriteLine($"InputObject.OperationCode = {OperationCode.ToLiteralExpression()};");
   }
 }
