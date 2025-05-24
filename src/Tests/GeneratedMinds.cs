@@ -78,7 +78,7 @@ public partial class GeneratedMinds
   public void StateIsCopiedIntoMakeInput()
   {
     var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    float[] OriginalState = Any.FloatArray(StatefulMind.StateCount);
+    var OriginalState = Any.FloatArray(StatefulMind.StateCount);
     var Mind = new StatefulMind(Brain)
     {
       SomeState = OriginalState
@@ -101,6 +101,32 @@ public partial class GeneratedMinds
     }).ConsumeDetached();
 
     Actual.Should().BeEquivalentTo(OriginalState);
+  }
+
+  [TestMethod]
+  public void StateIsCopiedFromMakeOutput()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var FinalState = Any.FloatArray(StatefulMind.StateCount);
+    var Mind = new StatefulMind(Brain);
+
+    Brain.MakeInferenceFunc = Parameters =>
+    {
+      var Output = new StatefulMind.Output();
+      Output.Parameters.SomeState.Value = FinalState;
+      var Buffer = new float[StatefulMind.Output.Length];
+      Output.MarshalTo(Buffer);
+
+      return new MockInference(Buffer);
+    };
+
+    Mind.MakeSimpleOutput(new()
+    {
+      P1 = Any.Float,
+      P2 = Any.Float
+    }).ConsumeDetached();
+
+    Mind.SomeState.Should().BeEquivalentTo(FinalState);
   }
 
   float[] MakeReferenceFloats<T>(T ToPersist) where T : CognitiveData<T>

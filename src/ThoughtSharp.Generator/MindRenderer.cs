@@ -35,10 +35,7 @@ static class MindRenderer
         W.WriteLine("using ThoughtSharp.Runtime;");
         W.WriteLine();
       },
-      WriteAfterTypeName = W=>
-      {
-        W.Write("(Brain Brain)");
-      },
+      WriteAfterTypeName = W => { W.Write("(Brain Brain)"); },
       WriteBody = W =>
       {
         ushort OperationCode = 1;
@@ -46,9 +43,7 @@ static class MindRenderer
         RenderStateCopyMethods(W, M);
 
         foreach (var MakeOperation in M.MakeOperations)
-        {
           RenderMakeMethod(W, MakeOperation, OperationCode++);
-        }
       }
     });
   }
@@ -58,31 +53,40 @@ static class MindRenderer
     W.WriteLine("void CopyStateTo(ref Input InputObject)");
     W.WriteLine("{");
     W.Indent++;
-    foreach (var State in Model.States) 
+    foreach (var State in Model.States)
       W.WriteLine($"InputObject.Parameters.{State.Name}.Value = {State.Name};");
+    W.Indent--;
+    W.WriteLine("}");
+
+    W.WriteLine("void CopyStateFrom(ref readonly Output OutputObject)");
+    W.WriteLine("{");
+    W.Indent++;
+    foreach (var State in Model.States)
+      W.WriteLine($"{State.Name} = OutputObject.Parameters.{State.Name}.Value;");
     W.Indent--;
     W.WriteLine("}");
   }
 
   static void RenderMakeMethod(IndentedTextWriter W, MindMakeOperationModel MakeOperation, ushort OperationCode)
   {
-    W.WriteLine($"public partial Thought<{MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
+    W.WriteLine(
+      $"public partial Thought<{MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
     W.WriteLine("var InputObject = new Input();");
     W.WriteLine($"InputObject.OperationCode = {OperationCode.ToLiteralExpression()};");
-    W.WriteLine("CopyStateTo(ref InputObject);");
 
     foreach (var Parameter in MakeOperation.Parameters)
-    {
       W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {Parameter.Name};");
-    }
 
+    W.WriteLine("CopyStateTo(ref InputObject);");
     W.WriteLine("var InputBuffer = new float[Input.Length];");
     W.WriteLine("InputObject.MarshalTo(InputBuffer);");
     W.WriteLine();
     W.WriteLine("var Inference = Brain.MakeInference(InputBuffer);");
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+    W.WriteLine("CopyStateFrom(ref OutputObject);");
+    W.WriteLine();
 
     W.WriteLine($"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name});");
     W.Indent--;

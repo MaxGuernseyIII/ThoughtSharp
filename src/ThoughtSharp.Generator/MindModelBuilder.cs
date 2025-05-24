@@ -101,15 +101,24 @@ class MindModelBuilder
 
   public void AddStateValueFor(IValueSymbol StateValue)
   {
-    var TypeName = GetInputParametersClassName(StateValue.Raw);
-    var ThisDataModel = new CognitiveDataClassBuilder(TypeName)
+    var InputParameterDataModel = new CognitiveDataClassBuilder(GetInputParametersClassName(StateValue.Raw))
     {
       IsPublic = true,
       ExplicitConstructor = true
     };
-    ThisDataModel.AddParameterValue(StateValue, true, "Value");
-    AssociatedDataTypes.Add(ThisDataModel.Build());
-    InputParametersBuilder.AddCompilerDefinedSubDataParameter(StateValue.Raw.Name, ThisDataModel);
+    InputParameterDataModel.AddParameterValue(StateValue, true, "Value");
+    AssociatedDataTypes.Add(InputParameterDataModel.Build());
+    InputParametersBuilder.AddCompilerDefinedSubDataParameter(StateValue.Raw.Name, InputParameterDataModel);
+
+    var OutputParameterDataModel = new CognitiveDataClassBuilder(GetOutputParametersClassName(StateValue.Raw))
+    {
+      IsPublic = true,
+      ExplicitConstructor = true
+    };
+    OutputParameterDataModel.AddParameterValue(StateValue, true, "Value");
+    AssociatedDataTypes.Add(OutputParameterDataModel.Build());
+    OutputParametersBuilder.AddCompilerDefinedSubDataParameter(StateValue.Raw.Name, OutputParameterDataModel);
+
     StateModels.Add(new(StateValue.Name));
   }
 
