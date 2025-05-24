@@ -46,16 +46,17 @@ public class Training
   {
     var RewardToApply = Any.Float;
 
-    var TotalRewardApplied = MeasureDistributedRewardAmount(RewardToApply);
+    var TotalRewards = MeasureDistributedRewardAmount(RewardToApply);
 
-    TotalRewardApplied.Should().Be(RewardToApply);
+    TotalRewards.OutputReward.Should().Be(RewardToApply);
+    TotalRewards.StateReward.Should().Be(0);
   }
 
   [TestMethod]
   public void WeightedDistribution()
   {
     var RewardToApply = Any.Float;
-    var UnweightedRewardAmount = MeasureDistributedRewardAmount(RewardToApply);
+    var UnweightedRewards = MeasureDistributedRewardAmount(RewardToApply);
 
     var Policy = new MockTrainingPolicy();
     var Weight = Any.Float;
@@ -66,7 +67,8 @@ public class Training
       R.SetWeight(Subthought, Weight);
     }).ApplyIncentive(RewardToApply);
 
-    Policy.OutputReward.Should().BeApproximately(UnweightedRewardAmount * Weight, 0.0001f);
+    Policy.OutputReward.Should().BeApproximately(UnweightedRewards.OutputReward * Weight, 0.0001f);
+    Policy.StateReward.Should().BeApproximately(UnweightedRewards.StateReward * Weight, 0.0001f);
   }
 
   [TestMethod]
@@ -77,7 +79,8 @@ public class Training
 
     var TotalRewardApplied = MeasureDistributedRewardAmount(RewardToApply, Mind);
 
-    TotalRewardApplied.Should().Be(RewardToApply);
+    TotalRewardApplied.OutputReward.Should().Be(RewardToApply);
+    TotalRewardApplied.StateReward.Should().Be(0);
   }
 
   [TestMethod]
@@ -85,7 +88,7 @@ public class Training
   {
     var Mind = new MockMind();
     var RewardToApply = Any.Float;
-    var UnweightedRewardAmount = MeasureDistributedRewardAmount(RewardToApply, Mind);
+    var UnweightedRewards = MeasureDistributedRewardAmount(RewardToApply, Mind);
 
     var Policy = new MockTrainingPolicy();
     var Weight = Any.Float;
@@ -96,13 +99,14 @@ public class Training
       R.SetWeight(Subthought, Weight);
     }).ApplyIncentive(RewardToApply);
 
-    Policy.OutputReward.Should().BeApproximately(UnweightedRewardAmount * Weight, 0.0001f);
+    Policy.OutputReward.Should().BeApproximately(UnweightedRewards.OutputReward * Weight, 0.0001f);
+    Policy.StateReward.Should().BeApproximately(UnweightedRewards.StateReward * Weight, 0.0001f);
   }
 
-  static float MeasureDistributedRewardAmount(float RewardToApply, Mind? Mind = null)
+  static MockTrainingPolicy MeasureDistributedRewardAmount(float RewardToApply, Mind? Mind = null)
   {
     var Policy = new MockTrainingPolicy {Mind = Mind};
     Thought.Do(R => { R.Consume(Thought.Capture(new MockProduct(), Policy)); }).ApplyIncentive(RewardToApply);
-    return Policy.OutputReward;
+    return Policy;
   }
 }
