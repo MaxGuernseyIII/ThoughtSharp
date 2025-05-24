@@ -192,7 +192,7 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void UseActionSurfaceOperation1()
+  public void UseSynchronousActionSurfaceOperation1()
   {
     var ExpectedSomeData = Any.Float;
 
@@ -211,7 +211,7 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void UseActionSurfaceOperation2()
+  public void UseSynchronousActionSurfaceOperation2()
   {
     var ExpectedSomeOtherDataData = Any.Float;
 
@@ -227,6 +227,21 @@ public partial class GeneratedMinds
         }
       }
     }, null, ExpectedSomeOtherDataData);
+  }
+
+  [DataRow(true)]
+  [DataRow(false)]
+  [TestMethod]
+  public void UseSynchronousActionSurfaceReturnsMore(bool ExpectedMore)
+  {
+    var Surface = new MockSynchronousSurface();
+    var ActualMore = ExecuteSynchronousUseOperation(new()
+    {
+      ActionCode = (ushort)Any.Int(0, 2),
+      MoreActions = ExpectedMore
+    }, Surface);
+
+    ActualMore.Should().Be(ExpectedMore);
   }
 
   static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData, float? ExpectedSomeOtherData)
