@@ -145,10 +145,37 @@ public partial class GeneratedMinds
 
     var Inference = Brain.MockInferences.Single();
     var OutputStart = StatefulMind.Output.ParametersIndex +
-                StatefulMind.Output.OutputParameters.MakeSimpleOutputIndex;
+                      StatefulMind.Output.OutputParameters.MakeSimpleOutputIndex;
     var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.MakeSimpleOutputParameters.Length;
     Inference.Incentives.Should().BeEquivalentTo([
       (Reward, new[] { OutputStart..OutputEnd })
+    ]);
+  }
+
+  [TestMethod]
+  public void TrainingAsContributingThought()
+  {
+    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Mind = new StatefulMind(Brain);
+
+    var T = Thought.Do(R =>
+    {
+      R.Consume(Mind.MakeSimpleOutput(new()));
+      R.Incorporate(Thought.Capture(new object(), new MockTrainingPolicy() { Mind = Mind }));
+    });
+    var Reward = Any.PositiveOrNegativeFloat;
+
+    T.ApplyIncentive(Reward);
+
+    var Inference = Brain.MockInferences.Single();
+    var OutputStart = StatefulMind.Output.ParametersIndex +
+                      StatefulMind.Output.OutputParameters.MakeSimpleOutputIndex;
+    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.MakeSimpleOutputParameters.Length;
+    var StateStart = StatefulMind.Output.ParametersIndex +
+                     StatefulMind.Output.OutputParameters.SomeStateIndex;
+    var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
+    Inference.Incentives.Should().BeEquivalentTo([
+      (Reward, new[] { OutputStart..OutputEnd, StateStart..StateEnd })
     ]);
   }
 

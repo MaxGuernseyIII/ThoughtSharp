@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ThoughtSharp.Runtime
 {
-  class ApplyTrainingToInference(Mind Mind, Inference Target, Span<Range> OutputRanges, Span<Range> StateRanges) : TrainingPolicy
+  class ApplyTrainingToInference(Mind Mind, Inference Target, IReadOnlyList<Range> OutputRanges, IReadOnlyList<Range> StateRanges) : TrainingPolicy
   {
     readonly IReadOnlyList<Range> OutputRanges = [..OutputRanges];
     readonly IReadOnlyList<Range> OutputAndStateRanges = [..StateRanges,..OutputRanges];

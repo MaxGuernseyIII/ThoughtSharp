@@ -65,6 +65,13 @@ static class MindRenderer
       W.WriteLine($"{State.Name} = OutputObject.Parameters.{State.Name}.Value;");
     W.Indent--;
     W.WriteLine("}");
+
+    W.WriteLine("static readonly IReadOnlyList<Range> StateRanges = [");
+    W.Indent++;
+    foreach (var State in Model.States) 
+      W.WriteLine($"(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index)..(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index + Output.OutputParameters.{State.Name}Parameters.Length)");
+    W.WriteLine("];");
+    W.Indent--;
   }
 
   static void RenderMakeMethod(IndentedTextWriter W, MindMakeOperationModel MakeOperation, ushort OperationCode)
@@ -88,9 +95,10 @@ static class MindRenderer
     W.WriteLine("CopyStateFrom(ref OutputObject);");
     W.WriteLine();
 
-    W.WriteLine($"var Start = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
-    W.WriteLine($"var End = Start + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
-    W.WriteLine("var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [Start..End], []);");
+    W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
+    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
+
+    W.WriteLine("var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
 
     W.WriteLine($"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name}.Value, TrainingPolicy);");
     W.Indent--;
