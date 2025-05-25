@@ -21,40 +21,22 @@
 // SOFTWARE.
 
 using TorchSharp;
-using TorchSharp.Modules;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrain(Sequential Model, torch.Device Device, int StateSize) : IDisposable
+public class TorchInference(
+  torch.Tensor StateOutputTensor,
+  torch.Tensor ProductOutputTensor
+) : IDisposable
 {
-  internal Sequential Model { get; } = Model;
-  internal torch.Device Device { get; } = Device;
-  internal int StateSize { get; } = StateSize;
+  internal torch.Tensor StateOutputTensor { get; } = StateOutputTensor;
+  internal torch.Tensor ProductOutputTensor { get; } = ProductOutputTensor;
 
-  public torch.Tensor EmptyState => torch.zeros(new long[] { 1, StateSize }, dtype: torch.ScalarType.Float32, device: Device);
+  public ReadOnlySpan<float> Result => ProductOutputTensor.squeeze(0).to(torch.CPU).data<float>().ToArray();
 
-  public virtual void Dispose()
+  public void Dispose()
   {
-    Model.Dispose();
-  }
-
-  internal torch.Tensor ConvertFloatsToTensor(float[] Parameters)
-  {
-    return torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
-  }
-
-  internal TorchInferenceParts Forward(torch.Tensor StateInputTensor, float[] Parameters)
-  {
-    var ParametersInputTensor = ConvertFloatsToTensor(Parameters);
-    var NewInput = torch.cat((IList<torch.Tensor>) [StateInputTensor, ParametersInputTensor], (long) 1);
-    var NewOutput = Model.forward(NewInput);
-    var NewStateTensor = NewOutput.slice(1, 0, StateSize, 1);
-    var NewProductTensor = NewOutput.slice(1, StateSize, NewOutput.size(1) - StateSize, 1);
-
-    return new()
-    {
-      State = NewStateTensor,
-      Product = NewProductTensor
-    };
+    StateOutputTensor.Dispose();
+    ProductOutputTensor.Dispose();
   }
 }

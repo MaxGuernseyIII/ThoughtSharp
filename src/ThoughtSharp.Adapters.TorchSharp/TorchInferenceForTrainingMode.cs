@@ -26,15 +26,16 @@ using static TorchSharp.torch;
 namespace ThoughtSharp.Adapters.TorchSharp;
 
 // ReSharper disable once UnusedMember.Global
-public class TorchInferenceForTraining(
+public class TorchInferenceForTrainingMode(
   TorchBrainForTrainingMode Brain,
-  TorchInferenceForTraining? Predecessor,
+  TorchInferenceForTrainingMode? Predecessor,
   float[] OriginalParameters,
   Tensor StateOutputTensor,
-  Tensor ProductOutputTensor) : Inference
+  Tensor ProductOutputTensor) 
+  : TorchInference(StateOutputTensor, ProductOutputTensor), Inference
 {
-  public ReadOnlySpan<float> Result => ProductOutputTensor.squeeze(0).to(CPU).data<float>().ToArray();
-
+  protected TorchBrainForTrainingMode Brain { get; } = Brain;
+ 
   public void Incentivize(float Reward, params IReadOnlyList<Range> Ranges)
   {
     //if (Reward == 0)
@@ -93,16 +94,8 @@ public class TorchInferenceForTraining(
     return Brain.Forward(StateTensor, OriginalParameters);
   }
 
-  public void Dispose()
-  {
-    StateOutputTensor.Dispose();
-    ProductOutputTensor.Dispose();
-  }
-
   public Inference MakeInference(float[] Parameters)
   {
     return Brain.ExecuteInference(this, StateOutputTensor, Parameters);
   }
-
-  internal Tensor StateOutputTensor { get; } = StateOutputTensor;
 }

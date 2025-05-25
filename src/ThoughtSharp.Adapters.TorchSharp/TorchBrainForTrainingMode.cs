@@ -37,28 +37,13 @@ public class TorchBrainForTrainingMode(Sequential Model, Device Device, int Stat
   }
 
   internal Inference ExecuteInference(
-    TorchInferenceForTraining? Predecessor,
+    TorchInferenceForTrainingMode? Predecessor,
     Tensor StateInputTensor,
     float[] Parameters)
   {
     var Tensors = Forward(StateInputTensor, Parameters);
 
-    return new TorchInferenceForTraining(this, Predecessor, Parameters, Tensors.State, Tensors.Product);
-  }
-
-  internal TorchInferenceParts Forward(Tensor StateInputTensor, float[] Parameters)
-  {
-    var ParametersInputTensor = ConvertFloatsToTensor(Parameters);
-    var NewInput = cat([StateInputTensor, ParametersInputTensor], 1);
-    var NewOutput = Model.forward(NewInput);
-    var NewStateTensor = NewOutput.slice(1, 0, StateSize, 1);
-    var NewProductTensor = NewOutput.slice(1, StateSize, NewOutput.size(1) - StateSize, 1);
-
-    return new()
-    {
-      State = NewStateTensor,
-      Product = NewProductTensor
-    };
+    return new TorchInferenceForTrainingMode(this, Predecessor, Parameters, Tensors.State, Tensors.Product);
   }
 
   public void ApplyLoss(Tensor Loss)

@@ -69,6 +69,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
   }
 
   public int StateSize { get; set; } = 0;
+  public bool AllowTraining { get; set; } = true;
 
   public ExecutionDevice Device { get; set; } = torch.cuda.is_available() ? ExecutionDevice.CUDA : ExecutionDevice.CPU;
   public ActivationType FinalActivationType = OutputLength == 1 ? ActivationType.Sigmoid : ActivationType.Softmax;
@@ -91,7 +92,9 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     };
     var NeuralNet = torch.nn.Sequential(TorchLayers.ToArray()).to(DeviceType);
 
-    return new TorchBrainForTrainingMode(NeuralNet, new(DeviceType), StateSize);
+    return AllowTraining ? 
+      new TorchBrainForTrainingMode(NeuralNet, new(DeviceType), StateSize) : 
+      new TorchBrainForProductionMode(NeuralNet, new(DeviceType), StateSize);
   }
 
   protected static int AddModulesForLayer(Layer Layer, List<torch.nn.Module<torch.Tensor, torch.Tensor>> TorchLayers, int InFeatures)

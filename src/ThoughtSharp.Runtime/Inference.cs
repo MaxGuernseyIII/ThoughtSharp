@@ -27,4 +27,5 @@ public interface Inference : IDisposable, InferenceSource
   ReadOnlySpan<float> Result { get; }
 
   void Incentivize(float Reward, params IReadOnlyList<Range> Ranges);
+  void Train(ReadOnlySpan<float> Expected);
 }
