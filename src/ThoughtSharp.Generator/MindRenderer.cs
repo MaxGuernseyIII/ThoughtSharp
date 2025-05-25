@@ -50,8 +50,20 @@ static class MindRenderer
 
         foreach (var ChooseOperation in M.ChooseOperations)
           RenderChooseMethod(W, M, ChooseOperation, OperationCode++);
+
+        RenderDisposeMembers(W);
       }
     });
+  }
+
+  static void RenderDisposeMembers(IndentedTextWriter W)
+  {
+    W.WriteLine("public void Dispose()");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine("Brain.Dispose();");
+    W.Indent--;
+    W.WriteLine("}");
   }
 
   static void RenderStateCopyMembers(IndentedTextWriter W, MindModel Model)

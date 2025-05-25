@@ -2,6 +2,6 @@
 
 namespace Tests.Mocks;
 
-public class MockMind : Mind
+class MockMind : MockDisposable, Mind
 {
 }

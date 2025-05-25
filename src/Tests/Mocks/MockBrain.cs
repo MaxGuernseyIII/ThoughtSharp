@@ -25,7 +25,7 @@ using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-class MockBrain : Brain
+class MockBrain : MockDisposable, Brain
 {
   public List<MockInference> MockInferences = [];
   public Func<float[], Inference> MakeInferenceFunc;
@@ -84,9 +84,5 @@ class MockBrain : Brain
 
       return Result;
     }
-  }
-
-  public void Dispose()
-  {
   }
 }

@@ -24,7 +24,7 @@ using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-class MockInference(float[] Floats) : Inference
+class MockInference(float[] Floats) : MockDisposable, Inference
 {
   public readonly List<(float Reward, IReadOnlyList<Range> Ranges)> Incentives = [];
 
@@ -33,9 +33,5 @@ class MockInference(float[] Floats) : Inference
   public void Incentivize(float Reward, params IReadOnlyList<Range> Ranges)
   {
     Incentives.Add((Reward, [..Ranges]));
-  }
-
-  public void Dispose()
-  {
   }
 }

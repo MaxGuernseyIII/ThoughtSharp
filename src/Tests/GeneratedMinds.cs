@@ -31,6 +31,17 @@ namespace Tests;
 public partial class GeneratedMinds
 {
   [TestMethod]
+  public void DisposeCleansUpBrain()
+  {
+    var Brain = new MockBrain(0, 0);
+    var Mind = new SimpleMakeMockMind(Brain);
+
+    Mind.Dispose();
+
+    Brain.Disposed.Should().Be(true);
+  }
+
+  [TestMethod]
   public void DoSimpleMake()
   {
     var Brain = new MockBrain(SimpleMakeMockMind.Input.Length, SimpleMakeMockMind.Output.Length);

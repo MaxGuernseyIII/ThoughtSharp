@@ -1,5 +1,5 @@
 ﻿namespace ThoughtSharp.Runtime;
 
-public interface Mind
+public interface Mind : IDisposable
 {
 }
