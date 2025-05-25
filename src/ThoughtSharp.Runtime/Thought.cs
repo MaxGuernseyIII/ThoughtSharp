@@ -20,16 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Runtime.ExceptionServices;
+
 namespace ThoughtSharp.Runtime;
 
 public abstract partial class Thought
 {
   readonly IReadOnlyDictionary<Thought, float> Weights;
+  readonly ExceptionDispatchInfo? ExceptionInfo;
 
   // prevents foreign inheritors
-  internal Thought(Reasoning LineOfReasoning, TrainingPolicy? TrainingPolicy)
+  internal Thought(Reasoning LineOfReasoning, ExceptionDispatchInfo? ExceptionInfo,
+    TrainingPolicy? TrainingPolicy)
   {
     this.TrainingPolicy = TrainingPolicy;
+    this.ExceptionInfo = ExceptionInfo;
     Children = LineOfReasoning.Children;
     Weights = LineOfReasoning.ChildrenWeights;
   }
@@ -43,19 +48,30 @@ public abstract partial class Thought
 
   public static Thought Done(TrainingPolicy? Training = null)
   {
-    return new Thought<object?>(null, new(), Training);
+    return new Thought<object?>(null, null, new(), Training);
   }
 
   public static Thought<T> Capture<T>(T Product, TrainingPolicy? Training = null)
   {
-    return new(Product, new(), Training);
+    return new(Product, null, new(), Training);
   }
 
   public static Thought<T> Think<T>(Func<Reasoning, T> Produce, TrainingPolicy? Policy = null)
   {
     var Reasoning = new Reasoning();
-    var Product = Produce(Reasoning);
-    var Result = new Thought<T>(Product, Reasoning, Policy);
+    T? Product;
+    ExceptionDispatchInfo? ExceptionInfo;
+    try
+    {
+      Product = Produce(Reasoning);
+      ExceptionInfo = null;
+    }
+    catch (Exception Exception)
+    {
+      Product = default;
+      ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
+    }
+    var Result = new Thought<T>(Product, ExceptionInfo, Reasoning, Policy);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -73,7 +89,7 @@ public abstract partial class Thought
   {
     var Reasoning = new Reasoning();
     var Product = await Produce(Reasoning);
-    var Result = new Thought<T>(Product, Reasoning, Policy);
+    var Result = new Thought<T>(Product, null, Reasoning, Policy);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -108,14 +124,20 @@ public abstract partial class Thought
       Sequence[^1].IncentivizeOutput(Reward);
     }
   }
+
+  public void RaiseAnyExceptions()
+  {
+    if (ExceptionInfo is not null)
+      ExceptionInfo.Throw();
+  }
 }
 
 public sealed class Thought<T> : Thought
 {
-  internal readonly T Product;
+  readonly T? Product;
 
-  internal Thought(T Product, Reasoning LineOfReasoning, TrainingPolicy? TrainingPolicy)
-    : base(LineOfReasoning, TrainingPolicy)
+  internal Thought(T? Product, ExceptionDispatchInfo? ExceptionInfo, Reasoning LineOfReasoning, TrainingPolicy? TrainingPolicy)
+    : base(LineOfReasoning, ExceptionInfo, TrainingPolicy)
   {
     this.Product = Product;
   }
@@ -123,5 +145,11 @@ public sealed class Thought<T> : Thought
   public T ConsumeDetached()
   {
     return new Reasoning().Consume(this);
+  }
+
+
+  internal T GetProduct()
+  {
+    return Product!;
   }
 }

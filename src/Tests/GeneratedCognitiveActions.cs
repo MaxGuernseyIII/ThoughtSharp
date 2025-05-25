@@ -147,7 +147,9 @@ public partial class GeneratedCognitiveActions
       ActionCode = 4
     };
 
-    P.Invoking(Parameters => Parameters.InterpretFor(Choices)).Should().Throw<InvalidOperationException>();
+    var T = P.InterpretFor(Choices);
+
+    T.Invoking(It => It.ConsumeDetached()).Should().Throw<InvalidOperationException>();
   }
 
   [CognitiveActions]

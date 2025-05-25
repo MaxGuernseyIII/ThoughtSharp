@@ -36,7 +36,7 @@ public class Reasoning
   {
     Incorporate(Subthought);
 
-    return Subthought.Product;
+    return Subthought.GetProduct();
   }
 
   public void Incorporate(Thought Subthought)
@@ -47,6 +47,8 @@ public class Reasoning
     UsedSubthoughts.Add(Subthought);
     Subthought.Container = this;
     Weights[Subthought] = 1f;
+
+    Subthought.RaiseAnyExceptions();
   }
 
   public void SetWeight(Thought Subthought, float Weight)

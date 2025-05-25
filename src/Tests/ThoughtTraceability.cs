@@ -79,6 +79,15 @@ public sealed class ThoughtTraceability
   }
 
   [TestMethod]
+  public void ThoughtsCaptureAndReleaseExceptions()
+  {
+    var Expected = new Exception();
+    var T = Thought.Do(_ => throw Expected);
+
+    T.Invoking(It => new Reasoning().Incorporate(It)).Should().Throw<Exception>().And.Should().Be(Expected);
+  }
+
+  [TestMethod]
   public void ThoughtChildrenIsReasoningChildrenAtEndOfProduction()
   {
     Reasoning CapturedReasoning = null!;
