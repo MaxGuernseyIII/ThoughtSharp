@@ -150,10 +150,12 @@ static class MindRenderer
     W.WriteLine("{");
     W.Indent++;
 
-    RenderInputObjectForOpCode(W, OpCode);
-    W.WriteLine();
+    W.WriteLine("Output FinalOutputObject = default!;");
 
-    W.WriteLine($"var Batch = {ChooseOperation.CategoryParameter}.ToInputBatches().Single();");
+    W.WriteLine($"foreach (var Batch in {ChooseOperation.CategoryParameter}.ToInputBatches())");
+    W.WriteLine("{");
+    W.Indent++;
+    RenderInputObjectForOpCode(W, OpCode);
     foreach (var Parameter in ChooseOperation.Parameters)
     {
       W.Write($"InputObject.Parameters.{ChooseOperation.Name}.{Parameter.Name} = ");
@@ -165,9 +167,18 @@ static class MindRenderer
 
     W.WriteLine();
     RenderMakeInference(W, MindModel);
+    W.WriteLine("FinalOutputObject = OutputObject;");
     W.WriteLine();
+    W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index;");
+    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{ChooseOperation.Name}Parameters.Length;");
+    W.WriteLine();
+    W.WriteLine("var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
+    W.WriteLine("R.Incorporate(Thought.Done(TrainingPolicy));");
+    W.WriteLine();
+    W.Indent--;
+    W.WriteLine("}");
 
-    W.WriteLine($"return {ChooseOperation.CategoryParameter}.Interpret(OutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter});");
+    W.WriteLine($"return {ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter});");
 
     W.Indent--;
     W.WriteLine("});");

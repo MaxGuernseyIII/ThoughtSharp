@@ -41,6 +41,11 @@ public abstract partial class Thought
   public Thought? Parent => Container?.Parent;
   public IReadOnlyList<Thought> Children { get; }
 
+  public static Thought Done(TrainingPolicy? Training = null)
+  {
+    return new Thought<object?>(null, new(), Training);
+  }
+
   public static Thought<T> Capture<T>(T Product, TrainingPolicy? Training = null)
   {
     return new(Product, new(), Training);
