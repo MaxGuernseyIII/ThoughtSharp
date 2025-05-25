@@ -94,7 +94,10 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
   protected static int AddModulesForLayer(Layer Layer, List<torch.nn.Module<torch.Tensor, torch.Tensor>> TorchLayers, int InFeatures)
   {
     var OutFeatures = Layer.Features;
-    TorchLayers.Add(torch.nn.Linear(InFeatures, OutFeatures));
+    var Linear = torch.nn.Linear(InFeatures, OutFeatures);
+    torch.nn.init.kaiming_uniform_(Linear.weight);
+    torch.nn.init.zeros_(Linear.bias);
+    TorchLayers.Add(Linear);
     InFeatures = OutFeatures;
     var ActivationLayer = Layer.ActivationType switch
     {
