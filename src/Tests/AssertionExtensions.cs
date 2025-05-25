@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,8 @@ namespace Tests;
 
 static class AssertionExtensions
 {
-  public static GenericCollectionAssertions<T> MarshalToSameTensor<T>(this GenericCollectionAssertions<T> Assertions, IEnumerable<T> Expected)
+  public static GenericCollectionAssertions<T> MarshalToSameTensor<T>(this GenericCollectionAssertions<T> Assertions,
+    IEnumerable<T> Expected)
     where T : CognitiveData<T>
   {
     var ActualBuffer = MarshalToBuffer(Assertions.Subject);
@@ -45,7 +46,7 @@ static class AssertionExtensions
     var Items = CollectionSubject.ToImmutableArray();
     var Buffer = new float[T.Length * Items.Length];
     for (var I = 0; I < Items.Length; ++I)
-      Items[I].MarshalTo(Buffer[(I*T.Length)..((I+1)*T.Length)]);
+      Items[I].MarshalTo(Buffer[(I * T.Length)..((I + 1) * T.Length)]);
 
     return Buffer;
   }

@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,11 +30,11 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 public class TorchBrain(Sequential Model, int OutputLength, torch.Device? Device = null) : Brain
 {
   readonly torch.Device Device = Device ?? torch.CPU;
-  readonly torch.optim.Optimizer Optimizer = torch.optim.Adam(Model.parameters(), lr: 0.001);
+  readonly torch.optim.Optimizer Optimizer = torch.optim.Adam(Model.parameters(), 0.001);
 
   public Inference MakeInference(float[] Parameters)
   {
-    using var Input = torch.tensor(Parameters, dtype: torch.ScalarType.Float32).unsqueeze(0).to(Device);
+    using var Input = torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
     var Output = Model.forward(Input);
 
     return new TorchInference(Model, Optimizer, Input, Output, OutputLength);

@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using Microsoft.CodeAnalysis;
-using System.Xml.Linq;
 
 namespace ThoughtSharp.Generator;
 
@@ -50,6 +49,7 @@ public static class TypeSymbolExtensions
       typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
       genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters)).Trim();
   }
+
   public static string GetFullPathWithoutTypeParameters(this ITypeSymbol T)
   {
     return T.ToDisplayString(new SymbolDisplayFormat(
@@ -113,8 +113,15 @@ public static class TypeSymbolExtensions
     return Type.IsGenericOf("System.Threading.Tasks.Task", PayloadRequirement);
   }
 
-  public static bool RequiresAwait(this ITypeSymbol Type) => Type.IsTaskType() || Type.IsTaskOfThoughtType();
-  public static bool IsThoughtful(this ITypeSymbol Type) => Type.IsThoughtType() || Type.IsTaskOfThoughtType();
+  public static bool RequiresAwait(this ITypeSymbol Type)
+  {
+    return Type.IsTaskType() || Type.IsTaskOfThoughtType();
+  }
+
+  public static bool IsThoughtful(this ITypeSymbol Type)
+  {
+    return Type.IsThoughtType() || Type.IsTaskOfThoughtType();
+  }
 
   static bool IsType(ITypeSymbol Type, string Name)
   {

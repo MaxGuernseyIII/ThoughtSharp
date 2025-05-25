@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,10 @@ namespace Tests.Mocks;
 
 class MockDisposable : IDisposable
 {
+  public bool Disposed { get; private set; }
+
   public void Dispose()
   {
     Disposed = true;
   }
-
-  public bool Disposed { get; private set; }
 }

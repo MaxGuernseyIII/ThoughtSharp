@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,11 @@ public partial class Thought
 {
   public class Reasoning
   {
-    internal Thought? Parent { get; set; }
+    readonly List<IDisposable> Disposables = [];
 
     readonly List<Thought> UsedSubthoughts = [];
     readonly Dictionary<Thought, float> Weights = [];
-    readonly List<IDisposable> Disposables = [];
+    internal Thought? Parent { get; set; }
 
     internal IReadOnlyList<Thought> Children => UsedSubthoughts.ToArray();
     internal IReadOnlyDictionary<Thought, float> ChildrenWeights => new Dictionary<Thought, float>(Weights);

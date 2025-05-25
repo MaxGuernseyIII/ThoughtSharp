@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using System.CodeDom.Compiler;
-using System.Net;
 
 namespace ThoughtSharp.Generator;
 
@@ -33,17 +32,6 @@ static class GeneratedTypeFormatter
       Address.ContainingNamespaces.SelectMany(N => N.Split('.'))
         .Concat(Address.ContainingTypes.Select(T => T.Name)
           .Concat([Address.TypeName.Name]))) + Suffix + ".g.cs";
-  }
-
-  public class TypeGenerationRequest(TypeAddress Type)
-  {
-    public TypeAddress Type { get; } = Type;
-    public Action<IndentedTextWriter> WriteHeader { get; set; } = Ignore;
-    public Action<IndentedTextWriter> WriteBeforeTypeDeclaration { get; set; } = Ignore;
-    public Action<IndentedTextWriter> WriteAfterTypeName { get; set; } = Ignore;
-    public Action<IndentedTextWriter> WriteBody { get; set; } = Ignore;
-
-    static void Ignore(IndentedTextWriter _) {}
   }
 
   public static string GenerateType(TypeGenerationRequest Request)
@@ -99,6 +87,19 @@ static class GeneratedTypeFormatter
     {
       Target.Indent--;
       Target.WriteLine("}");
+    }
+  }
+
+  public class TypeGenerationRequest(TypeAddress Type)
+  {
+    public TypeAddress Type { get; } = Type;
+    public Action<IndentedTextWriter> WriteHeader { get; set; } = Ignore;
+    public Action<IndentedTextWriter> WriteBeforeTypeDeclaration { get; set; } = Ignore;
+    public Action<IndentedTextWriter> WriteAfterTypeName { get; set; } = Ignore;
+    public Action<IndentedTextWriter> WriteBody { get; set; } = Ignore;
+
+    static void Ignore(IndentedTextWriter _)
+    {
     }
   }
 }

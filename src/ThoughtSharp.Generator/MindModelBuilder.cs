@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -112,7 +112,8 @@ class MindModelBuilder
 
   public void AddUseMethodFor(IMethodSymbol UseMethod)
   {
-    var ThisInputDataModel = UseMethod.GetParametersDataModel(GetInputParametersClassName(UseMethod), (Parameter, _) => IsActionSurfaceParameter(Parameter));
+    var ThisInputDataModel = UseMethod.GetParametersDataModel(GetInputParametersClassName(UseMethod),
+      (Parameter, _) => IsActionSurfaceParameter(Parameter));
     AssociatedDataTypes.Add(ThisInputDataModel);
     InputParametersBuilder.AddCompilerDefinedSubDataParameter(UseMethod.Name, ThisInputDataModel.Address.FullName);
 
@@ -122,14 +123,19 @@ class MindModelBuilder
       ExplicitConstructor = true
     };
     OutputParametersBuilder.AddCompilerDefinedSubDataParameter(UseMethod.Name, ThisOutputModelBuilder);
-    foreach (var ActionSurface in UseMethod.Parameters.Where(IsActionSurfaceParameter)) 
-      ThisOutputModelBuilder.AddCompilerDefinedSubDataParameter(ActionSurface.Name, ActionSurface.Type.GetFullPath() + ".Output");
+    foreach (var ActionSurface in UseMethod.Parameters.Where(IsActionSurfaceParameter))
+      ThisOutputModelBuilder.AddCompilerDefinedSubDataParameter(ActionSurface.Name,
+        ActionSurface.Type.GetFullPath() + ".Output");
     AssociatedDataTypes.Add(ThisOutputModelBuilder.Build());
 
-    UseOperations.Add(new(UseMethod.Name, [..UseMethod.Parameters.Select(P => (
-      P.Name, 
-      P.Type.GetFullPath(), 
-      IsActionSurfaceParameter(P) ? CognitiveActionsModelFactory.ConvertToInterpreter((INamedTypeSymbol)P.Type).CognitiveInterpreterClass : null))]));
+    UseOperations.Add(new(UseMethod.Name, [
+      ..UseMethod.Parameters.Select(P => (
+        P.Name,
+        P.Type.GetFullPath(),
+        IsActionSurfaceParameter(P)
+          ? CognitiveActionsModelFactory.ConvertToInterpreter((INamedTypeSymbol) P.Type).CognitiveInterpreterClass
+          : null))
+    ]));
 
     static bool IsActionSurfaceParameter(IParameterSymbol Parameter)
     {
@@ -141,17 +147,18 @@ class MindModelBuilder
   {
     IParameterSymbol CategoryParameter = null!;
 
-    var ThisInputDataModel = ChooseMethod.GetParametersDataModel(GetInputParametersClassName(ChooseMethod), (Parameter, Builder) =>
-    {
-      if (!IsCategoryParameter(Parameter))
-        return false;
+    var ThisInputDataModel = ChooseMethod.GetParametersDataModel(GetInputParametersClassName(ChooseMethod),
+      (Parameter, Builder) =>
+      {
+        if (!IsCategoryParameter(Parameter))
+          return false;
 
-      CategoryParameter = Parameter;
+        CategoryParameter = Parameter;
 
-      Builder.AddCompilerDefinedSubDataParameter(Parameter.Name, Parameter.Type.GetFullPath() + ".Input");
+        Builder.AddCompilerDefinedSubDataParameter(Parameter.Name, Parameter.Type.GetFullPath() + ".Input");
 
-      return true;
-    });
+        return true;
+      });
     AssociatedDataTypes.Add(ThisInputDataModel);
     InputParametersBuilder.AddCompilerDefinedSubDataParameter(ChooseMethod.Name, ThisInputDataModel.Address.FullName);
 
@@ -161,15 +168,17 @@ class MindModelBuilder
       ExplicitConstructor = true
     };
     OutputParametersBuilder.AddCompilerDefinedSubDataParameter(ChooseMethod.Name, ThisOutputModelBuilder);
-    ThisOutputModelBuilder.AddCompilerDefinedSubDataParameter(CategoryParameter.Name, CategoryParameter.Type.GetFullPath() + ".Output");
+    ThisOutputModelBuilder.AddCompilerDefinedSubDataParameter(CategoryParameter.Name,
+      CategoryParameter.Type.GetFullPath() + ".Output");
     AssociatedDataTypes.Add(ThisOutputModelBuilder.Build());
 
     ChooseOperations.Add(new(
-      ChooseMethod.Name, 
+      ChooseMethod.Name,
       ChooseMethod.ReturnType.GetFullPath(),
       [..ChooseMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath()))],
       CategoryParameter.Name
-      ));
+    ));
+
     static bool IsCategoryParameter(IParameterSymbol Parameter)
     {
       return Parameter.Type.HasAttribute(CognitiveAttributeNames.CategoryAttributeName);

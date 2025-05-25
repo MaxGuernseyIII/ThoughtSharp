@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,9 +29,9 @@ public class NormalizeNumberCodec<T, U> : CognitiveDataCodec<T>
   where T : INumber<T>
   where U : INumber<U>, IFloatingPoint<U>, IAdditionOperators<U, U, U>, IMultiplyOperators<U, U, U>
 {
-  readonly U TargetTypedMinimum;
   readonly U Factor;
   readonly CognitiveDataCodec<U> Inner;
+  readonly U TargetTypedMinimum;
 
   public NormalizeNumberCodec(T Minimum,
     T Maximum,

@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using FluentAssertions;
-using FluentAssertions.Primitives;
 using ThoughtSharp.Runtime;
 
 namespace Tests;
@@ -42,11 +41,12 @@ public partial class GeneratedChoices
 
     var Batches = Category.ToInputBatches();
 
-    Batches.Should().MarshalToSameTensor<MockCategory.Input>([
+    Batches.Should().MarshalToSameTensor([
       new()
       {
         IsFinalBatch = true,
-        Items = [
+        Items =
+        [
           new()
           {
             IsHot = true,
@@ -64,7 +64,7 @@ public partial class GeneratedChoices
             IsHot = true,
             ItemNumber = 2,
             Descriptor = Options[2].Descriptor
-          },
+          }
         ]
       }
     ]);
@@ -76,17 +76,18 @@ public partial class GeneratedChoices
     IReadOnlyList<CognitiveOption<MockPayload, MockData>> Options =
     [
       new(new(), new() {Parameter = Any.Float}),
-      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float})
     ];
     var Category = new MockCategory(Options);
 
     var Batches = Category.ToInputBatches();
 
-    Batches.Should().MarshalToSameTensor<MockCategory.Input>([
+    Batches.Should().MarshalToSameTensor([
       new()
       {
         IsFinalBatch = true,
-        Items = [
+        Items =
+        [
           new()
           {
             IsHot = true,
@@ -120,17 +121,18 @@ public partial class GeneratedChoices
       new(new(), new() {Parameter = Any.Float}),
       new(new(), new() {Parameter = Any.Float}),
       new(new(), new() {Parameter = Any.Float}),
-      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float})
     ];
     var Category = new MockCategory(Options);
 
     var Batches = Category.ToInputBatches();
 
-    Batches.Should().MarshalToSameTensor<MockCategory.Input>([
+    Batches.Should().MarshalToSameTensor([
       new()
       {
         IsFinalBatch = false,
-        Items = [
+        Items =
+        [
           new()
           {
             IsHot = true,
@@ -154,7 +156,8 @@ public partial class GeneratedChoices
       new()
       {
         IsFinalBatch = true,
-        Items = [
+        Items =
+        [
           new()
           {
             IsHot = true,
@@ -174,7 +177,7 @@ public partial class GeneratedChoices
             Descriptor = Options[5].Descriptor
           }
         ]
-      },
+      }
     ]);
   }
 
@@ -189,17 +192,18 @@ public partial class GeneratedChoices
       new(new(), new() {Parameter = Any.Float}),
       new(new(), new() {Parameter = Any.Float}),
       new(new(), new() {Parameter = Any.Float}),
-      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float})
     ];
     var Category = new MockCategory(Options);
 
     var Batches = Category.ToInputBatches();
 
-    Batches.Should().MarshalToSameTensor<MockCategory.Input>([
+    Batches.Should().MarshalToSameTensor([
       new()
       {
         IsFinalBatch = false,
-        Items = [
+        Items =
+        [
           new()
           {
             IsHot = true,
@@ -223,7 +227,8 @@ public partial class GeneratedChoices
       new()
       {
         IsFinalBatch = false,
-        Items = [
+        Items =
+        [
           new()
           {
             IsHot = true,
@@ -247,7 +252,8 @@ public partial class GeneratedChoices
       new()
       {
         IsFinalBatch = true,
-        Items = [
+        Items =
+        [
           new()
           {
             IsHot = true,
@@ -267,7 +273,7 @@ public partial class GeneratedChoices
             Descriptor = new()
           }
         ]
-      },
+      }
     ]);
   }
 
@@ -281,10 +287,10 @@ public partial class GeneratedChoices
       new(new(), new() {Parameter = Any.Float}),
       new(new(), new() {Parameter = Any.Float}),
       new(new(), new() {Parameter = Any.Float}),
-      new(new(), new() {Parameter = Any.Float}),
+      new(new(), new() {Parameter = Any.Float})
     ]);
     var Index = (ushort) Any.Int(0, Category.AllOptions.Count - 1);
-    var Output = new MockCategory.Output() {Selection = Index};
+    var Output = new MockCategory.Output {Selection = Index};
 
     var Selection = Category.Interpret(Output);
 

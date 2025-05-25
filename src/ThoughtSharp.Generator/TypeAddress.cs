@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,8 @@ class TypeAddress
   public IReadOnlyList<TypeIdentifier> ContainingTypes { get; }
   public TypeIdentifier TypeName { get; }
 
-  public string FullName => string.Join(".", ContainingNamespaces.Concat(ContainingTypes.Select(T => T.FullName)).Concat([TypeName.FullName]));
+  public string FullName => string.Join(".",
+    ContainingNamespaces.Concat(ContainingTypes.Select(T => T.FullName)).Concat([TypeName.FullName]));
 
   public TypeAddress GetNested(TypeIdentifier NestedType)
   {

@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,27 @@ namespace ThoughtSharp.Generator;
 
 static class CognitiveCategoryRenderer
 {
+  public static string GenerateCategoryType(CognitiveCategoryModel Model)
+  {
+    var RenderingOperation = new RenderingOperation(Model);
+    using var StringWriter = new StringWriter();
+
+    {
+      using var Writer = new IndentedTextWriter(StringWriter, "  ");
+
+      GeneratedTypeFormatter.GenerateType(Writer, new(Model.CategoryType)
+      {
+        WriteBody = RenderingOperation.GenerateBody,
+        WriteHeader = RenderingOperation.GenerateHeader,
+        WriteAfterTypeName = RenderingOperation.AdornTypeName
+      });
+    }
+
+    StringWriter.Close();
+
+    return StringWriter.ToString();
+  }
+
   class RenderingOperation(CognitiveCategoryModel Model)
   {
     CognitiveCategoryModel Model { get; } = Model;
@@ -158,26 +179,5 @@ static class CognitiveCategoryRenderer
       W.WriteLine($"(IReadOnlyList<CognitiveOption{TypeParameters}> Options)");
       W.Write($"  : CognitiveCategory{TypeParameters}");
     }
-  }
-
-  public static string GenerateCategoryType(CognitiveCategoryModel Model)
-  {
-    var RenderingOperation = new RenderingOperation(Model);
-    using var StringWriter = new StringWriter();
-
-    {
-      using var Writer = new IndentedTextWriter(StringWriter, "  ");
-
-      GeneratedTypeFormatter.GenerateType(Writer, new(Model.CategoryType)
-      {
-        WriteBody = RenderingOperation.GenerateBody,
-        WriteHeader = RenderingOperation.GenerateHeader,
-        WriteAfterTypeName = RenderingOperation.AdornTypeName
-      });
-    }
-
-    StringWriter.Close();
-
-    return StringWriter.ToString();
   }
 }

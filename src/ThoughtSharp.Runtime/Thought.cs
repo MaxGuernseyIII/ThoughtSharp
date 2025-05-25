@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,9 @@ namespace ThoughtSharp.Runtime;
 
 public abstract partial class Thought : IDisposable
 {
-  readonly IReadOnlyDictionary<Thought, float> Weights;
-  readonly ExceptionDispatchInfo? ExceptionInfo;
   readonly IReadOnlyList<IDisposable> Disposables;
+  readonly ExceptionDispatchInfo? ExceptionInfo;
+  readonly IReadOnlyDictionary<Thought, float> Weights;
 
   // prevents foreign inheritors
   internal Thought(Reasoning LineOfReasoning, ExceptionDispatchInfo? ExceptionInfo,
@@ -47,6 +47,15 @@ public abstract partial class Thought : IDisposable
 
   public Thought? Parent => Container?.Parent;
   public IReadOnlyList<Thought> Children { get; }
+
+  public void Dispose()
+  {
+    foreach (var Child in Children)
+      Child.Dispose();
+
+    foreach (var Disposable in Disposables)
+      Disposable.Dispose();
+  }
 
   public static Thought Done(TrainingPolicy? Training = null)
   {
@@ -73,6 +82,7 @@ public abstract partial class Thought : IDisposable
       Product = default;
       ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
     }
+
     var Result = new Thought<T>(Product, ExceptionInfo, Reasoning, Policy);
     Reasoning.Parent = Result;
     return Result;
@@ -102,6 +112,7 @@ public abstract partial class Thought : IDisposable
       Product = default;
       ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
     }
+
     var Result = new Thought<T>(Product, ExceptionInfo, Reasoning, Policy);
     Reasoning.Parent = Result;
     return Result;
@@ -122,12 +133,12 @@ public abstract partial class Thought : IDisposable
   public void ApplyIncentive(float Reward)
   {
     var ThoughtGraph = Thought.ThoughtGraph.For(this);
-    foreach (var Rewarded in ThoughtGraph.RewardedWithoutMind) 
+    foreach (var Rewarded in ThoughtGraph.RewardedWithoutMind)
       Rewarded.IncentivizeOutput(Reward);
 
     foreach (var (_, Sequence) in ThoughtGraph.RewardedWithMind)
     {
-      foreach (var Rewarded in Sequence[..^1]) 
+      foreach (var Rewarded in Sequence[..^1])
         Rewarded.IncentivizeOutputAndState(Reward);
 
       Sequence[^1].IncentivizeOutput(Reward);
@@ -139,22 +150,14 @@ public abstract partial class Thought : IDisposable
     if (ExceptionInfo is not null)
       ExceptionInfo.Throw();
   }
-
-  public void Dispose()
-  {
-    foreach (var Child in Children) 
-      Child.Dispose();
-
-    foreach (var Disposable in Disposables)
-      Disposable.Dispose();
-  }
 }
 
 public sealed class Thought<T> : Thought
 {
   readonly T? Product;
 
-  internal Thought(T? Product, ExceptionDispatchInfo? ExceptionInfo, Reasoning LineOfReasoning, TrainingPolicy? TrainingPolicy)
+  internal Thought(T? Product, ExceptionDispatchInfo? ExceptionInfo, Reasoning LineOfReasoning,
+    TrainingPolicy? TrainingPolicy)
     : base(LineOfReasoning, ExceptionInfo, TrainingPolicy)
   {
     this.Product = Product;

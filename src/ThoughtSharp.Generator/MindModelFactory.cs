@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -72,7 +72,7 @@ static class MindModelFactory
   static bool TryGetUseMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Result)
   {
     if (
-      S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M && 
+      S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M &&
       M.HasAttribute(CognitiveAttributeNames.UseAttributeName) &&
       CognitiveActionRules.IsValidThoughtResult(M))
     {
@@ -87,7 +87,7 @@ static class MindModelFactory
   static bool TryGetMakeMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Method)
   {
     if (
-      S is IMethodSymbol { IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public } M &&
+      S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M &&
       M.HasAttribute(CognitiveAttributeNames.MakeAttributeName) &&
       M.ReturnType.IsThoughtTypeWithPayload())
     {
@@ -102,13 +102,14 @@ static class MindModelFactory
   static bool TryGetChooseMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Method)
   {
     if (
-      S is IMethodSymbol { IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public } M &&
+      S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M &&
       M.HasAttribute(CognitiveAttributeNames.ChooseAttributeName)
-      )
+    )
     {
       var CognitiveCategories =
-        M.Parameters.Select(P => (Hit:P.Type.TryGetCognitiveCategoryData(out var CategoryData), CategoryData)).Where(P => P.Hit);
-      if (CognitiveCategories.Count() == 1 )
+        M.Parameters.Select(P => (Hit: P.Type.TryGetCognitiveCategoryData(out var CategoryData), CategoryData))
+          .Where(P => P.Hit);
+      if (CognitiveCategories.Count() == 1)
       {
         var PayloadType = CognitiveCategories.Single().CategoryData!.Value.PayloadType;
         if (M.ReturnType.IsThoughtOf(T => T.IsEquivalentTo(PayloadType)))

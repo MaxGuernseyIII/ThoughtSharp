@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -76,7 +76,9 @@ class TypeIdentifier
 
   public static TypeIdentifier Explicit(
     string Keyword, string Name, params TypeAddress[] TypeParameters)
-    => new(Keyword, Name, TypeParameters);
+  {
+    return new(Keyword, Name, TypeParameters);
+  }
 
   static string GetTypeKeyword(ITypeSymbol Symbol)
   {

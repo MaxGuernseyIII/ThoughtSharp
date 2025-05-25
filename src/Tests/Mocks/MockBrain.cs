@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +27,9 @@ namespace Tests.Mocks;
 
 class MockBrain : MockDisposable, Brain
 {
-  public List<MockInference> MockInferences = [];
-  public Func<float[], Inference> MakeInferenceFunc;
-
   readonly int InputLength;
+  public Func<float[], Inference> MakeInferenceFunc;
+  public List<MockInference> MockInferences = [];
 
   public MockBrain(int InputLength, int OutputLength)
   {
@@ -59,7 +58,8 @@ class MockBrain : MockDisposable, Brain
     SetOutputsForInputs([(ExpectedInput, StipulatedOutput)]);
   }
 
-  public void SetOutputsForInputs<TInput, TOutput>(IReadOnlyList<(TInput ExpectedInput, TOutput StipulatedOutput)> Sequence)
+  public void SetOutputsForInputs<TInput, TOutput>(
+    IReadOnlyList<(TInput ExpectedInput, TOutput StipulatedOutput)> Sequence)
     where TInput : CognitiveData<TInput>
     where TOutput : CognitiveData<TOutput>
   {

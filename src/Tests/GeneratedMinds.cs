@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -467,7 +467,7 @@ public partial class GeneratedMinds
   {
     TestChooseBatches(new([
       AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(),
-      AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(), 
+      AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(),
       AnyMockOption()
     ]));
   }
@@ -488,7 +488,7 @@ public partial class GeneratedMinds
     ]);
 
     var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var SelectedIndex = (ushort)Any.Int(0, Category.AllOptions.Count - 1);
+    var SelectedIndex = (ushort) Any.Int(0, Category.AllOptions.Count - 1);
     var StipulatedOutput = new MockCategory.Output
     {
       Selection = SelectedIndex
@@ -505,7 +505,7 @@ public partial class GeneratedMinds
     var Mind = new StatefulMind(Brain);
     var T = Mind.ChooseItems(Category, Any.Float, Any.Float, Any.Float);
     var Reward = Any.Float;
-    
+
     T.ApplyIncentive(Reward);
 
     var SupportingInferences = CapturedInferences[..^1];
@@ -518,11 +518,9 @@ public partial class GeneratedMinds
     var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
 
     foreach (var SupportingInference in SupportingInferences)
-    {
       SupportingInference.Incentives.Should().BeEquivalentTo([
         (Reward, new[] {OutputStart..OutputEnd, StateStart..StateEnd})
       ]);
-    }
 
     FinalInference.Incentives.Should().BeEquivalentTo([
       (Reward, new[] {OutputStart..OutputEnd})
@@ -554,7 +552,8 @@ public partial class GeneratedMinds
     Result.Should().BeSameAs(Category.Interpret(StipulatedOutput));
   }
 
-  static void SetUpOptionsBatchReadsAndWrites(MockCategory Category, MockCategory.Output StipulatedOutput, MockBrain Brain,
+  static void SetUpOptionsBatchReadsAndWrites(MockCategory Category, MockCategory.Output StipulatedOutput,
+    MockBrain Brain,
     float ArgumentA, float Argument2, float AThirdArg)
   {
     var AllBatches = Category.ToInputBatches().ToImmutableArray();

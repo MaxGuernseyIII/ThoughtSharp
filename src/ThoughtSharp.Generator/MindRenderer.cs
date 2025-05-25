@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ static class MindRenderer
         foreach (var MakeOperation in M.MakeOperations)
           RenderMakeMethod(W, M, MakeOperation, OperationCode++);
 
-        foreach (var UseOperation in M.UseOperations) 
+        foreach (var UseOperation in M.UseOperations)
           RenderUseMethod(W, M, UseOperation, OperationCode++);
 
         foreach (var ChooseOperation in M.ChooseOperations)
@@ -71,12 +71,14 @@ static class MindRenderer
     W.WriteLine("static readonly IReadOnlyList<Range> StateRanges = [");
     W.Indent++;
     foreach (var State in Model.States)
-      W.WriteLine($"(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index)..(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index + Output.OutputParameters.{State.Name}Parameters.Length)");
+      W.WriteLine(
+        $"(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index)..(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index + Output.OutputParameters.{State.Name}Parameters.Length)");
     W.WriteLine("];");
     W.Indent--;
   }
 
-  static void RenderMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation, ushort OperationCode)
+  static void RenderMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation,
+    ushort OperationCode)
   {
     W.WriteLine(
       $"public partial Thought<{MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
@@ -93,7 +95,8 @@ static class MindRenderer
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
 
-    W.WriteLine("var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
+    W.WriteLine(
+      "var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
 
     W.WriteLine($"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name}.Value, TrainingPolicy);");
     W.Indent--;
@@ -101,8 +104,8 @@ static class MindRenderer
   }
 
   static void RenderUseMethod(
-    IndentedTextWriter W, 
-    MindModel Model, 
+    IndentedTextWriter W,
+    MindModel Model,
     MindUseOperationModel UseOperation,
     ushort OperationCode)
   {
@@ -114,7 +117,8 @@ static class MindRenderer
     if (MethodIsAsync)
       ReturnType = $"Task<{ReturnType}>";
 
-    W.WriteLine($"public partial {ReturnType} {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
+    W.WriteLine(
+      $"public partial {ReturnType} {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
     RenderInputObjectForOpCode(W, OperationCode);
@@ -129,7 +133,8 @@ static class MindRenderer
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{UseOperation.Name}Parameters.Length;");
     W.WriteLine();
 
-    W.WriteLine("var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
+    W.WriteLine(
+      "var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
     var (ThoughtMethod, Async) = MethodIsAsync ? ("ThinkAsync", "async ") : ("Think", "");
     W.WriteLine($"return Thought.{ThoughtMethod}({Async}R =>");
     W.WriteLine("{");
@@ -139,8 +144,10 @@ static class MindRenderer
     foreach (var Parameter in ActionSurfaces)
     {
       var Unwrap = Parameter.AssociatedInterpreter!.RequiresAwait ? "await " : "";
-      W.WriteLine($"MoreActions = MoreActions || R.Consume({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{Parameter.Name}.InterpretFor({Parameter.Name}));");
+      W.WriteLine(
+        $"MoreActions = MoreActions || R.Consume({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{Parameter.Name}.InterpretFor({Parameter.Name}));");
     }
+
     W.WriteLine();
     W.WriteLine("return MoreActions;");
     W.Indent--;
@@ -150,15 +157,16 @@ static class MindRenderer
   }
 
   static void RenderChooseMethod(
-    IndentedTextWriter W, 
-    MindModel MindModel, 
+    IndentedTextWriter W,
+    MindModel MindModel,
     MindChooseOperationModel ChooseOperation,
     ushort OpCode)
   {
-    W.WriteLine($"public partial {ChooseOperation.ReturnType} {ChooseOperation.Name}({string.Join(", ", ChooseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
+    W.WriteLine(
+      $"public partial {ChooseOperation.ReturnType} {ChooseOperation.Name}({string.Join(", ", ChooseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
-    W.WriteLine($"return Thought.Think(R =>");
+    W.WriteLine("return Thought.Think(R =>");
     W.WriteLine("{");
     W.Indent++;
 
@@ -171,8 +179,7 @@ static class MindRenderer
     foreach (var Parameter in ChooseOperation.Parameters)
     {
       W.Write($"InputObject.Parameters.{ChooseOperation.Name}.{Parameter.Name} = ");
-      W.Write(Parameter.Name == ChooseOperation.CategoryParameter ? 
-        "Batch" : Parameter.Name);
+      W.Write(Parameter.Name == ChooseOperation.CategoryParameter ? "Batch" : Parameter.Name);
 
       W.WriteLine(";");
     }
@@ -184,13 +191,15 @@ static class MindRenderer
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index;");
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{ChooseOperation.Name}Parameters.Length;");
     W.WriteLine();
-    W.WriteLine("var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
+    W.WriteLine(
+      "var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
     W.WriteLine("R.Incorporate(Thought.Done(TrainingPolicy));");
     W.WriteLine();
     W.Indent--;
     W.WriteLine("}");
 
-    W.WriteLine($"return {ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter});");
+    W.WriteLine(
+      $"return {ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter});");
 
     W.Indent--;
     W.WriteLine("});");

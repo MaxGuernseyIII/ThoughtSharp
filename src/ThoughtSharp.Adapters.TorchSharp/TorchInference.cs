@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 
 // ReSharper disable once UnusedMember.Global
 public class TorchInference(
-  Sequential Model, 
+  Sequential Model,
   torch.optim.Optimizer Optimizer,
   torch.Tensor Input,
   torch.Tensor Output,
@@ -45,18 +45,18 @@ public class TorchInference(
 
     var Indices = new List<long>();
     foreach (var Range in Ranges)
-      for (var I = Range.Start.GetOffset(OutputLength); I < Range.End.GetOffset(OutputLength);++I)
+      for (var I = Range.Start.GetOffset(OutputLength); I < Range.End.GetOffset(OutputLength); ++I)
         Indices.Add(I);
 
     if (Indices.Count == 0)
       return;
 
     using var CachedOutput = Output.detach().clone();
-    var IndicesTensor = torch.tensor(Indices.ToArray(), dtype: torch.ScalarType.Int64, device: CachedOutput.device);
+    var IndicesTensor = torch.tensor(Indices.ToArray(), torch.ScalarType.Int64, CachedOutput.device);
     var CachedSlice = CachedOutput.index_select(1, IndicesTensor);
     var RerunSlice = Model.forward(Input).index_select(1, IndicesTensor);
 
-    torch.Tensor Similarity = (CachedSlice * RerunSlice).sum() / (CachedSlice.norm() * RerunSlice.norm() + 1e-8);
+    var Similarity = (CachedSlice * RerunSlice).sum() / (CachedSlice.norm() * RerunSlice.norm() + 1e-8);
 
     using var Loss = Reward * (Reward > 0 ? 1 - Similarity : Similarity);
 

@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -90,7 +90,7 @@ public class Training
     var RewardToApply = Any.Float;
     var UnweightedRewards = MeasureDistributedRewardAmount(RewardToApply, Mind);
 
-    var Policy = new MockTrainingPolicy() { Mind = Mind };
+    var Policy = new MockTrainingPolicy {Mind = Mind};
     var Weight = Any.Float;
     Thought.Do(R =>
     {
@@ -122,7 +122,7 @@ public class Training
     var RewardToApply = Any.Float;
     var UnweightedRewards = MeasureDistributedRewardAmountForContributingThought(RewardToApply, Mind);
 
-    var Policy = new MockTrainingPolicy() { Mind = Mind};
+    var Policy = new MockTrainingPolicy {Mind = Mind};
     var Weight = Any.Float;
     Thought.Do(R =>
     {
@@ -130,7 +130,7 @@ public class Training
       R.Consume(Subthought);
       R.SetWeight(Subthought, Weight);
 
-      R.Consume(Thought.Capture(new MockProduct(), new MockTrainingPolicy() {Mind = Mind}));
+      R.Consume(Thought.Capture(new MockProduct(), new MockTrainingPolicy {Mind = Mind}));
     }).ApplyIncentive(RewardToApply);
 
     Policy.OutputReward.Should().BeApproximately(UnweightedRewards.OutputReward * Weight, 0.0001f);
@@ -150,7 +150,7 @@ public class Training
     Thought.Do(R =>
     {
       R.Consume(Thought.Capture(new MockProduct(), Policy));
-      R.Consume(Thought.Capture(new MockProduct(), new MockTrainingPolicy { Mind = Mind }));
+      R.Consume(Thought.Capture(new MockProduct(), new MockTrainingPolicy {Mind = Mind}));
     }).ApplyIncentive(RewardToApply);
     return Policy;
   }

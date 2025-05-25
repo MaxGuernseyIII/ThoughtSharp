@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,6 @@ static class SymbolExtensions
 {
   public static IValueSymbol? ToValueSymbolOrDefault(this ISymbol ToAdapt)
   {
-
     if (ToAdapt is IFieldSymbol Field)
       return new FieldValueSymbol(Field);
 
@@ -40,6 +39,64 @@ static class SymbolExtensions
       return new ParameterValueSymbolAdapter(Parameter);
 
     return null;
+  }
+
+  public static string ToLiteralExpression(this object? Value)
+  {
+    var Expression = Value switch
+    {
+      null => SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression),
+      bool B => SyntaxFactory.LiteralExpression(
+        B ? SyntaxKind.TrueLiteralExpression : SyntaxKind.FalseLiteralExpression),
+      short S => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(S)),
+      ushort S => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(S)),
+      int I => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(I)),
+      uint I => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(I)),
+      long L => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(L)),
+      ulong L => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(L)),
+      float F => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(F)),
+      double D => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(D)),
+      decimal M => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(M)),
+      byte B => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(B)),
+      sbyte B => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(B)),
+      string S => SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(S)),
+      char C => SyntaxFactory.LiteralExpression(SyntaxKind.CharacterLiteralExpression, SyntaxFactory.Literal(C)),
+      Enum E => SyntaxFactory.ParseExpression(E.GetType().FullName + "." + E),
+      _ => throw new NotSupportedException($"Literal generation not supported for type: {Value.GetType()}")
+    };
+    return Expression.NormalizeWhitespace().ToFullString();
+  }
+
+  public static CognitiveDataClass GetParametersDataModel(
+    this IMethodSymbol Method,
+    TypeAddress MethodType,
+    Func<IParameterSymbol, CognitiveDataClassBuilder, bool>? InterceptParameter = null)
+  {
+    InterceptParameter ??= NeverIntercept;
+    var ThisDataClassBuilder = new CognitiveDataClassBuilder(MethodType)
+    {
+      IsPublic = true,
+      ExplicitConstructor = true
+    };
+
+    foreach (var Parameter in Method.Parameters
+               .Where(P => !InterceptParameter(P, ThisDataClassBuilder))
+               .Select(P => P.ToValueSymbolOrDefault()!))
+      ThisDataClassBuilder.AddParameterValue(Parameter, true);
+
+    var ThisDataClass = ThisDataClassBuilder.Build();
+    return ThisDataClass;
+
+    static bool NeverIntercept(IParameterSymbol Arg0, CognitiveDataClassBuilder Arg1)
+    {
+      return false;
+    }
+  }
+
+  public static bool HasAttribute(this ISymbol S, string Name)
+  {
+    return S.GetAttributes()
+      .Any(A => A.AttributeClass?.Name == Name);
   }
 
   class ParameterValueSymbolAdapter(IParameterSymbol Parameter) : IValueSymbol
@@ -79,65 +136,5 @@ static class SymbolExtensions
     public bool IsImplicitlyDeclared => Property.IsImplicitlyDeclared;
 
     public ISymbol Raw => Property;
-  }
-
-  public static string ToLiteralExpression(this object? Value)
-  {
-    var Expression = Value switch
-    {
-      null => SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression),
-      bool B => SyntaxFactory.LiteralExpression(
-        B ? SyntaxKind.TrueLiteralExpression : SyntaxKind.FalseLiteralExpression),
-      short S => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(S)),
-      ushort S => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(S)),
-      int I => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(I)),
-      uint I => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(I)),
-      long L => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(L)),
-      ulong L => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(L)),
-      float F => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(F)),
-      double D => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(D)),
-      decimal M => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(M)),
-      byte B => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(B)),
-      sbyte B => SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(B)),
-      string S => SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(S)),
-      char C => SyntaxFactory.LiteralExpression(SyntaxKind.CharacterLiteralExpression, SyntaxFactory.Literal(C)),
-      Enum E => SyntaxFactory.ParseExpression(E.GetType().FullName + "." + E),
-      _ => throw new NotSupportedException($"Literal generation not supported for type: {Value.GetType()}")
-    };
-    return Expression.NormalizeWhitespace().ToFullString();
-  }
-
-  public static CognitiveDataClass GetParametersDataModel(
-    this IMethodSymbol Method, 
-    TypeAddress MethodType,
-    Func<IParameterSymbol, CognitiveDataClassBuilder, bool>? InterceptParameter = null)
-  {
-    InterceptParameter ??= NeverIntercept;
-    var ThisDataClassBuilder = new CognitiveDataClassBuilder(MethodType)
-    {
-      IsPublic = true,
-      ExplicitConstructor = true
-    };
-
-    foreach (var Parameter in Method.Parameters
-               .Where(P => !InterceptParameter(P, ThisDataClassBuilder))
-               .Select(P => P.ToValueSymbolOrDefault()!))
-    {
-      ThisDataClassBuilder.AddParameterValue(Parameter, true);
-    }
-
-    var ThisDataClass = ThisDataClassBuilder.Build();
-    return ThisDataClass;
-
-    static bool NeverIntercept(IParameterSymbol Arg0, CognitiveDataClassBuilder Arg1)
-    {
-      return false;
-    }
-  }
-
-  public static bool HasAttribute(this ISymbol S, string Name)
-  {
-    return S.GetAttributes()
-      .Any(A => A.AttributeClass?.Name == Name);
   }
 }

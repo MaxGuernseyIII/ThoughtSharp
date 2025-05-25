@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ public sealed class ThoughtTraceability
   public void ForProduct()
   {
     var Expected = new MockProduct();
-    
+
     var T = Thought.Capture(Expected);
 
     T.ConsumeDetached().Should().BeSameAs(Expected);
@@ -100,10 +100,7 @@ public sealed class ThoughtTraceability
   public void SynchronousCleanup()
   {
     var Disposable = new MockDisposable();
-    var T = Thought.Do(R =>
-    {
-      R.RegisterDisposable(Disposable);
-    });
+    var T = Thought.Do(R => { R.RegisterDisposable(Disposable); });
 
     T.Dispose();
 
@@ -114,10 +111,7 @@ public sealed class ThoughtTraceability
   public void CleanupIsDistributive()
   {
     var Disposable = new MockDisposable();
-    var T = Thought.Do(R =>
-    {
-      R.Incorporate(Thought.Do(R2 => R2.RegisterDisposable(Disposable)));
-    });
+    var T = Thought.Do(R => { R.Incorporate(Thought.Do(R2 => R2.RegisterDisposable(Disposable))); });
 
     T.Dispose();
 
@@ -162,10 +156,7 @@ public sealed class ThoughtTraceability
   public void ThoughtChildrenAreAttachedToParentThought()
   {
     var Subthought = Thought.Capture(new MockProduct());
-    var Superthought = Thought.Do(R =>
-    {
-      R.Consume(Subthought);
-    });
+    var Superthought = Thought.Do(R => { R.Consume(Subthought); });
 
     Subthought.Parent.Should().BeSameAs(Superthought);
   }

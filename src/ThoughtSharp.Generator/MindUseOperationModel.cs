@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,13 @@
 namespace ThoughtSharp.Generator;
 
 class MindUseOperationModel(
-  string Name, 
+  string Name,
   IReadOnlyList<(string Name, string TypeName, CognitiveDataInterpreter? AssociatedInterpreter)> Parameters)
 {
   public string Name { get; } = Name;
-  public IReadOnlyList<(string Name, string TypeName, CognitiveDataInterpreter? AssociatedInterpreter)> Parameters { get; } = Parameters;
+
+  public IReadOnlyList<(string Name, string TypeName, CognitiveDataInterpreter? AssociatedInterpreter)> Parameters
+  {
+    get;
+  } = Parameters;
 }

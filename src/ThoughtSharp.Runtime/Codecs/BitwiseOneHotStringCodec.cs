@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2024-2024 Hexagon Software LLC
+// Copyright (c) 2025-2025 Hexagon Software LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ namespace ThoughtSharp.Runtime.Codecs;
 public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
 {
   static readonly BitwiseOneHotNumberCodec<char> Inner = new();
+
   // ReSharper disable once ReplaceWithPrimaryConstructorParameter
   readonly int MaximumCharacters = Length;
   public int Length { get; } = Length * Inner.Length;
@@ -34,7 +35,7 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
   {
     var Padded = ObjectToEncode.PadRight(MaximumCharacters, (char) 0);
     var Index = 0;
-  
+
     foreach (var C in Padded)
     {
       Inner.EncodeTo(C, Target[Index..(Index + Inner.Length)]);
@@ -47,8 +48,8 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
     var ResultBuffer = new char[MaximumCharacters];
 
     foreach (var I in Enumerable.Range(0, MaximumCharacters))
-      ResultBuffer[I] = Inner.DecodeFrom(Source[(I * Inner.Length)..((I+1)*Inner.Length)]);
+      ResultBuffer[I] = Inner.DecodeFrom(Source[(I * Inner.Length)..((I + 1) * Inner.Length)]);
 
-    return new string(ResultBuffer).TrimEnd((char)0);
+    return new string(ResultBuffer).TrimEnd((char) 0);
   }
 }
