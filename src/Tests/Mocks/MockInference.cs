@@ -34,4 +34,9 @@ class MockInference(float[] Floats) : MockDisposable, Inference
   {
     Incentives.Add((Reward, [..Ranges]));
   }
+
+  public Inference MakeInference(float[] Parameters)
+  {
+    throw new NotImplementedException();
+  }
 }

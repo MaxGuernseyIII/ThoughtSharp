@@ -40,20 +40,33 @@ static class MindRenderer
       {
         ushort OperationCode = 1;
 
-        RenderStateCopyMembers(W, M);
+        WriteCognitionModeMembers(W);
 
-        foreach (var MakeOperation in M.MakeOperations)
-          RenderMakeMethod(W, M, MakeOperation, OperationCode++);
-
-        foreach (var UseOperation in M.UseOperations)
-          RenderUseMethod(W, M, UseOperation, OperationCode++);
-
-        foreach (var ChooseOperation in M.ChooseOperations)
-          RenderChooseMethod(W, M, ChooseOperation, OperationCode++);
-
-        RenderDisposeMembers(W);
+        RenderModelMembers(M, W, OperationCode);
       }
     });
+  }
+
+  static void WriteCognitionModeMembers(IndentedTextWriter W)
+  {
+    W.WriteLine("CognitionMode CognitionMode = new IsolatedCognitionMode(Brain);");
+   
+  }
+
+  static void RenderModelMembers(MindModel M, IndentedTextWriter W, ushort OperationCode)
+  {
+    RenderStateCopyMembers(W, M);
+
+    foreach (var MakeOperation in M.MakeOperations)
+      RenderMakeMethod(W, M, MakeOperation, OperationCode++);
+
+    foreach (var UseOperation in M.UseOperations)
+      RenderUseMethod(W, M, UseOperation, OperationCode++);
+
+    foreach (var ChooseOperation in M.ChooseOperations)
+      RenderChooseMethod(W, M, ChooseOperation, OperationCode++);
+        
+    RenderDisposeMembers(W);
   }
 
   static void RenderDisposeMembers(IndentedTextWriter W)
@@ -68,6 +81,7 @@ static class MindRenderer
 
   static void RenderStateCopyMembers(IndentedTextWriter W, MindModel Model)
   {
+    W.WriteLine("InferenceSource CurrentInferenceSource = Brain;");
     W.WriteLine("static readonly IReadOnlyList<Range> StateRanges = [");
     W.Indent++;
     foreach (var State in Model.States)
@@ -126,8 +140,9 @@ static class MindRenderer
 
     foreach (var Parameter in InputParameters)
       W.WriteLine($"InputObject.Parameters.{UseOperation.Name}.{Parameter.Name} = {Parameter.Name};");
-    W.WriteLine();
+    W.WriteLine(); 
     RenderMakeInference(W, Model);
+
     W.WriteLine();
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{UseOperation.Name}Index;");
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{UseOperation.Name}Parameters.Length;");
@@ -221,10 +236,16 @@ static class MindRenderer
     W.WriteLine("var InputBuffer = new float[Input.Length];");
     W.WriteLine("InputObject.MarshalTo(InputBuffer);");
     W.WriteLine();
-    W.WriteLine("var Inference = Brain.MakeInference(InputBuffer);");
+    W.WriteLine("var Inference = CurrentInferenceSource.MakeInference(InputBuffer);");
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+    RenderUpdateInference(W);
 
     foreach (var State in Model.States)
       W.WriteLine($"{State.Name} = OutputObject.Parameters.{State.Name}.Value;");
+  }
+
+  static void RenderUpdateInference(IndentedTextWriter W)
+  {
+    W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
   }
 }

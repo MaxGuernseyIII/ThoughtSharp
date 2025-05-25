@@ -20,11 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+using TorchSharp;
 
-public interface Inference : IDisposable, InferenceSource
+namespace ThoughtSharp.Adapters.TorchSharp;
+
+record TorchInferenceParts
 {
-  ReadOnlySpan<float> Result { get; }
-
-  void Incentivize(float Reward, params IReadOnlyList<Range> Ranges);
+  public required torch.Tensor State { get; set; }
+  public required torch.Tensor Product { get; set; }
 }

@@ -20,29 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
 using TorchSharp;
 using TorchSharp.Modules;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-// ReSharper disable once UnusedMember.Global
-public class TorchBrain(Sequential Model, int OutputLength, torch.Device? Device = null) : Brain
+public class TorchBrain(Sequential Model, torch.Device Device, int StateSize) : IDisposable
 {
-  readonly torch.Device Device = Device ?? torch.CPU;
-  readonly torch.optim.Optimizer Optimizer = torch.optim.Adam(Model.parameters(), 0.001);
+  internal Sequential Model { get; } = Model;
+  internal torch.Device Device { get; } = Device;
+  internal int StateSize { get; } = StateSize;
 
-  public Inference MakeInference(float[] Parameters)
+  public torch.Tensor EmptyState => torch.zeros(new long[] { 1, StateSize }, dtype: torch.ScalarType.Float32, device: Device);
+
+  public virtual void Dispose()
   {
-    var Input = torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
-    var Output = Model.forward(Input);
-
-    return new TorchInference(Model, Optimizer, Input, Output, OutputLength);
+    Model.Dispose();
   }
 
-  public void Dispose()
+  internal torch.Tensor ConvertFloatsToTensor(float[] Parameters)
   {
-    Optimizer.Dispose();
-    Model.Dispose();
+    return torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
   }
 }

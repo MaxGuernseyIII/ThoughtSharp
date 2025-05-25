@@ -71,7 +71,7 @@ foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
       Successes++;
     }
   }
-  catch (Exception Ex)
+  catch (Exception)
   {
     //Console.WriteLine("Original exception:");
     //Console.WriteLine(Ex);
