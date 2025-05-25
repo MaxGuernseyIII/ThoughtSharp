@@ -68,6 +68,9 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     public ActivationType ActivationType { get; set; } = ActivationType.ReLU;
   }
 
+  public int StateSize { get; set; } = 0;
+  public bool AllowTraining { get; set; } = true;
+
   public ExecutionDevice Device { get; set; } = torch.cuda.is_available() ? ExecutionDevice.CUDA : ExecutionDevice.CPU;
   public ActivationType FinalActivationType = OutputLength == 1 ? ActivationType.Sigmoid : ActivationType.Softmax;
 
@@ -82,19 +85,25 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
       ActivationType = FinalActivationType
     }, TorchLayers, InFeatures);
 
-    var NeuralNet = torch.nn.Sequential(TorchLayers.ToArray()).to(Device switch
+    var DeviceType = Device switch
     {
-      ExecutionDevice.CUDA => DeviceType.CUDA,
-      _ => DeviceType.CPU
-    });
+      ExecutionDevice.CUDA => global::TorchSharp.DeviceType.CUDA,
+      _ => global::TorchSharp.DeviceType.CPU
+    };
+    var NeuralNet = torch.nn.Sequential(TorchLayers.ToArray()).to(DeviceType);
 
-    return new TorchBrain(NeuralNet, InFeatures);
+    return AllowTraining ? 
+      new TorchBrainForTrainingMode(NeuralNet, new(DeviceType), StateSize) : 
+      new TorchBrainForProductionMode(NeuralNet, new(DeviceType), StateSize);
   }
 
   protected static int AddModulesForLayer(Layer Layer, List<torch.nn.Module<torch.Tensor, torch.Tensor>> TorchLayers, int InFeatures)
   {
     var OutFeatures = Layer.Features;
-    TorchLayers.Add(torch.nn.Linear(InFeatures, OutFeatures));
+    var Linear = torch.nn.Linear(InFeatures, OutFeatures);
+    torch.nn.init.kaiming_uniform_(Linear.weight);
+    torch.nn.init.zeros_(Linear.bias);
+    TorchLayers.Add(Linear);
     InFeatures = OutFeatures;
     var ActivationLayer = Layer.ActivationType switch
     {

@@ -21,40 +21,11 @@
 // SOFTWARE.
 
 using TorchSharp;
-using TorchSharp.Modules;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrain(Sequential Model, torch.Device Device, int StateSize) : IDisposable
+record TorchInferenceParts
 {
-  internal Sequential Model { get; } = Model;
-  internal torch.Device Device { get; } = Device;
-  internal int StateSize { get; } = StateSize;
-
-  public torch.Tensor EmptyState => torch.zeros(new long[] { 1, StateSize }, dtype: torch.ScalarType.Float32, device: Device);
-
-  public virtual void Dispose()
-  {
-    Model.Dispose();
-  }
-
-  internal torch.Tensor ConvertFloatsToTensor(float[] Parameters)
-  {
-    return torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
-  }
-
-  internal TorchInferenceParts Forward(torch.Tensor StateInputTensor, float[] Parameters)
-  {
-    var ParametersInputTensor = ConvertFloatsToTensor(Parameters);
-    var NewInput = torch.cat((IList<torch.Tensor>) [StateInputTensor, ParametersInputTensor], (long) 1);
-    var NewOutput = Model.forward(NewInput);
-    var NewStateTensor = NewOutput.slice(1, 0, StateSize, 1);
-    var NewProductTensor = NewOutput.slice(1, StateSize, NewOutput.size(1) - StateSize, 1);
-
-    return new()
-    {
-      State = NewStateTensor,
-      Product = NewProductTensor
-    };
-  }
+  public required torch.Tensor State { get; set; }
+  public required torch.Tensor Product { get; set; }
 }

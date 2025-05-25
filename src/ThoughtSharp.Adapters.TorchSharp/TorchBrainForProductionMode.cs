@@ -20,41 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using ThoughtSharp.Runtime;
 using TorchSharp;
 using TorchSharp.Modules;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrain(Sequential Model, torch.Device Device, int StateSize) : IDisposable
+public class TorchBrainForProductionMode(Sequential Model, torch.Device Device, int StateSize)
+  : TorchBrain(Model, Device, StateSize), Brain
 {
-  internal Sequential Model { get; } = Model;
-  internal torch.Device Device { get; } = Device;
-  internal int StateSize { get; } = StateSize;
-
-  public torch.Tensor EmptyState => torch.zeros(new long[] { 1, StateSize }, dtype: torch.ScalarType.Float32, device: Device);
-
-  public virtual void Dispose()
+  public Inference MakeInference(float[] Parameters)
   {
-    Model.Dispose();
+    return ExecuteInference(EmptyState, Parameters);
   }
 
-  internal torch.Tensor ConvertFloatsToTensor(float[] Parameters)
+  internal Inference ExecuteInference(torch.Tensor StateInput, float[] Parameters)
   {
-    return torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
-  }
+    var Tensors = Forward(StateInput, Parameters);
 
-  internal TorchInferenceParts Forward(torch.Tensor StateInputTensor, float[] Parameters)
-  {
-    var ParametersInputTensor = ConvertFloatsToTensor(Parameters);
-    var NewInput = torch.cat((IList<torch.Tensor>) [StateInputTensor, ParametersInputTensor], (long) 1);
-    var NewOutput = Model.forward(NewInput);
-    var NewStateTensor = NewOutput.slice(1, 0, StateSize, 1);
-    var NewProductTensor = NewOutput.slice(1, StateSize, NewOutput.size(1) - StateSize, 1);
-
-    return new()
-    {
-      State = NewStateTensor,
-      Product = NewProductTensor
-    };
+    return new TorchInferenceForProductionMode(this, Tensors.State, Tensors.Product);
   }
 }

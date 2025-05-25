@@ -41,47 +41,47 @@ foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
   if (Iteration % ReportEvery == 0)
     Report(Iteration);
 
-  //var Input = Random.Next(1, 101);
-  //var Terminal = new StringBuilderTerminal();
-  //var T = Thought.Do(R => { FizzBuzzHybridReasoning.WriteForOneNumber(Mind, 5, R, Terminal, Input); });
+  var Input = Random.Next(1, 101);
+  var Terminal = new StringBuilderTerminal();
+  var T = Thought.Do(R => { FizzBuzzHybridReasoning.WriteForOneNumber(Mind, 5, R, Terminal, Input); });
 
-  //try
-  //{
-  //  T.RaiseAnyExceptions();
+  try
+  {
+    T.RaiseAnyExceptions();
 
-  //  var Actual = Terminal.Content.ToString();
-  //  string Expected;
-  //  if (Input % 15 == 0)
-  //    Expected = "fizzbuzz";
-  //  else if (Input % 3 == 0)
-  //    Expected = "fizz";
-  //  else if (Input % 5 == 0)
-  //    Expected = "buzz";
-  //  else
-  //    Expected = $"{Input}";
+    var Actual = Terminal.Content.ToString();
+    string Expected;
+    if (Input % 15 == 0)
+      Expected = "fizzbuzz";
+    else if (Input % 3 == 0)
+      Expected = "fizz";
+    else if (Input % 5 == 0)
+      Expected = "buzz";
+    else
+      Expected = $"{Input}";
 
-  //  if (Actual != Expected)
-  //  {
-  //    T.ApplyIncentive(-.05f);
-  //    Failures++;
-  //  }
-  //  else
-  //  {
-  //    T.ApplyIncentive(.5f);
-  //    Successes++;
-  //  }
-  //}
-  //catch (Exception Ex)
-  //{
-  //  //Console.WriteLine("Original exception:");
-  //  //Console.WriteLine(Ex);
+    if (Actual != Expected)
+    {
+      T.ApplyIncentive(-.05f);
+      Failures++;
+    }
+    else
+    {
+      T.ApplyIncentive(.5f);
+      Successes++;
+    }
+  }
+  catch (Exception)
+  {
+    //Console.WriteLine("Original exception:");
+    //Console.WriteLine(Ex);
 
-  //  //Console.WriteLine();
-  //  //Console.WriteLine();
-  //  T.ApplyIncentive(-20f);
-  //  Failures++;
-  //  Exceptions++;
-  //}
+    //Console.WriteLine();
+    //Console.WriteLine();
+    T.ApplyIncentive(-20f);
+    Failures++;
+    Exceptions++;
+  }
 }
 
 Report(TotalTrainingPasses);

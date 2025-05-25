@@ -20,41 +20,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using TorchSharp;
+using ThoughtSharp.Runtime;
 using TorchSharp.Modules;
+using static TorchSharp.torch;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrain(Sequential Model, torch.Device Device, int StateSize) : IDisposable
+// ReSharper disable once UnusedMember.Global
+public class TorchBrainForTrainingMode(Sequential Model, Device Device, int StateSize) : TorchBrain(Model, Device, StateSize), Brain
 {
-  internal Sequential Model { get; } = Model;
-  internal torch.Device Device { get; } = Device;
-  internal int StateSize { get; } = StateSize;
+  internal optim.Optimizer Optimizer { get; } = optim.Adam(Model.parameters());
 
-  public torch.Tensor EmptyState => torch.zeros(new long[] { 1, StateSize }, dtype: torch.ScalarType.Float32, device: Device);
-
-  public virtual void Dispose()
+  public Inference MakeInference(float[] Parameters)
   {
-    Model.Dispose();
+    return ExecuteInference(null, EmptyState, Parameters);
   }
 
-  internal torch.Tensor ConvertFloatsToTensor(float[] Parameters)
+  internal Inference ExecuteInference(
+    TorchInferenceForTrainingMode? Predecessor,
+    Tensor StateInputTensor,
+    float[] Parameters)
   {
-    return torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
+    var Tensors = Forward(StateInputTensor, Parameters);
+
+    return new TorchInferenceForTrainingMode(this, Predecessor, Parameters, Tensors.State, Tensors.Product);
   }
 
-  internal TorchInferenceParts Forward(torch.Tensor StateInputTensor, float[] Parameters)
+  public void ApplyLoss(Tensor Loss)
   {
-    var ParametersInputTensor = ConvertFloatsToTensor(Parameters);
-    var NewInput = torch.cat((IList<torch.Tensor>) [StateInputTensor, ParametersInputTensor], (long) 1);
-    var NewOutput = Model.forward(NewInput);
-    var NewStateTensor = NewOutput.slice(1, 0, StateSize, 1);
-    var NewProductTensor = NewOutput.slice(1, StateSize, NewOutput.size(1) - StateSize, 1);
+    Model.zero_grad();
+    Loss.backward();
+    Optimizer.step();
+  }
 
-    return new()
-    {
-      State = NewStateTensor,
-      Product = NewProductTensor
-    };
+  public override void Dispose()
+  {
+    Optimizer.Dispose();
   }
 }

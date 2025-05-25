@@ -20,67 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
 using TorchSharp;
-using TorchSharp.Modules;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-// ReSharper disable once UnusedMember.Global
 public class TorchInference(
-  Sequential Model,
-  torch.optim.Optimizer Optimizer,
-  torch.Tensor Input,
-  torch.Tensor Output,
-  int OutputLength) : Inference
+  torch.Tensor StateOutputTensor,
+  torch.Tensor ProductOutputTensor
+) : IDisposable
 {
-  public ReadOnlySpan<float> Result => Output.squeeze(0).to(torch.CPU).data<float>().ToArray();
+  internal torch.Tensor StateOutputTensor { get; } = StateOutputTensor;
+  internal torch.Tensor ProductOutputTensor { get; } = ProductOutputTensor;
 
-  public void Incentivize(float Reward, params IReadOnlyList<Range> Ranges)
-  {
-    if (Reward == 0)
-      return;
-
-    using var TrainingTarget = Output.detach().clone();
-
-    var Indices = new List<long>();
-    foreach (var Range in Ranges)
-      for (var I = Range.Start.GetOffset(OutputLength); I < Range.End.GetOffset(OutputLength); ++I)
-        Indices.Add(I);
-
-    if (Indices.Count == 0)
-      return;
-
-    using var CachedOutput = Output.clone();
-    var IndicesTensor = torch.tensor(Indices.ToArray(), torch.ScalarType.Int64, CachedOutput.device);
-    var CachedSlice = CachedOutput.index_select(1, IndicesTensor);
-    var OutputWithGradients = Model.forward(Input.detach().clone().requires_grad_());
-    var RerunSlice = OutputWithGradients.index_select(1, IndicesTensor);
-
-    var Target = RerunSlice.detach().clone(); // this is not part of the graph
-    var Similarity = (CachedSlice * Target).sum() / (CachedSlice.norm() * Target.norm() + 1e-8);
-
-    using var Loss = -Reward * CachedOutput.mean();
-    //using var Loss = Reward * Similarity;
-
-    var p = Model.parameters().First();
-    Console.WriteLine($"Before: {p.data<float>()[0]}");
-    Model.zero_grad();
-    Loss.backward();
-    foreach (var param in Model.parameters())
-    {
-      var grad = param.grad;
-      Console.WriteLine($"Grad norm: {(grad is null ? "null" : grad.norm().item<float>().ToString())}");
-    }
-    Optimizer.step();
-    Console.WriteLine($"After: {p.data<float>()[0]}");
-
-    Console.WriteLine($"Loss: {Loss.item<float>()}");
-  }
+  public ReadOnlySpan<float> Result => ProductOutputTensor.squeeze(0).to(torch.CPU).data<float>().ToArray();
 
   public void Dispose()
   {
-    Input.Dispose();
-    Output.Dispose();
+    StateOutputTensor.Dispose();
+    ProductOutputTensor.Dispose();
   }
 }
