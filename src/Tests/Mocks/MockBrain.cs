@@ -85,4 +85,8 @@ class MockBrain : Brain
       return Result;
     }
   }
+
+  public void Dispose()
+  {
+  }
 }

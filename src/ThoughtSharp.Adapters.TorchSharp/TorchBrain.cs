@@ -20,6 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime.Codecs;
+using ThoughtSharp.Runtime;
+using TorchSharp;
+using TorchSharp.Modules;
 
-namespace ThoughtSharp.Runtime;
+namespace ThoughtSharp.Adapters.TorchSharp;
+
+// ReSharper disable once UnusedMember.Global
+public class TorchBrain(Sequential Model, int OutputLength, torch.Device? Device = null) : Brain
+{
+  readonly torch.Device Device = Device ?? torch.CPU;
+  readonly torch.optim.Optimizer Optimizer = torch.optim.Adam(Model.parameters(), lr: 0.001);
+
+  public Inference MakeInference(float[] Parameters)
+  {
+    using var Input = torch.tensor(Parameters, dtype: torch.ScalarType.Float32).unsqueeze(0).to(Device);
+    var Output = Model.forward(Input);
+
+    return new TorchInference(Model, Optimizer, Input, Output, OutputLength);
+  }
+
+  public void Dispose()
+  {
+    Optimizer.Dispose();
+    Model.Dispose();
+  }
+}

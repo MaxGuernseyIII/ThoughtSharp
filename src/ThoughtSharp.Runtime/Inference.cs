@@ -1,6 +1,6 @@
 ﻿namespace ThoughtSharp.Runtime;
 
-public interface Inference
+public interface Inference : IDisposable
 {
   ReadOnlySpan<float> Result { get; }
 

@@ -20,22 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
+namespace ThoughtSharp.Adapters.TorchSharp;
 
-namespace Tests.Mocks;
-
-class MockInference(float[] Floats) : Inference
+// ReSharper disable once UnusedMember.Global
+public class TorchBrainFactory
 {
-  public readonly List<(float Reward, IReadOnlyList<Range> Ranges)> Incentives = [];
-
-  public ReadOnlySpan<float> Result => Floats;
-
-  public void Incentivize(float Reward, params IReadOnlyList<Range> Ranges)
-  {
-    Incentives.Add((Reward, [..Ranges]));
-  }
-
-  public void Dispose()
-  {
-  }
 }

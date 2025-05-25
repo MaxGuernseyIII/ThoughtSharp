@@ -1,6 +1,6 @@
 ﻿namespace ThoughtSharp.Runtime;
 
-interface Brain
+public interface Brain : IDisposable
 {
   Inference MakeInference(float[] Parameters);
 }
