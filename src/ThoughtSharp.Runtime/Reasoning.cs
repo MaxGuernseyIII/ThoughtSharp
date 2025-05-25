@@ -22,37 +22,47 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class Reasoning
+public partial class Thought
 {
-  internal Thought? Parent { get; set; }
-
-  readonly List<Thought> UsedSubthoughts = [];
-  readonly Dictionary<Thought, float> Weights = [];
-
-  internal IReadOnlyList<Thought> Children => UsedSubthoughts.ToArray();
-  internal IReadOnlyDictionary<Thought, float> ChildrenWeights => new Dictionary<Thought, float>(Weights);
-
-  public T Consume<T>(Thought<T> Subthought)
+  public class Reasoning
   {
-    Incorporate(Subthought);
+    internal Thought? Parent { get; set; }
 
-    return Subthought.GetProduct();
-  }
+    readonly List<Thought> UsedSubthoughts = [];
+    readonly Dictionary<Thought, float> Weights = [];
+    readonly List<IDisposable> Disposables = [];
 
-  public void Incorporate(Thought Subthought)
-  {
-    if (Subthought.Container is not null)
-      throw new InvalidOperationException("A Thought can only be used in one line of reasoning");
+    internal IReadOnlyList<Thought> Children => UsedSubthoughts.ToArray();
+    internal IReadOnlyDictionary<Thought, float> ChildrenWeights => new Dictionary<Thought, float>(Weights);
+    internal IReadOnlyList<IDisposable> DisposableResources => new List<IDisposable>(Disposables);
 
-    UsedSubthoughts.Add(Subthought);
-    Subthought.Container = this;
-    Weights[Subthought] = 1f;
+    public T Consume<T>(Thought<T> Subthought)
+    {
+      Incorporate(Subthought);
 
-    Subthought.RaiseAnyExceptions();
-  }
+      return Subthought.GetProduct();
+    }
 
-  public void SetWeight(Thought Subthought, float Weight)
-  {
-    Weights[Subthought] = Weight;
+    public void Incorporate(Thought Subthought)
+    {
+      if (Subthought.Container is not null)
+        throw new InvalidOperationException("A Thought can only be used in one line of reasoning");
+
+      UsedSubthoughts.Add(Subthought);
+      Subthought.Container = this;
+      Weights[Subthought] = 1f;
+
+      Subthought.RaiseAnyExceptions();
+    }
+
+    public void SetWeight(Thought Subthought, float Weight)
+    {
+      Weights[Subthought] = Weight;
+    }
+
+    public void RegisterDisposable(IDisposable Resource)
+    {
+      Disposables.Add(Resource);
+    }
   }
 }

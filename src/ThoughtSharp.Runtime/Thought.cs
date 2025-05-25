@@ -24,10 +24,11 @@ using System.Runtime.ExceptionServices;
 
 namespace ThoughtSharp.Runtime;
 
-public abstract partial class Thought
+public abstract partial class Thought : IDisposable
 {
   readonly IReadOnlyDictionary<Thought, float> Weights;
   readonly ExceptionDispatchInfo? ExceptionInfo;
+  readonly IReadOnlyList<IDisposable> Disposables;
 
   // prevents foreign inheritors
   internal Thought(Reasoning LineOfReasoning, ExceptionDispatchInfo? ExceptionInfo,
@@ -37,11 +38,12 @@ public abstract partial class Thought
     this.ExceptionInfo = ExceptionInfo;
     Children = LineOfReasoning.Children;
     Weights = LineOfReasoning.ChildrenWeights;
+    Disposables = LineOfReasoning.DisposableResources;
   }
 
   internal TrainingPolicy? TrainingPolicy { get; set; }
 
-  internal Reasoning? Container { get; set; }
+  internal Reasoning? Container { get; private set; }
 
   public Thought? Parent => Container?.Parent;
   public IReadOnlyList<Thought> Children { get; }
@@ -136,6 +138,15 @@ public abstract partial class Thought
   {
     if (ExceptionInfo is not null)
       ExceptionInfo.Throw();
+  }
+
+  public void Dispose()
+  {
+    foreach (var Child in Children) 
+      Child.Dispose();
+
+    foreach (var Disposable in Disposables)
+      Disposable.Dispose();
   }
 }
 

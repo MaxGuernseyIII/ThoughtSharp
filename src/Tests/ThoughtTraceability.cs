@@ -45,7 +45,7 @@ public sealed class ThoughtTraceability
   {
     var Expected = new MockProduct();
     var T = Thought.Capture(Expected);
-    var Reasoning = new Reasoning();
+    var Reasoning = new Thought.Reasoning();
 
     var Actual = Reasoning.Consume(T);
 
@@ -57,7 +57,7 @@ public sealed class ThoughtTraceability
   {
     var Expected = new MockProduct();
     var T = Thought.Capture(Expected);
-    var Reasoning = new Reasoning();
+    var Reasoning = new Thought.Reasoning();
     Reasoning.Consume(Thought.Capture(new MockProduct()));
     Reasoning.Consume(Thought.Capture(new MockProduct()));
     var OriginalChildren = Reasoning.Children.ToArray();
@@ -84,7 +84,7 @@ public sealed class ThoughtTraceability
     var Expected = new Exception();
     var T = Thought.Do(_ => throw Expected);
 
-    T.Invoking(It => new Reasoning().Incorporate(It)).Should().Throw<Exception>().And.Should().Be(Expected);
+    T.Invoking(It => new Thought.Reasoning().Incorporate(It)).Should().Throw<Exception>().And.Should().Be(Expected);
   }
 
   [TestMethod]
@@ -93,13 +93,56 @@ public sealed class ThoughtTraceability
     var Expected = new Exception();
     var T = await Thought.DoAsync(_ => Task.FromException(Expected));
 
-    T.Invoking(It => new Reasoning().Incorporate(It)).Should().Throw<Exception>().And.Should().Be(Expected);
+    T.Invoking(It => new Thought.Reasoning().Incorporate(It)).Should().Throw<Exception>().And.Should().Be(Expected);
+  }
+
+  [TestMethod]
+  public void SynchronousCleanup()
+  {
+    var Disposable = new MockDisposable();
+    var T = Thought.Do(R =>
+    {
+      R.RegisterDisposable(Disposable);
+    });
+
+    T.Dispose();
+
+    Disposable.Disposed.Should().Be(true);
+  }
+
+  [TestMethod]
+  public void CleanupIsDistributive()
+  {
+    var Disposable = new MockDisposable();
+    var T = Thought.Do(R =>
+    {
+      R.Incorporate(Thought.Do(R2 => R2.RegisterDisposable(Disposable)));
+    });
+
+    T.Dispose();
+
+    Disposable.Disposed.Should().Be(true);
+  }
+
+  [TestMethod]
+  public async Task AsynchronousCleanup()
+  {
+    var Disposable = new MockDisposable();
+    var T = await Thought.DoAsync(R =>
+    {
+      R.RegisterDisposable(Disposable);
+      return Task.CompletedTask;
+    });
+
+    T.Dispose();
+
+    Disposable.Disposed.Should().Be(true);
   }
 
   [TestMethod]
   public void ThoughtChildrenIsReasoningChildrenAtEndOfProduction()
   {
-    Reasoning CapturedReasoning = null!;
+    Thought.Reasoning CapturedReasoning = null!;
     var T = Thought.Think(R =>
     {
       CapturedReasoning = R;
