@@ -88,8 +88,19 @@ public abstract partial class Thought
   public static async Task<Thought<T>> ThinkAsync<T>(Func<Reasoning, Task<T>> Produce, TrainingPolicy? Policy = null)
   {
     var Reasoning = new Reasoning();
-    var Product = await Produce(Reasoning);
-    var Result = new Thought<T>(Product, null, Reasoning, Policy);
+    T? Product;
+    ExceptionDispatchInfo? ExceptionInfo;
+    try
+    {
+      Product = await Produce(Reasoning);
+      ExceptionInfo = null;
+    }
+    catch (Exception Exception)
+    {
+      Product = default;
+      ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
+    }
+    var Result = new Thought<T>(Product, ExceptionInfo, Reasoning, Policy);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -106,10 +117,6 @@ public abstract partial class Thought
     return Result;
   }
 
-  // TODO: this needs to be rebuilt to...
-  //  1. [x] get a graph of thoughts bucketed into time-ordered lists by Mind
-  //  2. apply reward to both state and output for all be last thought for a Mind
-  //  3. apply reward to output only for the last thought for a Mind
   public void ApplyIncentive(float Reward)
   {
     var ThoughtGraph = Thought.ThoughtGraph.For(this);

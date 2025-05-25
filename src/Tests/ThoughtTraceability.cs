@@ -88,6 +88,15 @@ public sealed class ThoughtTraceability
   }
 
   [TestMethod]
+  public async Task AsynchronousThoughtsCaptureAndReleaseExceptions()
+  {
+    var Expected = new Exception();
+    var T = await Thought.DoAsync(_ => Task.FromException(Expected));
+
+    T.Invoking(It => new Reasoning().Incorporate(It)).Should().Throw<Exception>().And.Should().Be(Expected);
+  }
+
+  [TestMethod]
   public void ThoughtChildrenIsReasoningChildrenAtEndOfProduction()
   {
     Reasoning CapturedReasoning = null!;
