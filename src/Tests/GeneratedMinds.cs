@@ -736,7 +736,7 @@ public partial class GeneratedMinds
   partial class SimpleMakeMockMind
   {
     [Make]
-    public partial Thought<SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
+    public partial Thought<SimpleOutputData, MakeFeedbackPolicy<SimpleOutputData>> MakeSimpleOutput(SimpleInputData Simple1);
   }
 
   [CognitiveActions]

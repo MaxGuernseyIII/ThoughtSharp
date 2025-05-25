@@ -59,72 +59,81 @@ public abstract partial class Thought : IDisposable
 
   public static Thought Done(TrainingPolicy? Training = null)
   {
-    return new Thought<object?>(null, null, new(), Training);
+    return new Thought<object?, object?>(null, null, null, new(), Training);
   }
 
-  public static Thought<T> Capture<T>(T Product, TrainingPolicy? Training = null)
+  public static Thought<TProduct, TFeedback> Capture<TProduct, TFeedback>(TProduct Product, FeedbackPolicy<TFeedback>? Feedback = null, TrainingPolicy? Training = null)
   {
-    return new(Product, null, new(), Training);
+    return new(Product, Feedback, null, new(), Training);
   }
 
-  public static Thought<T> Think<T>(Func<Reasoning, T> Produce, TrainingPolicy? Policy = null)
+  public static Thought<TProduct, TFeedback> Think<TProduct, TFeedback>(
+    Func<Reasoning, (TProduct Product, FeedbackPolicy<TFeedback> Feedback)> Produce,
+    TrainingPolicy? Policy = null)
   {
     var Reasoning = new Reasoning();
-    T? Product;
+    TProduct? Product;
+    FeedbackPolicy<TFeedback> FeedbackPolicy;
+
     ExceptionDispatchInfo? ExceptionInfo;
     try
     {
-      Product = Produce(Reasoning);
+      (Product, FeedbackPolicy) = Produce(Reasoning);
       ExceptionInfo = null;
     }
     catch (Exception Exception)
     {
-      Product = default;
+      (Product, FeedbackPolicy) = (default, null);
       ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
     }
 
-    var Result = new Thought<T>(Product, ExceptionInfo, Reasoning, Policy);
+    var Result = new Thought<TProduct, TFeedback>(Product, FeedbackPolicy, ExceptionInfo, Reasoning, Policy);
     Reasoning.Parent = Result;
     return Result;
   }
 
   public static Thought Do(Action<Reasoning> ToDo)
   {
-    return Think(object? (R) =>
+    return Think<object?, object>(R =>
     {
       ToDo(R);
-      return null;
+      return (null, null!);
     });
   }
 
-  public static async Task<Thought<T>> ThinkAsync<T>(Func<Reasoning, Task<T>> Produce, TrainingPolicy? Policy = null)
+  public static async Task<Thought<TProduct, TFeedback>> ThinkAsync<TProduct, TFeedback>(
+    Func<Reasoning, Task<(TProduct, FeedbackPolicy<TFeedback>)>> Produce, 
+    TrainingPolicy? Policy = null)
   {
     var Reasoning = new Reasoning();
-    T? Product;
+    TProduct? Product;
+    FeedbackPolicy<TFeedback>? Feedback;
+
     ExceptionDispatchInfo? ExceptionInfo;
     try
     {
-      Product = await Produce(Reasoning);
+      (Product, Feedback) = await Produce(Reasoning);
       ExceptionInfo = null;
     }
     catch (Exception Exception)
     {
       Product = default;
+      Feedback = null;
       ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
     }
 
-    var Result = new Thought<T>(Product, ExceptionInfo, Reasoning, Policy);
+    var Result = new Thought<TProduct, TFeedback>(Product, Feedback, ExceptionInfo, Reasoning, Policy);
     Reasoning.Parent = Result;
     return Result;
   }
 
   public static async Task<Thought> DoAsync(Func<Reasoning, Task> ToDo)
   {
-    var Result = await ThinkAsync(async Task<object?> (R) =>
+    var Result = await ThinkAsync(async Task<(object?, FeedbackPolicy<object?>)> (R) =>
     {
       await ToDo(R);
 
-      return null;
+      return (null, null!);
     });
 
     return Result;
@@ -152,24 +161,28 @@ public abstract partial class Thought : IDisposable
   }
 }
 
-public sealed class Thought<T> : Thought
+public sealed class Thought<TProduct, TFeedback> : Thought
 {
-  readonly T? Product;
+  readonly TProduct? Product;
 
-  internal Thought(T? Product, ExceptionDispatchInfo? ExceptionInfo, Reasoning LineOfReasoning,
+  internal Thought(
+    TProduct? Product, 
+    FeedbackPolicy<TFeedback>? Feedback,
+    ExceptionDispatchInfo? ExceptionInfo, 
+    Reasoning LineOfReasoning,
     TrainingPolicy? TrainingPolicy)
     : base(LineOfReasoning, ExceptionInfo, TrainingPolicy)
   {
     this.Product = Product;
   }
 
-  public T ConsumeDetached()
+  public TProduct ConsumeDetached()
   {
     return new Reasoning().Consume(this);
   }
 
 
-  internal T GetProduct()
+  internal TProduct GetProduct()
   {
     return Product!;
   }

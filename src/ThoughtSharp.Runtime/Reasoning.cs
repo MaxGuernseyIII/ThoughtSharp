@@ -36,7 +36,7 @@ public partial class Thought
     internal IReadOnlyDictionary<Thought, float> ChildrenWeights => new Dictionary<Thought, float>(Weights);
     internal IReadOnlyList<IDisposable> DisposableResources => new List<IDisposable>(Disposables);
 
-    public T Consume<T>(Thought<T> Subthought)
+    public TProduct Consume<TProduct, TFeedback>(Thought<TProduct, TFeedback> Subthought)
     {
       Incorporate(Subthought);
 
