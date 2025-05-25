@@ -28,6 +28,13 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 // ReSharper disable once UnusedMember.Global
 public class TorchBrainBuilder(int InputLength, int OutputLength)
 {
+  public static TorchBrainBuilder For<TInput, TOutput>()
+    where TInput : CognitiveData<TInput>
+    where TOutput : CognitiveData<TOutput>
+  {
+    return new(TInput.Length, TOutput.Length);
+  }
+
   public enum ActivationType
   {
     ReLU,

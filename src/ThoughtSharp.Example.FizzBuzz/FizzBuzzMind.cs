@@ -21,28 +21,26 @@
 // SOFTWARE.
 
 using ThoughtSharp.Runtime;
-using TorchSharp;
-using TorchSharp.Modules;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
+namespace ThoughtSharp.Example.FizzBuzz;
 
-// ReSharper disable once UnusedMember.Global
-public class TorchBrain(Sequential Model, int OutputLength, torch.Device? Device = null) : Brain
+[Mind]
+partial class FizzBuzzMind
 {
-  readonly torch.Device Device = Device ?? torch.CPU;
-  readonly torch.optim.Optimizer Optimizer = torch.optim.Adam(Model.parameters(), 0.001);
+  [Use]
+  public partial Thought<bool> WriteForNumber(Terminal Surface, short Index);
+}
 
-  public Inference MakeInference(float[] Parameters)
-  {
-    var Input = torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
-    var Output = Model.forward(Input);
+[CognitiveData]
+partial class ShapeInfo
+{
+  [CognitiveDataBounds<float>(-1e8f, 1e8f)]
+  public float Area { get; set; }
+}
 
-    return new TorchInference(Model, Optimizer, Input, Output, OutputLength);
-  }
-
-  public void Dispose()
-  {
-    Optimizer.Dispose();
-    Model.Dispose();
-  }
+[Mind]
+partial class ShapesMind
+{
+  [Make]
+  public partial Thought<ShapeInfo> MakeSquare([CognitiveDataBounds<float>(-1e3f, 1e3f)] float SideLength);
 }

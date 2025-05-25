@@ -20,29 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-using TorchSharp;
-using TorchSharp.Modules;
+using System.Text;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
+namespace ThoughtSharp.Example.FizzBuzz;
 
-// ReSharper disable once UnusedMember.Global
-public class TorchBrain(Sequential Model, int OutputLength, torch.Device? Device = null) : Brain
+class StringBuilderTerminal : Terminal
 {
-  readonly torch.Device Device = Device ?? torch.CPU;
-  readonly torch.optim.Optimizer Optimizer = torch.optim.Adam(Model.parameters(), 0.001);
+  public readonly StringBuilder Content = new();
 
-  public Inference MakeInference(float[] Parameters)
+  public void WriteNumber(short ToWrite)
   {
-    var Input = torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
-    var Output = Model.forward(Input);
-
-    return new TorchInference(Model, Optimizer, Input, Output, OutputLength);
+    Content.Append(ToWrite);
   }
 
-  public void Dispose()
+  public void Fizz()
   {
-    Optimizer.Dispose();
-    Model.Dispose();
+    Content.Append("fizz");
+  }
+
+  public void Buzz()
+  {
+    Content.Append("buzz");
   }
 }

@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-class ApplyTrainingToInference(
+public class ApplyTrainingToInference(
   Mind Mind,
   Inference Target,
   IReadOnlyList<Range> OutputRanges,

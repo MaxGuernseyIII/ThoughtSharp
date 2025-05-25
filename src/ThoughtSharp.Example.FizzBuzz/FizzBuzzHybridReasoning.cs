@@ -21,28 +21,36 @@
 // SOFTWARE.
 
 using ThoughtSharp.Runtime;
-using TorchSharp;
-using TorchSharp.Modules;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
+namespace ThoughtSharp.Example.FizzBuzz;
 
-// ReSharper disable once UnusedMember.Global
-public class TorchBrain(Sequential Model, int OutputLength, torch.Device? Device = null) : Brain
+static class FizzBuzzHybridReasoning
 {
-  readonly torch.Device Device = Device ?? torch.CPU;
-  readonly torch.optim.Optimizer Optimizer = torch.optim.Adam(Model.parameters(), 0.001);
-
-  public Inference MakeInference(float[] Parameters)
+  public static Thought<string> DoFizzBuzz(
+    FizzBuzzMind Mind,
+    short Start, 
+    short End, 
+    short MaximumOperationsPerStep = 5)
   {
-    var Input = torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
-    var Output = Model.forward(Input);
+    return Thought.Think(R =>
+    {
+      var Terminal = new StringBuilderTerminal();
 
-    return new TorchInference(Model, Optimizer, Input, Output, OutputLength);
+      foreach (var I in Enumerable.Range(Start, End - Start)) WriteForOneNumber(Mind, MaximumOperationsPerStep, R, Terminal, I);
+
+      return Terminal.Content.ToString();
+    });
   }
 
-  public void Dispose()
+  public static void WriteForOneNumber(
+    FizzBuzzMind Mind, 
+    short MaximumOperationsPerStep, 
+    Thought.Reasoning R,
+    Terminal Terminal, 
+    int I)
   {
-    Optimizer.Dispose();
-    Model.Dispose();
+    foreach (var _ in Enumerable.Range(0, MaximumOperationsPerStep))
+      if (!R.Consume(Mind.WriteForNumber(Terminal, (short)I)))
+        break;
   }
 }
