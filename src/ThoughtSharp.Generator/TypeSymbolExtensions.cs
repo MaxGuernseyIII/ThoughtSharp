@@ -46,6 +46,9 @@ public static class TypeSymbolExtensions
 
   public static string GetFullPath(this ITypeSymbol T)
   {
+    if (T.SpecialType == SpecialType.System_Void)
+      return "void";
+
     return T.ToDisplayString(new SymbolDisplayFormat(
       typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
       genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters)).Trim();

@@ -166,18 +166,39 @@ public partial class GeneratedMinds
     var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
     var Mind = new StatelessMind(Brain);
 
-    var Thought = Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100));
-    var Reward = Any.PositiveOrNegativeFloat;
+    var T = Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100));
 
-    Thought.ApplyIncentive(Reward);
+    var ExpectedMore = Any.Bool;
+    var SomeOtherData = Any.Float;
+
+    T.Feedback.ExpectationsWere((Mock, More) =>
+    {
+      Mock.DoSomething2(SomeOtherData);
+      More.Value = ExpectedMore;
+    });
 
     var Inference = Brain.MockInferences.Single();
-    var OutputStart = StatelessMind.Output.ParametersIndex +
-                      StatelessMind.Output.OutputParameters.SynchronousUseSomeInterfaceIndex;
-    var OutputEnd = OutputStart + StatelessMind.Output.OutputParameters.SynchronousUseSomeInterfaceParameters.Length;
-    Inference.Incentives.Should().BeEquivalentTo([
-      (Reward, new[] {OutputStart..OutputEnd})
-    ]);
+    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output()
+    {
+      Parameters =
+      {
+        SynchronousUseSomeInterface =
+        {
+          Surface =
+          {
+            ActionCode = 2,
+            MoreActions = ExpectedMore,
+            Parameters =
+            {
+              DoSomething2 =
+              {
+                SomeOtherData = SomeOtherData
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   [TestMethod]
@@ -234,23 +255,45 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public async Task TrainingOfUseAsOutputThought()
+  public async Task TrainingOfAsynchronousUseAsOutputThought()
   {
     var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
     var Mind = new StatelessMind(Brain);
 
-    var Thought = await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100));
-    var Reward = Any.PositiveOrNegativeFloat;
+    var T = await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100));
 
-    Thought.ApplyIncentive(Reward);
+    var ExpectedMore = Any.Bool;
+    var SomeOtherData = Any.Float;
+
+    T.Feedback.ExpectationsWere((Mock, More) =>
+    {
+      Mock.DoSomething2(SomeOtherData);
+      More.Value = ExpectedMore;
+      return Task.CompletedTask;
+    });
 
     var Inference = Brain.MockInferences.Single();
-    var OutputStart = StatelessMind.Output.ParametersIndex +
-                      StatelessMind.Output.OutputParameters.AsynchronousUseSomeInterfaceIndex;
-    var OutputEnd = OutputStart + StatelessMind.Output.OutputParameters.AsynchronousUseSomeInterfaceParameters.Length;
-    Inference.Incentives.Should().BeEquivalentTo([
-      (Reward, new[] {OutputStart..OutputEnd})
-    ]);
+    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output()
+    {
+      Parameters =
+      {
+        AsynchronousUseSomeInterface = 
+        {
+          Surface =
+          {
+            ActionCode = 2,
+            MoreActions = ExpectedMore,
+            Parameters =
+            {
+              DoSomething2 =
+              {
+                SomeOtherData = SomeOtherData
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   [TestMethod]
@@ -548,7 +591,7 @@ public partial class GeneratedMinds
       int Argument2);
 
     [Use]
-    public partial Task<Thought<bool, UseFeedback<AsynchronousActionSurface>>> AsynchronousUseSomeInterface(
+    public partial Task<Thought<bool, AsyncUseFeedback<AsynchronousActionSurface>>> AsynchronousUseSomeInterface(
       AsynchronousActionSurface Surface,
       int Argument1,
       int Argument2);

@@ -37,6 +37,6 @@ class CognitiveDataInterpreterBuilder(TypeAddress ToInterpretType)
 
   public void AssociateMethodWithDataClass(IMethodSymbol Method, CognitiveDataClass Parameters)
   {
-    Paths.Add(new(Method.Name, Parameters, Method.ReturnType.RequiresAwait(), Method.ReturnType.IsThoughtful()));
+    Paths.Add(new(Method.Name, Parameters, Method.ReturnType.RequiresAwait(), Method.ReturnType.IsThoughtful(), Method.ReturnType.GetFullPath()));
   }
 }

@@ -54,10 +54,10 @@ static class CognitiveActionsModelFactory
       IsPublic = true,
       ExplicitConstructor = true
     };
-    CompleteDataBuilder.AddCompilerDefinedSubDataParameter("Parameters", "OutputParameters");
     var InterpreterBuilder = new CognitiveDataInterpreterBuilder(TargetType);
     CompleteDataBuilder.AddCompilerDefinedBoundedIntLikeParameter("ActionCode", ushort.MinValue, ushort.MaxValue);
     CompleteDataBuilder.AddCompilerDefinedBoolParameter("MoreActions");
+    CompleteDataBuilder.AddCompilerDefinedSubDataParameter("Parameters", "OutputParameters");
     foreach (var Method in Methods)
     {
       var MethodType = TargetType.GetNested(TypeIdentifier.Explicit("struct", $"{Method.Name}Parameters"));

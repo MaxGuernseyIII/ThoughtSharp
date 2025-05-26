@@ -40,7 +40,36 @@ public class MakeFeedback<TMade>(InferenceFeedback Underlying, Func<TMade, float
   }
 }
 
-public class UseFeedback<TSurface>(TSurface Mock, Action Commit);
+public class BoxedBool
+{
+  public bool Value { get; set; }
+}
+
+public class UseFeedback<TSurface>(TSurface Mock, Action<bool> Commit)
+{
+  public delegate void TrainingMethod(TSurface Mock, BoxedBool ShouldHaveRequestedMore);
+
+  public void ExpectationsWere(TrainingMethod Configure)
+  {
+    var ShouldHaveRequestedMore = new BoxedBool();
+    Configure(Mock, ShouldHaveRequestedMore);
+
+    Commit(ShouldHaveRequestedMore.Value);
+  }
+}
+
+public class AsyncUseFeedback<TSurface>(TSurface Mock, Action<bool> Commit)
+{
+  public delegate Task TrainingMethod(TSurface Mock, BoxedBool ShouldHaveRequestedMore);
+
+  public void ExpectationsWere(TrainingMethod Configure)
+  {
+    var ShouldHaveRequestedMore = new BoxedBool();
+    Configure(Mock, ShouldHaveRequestedMore);
+
+    Commit(ShouldHaveRequestedMore.Value);
+  }
+}
 
 public class ChooseFeedback<TSelectable>(InferenceFeedback Underlying, IReadOnlyList<TSelectable> Options, Func<ushort, float[]> ToExpectedOutput)
 {

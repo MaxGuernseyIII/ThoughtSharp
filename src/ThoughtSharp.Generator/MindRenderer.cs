@@ -158,10 +158,61 @@ static class MindRenderer
     var ActionSurfaces = UseOperation.Parameters.Where(P => P.AssociatedInterpreter is not null);
     var ActionSurface = ActionSurfaces.Single();
 
-    var ReturnType = $"Thought<bool, UseFeedback<{ActionSurface.TypeName}>>";
     var MethodIsAsync = ActionSurface.AssociatedInterpreter!.RequiresAwait;
+    var FeedbackType = $"UseFeedback<{ActionSurface.TypeName}>";
+    if (MethodIsAsync)
+      FeedbackType = "Async" + FeedbackType;
+
+    var ReturnType = $"Thought<bool, {FeedbackType}>";
     if (MethodIsAsync)
       ReturnType = $"Task<{ReturnType}>";
+
+    W.WriteLine();
+    W.WriteLine($"class {UseOperation.Name}FeedbackMock(Inference ToTrain) : {ActionSurface.TypeName}");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine("bool Conditioned;");
+    W.WriteLine("Output Expected = new();");
+    W.WriteLine();
+
+    ushort ActionCode = 1;
+    foreach (var Path in ActionSurface.AssociatedInterpreter!.Paths)
+    {
+      W.WriteLine($"public {Path.ReturnType} {Path.MethodName}({string.Join(", ", Path.ParametersClass.Parameters.Select(P => $"{P.FullType} {P.Name}"))})");
+      W.WriteLine("{");
+      W.Indent++;
+      W.WriteLine($"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.ActionCode = {ActionCode.ToLiteralExpression()};");
+
+      foreach (var Parameter in Path.ParametersClass.Parameters) 
+        W.WriteLine($"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.Parameters.{Path.MethodName}.{Parameter.Name} = {Parameter.Name};");
+
+      var ReturnValue = Path.IsThoughtful? "Thought.Done()" : "";
+      if (Path.RequiresAwait)
+        ReturnValue = $"Task.FromResult({ReturnValue})";
+
+      if (ReturnValue.Length > 0)
+        ReturnValue = " " + ReturnValue;
+      if (Path.IsThoughtful)
+        W.WriteLine($"return{ReturnValue};");
+
+      W.Indent--;
+      W.WriteLine("}");
+      W.WriteLine();
+      ActionCode++;
+    }
+
+    W.WriteLine("public void Commit(bool ExpectedMore)");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine($"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.MoreActions = ExpectedMore;");
+    W.WriteLine("var Buffer = new float[Output.Length];");
+    W.WriteLine("Expected.MarshalTo(Buffer);");
+    W.WriteLine("ToTrain.Train(Buffer);");
+    W.Indent--;
+    W.WriteLine("}");
+    W.Indent--;
+    W.WriteLine("}");
+    W.WriteLine();
 
     W.WriteLine(
       $"public partial {ReturnType} {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
@@ -190,7 +241,17 @@ static class MindRenderer
       $"var MoreActions = R.Consume({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name}));");
 
     W.WriteLine();
-    W.WriteLine($"return (MoreActions, new UseFeedback<{ActionSurface.TypeName}>(null!, null!));");
+    W.WriteLine($"var Feedback = new {UseOperation.Name}FeedbackMock(Inference);");
+    W.WriteLine("return (");
+    W.Indent++;
+    W.WriteLine($"MoreActions, new {FeedbackType}(");
+    W.Indent++;
+    W.WriteLine($"Feedback,");
+    W.WriteLine("Feedback.Commit");
+    W.Indent--;
+    W.WriteLine(")");
+    W.Indent--;
+    W.WriteLine(");");
     W.Indent--;
     W.WriteLine("});");
     W.Indent--;

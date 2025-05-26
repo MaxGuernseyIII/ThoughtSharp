@@ -99,6 +99,11 @@ public abstract partial class Thought : IDisposable
     });
   }
 
+  public static Thought Done()
+  {
+    return Do(R => { });
+  }
+
   public static async Task<Thought<TProduct, TFeedback>> ThinkAsync<TProduct, TFeedback>(
     Func<Reasoning, Task<(TProduct, TFeedback)>> Produce, 
     TrainingPolicy? Policy = null)
