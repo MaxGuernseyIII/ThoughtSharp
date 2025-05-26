@@ -69,23 +69,23 @@ public abstract partial class Thought : IDisposable
     {
       var Reasoning = new Thought<TFeedback>.Reasoning();
       TProduct? Product;
-      TFeedback? FeedbackPolicy;
+      TFeedback? Feedback;
 
       ExceptionDispatchInfo? ExceptionInfo;
       try
       {
-        (Product, FeedbackPolicy) = Produce(Reasoning);
+        (Product, Feedback) = Produce(Reasoning);
         ExceptionInfo = null;
       }
       catch (Exception Exception)
       {
-        (Product, FeedbackPolicy) = (default, default);
+        (Product, Feedback) = (default, default);
         ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
       }
 
-      FeedbackPolicy ??= Reasoning.Feedback;
+      Feedback ??= Reasoning.Feedback;
 
-        var Result = new Thought<TProduct, TFeedback>(Product, FeedbackPolicy, ExceptionInfo, Reasoning);
+        var Result = new Thought<TProduct, TFeedback>(Product, Feedback, ExceptionInfo, Reasoning);
       Reasoning.Parent = Result;
       return Result;
     }
