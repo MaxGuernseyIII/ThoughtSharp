@@ -43,7 +43,10 @@ foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
 
   var Input = Random.Next(1, 101);
   var Terminal = new StringBuilderTerminal();
-  var T = Thought.Do(R => { FizzBuzzHybridReasoning.WriteForOneNumber(Mind, 5, R, Terminal, Input); });
+  var T = Thought.WithFeedback<IReadOnlyList<UseFeedback<Terminal>>>.Do(R =>
+  {
+    FizzBuzzHybridReasoning.WriteForOneNumber(Mind, 5, R, Terminal, Input);
+  });
 
   var Failure = false;
   string Expected;
@@ -84,8 +87,45 @@ foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
     Exceptions++;
   }
 
-  //if (Failure)
-  //  T.Feedback
+  if (Failure)
+  {
+    switch (Expected)
+    {
+      case "Fizz":
+        T.Feedback[0].ExpectationsWere((Mock, More) =>
+        {
+          Mock.Fizz();
+          More.Value = false;
+        });
+        return;
+      case "Buzz":
+        T.Feedback[0].ExpectationsWere((Mock, More) =>
+        {
+          Mock.Buzz();
+          More.Value = false;
+        });
+        return;
+      case "FizzBuzz":
+        T.Feedback[0].ExpectationsWere((Mock, More) =>
+        {
+          Mock.Fizz();
+          More.Value = true;
+        });
+        T.Feedback[1].ExpectationsWere((Mock, More) =>
+        {
+          Mock.Buzz();
+          More.Value = false;
+        });
+        return;
+      default:
+        T.Feedback[0].ExpectationsWere((Mock, More) =>
+        {
+          Mock.WriteNumber((short) Input);
+          More.Value = false;
+        });
+        break;
+    }
+  }
 }
 
 Report(TotalTrainingPasses);

@@ -234,24 +234,28 @@ static class MindRenderer
     W.WriteLine();
 
     var (ThoughtMethod, Async) = MethodIsAsync ? ("ThinkAsync", "async ") : ("Think", "");
-    W.WriteLine($"return Thought.{ThoughtMethod}({Async}R =>");
+    W.WriteLine($"return Thought.WithFeedback<{FeedbackType}>.{ThoughtMethod}({Async}R =>");
     W.WriteLine("{");
     W.Indent++;
+    W.WriteLine($"var FeedbackMock = new {UseOperation.Name}FeedbackMock(Inference);");
+    W.WriteLine($"var Feedback = new {FeedbackType}(");
+    W.Indent++;
+    W.WriteLine($"FeedbackMock,");
+    W.WriteLine("FeedbackMock.Commit");
+    W.Indent--;
+    W.WriteLine(");");
+
+    W.WriteLine("R.SetFeedback(Feedback);");
     W.WriteLine();
     var Unwrap = ActionSurface.AssociatedInterpreter!.RequiresAwait ? "await " : "";
     W.WriteLine(
       $"var MoreActions = R.Consume({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name}));");
 
     W.WriteLine();
-    W.WriteLine($"var Feedback = new {UseOperation.Name}FeedbackMock(Inference);");
     W.WriteLine("return (");
     W.Indent++;
-    W.WriteLine($"MoreActions, new {FeedbackType}(");
-    W.Indent++;
-    W.WriteLine($"Feedback,");
-    W.WriteLine("Feedback.Commit");
-    W.Indent--;
-    W.WriteLine(")");
+    W.WriteLine("MoreActions,");
+    W.WriteLine("Feedback");
     W.Indent--;
     W.WriteLine(");");
     W.Indent--;

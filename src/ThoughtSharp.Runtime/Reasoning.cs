@@ -35,7 +35,6 @@ public partial class Thought<TFeedback>
   }
 }
 
-
 public partial class Thought
 {
   public class Reasoning

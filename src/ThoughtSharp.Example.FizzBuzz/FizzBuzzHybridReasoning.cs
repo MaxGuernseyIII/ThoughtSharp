@@ -26,31 +26,40 @@ namespace ThoughtSharp.Example.FizzBuzz;
 
 static class FizzBuzzHybridReasoning
 {
-  public static Thought<string, NullFeedback> DoFizzBuzz(
-    FizzBuzzMind Mind,
-    short Start, 
-    short End, 
-    short MaximumOperationsPerStep = 5)
-  {
-    return Thought.Think(R =>
-    {
-      var Terminal = new StringBuilderTerminal();
+  //public static Thought<string, NullFeedback> DoFizzBuzz(
+  //  FizzBuzzMind Mind,
+  //  short Start, 
+  //  short End, 
+  //  short MaximumOperationsPerStep = 5)
+  //{
+  //  return Thought.Think(R =>
+  //  {
+  //    var Terminal = new StringBuilderTerminal();
 
-      foreach (var I in Enumerable.Range(Start, End - Start)) WriteForOneNumber(Mind, MaximumOperationsPerStep, R, Terminal, I);
+  //    foreach (var I in Enumerable.Range(Start, End - Start)) WriteForOneNumber(Mind, MaximumOperationsPerStep, R, Terminal, I);
 
-      return (Terminal.Content.ToString(), NullFeedback.Instance);
-    });
-  }
+  //    return (Terminal.Content.ToString(), NullFeedback.Instance);
+  //  });
+  //}
 
   public static void WriteForOneNumber(
     FizzBuzzMind Mind, 
     short MaximumOperationsPerStep, 
-    Thought.Reasoning R,
+    Thought<IReadOnlyList<UseFeedback<Terminal>>>.Reasoning R,
     Terminal Terminal, 
     int I)
   {
+    using var Reasoning = Mind.EnterChainedReasoning();
+    var Feedback = new List<UseFeedback<Terminal>>();
+    R.SetFeedback(Feedback);
+
     foreach (var _ in Enumerable.Range(0, MaximumOperationsPerStep))
-      if (!R.Consume(Mind.WriteForNumber(Terminal, (short)I)))
+    {
+      var Thought = Mind.WriteForNumber(Terminal, (short)I);
+      Feedback.Add(Thought.Feedback);
+      
+      if (!R.Consume(Thought))
         break;
+    }
   }
 }

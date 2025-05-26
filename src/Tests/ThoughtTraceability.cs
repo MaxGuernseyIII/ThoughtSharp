@@ -82,7 +82,7 @@ public sealed class ThoughtTraceability
   public void FeedbackCanBeSetEarlyAndIsStillAccessibleAfterException()
   {
     var Expected = new object();
-    var T = Thought.WithEarlyFeedback<object>().Think(R =>
+    var T = Thought.WithFeedback<object>.Think(R =>
     {
       R.SetFeedback(Expected);
 
@@ -93,7 +93,7 @@ public sealed class ThoughtTraceability
 
     T.Feedback.Should().BeSameAs(Expected);
   }
-
+  
   [TestMethod]
   public void ThoughtsCaptureAndReleaseExceptions()
   {
