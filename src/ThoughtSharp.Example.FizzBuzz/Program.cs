@@ -28,7 +28,7 @@ Console.WriteLine("Training...");
 const int TotalTrainingPasses = 20000;
 const int ReportEvery = 100;
 
-DoForcedTraining(TotalTrainingPasses, ReportEvery);
+DoFizzBuzz(TotalTrainingPasses, ReportEvery);
 
 void DoForcedTraining(int TotalTrainingPasses1, int ReportEvery1)
 {
@@ -193,8 +193,9 @@ void DoAreaRaw(int TotalTrainingPasses1, int ReportEvery1)
 
 void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
 {
-  var Mind = new FizzBuzzMind(TorchBrainBuilder.For<FizzBuzzMind.Input, FizzBuzzMind.Output>()
-    .Build());
+  var BrainBuilder = TorchBrainBuilder.For<FizzBuzzMind.Input, FizzBuzzMind.Output>();
+  BrainBuilder.StateSize = 16;
+  var Mind = new FizzBuzzMind(BrainBuilder.Build());
   var Random = new Random();
   var Successes = 0;
   var Failures = 0;

@@ -54,7 +54,7 @@ public abstract partial class Thought : IDisposable
       Disposable.Dispose();
   }
   
-  public static Thought<TProduct, TFeedback> Capture<TProduct, TFeedback>(TProduct Product, TFeedback Feedback, TrainingPolicy? Training = null)
+  public static Thought<TProduct, TFeedback> Capture<TProduct, TFeedback>(TProduct Product, TFeedback Feedback)
   {
     return new(Product, Feedback, null, new());
   }
@@ -65,8 +65,7 @@ public abstract partial class Thought : IDisposable
   public static class WithFeedback<TFeedback>
   {
     public static Thought<TProduct, TFeedback> Think<TProduct>(
-      Func<Thought<TFeedback>.Reasoning, (TProduct Product, TFeedback Feedback)> Produce,
-      TrainingPolicy? Policy = null)
+      Func<Thought<TFeedback>.Reasoning, (TProduct Product, TFeedback Feedback)> Produce)
     {
       var Reasoning = new Thought<TFeedback>.Reasoning();
       TProduct? Product;
@@ -92,8 +91,7 @@ public abstract partial class Thought : IDisposable
     }
 
     public static async Task<Thought<TProduct, TFeedback>> ThinkAsync<TProduct>(
-      Func<Thought<TFeedback>.Reasoning, Task<(TProduct, TFeedback)>> Produce,
-      TrainingPolicy? Policy = null)
+      Func<Thought<TFeedback>.Reasoning, Task<(TProduct, TFeedback)>> Produce)
     {
       var Reasoning = new Thought<TFeedback>.Reasoning();
       TProduct? Product;
@@ -140,10 +138,9 @@ public abstract partial class Thought : IDisposable
   }
 
   public static Thought<TProduct, TFeedback> Think<TProduct, TFeedback>(
-    Func<Reasoning, (TProduct Product, TFeedback Feedback)> Produce,
-    TrainingPolicy? Policy = null)
+    Func<Reasoning, (TProduct Product, TFeedback Feedback)> Produce)
   {
-    return WithFeedback<TFeedback>.Think(Produce, Policy);
+    return WithFeedback<TFeedback>.Think(Produce);
   }
 
   public static Thought Do(Action<Reasoning> ToDo)
@@ -166,8 +163,7 @@ public abstract partial class Thought : IDisposable
   }
 
   public static Task<Thought<TProduct, TFeedback>> ThinkAsync<TProduct, TFeedback>(
-    Func<Reasoning, Task<(TProduct, TFeedback)>> Produce, 
-    TrainingPolicy? Policy = null)
+    Func<Reasoning, Task<(TProduct, TFeedback)>> Produce)
   {
     return WithFeedback<TFeedback>.ThinkAsync(Produce);
   }

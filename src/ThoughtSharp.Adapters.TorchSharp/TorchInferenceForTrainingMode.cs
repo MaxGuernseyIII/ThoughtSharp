@@ -35,48 +35,6 @@ public class TorchInferenceForTrainingMode(
   : TorchInference(StateOutputTensor, ProductOutputTensor), Inference
 {
   protected TorchBrainForTrainingMode Brain { get; } = Brain;
- 
-  public void Incentivize(float Reward, params IReadOnlyList<Range> Ranges)
-  {
-    //if (Reward == 0)
-    //  return;
-
-    //using var TrainingTarget = PreviousOutput.detach().clone();
-
-    //var Indices = new List<long>();
-    //foreach (var Range in Ranges)
-    //  for (var I = Range.Start.GetOffset(OutputLength); I < Range.End.GetOffset(OutputLength); ++I)
-    //    Indices.Add(I);
-
-    //if (Indices.Count == 0)
-    //  return;
-
-    //using var CachedOutput = PreviousOutput.clone();
-    //var IndicesTensor = torch.tensor(Indices.ToArray(), torch.ScalarType.Int64, CachedOutput.device);
-    //var CachedSlice = CachedOutput.index_select(1, IndicesTensor);
-    //var OutputWithGradients = Model.forward(PreviousInput.detach().clone().requires_grad_());
-    //var RerunSlice = OutputWithGradients.index_select(1, IndicesTensor);
-
-    //var Target = RerunSlice.detach().clone(); // this is not part of the graph
-    //var Similarity = (CachedSlice * Target).sum() / (CachedSlice.norm() * Target.norm() + 1e-8);
-
-    //using var Loss = -Reward * CachedOutput.mean();
-    ////using var Loss = Reward * Similarity;
-
-    //var p = Model.parameters().First();
-    //Console.WriteLine($"Before: {p.data<float>()[0]}");
-    //Model.zero_grad();
-    //Loss.backward();
-    //foreach (var param in Model.parameters())
-    //{
-    //  var grad = param.grad;
-    //  Console.WriteLine($"Grad norm: {(grad is null ? "null" : grad.norm().item<float>().ToString())}");
-    //}
-    //Optimizer.step();
-    //Console.WriteLine($"After: {p.data<float>()[0]}");
-
-    //Console.WriteLine($"Loss: {Loss.item<float>()}");
-  }
 
   public void Train(ReadOnlySpan<float> Expected)
   {

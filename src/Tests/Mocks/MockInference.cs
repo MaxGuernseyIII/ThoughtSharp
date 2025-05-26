@@ -33,11 +33,6 @@ class MockInference(int InputLength, float[] Floats) : MockInferenceSource(Input
 
   public ReadOnlySpan<float> Result => Floats;
 
-  public void Incentivize(float Reward, params IReadOnlyList<Range> Ranges)
-  {
-    Incentives.Add((Reward, [..Ranges]));
-  }
-
   public void Train(ReadOnlySpan<float> Expected)
   {
     TrainedData.Should().BeNull();
