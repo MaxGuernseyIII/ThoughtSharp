@@ -22,6 +22,20 @@
 
 namespace ThoughtSharp.Runtime;
 
+public partial class Thought<TFeedback>
+{
+  public new class Reasoning : Thought.Reasoning
+  {
+    public TFeedback? Feedback { get; private set; }
+
+    public void SetFeedback(TFeedback Feedback)
+    {
+      this.Feedback = Feedback;
+    }
+  }
+}
+
+
 public partial class Thought
 {
   public class Reasoning

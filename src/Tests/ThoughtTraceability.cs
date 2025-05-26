@@ -79,6 +79,22 @@ public sealed class ThoughtTraceability
   }
 
   [TestMethod]
+  public void FeedbackCanBeSetEarlyAndIsStillAccessibleAfterException()
+  {
+    var Expected = new object();
+    var T = Thought.WithEarlyFeedback<object>().Think(R =>
+    {
+      R.SetFeedback(Expected);
+
+      Assert.Fail("This exception should not be raised.");
+
+      return (new MockProduct(), Expected);
+    });
+
+    T.Feedback.Should().BeSameAs(Expected);
+  }
+
+  [TestMethod]
   public void ThoughtsCaptureAndReleaseExceptions()
   {
     var Expected = new Exception();

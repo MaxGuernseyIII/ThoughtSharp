@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 
 namespace ThoughtSharp.Runtime;
@@ -31,17 +32,13 @@ public abstract partial class Thought : IDisposable
   readonly IReadOnlyDictionary<Thought, float> Weights;
 
   // prevents foreign inheritors
-  internal Thought(Reasoning LineOfReasoning, ExceptionDispatchInfo? ExceptionInfo,
-    TrainingPolicy? TrainingPolicy)
+  internal Thought(Reasoning LineOfReasoning, ExceptionDispatchInfo? ExceptionInfo)
   {
-    this.TrainingPolicy = TrainingPolicy;
     this.ExceptionInfo = ExceptionInfo;
     Children = LineOfReasoning.Children;
     Weights = LineOfReasoning.ChildrenWeights;
     Disposables = LineOfReasoning.DisposableResources;
   }
-
-  internal TrainingPolicy? TrainingPolicy { get; set; }
 
   internal Reasoning? Container { get; private set; }
 
@@ -59,17 +56,49 @@ public abstract partial class Thought : IDisposable
   
   public static Thought<TProduct, TFeedback> Capture<TProduct, TFeedback>(TProduct Product, TFeedback Feedback, TrainingPolicy? Training = null)
   {
-    return new(Product, Feedback, null, new(), Training);
+    return new(Product, Feedback, null, new());
   }
 
   public static Thought<TProduct, NullFeedback> Capture<TProduct>(TProduct Product) =>
     Capture(Product, NullFeedback.Instance);
 
+  public struct WithEarlyFeedbackFactory<TFeedback>
+  {
+    public Thought<TProduct, TFeedback> Think<TProduct>(
+      Func<Thought<TFeedback>.Reasoning, (TProduct Product, TFeedback Feedback)> Produce,
+      TrainingPolicy? Policy = null)
+    {
+      var Reasoning = new Thought<TFeedback>.Reasoning();
+      TProduct? Product;
+      TFeedback? FeedbackPolicy;
+
+      ExceptionDispatchInfo? ExceptionInfo;
+      try
+      {
+        (Product, FeedbackPolicy) = Produce(Reasoning);
+        ExceptionInfo = null;
+      }
+      catch (Exception Exception)
+      {
+        (Product, FeedbackPolicy) = (default, default);
+        ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
+      }
+
+      FeedbackPolicy ??= Reasoning.Feedback;
+
+        var Result = new Thought<TProduct, TFeedback>(Product, FeedbackPolicy, ExceptionInfo, Reasoning);
+      Reasoning.Parent = Result;
+      return Result;
+    }
+  }
+
+  public static WithEarlyFeedbackFactory<TFeedback> WithEarlyFeedback<TFeedback>() => new();
+
   public static Thought<TProduct, TFeedback> Think<TProduct, TFeedback>(
-    Func<Reasoning, (TProduct Product, TFeedback Feedback)> Produce,
+    Func<Thought.Reasoning, (TProduct Product, TFeedback Feedback)> Produce,
     TrainingPolicy? Policy = null)
   {
-    var Reasoning = new Reasoning();
+    var Reasoning = new Thought<TFeedback>.Reasoning();
     TProduct? Product;
     TFeedback? FeedbackPolicy;
 
@@ -85,7 +114,7 @@ public abstract partial class Thought : IDisposable
       ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
     }
 
-    var Result = new Thought<TProduct, TFeedback>(Product, FeedbackPolicy, ExceptionInfo, Reasoning, Policy);
+    var Result = new Thought<TProduct, TFeedback>(Product, FeedbackPolicy, ExceptionInfo, Reasoning);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -99,6 +128,15 @@ public abstract partial class Thought : IDisposable
     });
   }
 
+  public static Thought<TFeedback> Do<TFeedback>(Func<Reasoning, TFeedback> ToDo)
+  {
+    return Think<object?, TFeedback>(R =>
+    {
+      var Feedback = ToDo(R);
+      return (null, Feedback);
+    });
+  }
+
   public static Thought Done()
   {
     return Do(R => { });
@@ -108,7 +146,7 @@ public abstract partial class Thought : IDisposable
     Func<Reasoning, Task<(TProduct, TFeedback)>> Produce, 
     TrainingPolicy? Policy = null)
   {
-    var Reasoning = new Reasoning();
+    var Reasoning = new Thought<TFeedback>.Reasoning();
     TProduct? Product;
     TFeedback? Feedback;
 
@@ -125,7 +163,7 @@ public abstract partial class Thought : IDisposable
       ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
     }
 
-    var Result = new Thought<TProduct, TFeedback>(Product, Feedback, ExceptionInfo, Reasoning, Policy);
+    var Result = new Thought<TProduct, TFeedback>(Product, Feedback, ExceptionInfo, Reasoning);
     Reasoning.Parent = Result;
     return Result;
   }
@@ -142,21 +180,6 @@ public abstract partial class Thought : IDisposable
     return Result;
   }
 
-  public void ApplyIncentive(float Reward)
-  {
-    var ThoughtGraph = Thought.ThoughtGraph.For(this);
-    foreach (var Rewarded in ThoughtGraph.RewardedWithoutMind)
-      Rewarded.IncentivizeOutput(Reward);
-
-    foreach (var (_, Sequence) in ThoughtGraph.RewardedWithMind)
-    {
-      foreach (var Rewarded in Sequence[..^1])
-        Rewarded.IncentivizeOutputAndState(Reward);
-
-      Sequence[^1].IncentivizeOutput(Reward);
-    }
-  }
-
   public void RaiseAnyExceptions()
   {
     if (ExceptionInfo is not null)
@@ -164,30 +187,27 @@ public abstract partial class Thought : IDisposable
   }
 }
 
-public sealed class Thought<TProduct, TFeedback> : Thought
+public abstract partial class Thought<TFeedback>(
+  Thought.Reasoning LineOfReasoning,
+  ExceptionDispatchInfo? ExceptionInfo,
+  TFeedback? Feedback)
+  : Thought(LineOfReasoning, ExceptionInfo)
+{
+  public TFeedback Feedback { get; } = Feedback!;
+}
+
+public sealed class Thought<TProduct, TFeedback> : Thought<TFeedback>
 {
   readonly TProduct? Product;
-  readonly TFeedback CapturedFeedback;
-
-  public TFeedback Feedback
-  {
-    get
-    {
-      RaiseAnyExceptions();
-      return CapturedFeedback;
-    }
-  }
 
   internal Thought(
     TProduct? Product, 
     TFeedback? Feedback,
     ExceptionDispatchInfo? ExceptionInfo, 
-    Reasoning LineOfReasoning,
-    TrainingPolicy? TrainingPolicy)
-    : base(LineOfReasoning, ExceptionInfo, TrainingPolicy)
+    Reasoning LineOfReasoning)
+    : base(LineOfReasoning, ExceptionInfo, Feedback)
   {
     this.Product = Product;
-    CapturedFeedback = Feedback;
   }
 
   public TProduct ConsumeDetached()

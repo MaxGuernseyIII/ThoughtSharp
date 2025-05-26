@@ -181,6 +181,8 @@ static class MindRenderer
       W.WriteLine($"public {Path.ReturnType} {Path.MethodName}({string.Join(", ", Path.ParametersClass.Parameters.Select(P => $"{P.FullType} {P.Name}"))})");
       W.WriteLine("{");
       W.Indent++;
+      W.WriteLine("if (Conditioned) throw new InvalidOperationException(\"Cannot condition a training mock twice.\");");
+      W.WriteLine("Conditioned = true;");
       W.WriteLine($"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.ActionCode = {ActionCode.ToLiteralExpression()};");
 
       foreach (var Parameter in Path.ParametersClass.Parameters) 

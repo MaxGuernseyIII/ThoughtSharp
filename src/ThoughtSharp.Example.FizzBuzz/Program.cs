@@ -45,29 +45,30 @@ foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
   var Terminal = new StringBuilderTerminal();
   var T = Thought.Do(R => { FizzBuzzHybridReasoning.WriteForOneNumber(Mind, 5, R, Terminal, Input); });
 
+  var Failure = false;
+  string Expected;
+  if (Input % 15 == 0)
+    Expected = "fizzbuzz";
+  else if (Input % 3 == 0)
+    Expected = "fizz";
+  else if (Input % 5 == 0)
+    Expected = "buzz";
+  else
+    Expected = $"{Input}";
   try
   {
     T.RaiseAnyExceptions();
 
     var Actual = Terminal.Content.ToString();
-    string Expected;
-    if (Input % 15 == 0)
-      Expected = "fizzbuzz";
-    else if (Input % 3 == 0)
-      Expected = "fizz";
-    else if (Input % 5 == 0)
-      Expected = "buzz";
-    else
-      Expected = $"{Input}";
+    
 
     if (Actual != Expected)
     {
-      T.ApplyIncentive(-.05f);
+      Failure = true;
       Failures++;
     }
     else
     {
-      T.ApplyIncentive(.5f);
       Successes++;
     }
   }
@@ -78,10 +79,13 @@ foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
 
     //Console.WriteLine();
     //Console.WriteLine();
-    T.ApplyIncentive(-20f);
+    Failure = true;
     Failures++;
     Exceptions++;
   }
+
+  //if (Failure)
+  //  T.Feedback
 }
 
 Report(TotalTrainingPasses);
