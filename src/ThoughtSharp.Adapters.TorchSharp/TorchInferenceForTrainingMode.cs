@@ -41,8 +41,7 @@ public class TorchInferenceForTrainingMode(
     var TensorForBackPropagation = Replay().Product;
     var TensorWithExpectedValues = Brain.ConvertFloatsToTensor(Expected.ToArray());
 
-    var Loss = nn.functional.mse_loss(TensorForBackPropagation, TensorWithExpectedValues);
-    Brain.ApplyLoss(Loss);
+    Brain.ApplyLoss(TensorForBackPropagation, TensorWithExpectedValues);
   }
 
   TorchInferenceParts Replay()

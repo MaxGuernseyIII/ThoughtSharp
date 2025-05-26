@@ -21,15 +21,20 @@
 // SOFTWARE.
 
 using ThoughtSharp.Runtime;
+using TorchSharp;
 using TorchSharp.Modules;
 using static TorchSharp.torch;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
 // ReSharper disable once UnusedMember.Global
-public class TorchBrainForTrainingMode(Sequential Model, Device Device, int StateSize) : TorchBrain(Model, Device, StateSize), Brain
+public class TorchBrainForTrainingMode(
+  Sequential Model, 
+  Device Device, 
+  int StateSize,
+  Func<Tensor, Tensor, Tensor> LossFunction) : TorchBrain(Model, Device, StateSize), Brain
 {
-  internal optim.Optimizer Optimizer { get; } = optim.Adam(Model.parameters());
+  optim.Optimizer Optimizer { get; } = optim.Adam(Model.parameters());
 
   public Inference MakeInference(float[] Parameters)
   {
@@ -46,21 +51,37 @@ public class TorchBrainForTrainingMode(Sequential Model, Device Device, int Stat
     return new TorchInferenceForTrainingMode(this, Predecessor, Parameters, Tensors.State, Tensors.Product);
   }
 
-  public void ApplyLoss(Tensor Loss)
+  public override void Dispose()
   {
+    Optimizer.Dispose();
+  }
+
+  public void ApplyLoss(Tensor TensorForBackPropagation, Tensor TensorWithExpectedValues)
+  {
+    var Loss = LossFunction(TensorForBackPropagation, TensorWithExpectedValues);
     Model.zero_grad();
+    //Console.WriteLine($"Before step: {Model.parameters().First().data<float>()[0]}");
     Loss.backward();
     //foreach (var param in Model.parameters())
     //{
     //  var grad = param.grad;
+    //  Console.WriteLine($"Requires grad: {param.requires_grad}, grad is null: {param.grad is null}");
     //  Console.WriteLine($"Grad norm: {(grad is null ? "null" : grad.norm().item<float>().ToString("F8"))}");
     //}
     Optimizer.step();
     //Console.WriteLine($"Sample weight: {Model.parameters().First().data<float>()[0]}");
-  }
+    //Console.WriteLine($"After step: {Model.parameters().First().data<float>()[0]}");
 
-  public override void Dispose()
-  {
-    Optimizer.Dispose();
+    //foreach (var param in Model.parameters())
+    //{
+    //  var data = param.data<float>();
+    //  Console.WriteLine(string.Join(", ", data.Take(5)));  // limit to a few entries
+    //}
+
+    //foreach (var param in Model.parameters())
+    //{
+    //  var grad = param.grad;
+    //  Console.WriteLine($"Grad mean: {grad?.mean().item<float>()}, zero? {grad?.allclose(torch.zeros_like(grad))}");
+    //}
   }
 }

@@ -22,19 +22,13 @@
 
 using ThoughtSharp.Runtime;
 using TorchSharp;
+using static TorchSharp.torch;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
 // ReSharper disable once UnusedMember.Global
 public class TorchBrainBuilder(int InputLength, int OutputLength)
 {
-  public static TorchBrainBuilder For<TInput, TOutput>()
-    where TInput : CognitiveData<TInput>
-    where TOutput : CognitiveData<TOutput>
-  {
-    return new(TInput.Length, TOutput.Length);
-  }
-
   public enum ActivationType
   {
     LeakyReLU,
@@ -51,45 +45,102 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     CPU
   }
 
+  public enum LossType
+  {
+    MSE,
+    BCE,
+    BCEWithLogits,
+    CrossEntropyLoss,
+    HuberLoss,
+    KLDivLoss
+  }
+
+  public ActivationType FinalActivationType { get; set; } = ActivationType.None;
+  public Func<Tensor, Tensor, Tensor> LossFunction { get; set; } = LossFunctions.MeanSquareError;
+
+  public static class LossFunctions
+  {
+    public static Func<Tensor, Tensor, Tensor> MeanSquareError { get; } = (L, R) => nn.functional.mse_loss(L, R);
+    public static Func<Tensor, Tensor, Tensor> BinaryCrossEntropy { get; } = (L, R) => nn.functional.binary_cross_entropy(L, R);
+    public static Func<Tensor, Tensor, Tensor> BinaryCrossEntropyWithLogits { get; } = (L, R) => nn.functional.binary_cross_entropy_with_logits(L, R);
+    public static Func<Tensor, Tensor, Tensor> CrossEntropy { get; } = (L, R) => nn.functional.cross_entropy(L, R);
+    public static Func<Tensor, Tensor, Tensor> HuberLoss { get; } = (L, R) => nn.functional.huber_loss(L, R);
+    public static Func<Tensor, Tensor, Tensor> KLDivLoss { get; } = (L, R) => nn.functional.kl_div(L, R);
+  }
+
+  public TorchBrainBuilder WithLossFunction(Func<Tensor, Tensor, Tensor> LossFunction)
+  {
+    this.LossFunction = LossFunction;
+    return this;
+  }
+
   public List<Layer> Layers =
   [
     new()
     {
-      Features = InputLength * 20,
+      Features = InputLength * 20
     },
     new()
     {
-      Features = (InputLength * 20 + OutputLength) / 2,
+      Features = (InputLength * 20 + OutputLength) / 2
     }
   ];
-
-  public record Layer
-  {
-    public required int Features { get; set; }
-    public ActivationType ActivationType { get; set; } = ActivationType.Tanh;
-  }
 
   public int StateSize { get; set; } = 0;
   public bool AllowTraining { get; set; } = true;
 
   public ExecutionDevice Device { get; set; } = torch.cuda.is_available() ? ExecutionDevice.CUDA : ExecutionDevice.CPU;
-  public ActivationType FinalActivationType = ActivationType.None;
 
-  public TorchBrainBuilder SetDefaultClassificationConfiguration()
+  public static TorchBrainBuilder For<TInput, TOutput>()
+    where TInput : CognitiveData<TInput>
+    where TOutput : CognitiveData<TOutput>
+  {
+    return new(TInput.Length, TOutput.Length);
+  }
+
+  public TorchBrainBuilder ForClassification()
   {
     FinalActivationType = OutputLength == 1 ? ActivationType.Sigmoid : ActivationType.Softmax;
 
     return this;
   }
 
+  public TorchBrainBuilder ForLogic(ushort ScaleBy = 16, ushort Depth = 2)
+  {
+    Layers.Clear();
+    var WidestFeatureCount = 3 + InputLength * ScaleBy;
+    foreach (var _ in Enumerable.Range(0, Depth))
+      Layers.Add(new()
+      {
+        Features = WidestFeatureCount,
+        ActivationType = ActivationType.Tanh
+      });
+    Layers.Add(
+      new()
+      {
+        Features = (WidestFeatureCount + OutputLength) / 2,
+        ActivationType = ActivationType.Tanh
+      }
+    );
+
+    FinalActivationType = ActivationType.None;
+    LossFunction = LossFunctions.BinaryCrossEntropyWithLogits;
+
+    return this;
+  }
+
   public Brain Build()
   {
+    var TotalInputFeatures = StateSize + InputLength;
+    var TotalOutputFeatures = StateSize + OutputLength;
+
     var TorchLayers = new List<torch.nn.Module<torch.Tensor, torch.Tensor>>();
-    var InFeatures = Layers.Aggregate(InputLength, (Current, Layer) => AddModulesForLayer(Layer, TorchLayers, Current));
+    var InFeatures = Layers.Aggregate(TotalInputFeatures,
+      (Current, Layer) => AddModulesForLayer(Layer, TorchLayers, Current));
 
     AddModulesForLayer(new()
     {
-      Features = OutputLength,
+      Features = TotalOutputFeatures,
       ActivationType = FinalActivationType
     }, TorchLayers, InFeatures);
 
@@ -100,12 +151,14 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     };
     var NeuralNet = torch.nn.Sequential(TorchLayers.ToArray()).to(DeviceType);
 
-    return AllowTraining ? 
-      new TorchBrainForTrainingMode(NeuralNet, new(DeviceType), StateSize) : 
-      new TorchBrainForProductionMode(NeuralNet, new(DeviceType), StateSize);
+
+    return AllowTraining
+      ? new TorchBrainForTrainingMode(NeuralNet, new(DeviceType), StateSize, LossFunction)
+      : new TorchBrainForProductionMode(NeuralNet, new(DeviceType), StateSize);
   }
 
-  protected static int AddModulesForLayer(Layer Layer, List<torch.nn.Module<torch.Tensor, torch.Tensor>> TorchLayers, int InFeatures)
+  protected static int AddModulesForLayer(Layer Layer, List<torch.nn.Module<torch.Tensor, torch.Tensor>> TorchLayers,
+    int InFeatures)
   {
     var OutFeatures = Layer.Features;
     var Linear = torch.nn.Linear(InFeatures, OutFeatures);
@@ -120,10 +173,16 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
       ActivationType.Sigmoid => torch.nn.Sigmoid(),
       ActivationType.Tanh => torch.nn.Tanh(),
       ActivationType.Softmax => torch.nn.Softmax(1),
-      _ => (torch.nn.Module<torch.Tensor, torch.Tensor>?)null
+      _ => (torch.nn.Module<torch.Tensor, torch.Tensor>?) null
     };
     if (ActivationLayer is not null)
       TorchLayers.Add(ActivationLayer);
     return InFeatures;
+  }
+
+  public record Layer
+  {
+    public required int Features { get; set; }
+    public ActivationType ActivationType { get; set; } = ActivationType.Tanh;
   }
 }

@@ -28,7 +28,7 @@ namespace ThoughtSharp.Example.FizzBuzz;
 partial class FizzBuzzMind
 {
   [Use]
-  public partial Thought<bool, UseFeedback<Terminal>> WriteForNumber(Terminal Surface, short Index);
+  public partial Thought<bool, UseFeedback<Terminal>> WriteForNumber(Terminal Surface, int Index);
 }
 
 [CognitiveData]

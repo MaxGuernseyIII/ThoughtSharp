@@ -23,17 +23,18 @@
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Example.FizzBuzz;
 using ThoughtSharp.Runtime;
+using TorchSharp;
 
 Console.WriteLine("Training...");
-const int TotalTrainingPasses = 20000;
-const int ReportEvery = 100;
+const int TotalTrainingPasses = 40000;
+const int ReportEvery = 1000;
 
-DoFizzBuzz(TotalTrainingPasses, ReportEvery);
+ComparisonCheck(TotalTrainingPasses, ReportEvery);
 
 void DoForcedTraining(int TotalTrainingPasses1, int ReportEvery1)
 {
   var Builder = new TorchBrainBuilder(1, 1);
- 
+
   var Brain = Builder.Build();
 
   var Random = new Random();
@@ -49,7 +50,7 @@ void DoForcedTraining(int TotalTrainingPasses1, int ReportEvery1)
     var Input = Random.NextSingle();
     var Inference = Brain.MakeInference([Input]);
     var Expected = Input > .9 ? 0f : 1f;
-    if ((Inference.Result[0] - Expected) > 0.01)
+    if (Inference.Result[0] - Expected > 0.01)
     {
       Inference.Train([Expected]);
       Failures++;
@@ -93,7 +94,7 @@ void DoArea(int TotalTrainingPasses1, int ReportEvery1)
     var T = ShapesMind.MakeSquare(Input);
 
 
-    float Expected = Input * Input;
+    var Expected = Input * Input;
     try
     {
       var Actual = T.ConsumeDetached();
@@ -117,7 +118,7 @@ void DoArea(int TotalTrainingPasses1, int ReportEvery1)
     }
 
     if (Failure)
-      T.Feedback.ResultShouldHaveBeen(new() { Area = Expected });
+      T.Feedback.ResultShouldHaveBeen(new() {Area = Expected});
   }
 
   Report(TotalTrainingPasses1);
@@ -130,6 +131,7 @@ void DoArea(int TotalTrainingPasses1, int ReportEvery1)
       $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
   }
 }
+
 void DoAreaRaw(int TotalTrainingPasses1, int ReportEvery1)
 {
   var BrainBuilder = new TorchBrainBuilder(1, 1);
@@ -152,7 +154,7 @@ void DoAreaRaw(int TotalTrainingPasses1, int ReportEvery1)
     var Output = Brain.MakeInference([Input]);
 
 
-    float Expected = Input * Input;
+    var Expected = Input * Input;
     try
     {
       var Actual = Output.Result[0];
@@ -189,7 +191,6 @@ void DoAreaRaw(int TotalTrainingPasses1, int ReportEvery1)
       $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
   }
 }
-
 
 void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
 {
@@ -286,7 +287,7 @@ void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
         default:
           T.Feedback.FirstOrDefault()?.ExpectationsWere((Mock, More) =>
           {
-            Mock.WriteNumber((short)Input);
+            Mock.WriteNumber((short) Input);
             More.Value = false;
           });
           break;
@@ -303,6 +304,73 @@ void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
       $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
   }
 }
+
+
+void ComparisonCheck(int TotalTrainingPasses1, int ReportEvery1)
+{
+  //var BrainBuilder = new TorchBrainBuilder(2, 1).ForLogic();
+  //BrainBuilder.StateSize = 16;
+  var Brain = new TorchBrainForTrainingMode(torch.nn.Sequential(
+      torch.nn.Linear(2, 64),
+      torch.nn.Tanh(),
+      torch.nn.Linear(64, 32),
+      torch.nn.ReLU(),
+      torch.nn.Linear(32, 1),
+      torch.nn.Sigmoid()
+  ), new(DeviceType.CPU), 0, TorchBrainBuilder.LossFunctions.MeanSquareError);
+  //var Brain = BrainBuilder.Build();
+  var Random = new Random();
+  var Successes = 0;
+  var Failures = 0;
+  var Exceptions = 0;
+
+  //var ShapesMind = new ShapesMind(TorchBrainBuilder.For<ShapesMind.Input, ShapesMind.Output>().Build());
+
+  List<bool> FailureLog = [];
+
+  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
+  {
+    if (Iteration % ReportEvery1 == 0)
+      Report(Iteration);
+
+    var Input1 = Random.NextSingle() * 2 - 1;
+    var Input2 = Random.NextSingle() * 2 - 1;
+    var Expected = Input1 > Input2;
+
+    var Inference = Brain.MakeInference([Input1, Input2]);
+    var Actual = Inference.Result[0] > .5;
+
+    var Failure = false;
+
+    if (Actual != Expected)
+    {
+      Failure = true;
+      Failures++;
+    }
+    else
+    {
+      Successes++;
+    }
+
+    FailureLog.Add(Failure);
+
+    //if (Failure)
+      Inference.Train([Expected ? 1 : 0]);
+  }
+
+  Report(TotalTrainingPasses1);
+
+  Console.WriteLine("Done.");
+
+  void Report(int I)
+  {
+    Console.WriteLine(
+      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+    if (I >= 1000)
+      Console.WriteLine($"  Errors Per 1000: {FailureLog[^1000..].Count(F => F)}");
+  }
+}
+
 void DoFizzBuzzRaw(int TotalTrainingPasses1, int ReportEvery1)
 {
   var Builder = new TorchBrainBuilder(1, 2);
@@ -314,9 +382,9 @@ void DoFizzBuzzRaw(int TotalTrainingPasses1, int ReportEvery1)
   });
   Builder.Layers.Add(new()
   {
-    Features = 100,
+    Features = 100
   });
-  Builder.SetDefaultClassificationConfiguration();
+  Builder.ForClassification();
   var Brain = Builder.Build();
 
   var Random = new Random();

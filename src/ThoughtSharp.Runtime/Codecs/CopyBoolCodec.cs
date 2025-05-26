@@ -23,7 +23,7 @@
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
-public class CopyBoolCodec : CognitiveDataCodec<bool>
+public class CopyBoolCodec(float Threshold = .001f) : CognitiveDataCodec<bool>
 {
   public int Length => 1;
 
@@ -34,6 +34,6 @@ public class CopyBoolCodec : CognitiveDataCodec<bool>
 
   public bool DecodeFrom(ReadOnlySpan<float> Source)
   {
-    return Source[0] > .5;
+    return Source[0] > Threshold;
   }
 }

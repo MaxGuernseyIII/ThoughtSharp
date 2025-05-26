@@ -227,7 +227,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 
   public void AddCompilerDefinedBoolParameter(string Name)
   {
-    AddCompilerDefinedParameter(Name, "new CopyBoolCodec()", null, "bool");
+    AddCompilerDefinedParameter(Name, "new CopyBoolCodec(0.000001f)", null, "bool");
   }
 
   public void AddCompilerDefinedBoundedIntLikeParameter<T>(string Name, T MinValue, T MaxValue)
