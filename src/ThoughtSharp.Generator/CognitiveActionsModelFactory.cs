@@ -47,6 +47,7 @@ static class CognitiveActionsModelFactory
       IsPublic = true,
       ExplicitConstructor = true
     };
+    UpdateActionCode(CompleteDataBuilder, Methods);
     var OutputParametersTypeAddress =
       CompleteDataTypeAddress.GetNested(TypeIdentifier.Explicit("struct", "OutputParameters"));
     var CompleteParametersDataBuilder = new CognitiveDataClassBuilder(OutputParametersTypeAddress)
@@ -55,7 +56,6 @@ static class CognitiveActionsModelFactory
       ExplicitConstructor = true
     };
     var InterpreterBuilder = new CognitiveDataInterpreterBuilder(TargetType);
-    CompleteDataBuilder.AddCompilerDefinedBoundedIntLikeParameter("ActionCode", ushort.MinValue, ushort.MaxValue);
     CompleteDataBuilder.AddCompilerDefinedBoolParameter("MoreActions");
     CompleteDataBuilder.AddCompilerDefinedSubDataParameter("Parameters", "OutputParameters");
     foreach (var Method in Methods)
@@ -73,6 +73,11 @@ static class CognitiveActionsModelFactory
     CognitiveDataClasses.Add(CompleteParametersDataBuilder.Build());
 
     return (CognitiveDataClasses, CognitiveInterpreterClass: InterpreterBuilder.Build());
+  }
+
+  static void UpdateActionCode(CognitiveDataClassBuilder CompleteDataBuilder, IEnumerable<IMethodSymbol> Methods)
+  {
+    CompleteDataBuilder.SetCompilerDefinedBoundedOpcodeParameter("ActionCode", (ushort)Methods.Count());
   }
 }
 

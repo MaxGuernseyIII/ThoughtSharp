@@ -241,4 +241,22 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   {
     AddCompilerDefinedSubDataParameter(Name, SubDataBuilder.TypeAddress.FullName);
   }
+
+  public void SetCompilerDefinedBoundedOpcodeParameter(string Name, ushort MaximumValue)
+  {
+    var Parameter = new CognitiveParameter(Name, $"new ValueWiseOneHotNumberCodec<ushort>(0, {MaximumValue.ToLiteralExpression()})", null, true, "ushort", "0");
+
+    SetCompilerDefinedParameter(Name, Parameter);
+  }
+
+  void SetCompilerDefinedParameter(string Name, CognitiveParameter Parameter)
+  {
+    var Index = Parameters.FindIndex(P => P.Name == Name);
+    if (Index != -1)
+      Parameters.RemoveAt(Index);
+    else
+      Index = Parameters.Count;
+
+    Parameters.Insert(Index, Parameter);
+  }
 }

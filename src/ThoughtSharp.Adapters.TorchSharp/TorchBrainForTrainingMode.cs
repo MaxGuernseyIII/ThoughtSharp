@@ -50,7 +50,13 @@ public class TorchBrainForTrainingMode(Sequential Model, Device Device, int Stat
   {
     Model.zero_grad();
     Loss.backward();
+    //foreach (var param in Model.parameters())
+    //{
+    //  var grad = param.grad;
+    //  Console.WriteLine($"Grad norm: {(grad is null ? "null" : grad.norm().item<float>().ToString("F8"))}");
+    //}
     Optimizer.step();
+    //Console.WriteLine($"Sample weight: {Model.parameters().First().data<float>()[0]}");
   }
 
   public override void Dispose()

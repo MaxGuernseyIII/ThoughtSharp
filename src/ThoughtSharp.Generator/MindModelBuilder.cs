@@ -35,7 +35,7 @@ class MindModelBuilder
       IsPublic = true,
       ExplicitConstructor = true
     };
-    InputBuilder.AddCompilerDefinedBoundedIntLikeParameter("OperationCode", ushort.MinValue, ushort.MaxValue);
+    InputBuilder.SetCompilerDefinedBoundedOpcodeParameter("OperationCode", 0);
     InputParametersBuilder = new(
       InputBuilder.TypeAddress.GetNested(TypeIdentifier.Explicit("struct", "InputParameters")))
     {
@@ -81,12 +81,19 @@ class MindModelBuilder
 
   public MindModel Build()
   {
+    UpdateOperationCode();
     AssociatedDataTypes.Add(InputBuilder.Build());
     AssociatedDataTypes.Add(InputParametersBuilder.Build());
     AssociatedDataTypes.Add(OutputBuilder.Build());
     AssociatedDataTypes.Add(OutputParametersBuilder.Build());
 
     return new(TypeName, [..MakeOperations], [.. UseOperations], [..ChooseOperations]);
+  }
+
+  void UpdateOperationCode()
+  {
+    InputBuilder.SetCompilerDefinedBoundedOpcodeParameter("OperationCode",
+      (ushort) (MakeOperations.Count + UseOperations.Count + ChooseOperations.Count));
   }
 
   public void AddMakeMethodFor(IMethodSymbol MakeMethod)

@@ -20,27 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
+using System.Numerics;
 
-namespace ThoughtSharp.Example.FizzBuzz;
+namespace ThoughtSharp.Runtime.Codecs;
 
-[Mind]
-partial class FizzBuzzMind
+// ReSharper disable once UnusedMember.Global
+public class ValueWiseOneHotNumberCodec<T>(T Bound1, T Bound2) : CognitiveDataCodec<T>
+  where T : unmanaged, IBinaryInteger<T>, ISubtractionOperators<T, T, T>, IAdditionOperators<T, T, T>
 {
-  [Use]
-  public partial Thought<bool, UseFeedback<Terminal>> WriteForNumber(Terminal Surface, short Index);
-}
+  readonly T Minimum = T.MinNumber(Bound1, Bound2);
+  readonly T Maximum = T.MaxNumber(Bound1, Bound2);
 
-[CognitiveData]
-partial class ShapeInfo
-{
-  [CognitiveDataBounds<float>(-1e2f, 1e2f)]
-  public float Area { get; set; }
-}
+  public int Length => int.CreateChecked(Maximum - Minimum + T.One);
 
-[Mind]
-partial class ShapesMind
-{
-  [Make]
-  public partial Thought<ShapeInfo, MakeFeedback<ShapeInfo>> MakeSquare([CognitiveDataBounds<float>(-1e3f, 1e3f)] float SideLength);
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  {
+    for (var I = 0; I < Length; ++I)
+      Target[I] = T.CreateChecked(I) + Minimum == ObjectToEncode ? 1 : 0;
+  }
+
+  public T DecodeFrom(ReadOnlySpan<float> Source)
+  {
+    var LargestScale = Source[0];
+    var Largest = 0;
+
+    for (var I = 0; I < Length; ++I)
+    {
+      var CandidateScale = Source[I];
+      if (CandidateScale > LargestScale)
+      {
+        LargestScale = CandidateScale;
+        Largest = I;
+      }
+    }
+
+    return T.CreateChecked(Largest) + Minimum;
+  }
 }

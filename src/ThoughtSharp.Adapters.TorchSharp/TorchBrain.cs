@@ -46,7 +46,7 @@ public class TorchBrain(Sequential Model, torch.Device Device, int StateSize) : 
   internal TorchInferenceParts Forward(torch.Tensor StateInputTensor, float[] Parameters)
   {
     var ParametersInputTensor = ConvertFloatsToTensor(Parameters);
-    var NewInput = torch.cat((IList<torch.Tensor>) [StateInputTensor, ParametersInputTensor], (long) 1);
+    var NewInput = torch.cat([StateInputTensor, ParametersInputTensor], 1);
     var NewOutput = Model.forward(NewInput);
     var NewStateTensor = NewOutput.slice(1, 0, StateSize, 1);
     var NewProductTensor = NewOutput.slice(1, StateSize, NewOutput.size(1) - StateSize, 1);

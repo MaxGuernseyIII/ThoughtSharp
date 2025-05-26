@@ -37,6 +37,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
 
   public enum ActivationType
   {
+    LeakyReLU,
     ReLU,
     Sigmoid,
     Tanh,
@@ -54,25 +55,32 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
   [
     new()
     {
-      Features = InputLength * 2,
+      Features = InputLength * 20,
     },
     new()
     {
-      Features = (InputLength + OutputLength) / 2,
+      Features = (InputLength * 20 + OutputLength) / 2,
     }
   ];
 
   public record Layer
   {
     public required int Features { get; set; }
-    public ActivationType ActivationType { get; set; } = ActivationType.ReLU;
+    public ActivationType ActivationType { get; set; } = ActivationType.Tanh;
   }
 
   public int StateSize { get; set; } = 0;
   public bool AllowTraining { get; set; } = true;
 
   public ExecutionDevice Device { get; set; } = torch.cuda.is_available() ? ExecutionDevice.CUDA : ExecutionDevice.CPU;
-  public ActivationType FinalActivationType = OutputLength == 1 ? ActivationType.Sigmoid : ActivationType.Softmax;
+  public ActivationType FinalActivationType = ActivationType.None;
+
+  public TorchBrainBuilder SetDefaultClassificationConfiguration()
+  {
+    FinalActivationType = OutputLength == 1 ? ActivationType.Sigmoid : ActivationType.Softmax;
+
+    return this;
+  }
 
   public Brain Build()
   {
@@ -107,6 +115,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     InFeatures = OutFeatures;
     var ActivationLayer = Layer.ActivationType switch
     {
+      ActivationType.LeakyReLU => torch.nn.LeakyReLU(),
       ActivationType.ReLU => torch.nn.ReLU(),
       ActivationType.Sigmoid => torch.nn.Sigmoid(),
       ActivationType.Tanh => torch.nn.Tanh(),
