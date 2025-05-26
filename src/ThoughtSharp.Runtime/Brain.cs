@@ -26,30 +26,16 @@ public interface Brain : IDisposable, InferenceSource
 {
 }
 
-public interface InferenceSource
-{
-  Inference MakeInference(float[] Parameters);
-}
-
-public interface CognitionMode
-{
-  InferenceSource CurrentInferenceSource { get; }
-
-  CognitionMode EnterContinuousLineOfReasoning();
-  CognitionMode ExitContinuousLineOfReasoning();
-  CognitionMode RegisterNewInference(Inference Inference);
-}
-
 public class IsolatedCognitionMode(InferenceSource CurrentInferenceSource) : CognitionMode
 {
   public InferenceSource CurrentInferenceSource { get; } = CurrentInferenceSource;
 
-  public CognitionMode EnterContinuousLineOfReasoning()
+  public CognitionMode EnterChainedLineOfReasoning()
   {
-    return new ContinuousCognitionMode(this, CurrentInferenceSource);
+    return new ChainedCognitionMode(this, CurrentInferenceSource);
   }
 
-  public CognitionMode ExitContinuousLineOfReasoning()
+  public CognitionMode ExitChainedLineOfReasoning()
   {
     return this;
   }
@@ -60,22 +46,22 @@ public class IsolatedCognitionMode(InferenceSource CurrentInferenceSource) : Cog
   }
 }
 
-class ContinuousCognitionMode(CognitionMode Underlying, InferenceSource CurrentInferenceSource) : CognitionMode
+class ChainedCognitionMode(CognitionMode Underlying, InferenceSource CurrentInferenceSource) : CognitionMode
 {
   public InferenceSource CurrentInferenceSource { get; } = CurrentInferenceSource;
 
-  public CognitionMode EnterContinuousLineOfReasoning()
+  public CognitionMode EnterChainedLineOfReasoning()
   {
-    return new ContinuousCognitionMode(this, CurrentInferenceSource);
+    return new ChainedCognitionMode(this, CurrentInferenceSource);
   }
 
-  public CognitionMode ExitContinuousLineOfReasoning()
+  public CognitionMode ExitChainedLineOfReasoning()
   {
     return Underlying;
   }
 
   public CognitionMode RegisterNewInference(Inference Inference)
   {
-    return new ContinuousCognitionMode(Underlying, Inference);
+    return new ChainedCognitionMode(Underlying, Inference);
   }
 }

@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
@@ -59,7 +60,7 @@ public static class TypeSymbolExtensions
 
   public static bool IsThoughtTypeWithPayload(this ITypeSymbol Type)
   {
-    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", _ => true);
+    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", _ => true, _ => true);
   }
 
   public static bool IsThoughtType(this ITypeSymbol Type)
@@ -82,12 +83,12 @@ public static class TypeSymbolExtensions
     return Type.SpecialType == SpecialType.System_Boolean;
   }
 
-  public static bool IsThoughtOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> ArgumentConstraint)
+  public static bool IsThoughtOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> ArgumentConstraint, Func<ITypeSymbol, bool> FeedbackConstraint)
   {
-    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", ArgumentConstraint);
+    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", ArgumentConstraint, FeedbackConstraint);
   }
 
-  static bool IsGenericOf(this ITypeSymbol Type, string Name, params Func<ITypeSymbol, bool>[] ArgumentConstraints)
+  public static bool IsGenericOf(this ITypeSymbol Type, string Name, params Func<ITypeSymbol, bool>[] ArgumentConstraints)
   {
     if (Type is not INamedTypeSymbol Named)
       return false;
@@ -103,9 +104,17 @@ public static class TypeSymbolExtensions
     return true;
   }
 
-  public static bool IsThoughtOfBooleanType(this ITypeSymbol Type)
+  public static bool IsThoughtOfUseReturnType(this ITypeSymbol Type, IMethodSymbol Method)
   {
-    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", IsBooleanType);
+    var ActionSurfaceTypes = Method.Parameters.Select(P => P.Type)
+      .Where(T => T.HasAttribute(CognitiveAttributeNames.ActionsAttributeName));
+
+    if (ActionSurfaceTypes.Take(2).Count() != 1)
+      return false;
+
+    var ActionSurfaceType = ActionSurfaceTypes.Single();
+
+    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", IsBooleanType, T => T.IsGenericOf("UseFeedback", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())));
   }
 
   public static bool IsTaskOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> PayloadRequirement)
@@ -144,7 +153,7 @@ public static class TypeSymbolExtensions
   }
 
   public static (ITypeSymbol PayloadType, ITypeSymbol DescriptorType, ushort Count) GetCognitiveCategoryData(
-    this INamedTypeSymbol Type)
+    this ITypeSymbol Type)
   {
     return ConvertAttributeToCognitiveCategoryData(Type.GetAttributes()
       .First(IsCognitiveCategoryAttribute));

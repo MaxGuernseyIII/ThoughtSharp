@@ -82,76 +82,10 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void StateIsCopiedIntoMakeInput()
-  {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var OriginalState = Any.FloatArray(StatefulMind.StateCount);
-    var Mind = new StatefulMind(Brain)
-    {
-      SomeState = OriginalState
-    };
-    var ActualCapture = CaptureInputState(Brain);
-
-    Mind.MakeSimpleOutput(new()
-    {
-      P1 = Any.Float,
-      P2 = Any.Float
-    }).ConsumeDetached();
-
-    ActualCapture.Captured.Should().BeEquivalentTo(OriginalState);
-  }
-
-  static Capture<float[]> CaptureInputState(MockBrain Brain)
-  {
-    var ActualCapture = new Capture<float[]>();
-
-    var CoreMakeInference = Brain.MakeInferenceFunc;
-    Brain.MakeInferenceFunc = Parameters =>
-    {
-      var CapturedInput = StatefulMind.Input.UnmarshalFrom(Parameters);
-      ActualCapture.Captured = CapturedInput.Parameters.SomeState.Value;
-
-      return CoreMakeInference(Parameters);
-    };
-    return ActualCapture;
-  }
-
-  [TestMethod]
-  public void StateIsCopiedFromMakeOutput()
-  {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var FinalState = Any.FloatArray(StatefulMind.StateCount);
-    var Mind = new StatefulMind(Brain);
-
-    SetOutputState(Brain, FinalState);
-
-    Mind.MakeSimpleOutput(new()
-    {
-      P1 = Any.Float,
-      P2 = Any.Float
-    }).ConsumeDetached();
-
-    Mind.SomeState.Should().BeEquivalentTo(FinalState);
-  }
-
-  static void SetOutputState(MockBrain Brain, float[] FinalState)
-  {
-    Brain.MakeInferenceFunc = Parameters =>
-    {
-      var Output = new StatefulMind.Output();
-      Output.Parameters.SomeState.Value = FinalState;
-      var Buffer = new float[StatefulMind.Output.Length];
-      Output.MarshalTo(Buffer);
-
-      return new MockInference(Buffer);
-    };
-  }
-
-  [TestMethod]
   public void TrainingOfMakeAsOutputThought()
   {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var Mind = new StatefulMind(Brain);
+    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var Mind = new StatelessMind(Brain);
 
     var Thought = Mind.MakeSimpleOutput(new());
     var Reward = Any.PositiveOrNegativeFloat;
@@ -159,38 +93,11 @@ public partial class GeneratedMinds
     Thought.ApplyIncentive(Reward);
 
     var Inference = Brain.MockInferences.Single();
-    var OutputStart = StatefulMind.Output.ParametersIndex +
-                      StatefulMind.Output.OutputParameters.MakeSimpleOutputIndex;
-    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.MakeSimpleOutputParameters.Length;
+    var OutputStart = StatelessMind.Output.ParametersIndex +
+                      StatelessMind.Output.OutputParameters.MakeSimpleOutputIndex;
+    var OutputEnd = OutputStart + StatelessMind.Output.OutputParameters.MakeSimpleOutputParameters.Length;
     Inference.Incentives.Should().BeEquivalentTo([
       (Reward, new[] {OutputStart..OutputEnd})
-    ]);
-  }
-
-  [TestMethod]
-  public void TrainingOfMakeAsContributingThought()
-  {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var Mind = new StatefulMind(Brain);
-
-    var T = Thought.Do(R =>
-    {
-      R.Consume(Mind.MakeSimpleOutput(new()));
-      R.Incorporate(Thought.Capture(new object(), new MockTrainingPolicy {Mind = Mind}));
-    });
-    var Reward = Any.PositiveOrNegativeFloat;
-
-    T.ApplyIncentive(Reward);
-
-    var Inference = Brain.MockInferences.Single();
-    var OutputStart = StatefulMind.Output.ParametersIndex +
-                      StatefulMind.Output.OutputParameters.MakeSimpleOutputIndex;
-    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.MakeSimpleOutputParameters.Length;
-    var StateStart = StatefulMind.Output.ParametersIndex +
-                     StatefulMind.Output.OutputParameters.SomeStateIndex;
-    var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
-    Inference.Incentives.Should().BeEquivalentTo([
-      (Reward, new[] {OutputStart..OutputEnd, StateStart..StateEnd})
     ]);
   }
 
@@ -248,39 +155,10 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void UseSynchronousActionSurfaceFeedsStateAsInput()
-  {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var State = Any.FloatArray(StatefulMind.StateCount);
-    var Mind = new StatefulMind(Brain)
-    {
-      SomeState = State
-    };
-    var ActualCapture = CaptureInputState(Brain);
-
-    Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 100), Any.Int(0, 100));
-
-    ActualCapture.Captured.Should().Equal(State);
-  }
-
-  [TestMethod]
-  public void UseSynchronousActionSurfaceCapturesStateFromOutput()
-  {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var State = Any.FloatArray(StatefulMind.StateCount);
-    var Mind = new StatefulMind(Brain);
-    SetOutputState(Brain, State);
-
-    Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 100), Any.Int(0, 100));
-
-    Mind.SomeState.Should().Equal(State);
-  }
-
-  [TestMethod]
   public void TrainingOfSynchronousUseAsOutputThought()
   {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var Mind = new StatefulMind(Brain);
+    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var Mind = new StatelessMind(Brain);
 
     var Thought = Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100));
     var Reward = Any.PositiveOrNegativeFloat;
@@ -288,38 +166,11 @@ public partial class GeneratedMinds
     Thought.ApplyIncentive(Reward);
 
     var Inference = Brain.MockInferences.Single();
-    var OutputStart = StatefulMind.Output.ParametersIndex +
-                      StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceIndex;
-    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceParameters.Length;
+    var OutputStart = StatelessMind.Output.ParametersIndex +
+                      StatelessMind.Output.OutputParameters.SynchronousUseSomeInterfaceIndex;
+    var OutputEnd = OutputStart + StatelessMind.Output.OutputParameters.SynchronousUseSomeInterfaceParameters.Length;
     Inference.Incentives.Should().BeEquivalentTo([
       (Reward, new[] {OutputStart..OutputEnd})
-    ]);
-  }
-
-  [TestMethod]
-  public void TrainingOfSynchronousUseAsContributingThought()
-  {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var Mind = new StatefulMind(Brain);
-
-    var T = Thought.Do(R =>
-    {
-      R.Consume(Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100)));
-      R.Incorporate(Thought.Capture(new object(), new MockTrainingPolicy {Mind = Mind}));
-    });
-    var Reward = Any.PositiveOrNegativeFloat;
-
-    T.ApplyIncentive(Reward);
-
-    var Inference = Brain.MockInferences.Single();
-    var OutputStart = StatefulMind.Output.ParametersIndex +
-                      StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceIndex;
-    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.SynchronousUseSomeInterfaceParameters.Length;
-    var StateStart = StatefulMind.Output.ParametersIndex +
-                     StatefulMind.Output.OutputParameters.SomeStateIndex;
-    var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
-    Inference.Incentives.Should().BeEquivalentTo([
-      (Reward, new[] {OutputStart..OutputEnd, StateStart..StateEnd})
     ]);
   }
 
@@ -377,82 +228,22 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public async Task UseAsynchronousActionSurfaceFeedsStateAsInput()
-  {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var State = Any.FloatArray(StatefulMind.StateCount);
-    var Mind = new StatefulMind(Brain)
-    {
-      SomeState = State
-    };
-    var ActualCapture = CaptureInputState(Brain);
-
-    await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 100),
-      new MockSynchronousSurface(), Any.Int(0, 100));
-
-    ActualCapture.Captured.Should().Equal(State);
-  }
-
-  [TestMethod]
-  public async Task UseAsynchronousActionSurfaceCapturesStateFromOutput()
-  {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var State = Any.FloatArray(StatefulMind.StateCount);
-    var Mind = new StatefulMind(Brain);
-    SetOutputState(Brain, State);
-
-    await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 100),
-      new MockSynchronousSurface(), Any.Int(0, 100));
-
-    Mind.SomeState.Should().Equal(State);
-  }
-
-  [TestMethod]
   public async Task TrainingOfUseAsOutputThought()
   {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var Mind = new StatefulMind(Brain);
+    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var Mind = new StatelessMind(Brain);
 
-    var Thought = await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 10),
-      new MockSynchronousSurface(), Any.Int(-100, 100));
+    var Thought = await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100));
     var Reward = Any.PositiveOrNegativeFloat;
 
     Thought.ApplyIncentive(Reward);
 
     var Inference = Brain.MockInferences.Single();
-    var OutputStart = StatefulMind.Output.ParametersIndex +
-                      StatefulMind.Output.OutputParameters.AsynchronousUseSomeInterfaceIndex;
-    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.AsynchronousUseSomeInterfaceParameters.Length;
+    var OutputStart = StatelessMind.Output.ParametersIndex +
+                      StatelessMind.Output.OutputParameters.AsynchronousUseSomeInterfaceIndex;
+    var OutputEnd = OutputStart + StatelessMind.Output.OutputParameters.AsynchronousUseSomeInterfaceParameters.Length;
     Inference.Incentives.Should().BeEquivalentTo([
       (Reward, new[] {OutputStart..OutputEnd})
-    ]);
-  }
-
-  [TestMethod]
-  public async Task TrainingOfUseAsContributingThought()
-  {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var Mind = new StatefulMind(Brain);
-
-    var T = await Thought.DoAsync(async R =>
-    {
-      R.Consume(await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 10),
-        new MockSynchronousSurface(), Any.Int(-100, 100)));
-      R.Incorporate(Thought.Capture(new object(), new MockTrainingPolicy {Mind = Mind}));
-    });
-    var Reward = Any.PositiveOrNegativeFloat;
-
-    T.ApplyIncentive(Reward);
-
-    var Inference = Brain.MockInferences.Single();
-    var OutputStart = StatefulMind.Output.ParametersIndex +
-                      StatefulMind.Output.OutputParameters.AsynchronousUseSomeInterfaceIndex;
-    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.AsynchronousUseSomeInterfaceParameters.Length;
-    var StateStart = StatefulMind.Output.ParametersIndex +
-                     StatefulMind.Output.OutputParameters.SomeStateIndex;
-    var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
-    Inference.Incentives.Should().BeEquivalentTo([
-      (Reward, new[] {OutputStart..OutputEnd, StateStart..StateEnd})
     ]);
   }
 
@@ -479,7 +270,7 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
-  public void AllInferencesInChooseRewardedAppropriately()
+  public void InferenceChainForChooseRewardedAsOnePiece()
   {
     var Category = new MockCategory([
       AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(), AnyMockOption(),
@@ -487,44 +278,31 @@ public partial class GeneratedMinds
       AnyMockOption()
     ]);
 
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
     var SelectedIndex = (ushort) Any.Int(0, Category.AllOptions.Count - 1);
-    var StipulatedOutput = new MockCategory.Output
+    var ArgumentA = Any.Float;
+    var Argument2 = Any.Float;
+    var AThirdArgument = Any.Float;
+    var Inference = SetUpOptionsBatchReadsAndWrites(Category, new() {Selection = SelectedIndex}, Brain, ArgumentA,
+      Argument2, AThirdArgument);
+    var Mind = new StatelessMind(Brain);
+    var T = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArgument);
+    T.RaiseAnyExceptions();
+    T.Feedback.SelectionShouldHaveBeen(Category.AllOptions[SelectedIndex].Payload);
+
+    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output()
     {
-      Selection = SelectedIndex
-    };
-
-    var CapturedInferences = new List<MockInference>();
-    Brain.MakeInferenceFunc = Inputs =>
-    {
-      var Inference = new MockInference(new float[StatefulMind.Output.Length]);
-      CapturedInferences.Add(Inference);
-
-      return Inference;
-    };
-    var Mind = new StatefulMind(Brain);
-    var T = Mind.ChooseItems(Category, Any.Float, Any.Float, Any.Float);
-    var Reward = Any.Float;
-
-    T.ApplyIncentive(Reward);
-
-    var SupportingInferences = CapturedInferences[..^1];
-    var FinalInference = CapturedInferences[^1];
-    var OutputStart = StatefulMind.Output.ParametersIndex +
-                      StatefulMind.Output.OutputParameters.ChooseItemsIndex;
-    var OutputEnd = OutputStart + StatefulMind.Output.OutputParameters.ChooseItemsParameters.Length;
-    var StateStart = StatefulMind.Output.ParametersIndex +
-                     StatefulMind.Output.OutputParameters.SomeStateIndex;
-    var StateEnd = StateStart + StatefulMind.Output.OutputParameters.SomeStateParameters.Length;
-
-    foreach (var SupportingInference in SupportingInferences)
-      SupportingInference.Incentives.Should().BeEquivalentTo([
-        (Reward, new[] {OutputStart..OutputEnd, StateStart..StateEnd})
-      ]);
-
-    FinalInference.Incentives.Should().BeEquivalentTo([
-      (Reward, new[] {OutputStart..OutputEnd})
-    ]);
+      Parameters =
+      {
+        ChooseItems =
+        {
+          Category =
+          {
+            Selection = SelectedIndex
+          }
+        }
+      }
+    });
   }
 
   static CognitiveOption<MockSelectable, MockDescriptor> AnyMockOption()
@@ -534,7 +312,7 @@ public partial class GeneratedMinds
 
   static void TestChooseBatches(MockCategory Category)
   {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
+    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
     var SelectedIndex = (ushort) Any.Int(0, Category.AllOptions.Count - 1);
     var StipulatedOutput = new MockCategory.Output
     {
@@ -545,14 +323,14 @@ public partial class GeneratedMinds
     var Argument2 = Any.Float;
     var AThirdArg = Any.Float;
     SetUpOptionsBatchReadsAndWrites(Category, StipulatedOutput, Brain, ArgumentA, Argument2, AThirdArg);
-    var Mind = new StatefulMind(Brain);
+    var Mind = new StatelessMind(Brain);
 
     var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg).ConsumeDetached();
 
     Result.Should().BeSameAs(Category.Interpret(StipulatedOutput));
   }
 
-  static void SetUpOptionsBatchReadsAndWrites(MockCategory Category, MockCategory.Output StipulatedOutput,
+  static MockInference SetUpOptionsBatchReadsAndWrites(MockCategory Category, MockCategory.Output StipulatedOutput,
     MockBrain Brain,
     float ArgumentA, float Argument2, float AThirdArg)
   {
@@ -563,9 +341,9 @@ public partial class GeneratedMinds
     foreach (var NonFinalBatch in NonFinalBatches)
       Inputs.Add((NonFinalBatch, new()));
     Inputs.Add((FinalBatches, StipulatedOutput));
-    Brain.SetOutputsForInputs(Inputs.Select(Pair =>
+    return Brain.SetChainedOutputsForInputs(Inputs.Select(Pair =>
     (
-      new StatefulMind.Input
+      new StatelessMind.Input
       {
         OperationCode = 4,
         Parameters =
@@ -579,7 +357,7 @@ public partial class GeneratedMinds
           }
         }
       },
-      new StatefulMind.Output
+      new StatelessMind.Output
       {
         Parameters =
         {
@@ -603,8 +381,8 @@ public partial class GeneratedMinds
 
   static bool ExecuteSynchronousUseOperation(SynchronousActionSurface.Output Selection, MockSynchronousSurface Surface)
   {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var ExpectedInput = new StatefulMind.Input
+    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var ExpectedInput = new StatelessMind.Input
     {
       OperationCode = 2,
       Parameters =
@@ -617,7 +395,7 @@ public partial class GeneratedMinds
       }
     };
 
-    var StipulatedOutput = new StatefulMind.Output
+    var StipulatedOutput = new StatelessMind.Output
     {
       Parameters =
       {
@@ -628,7 +406,7 @@ public partial class GeneratedMinds
       }
     };
     Brain.SetOutputForOnlyInput(ExpectedInput, StipulatedOutput);
-    var Thought1 = new StatefulMind(Brain).SynchronousUseSomeInterface(Surface,
+    var Thought1 = new StatelessMind(Brain).SynchronousUseSomeInterface(Surface,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument1,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument2);
     var Thought = Thought1;
@@ -649,8 +427,8 @@ public partial class GeneratedMinds
   static async Task<bool> ExecuteAsynchronousUseOperation(AsynchronousActionSurface.Output Selection,
     MockAsynchronousSurface Surface)
   {
-    var Brain = new MockBrain(StatefulMind.Input.Length, StatefulMind.Output.Length);
-    var ExpectedInput = new StatefulMind.Input
+    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var ExpectedInput = new StatelessMind.Input
     {
       OperationCode = 3,
       Parameters =
@@ -663,7 +441,7 @@ public partial class GeneratedMinds
       }
     };
 
-    var StipulatedOutput = new StatefulMind.Output
+    var StipulatedOutput = new StatelessMind.Output
     {
       Parameters =
       {
@@ -674,9 +452,8 @@ public partial class GeneratedMinds
       }
     };
     Brain.SetOutputForOnlyInput(ExpectedInput, StipulatedOutput);
-    var Thought = await new StatefulMind(Brain).AsynchronousUseSomeInterface(Surface,
+    var Thought = await new StatelessMind(Brain).AsynchronousUseSomeInterface(Surface,
       ExpectedInput.Parameters.AsynchronousUseSomeInterface.Argument1,
-      new MockSynchronousSurface(),
       ExpectedInput.Parameters.AsynchronousUseSomeInterface.Argument2);
     var More = Thought.ConsumeDetached();
     return More;
@@ -736,7 +513,7 @@ public partial class GeneratedMinds
   partial class SimpleMakeMockMind
   {
     [Make]
-    public partial Thought<SimpleOutputData, MakeFeedbackPolicy<SimpleOutputData>> MakeSimpleOutput(SimpleInputData Simple1);
+    public partial Thought<SimpleOutputData, MakeFeedback<SimpleOutputData>> MakeSimpleOutput(SimpleInputData Simple1);
   }
 
   [CognitiveActions]
@@ -754,31 +531,25 @@ public partial class GeneratedMinds
   }
 
   [Mind]
-  partial class StatefulMind
+  partial class StatelessMind
   {
-    public const int StateCount = 128;
-
-    [CognitiveDataCount(StateCount)] [State]
-    public float[] SomeState = new float[128];
-
     [Make]
-    public partial Thought<SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
+    public partial Thought<SimpleOutputData, MakeFeedback<SimpleOutputData>> MakeSimpleOutput(SimpleInputData Simple1);
 
     [Use]
-    public partial Thought<bool> SynchronousUseSomeInterface(
+    public partial Thought<bool, UseFeedback<SynchronousActionSurface>> SynchronousUseSomeInterface(
       SynchronousActionSurface Surface,
       int Argument1,
       int Argument2);
 
     [Use]
-    public partial Task<Thought<bool>> AsynchronousUseSomeInterface(
+    public partial Task<Thought<bool, UseFeedback<AsynchronousActionSurface>>> AsynchronousUseSomeInterface(
       AsynchronousActionSurface Surface,
       int Argument1,
-      SynchronousActionSurface SynchronousSurface,
       int Argument2);
 
     [Choose]
-    public partial Thought<MockSelectable> ChooseItems(MockCategory Category, float ArgumentA, float Argument2,
+    public partial Thought<MockSelectable, ChooseFeedback<MockSelectable>> ChooseItems(MockCategory Category, float ArgumentA, float Argument2,
       float AThirdArg);
   }
 

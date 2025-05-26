@@ -20,35 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using FluentAssertions;
-using ThoughtSharp.Runtime;
+namespace ThoughtSharp.Runtime;
 
-namespace Tests.Mocks;
-
-class MockInference(int InputLength, float[] Floats) : MockInferenceSource(InputLength, Floats.Length), Inference
+public interface CognitionMode
 {
-  float[]? TrainedData;
+  InferenceSource CurrentInferenceSource { get; }
 
-  public readonly List<(float Reward, IReadOnlyList<Range> Ranges)> Incentives = [];
-
-  public ReadOnlySpan<float> Result => Floats;
-
-  public void Incentivize(float Reward, params IReadOnlyList<Range> Ranges)
-  {
-    Incentives.Add((Reward, [..Ranges]));
-  }
-
-  public void Train(ReadOnlySpan<float> Expected)
-  {
-    TrainedData.Should().BeNull();
-    TrainedData = Expected.ToArray();
-  }
-
-  public void ShouldHaveBeenTrainedWith<T>(T Output)
-    where T : CognitiveData<T>
-  {
-    var Buffer = new float[T.Length];
-    Output.MarshalTo(Buffer);
-    TrainedData.Should().Equal(Buffer);
-  }
+  CognitionMode EnterChainedLineOfReasoning();
+  CognitionMode ExitChainedLineOfReasoning();
+  CognitionMode RegisterNewInference(Inference Inference);
 }

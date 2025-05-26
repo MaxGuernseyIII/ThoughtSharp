@@ -100,10 +100,10 @@ static class CognitiveActionRules
     if (M.ReturnsVoid)
       return false;
 
-    if (M.ReturnType.IsThoughtOfBooleanType())
+    if (M.ReturnType.IsThoughtOfUseReturnType(M))
       return true;
 
-    if (M.ReturnType.IsTaskOf(T => T.IsThoughtOfBooleanType()))
+    if (M.ReturnType.IsTaskOf(T => T.IsThoughtOfUseReturnType(M)))
       return true;
 
     return false;

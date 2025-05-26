@@ -24,13 +24,11 @@ namespace ThoughtSharp.Generator;
 
 class MindModel(
   TypeAddress TypeName,
-  IReadOnlyList<MindStateModel> States,
   IReadOnlyList<MindMakeOperationModel> MakeOperations,
   IReadOnlyList<MindUseOperationModel> UseOperations,
   IReadOnlyList<MindChooseOperationModel> ChooseOperations)
 {
   public TypeAddress TypeName { get; } = TypeName;
-  public IReadOnlyList<MindStateModel> States { get; } = States;
   public IReadOnlyList<MindMakeOperationModel> MakeOperations { get; } = MakeOperations;
   public IReadOnlyList<MindUseOperationModel> UseOperations { get; } = UseOperations;
   public IReadOnlyList<MindChooseOperationModel> ChooseOperations { get; } = ChooseOperations;

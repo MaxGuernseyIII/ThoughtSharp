@@ -28,7 +28,7 @@ namespace ThoughtSharp.Example.FizzBuzz;
 partial class FizzBuzzMind
 {
   [Use]
-  public partial Thought<bool> WriteForNumber(Terminal Surface, short Index);
+  public partial Thought<bool, UseFeedback<Terminal>> WriteForNumber(Terminal Surface, short Index);
 }
 
 [CognitiveData]
@@ -42,5 +42,5 @@ partial class ShapeInfo
 partial class ShapesMind
 {
   [Make]
-  public partial Thought<ShapeInfo> MakeSquare([CognitiveDataBounds<float>(-1e3f, 1e3f)] float SideLength);
+  public partial Thought<ShapeInfo, MakeFeedback<ShapeInfo>> MakeSquare([CognitiveDataBounds<float>(-1e3f, 1e3f)] float SideLength);
 }

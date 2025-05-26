@@ -20,69 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using FluentAssertions;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-class MockBrain : MockDisposable, Brain
-{
-  readonly int InputLength;
-  public Func<float[], Inference> MakeInferenceFunc;
-  public List<MockInference> MockInferences = [];
-
-  public MockBrain(int InputLength, int OutputLength)
-  {
-    this.InputLength = InputLength;
-    MakeInferenceFunc = _ =>
-    {
-      var MockInference = new MockInference(new float[OutputLength]);
-      MockInferences.Add(MockInference);
-      return MockInference;
-    };
-  }
-
-  public Inference MakeInference(float[] Parameters)
-  {
-    Parameters.Length.Should().Be(InputLength);
-
-    var Result = MakeInferenceFunc(Parameters);
-
-    return Result;
-  }
-
-  public void SetOutputForOnlyInput<TInput, TOutput>(TInput ExpectedInput, TOutput StipulatedOutput)
-    where TInput : CognitiveData<TInput>
-    where TOutput : CognitiveData<TOutput>
-  {
-    SetOutputsForInputs([(ExpectedInput, StipulatedOutput)]);
-  }
-
-  public void SetOutputsForInputs<TInput, TOutput>(
-    IReadOnlyList<(TInput ExpectedInput, TOutput StipulatedOutput)> Sequence)
-    where TInput : CognitiveData<TInput>
-    where TOutput : CognitiveData<TOutput>
-  {
-    var Queue = new Queue<(TInput ExpectedInput, TOutput StipulatedOutput)>(Sequence);
-
-    MakeInferenceFunc = Parameters =>
-    {
-      var (ExpectedInput, StipulatedOutput) = Queue.Dequeue();
-      var ExpectedBrainInput = MakeReferenceFloats(ExpectedInput);
-      var StipulatedBrainOutput = MakeReferenceFloats(StipulatedOutput);
-
-      Parameters.Should().BeEquivalentTo(ExpectedBrainInput);
-
-      return new MockInference(StipulatedBrainOutput);
-    };
-
-    static float[] MakeReferenceFloats<T>(T ToPersist) where T : CognitiveData<T>
-    {
-      var Result = new float[T.Length];
-
-      ToPersist.MarshalTo(Result);
-
-      return Result;
-    }
-  }
-}
+class MockBrain(int InputLength, int OutputLength) : MockInferenceSource(InputLength, OutputLength), Brain;

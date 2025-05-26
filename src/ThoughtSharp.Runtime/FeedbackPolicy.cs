@@ -22,35 +22,38 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface FeedbackPolicy<out TFeedback>
+public class InferenceFeedback(Inference Target)
 {
-  public TFeedback FeedbackForProductThought();
-  public TFeedback FeedbackForSupportingThought();
-}
-
-public class MakeFeedbackPolicy<TMade>(
-  IReadOnlyList<Range> ProductRanges, 
-  InferenceFeedbackPolicy Underlying) 
-  : FeedbackPolicy<MakeFeedback<TMade>> 
-  where TMade : CognitiveData<TMade>
-{
-  public MakeFeedback<TMade> FeedbackForProductThought()
+  public void OutputShouldHaveBeen(float[] ExpectedOutput)
   {
-    throw new NotImplementedException();
-  }
-
-  public MakeFeedback<TMade> FeedbackForSupportingThought()
-  {
-    throw new NotImplementedException();
+    Target.Train(ExpectedOutput);
   }
 }
 
-public class MakeFeedback<TMade>(IReadOnlyList<Range> Affected)
-  where TMade : CognitiveData<TMade>
-{
-}
+public class MakeFeedback<TMade>(InferenceFeedback Underlying)
+  where TMade : CognitiveData<TMade>;
 
-public class InferenceFeedbackPolicy(Inference Target, IReadOnlyList<Range> State) : FeedbackPolicy<InferenceFeedback>
-{
+public class UseFeedback<TSurface>(TSurface Mock, Action Commit);
 
+public class ChooseFeedback<TSelectable>(InferenceFeedback Underlying, IReadOnlyList<TSelectable> Options, Func<ushort, float[]> ToExpectedOutput)
+{
+  public static ChooseFeedback<TSelectable> Get<TOutput>(InferenceFeedback Underlying,
+    IReadOnlyList<TSelectable> Options, Func<ushort, TOutput> GetOutputObject)
+    where TOutput : CognitiveData<TOutput>
+  {
+    return new(Underlying, Options, I =>
+    {
+      var Buffer = new float[TOutput.Length];
+      var Output = GetOutputObject(I);
+      Output.MarshalTo(Buffer);
+
+      return Buffer;
+    });
+  }
+
+  public void SelectionShouldHaveBeen(TSelectable Payload)
+  {
+    var ExpectedOutput = ToExpectedOutput((ushort) Options.ToList().IndexOf(Payload));
+    Underlying.OutputShouldHaveBeen(ExpectedOutput);
+  }
 }

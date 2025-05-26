@@ -40,23 +40,43 @@ static class MindRenderer
       {
         ushort OperationCode = 1;
 
-        WriteCognitionModeMembers(W);
+        WriteCognitionModeMembers(W, M);
+        RenderDisposeMembers(W);
 
-        RenderModelMembers(M, W, OperationCode);
+        RenderModelMembers(W, M, OperationCode);
       }
     });
   }
 
-  static void WriteCognitionModeMembers(IndentedTextWriter W)
+  static void WriteCognitionModeMembers(IndentedTextWriter W, MindModel M)
   {
+    W.WriteLine($"public struct ChainedReasoningSession({M.TypeName.FullName} Host) : IDisposable");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine("public void Dispose()");
+    W.WriteLine("{");
+    W.Indent++;
+
+    W.WriteLine("Host.CognitionMode = Host.CognitionMode.ExitChainedLineOfReasoning();");
+    W.Indent--;
+    W.WriteLine("}");
+    W.Indent--;
+    W.WriteLine("}");
+    W.WriteLine();
+
     W.WriteLine("CognitionMode CognitionMode = new IsolatedCognitionMode(Brain);");
-   
+    W.WriteLine();
+    W.WriteLine("public ChainedReasoningSession EnterChainedReasoning()");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine("CognitionMode = CognitionMode.EnterChainedLineOfReasoning();");
+    W.WriteLine("return new ChainedReasoningSession(this);");
+    W.Indent--;
+    W.WriteLine("}");
   }
 
-  static void RenderModelMembers(MindModel M, IndentedTextWriter W, ushort OperationCode)
+  static void RenderModelMembers(IndentedTextWriter W, MindModel M, ushort OperationCode)
   {
-    RenderStateCopyMembers(W, M);
-
     foreach (var MakeOperation in M.MakeOperations)
       RenderMakeMethod(W, M, MakeOperation, OperationCode++);
 
@@ -65,8 +85,6 @@ static class MindRenderer
 
     foreach (var ChooseOperation in M.ChooseOperations)
       RenderChooseMethod(W, M, ChooseOperation, OperationCode++);
-        
-    RenderDisposeMembers(W);
   }
 
   static void RenderDisposeMembers(IndentedTextWriter W)
@@ -79,23 +97,11 @@ static class MindRenderer
     W.WriteLine("}");
   }
 
-  static void RenderStateCopyMembers(IndentedTextWriter W, MindModel Model)
-  {
-    W.WriteLine("InferenceSource CurrentInferenceSource = Brain;");
-    W.WriteLine("static readonly IReadOnlyList<Range> StateRanges = [");
-    W.Indent++;
-    foreach (var State in Model.States)
-      W.WriteLine(
-        $"(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index)..(Output.ParametersIndex + Output.OutputParameters.{State.Name}Index + Output.OutputParameters.{State.Name}Parameters.Length)");
-    W.WriteLine("];");
-    W.Indent--;
-  }
-
   static void RenderMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation,
     ushort OperationCode)
   {
     W.WriteLine(
-      $"public partial Thought<{MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
+      $"public partial Thought<{MakeOperation.ReturnType}, MakeFeedback<{MakeOperation.ReturnType}>> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
     RenderInputObjectForOpCode(W, OperationCode);
@@ -110,9 +116,7 @@ static class MindRenderer
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
 
     W.WriteLine(
-      "var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
-
-    W.WriteLine($"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name}.Value, TrainingPolicy);");
+      $"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name}.Value, new MakeFeedback<{MakeOperation.ReturnType}>(new(Inference)));");
     W.Indent--;
     W.WriteLine("}");
   }
@@ -125,9 +129,10 @@ static class MindRenderer
   {
     var InputParameters = UseOperation.Parameters.Where(P => P.AssociatedInterpreter is null);
     var ActionSurfaces = UseOperation.Parameters.Where(P => P.AssociatedInterpreter is not null);
+    var ActionSurface = ActionSurfaces.Single();
 
-    var ReturnType = "Thought<bool>";
-    var MethodIsAsync = ActionSurfaces.Any(A => A.AssociatedInterpreter!.RequiresAwait);
+    var ReturnType = $"Thought<bool, UseFeedback<{ActionSurface.TypeName}>>";
+    var MethodIsAsync = ActionSurface.AssociatedInterpreter!.RequiresAwait;
     if (MethodIsAsync)
       ReturnType = $"Task<{ReturnType}>";
 
@@ -140,7 +145,7 @@ static class MindRenderer
 
     foreach (var Parameter in InputParameters)
       W.WriteLine($"InputObject.Parameters.{UseOperation.Name}.{Parameter.Name} = {Parameter.Name};");
-    W.WriteLine(); 
+    W.WriteLine();
     RenderMakeInference(W, Model);
 
     W.WriteLine();
@@ -148,25 +153,19 @@ static class MindRenderer
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{UseOperation.Name}Parameters.Length;");
     W.WriteLine();
 
-    W.WriteLine(
-      "var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
     var (ThoughtMethod, Async) = MethodIsAsync ? ("ThinkAsync", "async ") : ("Think", "");
     W.WriteLine($"return Thought.{ThoughtMethod}({Async}R =>");
     W.WriteLine("{");
     W.Indent++;
-    W.WriteLine("var MoreActions = false;");
     W.WriteLine();
-    foreach (var Parameter in ActionSurfaces)
-    {
-      var Unwrap = Parameter.AssociatedInterpreter!.RequiresAwait ? "await " : "";
-      W.WriteLine(
-        $"MoreActions = MoreActions || R.Consume({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{Parameter.Name}.InterpretFor({Parameter.Name}));");
-    }
+    var Unwrap = ActionSurface.AssociatedInterpreter!.RequiresAwait ? "await " : "";
+    W.WriteLine(
+      $"var MoreActions = R.Consume({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name}));");
 
     W.WriteLine();
-    W.WriteLine("return MoreActions;");
+    W.WriteLine($"return (MoreActions, new UseFeedback<{ActionSurface.TypeName}>(null!, null!));");
     W.Indent--;
-    W.WriteLine("}, TrainingPolicy);");
+    W.WriteLine("});");
     W.Indent--;
     W.WriteLine("}");
   }
@@ -185,7 +184,10 @@ static class MindRenderer
     W.WriteLine("{");
     W.Indent++;
 
+    W.WriteLine("using var _ = EnterChainedReasoning();");
+
     W.WriteLine("Output FinalOutputObject = default!;");
+    W.WriteLine("Inference FinalInference = default!;");
 
     W.WriteLine($"foreach (var Batch in {ChooseOperation.CategoryParameter}.ToInputBatches())");
     W.WriteLine("{");
@@ -202,19 +204,26 @@ static class MindRenderer
     W.WriteLine();
     RenderMakeInference(W, MindModel);
     W.WriteLine("FinalOutputObject = OutputObject;");
+    W.WriteLine("FinalInference = Inference;");
     W.WriteLine();
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index;");
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{ChooseOperation.Name}Parameters.Length;");
     W.WriteLine();
-    W.WriteLine(
-      "var TrainingPolicy = new ApplyTrainingToInference(this, Inference, [OutputStart..OutputEnd], StateRanges);");
-    W.WriteLine("R.Incorporate(Thought.Done(TrainingPolicy));");
-    W.WriteLine();
     W.Indent--;
     W.WriteLine("}");
 
-    W.WriteLine(
-      $"return {ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter});");
+    W.WriteLine("return (");
+    W.Indent++;
+    W.WriteLine($"{ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}),");
+    W.WriteLine($"ChooseFeedback<{ChooseOperation.SelectableTypeName}>.Get(");
+    W.Indent++;
+    W.WriteLine($"new(FinalInference),");
+    W.WriteLine($"[..{ChooseOperation.CategoryParameter}.AllOptions.Select(O => O.Payload)],");
+    W.WriteLine($"I => new Output {{ Parameters = {{ {ChooseOperation.Name} = {{ {ChooseOperation.CategoryParameter} = {{ Selection = I }} }} }} }}");
+    W.Indent--;
+    W.WriteLine(")");
+    W.Indent--;
+    W.WriteLine(");");
 
     W.Indent--;
     W.WriteLine("});");
@@ -230,22 +239,11 @@ static class MindRenderer
 
   static void RenderMakeInference(IndentedTextWriter W, MindModel Model)
   {
-    foreach (var State in Model.States)
-      W.WriteLine($"InputObject.Parameters.{State.Name}.Value = {State.Name};");
-
     W.WriteLine("var InputBuffer = new float[Input.Length];");
     W.WriteLine("InputObject.MarshalTo(InputBuffer);");
     W.WriteLine();
-    W.WriteLine("var Inference = CurrentInferenceSource.MakeInference(InputBuffer);");
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(InputBuffer);");
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
-    RenderUpdateInference(W);
-
-    foreach (var State in Model.States)
-      W.WriteLine($"{State.Name} = OutputObject.Parameters.{State.Name}.Value;");
-  }
-
-  static void RenderUpdateInference(IndentedTextWriter W)
-  {
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
   }
 }

@@ -34,7 +34,7 @@ public sealed class ThoughtTraceability
   {
     var Expected = new MockProduct();
 
-    var T = Thought.Capture(Expected);
+    var T = Thought.Capture(Expected, NullFeedback.Instance);
 
     T.ConsumeDetached().Should().BeSameAs(Expected);
     T.Children.Should().Equal();
@@ -71,7 +71,7 @@ public sealed class ThoughtTraceability
   public void InternalReasoning()
   {
     var Expected = new MockProduct();
-    var T = Thought.Think(_ => Expected);
+    var T = Thought.Think(_ => (Expected, NullFeedback.Instance));
 
     var Actual = T.ConsumeDetached();
 
@@ -144,7 +144,7 @@ public sealed class ThoughtTraceability
       R.Consume(Thought.Capture(new object()));
       R.Consume(Thought.Capture(new MockProduct()));
 
-      return new MockProduct();
+      return (new MockProduct(), NullFeedback.Instance);
     });
 
     var Actual = T.Children;
@@ -169,7 +169,7 @@ public sealed class ThoughtTraceability
     {
       R.Consume(Subthought);
 
-      return new MockProduct();
+      return (new MockProduct(), NullFeedback.Instance);
     });
 
     var Actual = Subthought.Parent;
@@ -184,7 +184,7 @@ public sealed class ThoughtTraceability
     Thought.Think(R =>
     {
       R.Consume(Subthought);
-      return new object();
+      return (new object(), NullFeedback.Instance);
     });
     var SubthoughtParent = Subthought.Parent;
 
@@ -195,7 +195,7 @@ public sealed class ThoughtTraceability
         .Should()
         .Throw<InvalidOperationException>();
 
-      return new object();
+      return (new object(), NullFeedback.Instance);
     });
 
     FailedThought.Children.Should().Equal();
@@ -206,7 +206,7 @@ public sealed class ThoughtTraceability
   public async Task AsynchronousThinkingYieldsProduct()
   {
     var Expected = new MockProduct();
-    var T = await Thought.ThinkAsync(_ => Task.FromResult(Expected));
+    var T = await Thought.ThinkAsync(_ => Task.FromResult((Expected, NullFeedback.Instance)));
 
     var Actual = T.ConsumeDetached();
 

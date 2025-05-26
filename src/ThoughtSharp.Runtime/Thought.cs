@@ -56,24 +56,22 @@ public abstract partial class Thought : IDisposable
     foreach (var Disposable in Disposables)
       Disposable.Dispose();
   }
-
-  public static Thought Done(TrainingPolicy? Training = null)
-  {
-    return new Thought<object?, object?>(null, null, null, new(), Training);
-  }
-
-  public static Thought<TProduct, TFeedback> Capture<TProduct, TFeedback>(TProduct Product, FeedbackPolicy<TFeedback>? Feedback = null, TrainingPolicy? Training = null)
+  
+  public static Thought<TProduct, TFeedback> Capture<TProduct, TFeedback>(TProduct Product, TFeedback Feedback, TrainingPolicy? Training = null)
   {
     return new(Product, Feedback, null, new(), Training);
   }
 
+  public static Thought<TProduct, NullFeedback> Capture<TProduct>(TProduct Product) =>
+    Capture(Product, NullFeedback.Instance);
+
   public static Thought<TProduct, TFeedback> Think<TProduct, TFeedback>(
-    Func<Reasoning, (TProduct Product, FeedbackPolicy<TFeedback> Feedback)> Produce,
+    Func<Reasoning, (TProduct Product, TFeedback Feedback)> Produce,
     TrainingPolicy? Policy = null)
   {
     var Reasoning = new Reasoning();
     TProduct? Product;
-    FeedbackPolicy<TFeedback> FeedbackPolicy;
+    TFeedback? FeedbackPolicy;
 
     ExceptionDispatchInfo? ExceptionInfo;
     try
@@ -83,7 +81,7 @@ public abstract partial class Thought : IDisposable
     }
     catch (Exception Exception)
     {
-      (Product, FeedbackPolicy) = (default, null);
+      (Product, FeedbackPolicy) = (default, default);
       ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
     }
 
@@ -102,12 +100,12 @@ public abstract partial class Thought : IDisposable
   }
 
   public static async Task<Thought<TProduct, TFeedback>> ThinkAsync<TProduct, TFeedback>(
-    Func<Reasoning, Task<(TProduct, FeedbackPolicy<TFeedback>)>> Produce, 
+    Func<Reasoning, Task<(TProduct, TFeedback)>> Produce, 
     TrainingPolicy? Policy = null)
   {
     var Reasoning = new Reasoning();
     TProduct? Product;
-    FeedbackPolicy<TFeedback>? Feedback;
+    TFeedback? Feedback;
 
     ExceptionDispatchInfo? ExceptionInfo;
     try
@@ -118,7 +116,7 @@ public abstract partial class Thought : IDisposable
     catch (Exception Exception)
     {
       Product = default;
-      Feedback = null;
+      Feedback = default;
       ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
     }
 
@@ -129,11 +127,11 @@ public abstract partial class Thought : IDisposable
 
   public static async Task<Thought> DoAsync(Func<Reasoning, Task> ToDo)
   {
-    var Result = await ThinkAsync(async Task<(object?, FeedbackPolicy<object?>)> (R) =>
+    var Result = await ThinkAsync(async Task<(object?, object?)> (R) =>
     {
       await ToDo(R);
 
-      return (null, null!);
+      return (null, null);
     });
 
     return Result;
@@ -164,23 +162,24 @@ public abstract partial class Thought : IDisposable
 public sealed class Thought<TProduct, TFeedback> : Thought
 {
   readonly TProduct? Product;
+  public TFeedback Feedback { get; }
 
   internal Thought(
     TProduct? Product, 
-    FeedbackPolicy<TFeedback>? Feedback,
+    TFeedback? Feedback,
     ExceptionDispatchInfo? ExceptionInfo, 
     Reasoning LineOfReasoning,
     TrainingPolicy? TrainingPolicy)
     : base(LineOfReasoning, ExceptionInfo, TrainingPolicy)
   {
     this.Product = Product;
+    this.Feedback = Feedback;
   }
 
   public TProduct ConsumeDetached()
   {
     return new Reasoning().Consume(this);
   }
-
 
   internal TProduct GetProduct()
   {

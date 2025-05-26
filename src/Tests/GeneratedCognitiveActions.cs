@@ -129,48 +129,6 @@ public partial class GeneratedCognitiveActions
   }
 
   [TestMethod]
-  public async Task AsynchronousThoughtfulActionConnectsThoughtToParent()
-  {
-    var Training = new MockTrainingPolicy();
-    var ChildThought = Thought.Capture(new object(), Training);
-    MockAsyncThoughtfulAction Action = new()
-    {
-      ActionHandler = () => Task.FromResult<Thought>(ChildThought)
-    };
-    var P = new AsyncThoughtfulAction.Output
-    {
-      ActionCode = 1
-    };
-    var ParentThought = await P.InterpretFor(Action);
-    var ExpectedReward = Any.Float;
-
-    ParentThought.ApplyIncentive(ExpectedReward);
-
-    Training.OutputReward.Should().Be(ExpectedReward);
-  }
-
-  [TestMethod]
-  public void SynchronousThoughtfulActionConnectsThoughtToParent()
-  {
-    var Training = new MockTrainingPolicy();
-    var ChildThought = Thought.Capture(new object(), Training);
-    MockSynchronousThoughtfulAction Action = new()
-    {
-      ActionHandler = () => ChildThought
-    };
-    var P = new SynchronousThoughtfulAction.Output
-    {
-      ActionCode = 1
-    };
-    var ParentThought = P.InterpretFor(Action);
-    var ExpectedReward = Any.Float;
-
-    ParentThought.ApplyIncentive(ExpectedReward);
-
-    Training.OutputReward.Should().Be(ExpectedReward);
-  }
-
-  [TestMethod]
   public async Task InvokeAsyncThoughtlessAction()
   {
     var Invoked = false;

@@ -26,10 +26,12 @@ class MindChooseOperationModel(
   string Name,
   string ReturnType,
   IReadOnlyList<(string Name, string TypeName)> Parameters,
-  string CategoryParameter)
+  string CategoryParameter,
+  string SelectableTypeName)
 {
   public string Name { get; } = Name;
   public string ReturnType { get; } = ReturnType;
   public IReadOnlyList<(string Name, string TypeName)> Parameters { get; } = Parameters;
   public string CategoryParameter { get; } = CategoryParameter;
+  public string SelectableTypeName { get; } = SelectableTypeName;
 }

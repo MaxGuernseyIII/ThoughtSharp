@@ -26,7 +26,7 @@ namespace ThoughtSharp.Example.FizzBuzz;
 
 static class FizzBuzzHybridReasoning
 {
-  public static Thought<string> DoFizzBuzz(
+  public static Thought<string, NullFeedback> DoFizzBuzz(
     FizzBuzzMind Mind,
     short Start, 
     short End, 
@@ -38,7 +38,7 @@ static class FizzBuzzHybridReasoning
 
       foreach (var I in Enumerable.Range(Start, End - Start)) WriteForOneNumber(Mind, MaximumOperationsPerStep, R, Terminal, I);
 
-      return Terminal.Content.ToString();
+      return (Terminal.Content.ToString(), NullFeedback.Instance);
     });
   }
 

@@ -39,7 +39,7 @@ static class GeneratedTypeFormatter
     using var StringWriter = new StringWriter();
 
     {
-      var IndentedWriter = new IndentedTextWriter(StringWriter);
+      var IndentedWriter = new IndentedTextWriter(StringWriter, "  ");
 
       GenerateType(IndentedWriter, Request);
     }

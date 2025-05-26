@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
@@ -38,9 +39,7 @@ static class MindModelFactory
     var MindModelBuilder = Generator.MindModelBuilder.Create(TypeName);
 
     foreach (var Member in PossibleGenerationTargets)
-      if (TryGetStateValue(Member, out var StateValue))
-        MindModelBuilder.AddStateValueFor(StateValue);
-      else if (TryGetMakeMethod(Member, out var MakeMethod))
+      if (TryGetMakeMethod(Member, out var MakeMethod))
         MindModelBuilder.AddMakeMethodFor(MakeMethod);
       else if (TryGetUseMethod(Member, out var UseMethod))
         MindModelBuilder.AddUseMethodFor(UseMethod);
@@ -49,24 +48,6 @@ static class MindModelFactory
 
     var Result = MindModelBuilder.Build();
     return (Result, MindModelBuilder.AssociatedDataTypes);
-  }
-
-  static bool TryGetStateValue(ISymbol S, [NotNullWhen(true)] out IValueSymbol? Result)
-  {
-    var Value = S.ToValueSymbolOrDefault();
-    if (Value is
-        {
-          IsStatic: false,
-          IsImplicitlyDeclared: false
-        } &&
-        Value.Raw.HasAttribute(CognitiveAttributeNames.StateAttributeName))
-    {
-      Result = Value;
-      return true;
-    }
-
-    Result = null;
-    return false;
   }
 
   static bool TryGetUseMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Result)
@@ -112,7 +93,7 @@ static class MindModelFactory
       if (CognitiveCategories.Count() == 1)
       {
         var PayloadType = CognitiveCategories.Single().CategoryData!.Value.PayloadType;
-        if (M.ReturnType.IsThoughtOf(T => T.IsEquivalentTo(PayloadType)))
+        if (M.ReturnType.IsThoughtOf(T => T.IsEquivalentTo(PayloadType), T => T.IsGenericOf("UseFeedback", F => F.IsEquivalentTo(PayloadType))))
         {
           Method = M;
           return true;

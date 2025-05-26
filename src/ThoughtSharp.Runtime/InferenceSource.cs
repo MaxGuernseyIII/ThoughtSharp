@@ -22,5 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-public class StateAttribute : Attribute;
+public interface InferenceSource
+{
+  Inference MakeInference(float[] Parameters);
+}

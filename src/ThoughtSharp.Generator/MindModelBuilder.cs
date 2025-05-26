@@ -62,7 +62,6 @@ class MindModelBuilder
     MakeOperations = [];
     UseOperations = [];
     ChooseOperations = [];
-    StateModels = [];
   }
 
   public TypeAddress TypeName { get; }
@@ -74,7 +73,6 @@ class MindModelBuilder
   List<MindMakeOperationModel> MakeOperations { get; }
   List<MindUseOperationModel> UseOperations { get; }
   List<MindChooseOperationModel> ChooseOperations { get; }
-  List<MindStateModel> StateModels { get; }
 
   public static MindModelBuilder Create(TypeAddress TypeName)
   {
@@ -88,7 +86,7 @@ class MindModelBuilder
     AssociatedDataTypes.Add(OutputBuilder.Build());
     AssociatedDataTypes.Add(OutputParametersBuilder.Build());
 
-    return new(TypeName, [..StateModels], [..MakeOperations], [.. UseOperations], [..ChooseOperations]);
+    return new(TypeName, [..MakeOperations], [.. UseOperations], [..ChooseOperations]);
   }
 
   public void AddMakeMethodFor(IMethodSymbol MakeMethod)
@@ -161,6 +159,7 @@ class MindModelBuilder
       });
     AssociatedDataTypes.Add(ThisInputDataModel);
     InputParametersBuilder.AddCompilerDefinedSubDataParameter(ChooseMethod.Name, ThisInputDataModel.Address.FullName);
+    var CategoryData = CategoryParameter.Type.GetCognitiveCategoryData();
 
     var ThisOutputModelBuilder = new CognitiveDataClassBuilder(GetOutputParametersClassName(ChooseMethod))
     {
@@ -176,36 +175,14 @@ class MindModelBuilder
       ChooseMethod.Name,
       ChooseMethod.ReturnType.GetFullPath(),
       [..ChooseMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath()))],
-      CategoryParameter.Name
+      CategoryParameter.Name,
+      CategoryData.PayloadType.GetFullPath()
     ));
 
     static bool IsCategoryParameter(IParameterSymbol Parameter)
     {
       return Parameter.Type.HasAttribute(CognitiveAttributeNames.CategoryAttributeName);
     }
-  }
-
-  public void AddStateValueFor(IValueSymbol StateValue)
-  {
-    var InputParameterDataModel = new CognitiveDataClassBuilder(GetInputParametersClassName(StateValue.Raw))
-    {
-      IsPublic = true,
-      ExplicitConstructor = true
-    };
-    InputParameterDataModel.AddParameterValue(StateValue, true, "Value");
-    AssociatedDataTypes.Add(InputParameterDataModel.Build());
-    InputParametersBuilder.AddCompilerDefinedSubDataParameter(StateValue.Raw.Name, InputParameterDataModel);
-
-    var OutputParameterDataModel = new CognitiveDataClassBuilder(GetOutputParametersClassName(StateValue.Raw))
-    {
-      IsPublic = true,
-      ExplicitConstructor = true
-    };
-    OutputParameterDataModel.AddParameterValue(StateValue, true, "Value");
-    AssociatedDataTypes.Add(OutputParameterDataModel.Build());
-    OutputParametersBuilder.AddCompilerDefinedSubDataParameter(StateValue.Raw.Name, OutputParameterDataModel);
-
-    StateModels.Add(new(StateValue.Name));
   }
 
   TypeAddress GetInputParametersClassName(ISymbol S)
