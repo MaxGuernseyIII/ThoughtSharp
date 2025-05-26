@@ -30,8 +30,15 @@ public class InferenceFeedback(Inference Target)
   }
 }
 
-public class MakeFeedback<TMade>(InferenceFeedback Underlying)
-  where TMade : CognitiveData<TMade>;
+public class MakeFeedback<TMade>(InferenceFeedback Underlying, Func<TMade, float[]> ToExpectedOutput)
+  where TMade : CognitiveData<TMade>
+{
+  public void ResultShouldHaveBeen(TMade Expected)
+  {
+    var Buffer = ToExpectedOutput(Expected);
+    Underlying.OutputShouldHaveBeen(Buffer);
+  }
+}
 
 public class UseFeedback<TSurface>(TSurface Mock, Action Commit);
 

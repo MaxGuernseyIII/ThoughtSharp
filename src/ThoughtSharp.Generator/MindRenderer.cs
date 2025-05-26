@@ -115,8 +115,35 @@ static class MindRenderer
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
 
-    W.WriteLine(
-      $"return Thought.Capture(OutputObject.Parameters.{MakeOperation.Name}.Value, new MakeFeedback<{MakeOperation.ReturnType}>(new(Inference)));");
+    W.WriteLine("return Thought.Capture(");
+    W.Indent++;
+    W.WriteLine($"OutputObject.Parameters.{MakeOperation.Name}.Value,");
+    W.WriteLine($"new MakeFeedback<{MakeOperation.ReturnType}>(");
+    W.Indent++;
+    W.WriteLine("new(");
+    W.Indent++;
+    W.WriteLine("Inference");
+    W.Indent--;
+    W.WriteLine("),");
+    W.WriteLine("V => ");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine("var O = new Output");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine($"Parameters = {{ {MakeOperation.Name} = {{ Value = V }} }}");
+    W.Indent--;
+    W.WriteLine("};");
+    W.WriteLine();
+    W.WriteLine("var Buffer = new float[Output.Length];");
+    W.WriteLine("O.MarshalTo(Buffer);");
+    W.WriteLine("return Buffer;");
+    W.Indent--;
+    W.WriteLine("}");
+    W.Indent--;
+    W.WriteLine(")");
+    W.Indent--;
+    W.WriteLine(");");
     W.Indent--;
     W.WriteLine("}");
   }
@@ -214,12 +241,14 @@ static class MindRenderer
 
     W.WriteLine("return (");
     W.Indent++;
-    W.WriteLine($"{ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}),");
+    W.WriteLine(
+      $"{ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}),");
     W.WriteLine($"ChooseFeedback<{ChooseOperation.SelectableTypeName}>.Get(");
     W.Indent++;
-    W.WriteLine($"new(FinalInference),");
+    W.WriteLine("new(FinalInference),");
     W.WriteLine($"[..{ChooseOperation.CategoryParameter}.AllOptions.Select(O => O.Payload)],");
-    W.WriteLine($"I => new Output {{ Parameters = {{ {ChooseOperation.Name} = {{ {ChooseOperation.CategoryParameter} = {{ Selection = I }} }} }} }}");
+    W.WriteLine(
+      $"I => new Output {{ Parameters = {{ {ChooseOperation.Name} = {{ {ChooseOperation.CategoryParameter} = {{ Selection = I }} }} }} }}");
     W.Indent--;
     W.WriteLine(")");
     W.Indent--;

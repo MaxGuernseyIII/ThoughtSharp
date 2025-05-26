@@ -162,7 +162,16 @@ public abstract partial class Thought : IDisposable
 public sealed class Thought<TProduct, TFeedback> : Thought
 {
   readonly TProduct? Product;
-  public TFeedback Feedback { get; }
+  readonly TFeedback CapturedFeedback;
+
+  public TFeedback Feedback
+  {
+    get
+    {
+      RaiseAnyExceptions();
+      return CapturedFeedback;
+    }
+  }
 
   internal Thought(
     TProduct? Product, 
@@ -173,7 +182,7 @@ public sealed class Thought<TProduct, TFeedback> : Thought
     : base(LineOfReasoning, ExceptionInfo, TrainingPolicy)
   {
     this.Product = Product;
-    this.Feedback = Feedback;
+    CapturedFeedback = Feedback;
   }
 
   public TProduct ConsumeDetached()

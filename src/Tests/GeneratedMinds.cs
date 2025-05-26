@@ -86,19 +86,25 @@ public partial class GeneratedMinds
   {
     var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
     var Mind = new StatelessMind(Brain);
+    var T = Mind.MakeSimpleOutput(new());
+    var ExpectedObject = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
 
-    var Thought = Mind.MakeSimpleOutput(new());
-    var Reward = Any.PositiveOrNegativeFloat;
-
-    Thought.ApplyIncentive(Reward);
+    T.Feedback.ResultShouldHaveBeen(ExpectedObject);
 
     var Inference = Brain.MockInferences.Single();
-    var OutputStart = StatelessMind.Output.ParametersIndex +
-                      StatelessMind.Output.OutputParameters.MakeSimpleOutputIndex;
-    var OutputEnd = OutputStart + StatelessMind.Output.OutputParameters.MakeSimpleOutputParameters.Length;
-    Inference.Incentives.Should().BeEquivalentTo([
-      (Reward, new[] {OutputStart..OutputEnd})
-    ]);
+    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output()
+    {
+      Parameters =
+      {
+        MakeSimpleOutput =
+        {
+          Value = ExpectedObject
+        }
+      }
+    });
   }
 
   [TestMethod]
@@ -287,7 +293,6 @@ public partial class GeneratedMinds
       Argument2, AThirdArgument);
     var Mind = new StatelessMind(Brain);
     var T = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArgument);
-    T.RaiseAnyExceptions();
     T.Feedback.SelectionShouldHaveBeen(Category.AllOptions[SelectedIndex].Payload);
 
     Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output()
