@@ -241,10 +241,6 @@ static class MindRenderer
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{UseOperation.Name}Parameters.Length;");
     W.WriteLine();
 
-    var (ThoughtMethod, Async) = MethodIsAsync ? ("ThinkAsync", "async ") : ("Think", "");
-    W.WriteLine($"return Thought.WithFeedback<{FeedbackType}>.{ThoughtMethod}({Async}R =>");
-    W.WriteLine("{");
-    W.Indent++;
     W.WriteLine($"var FeedbackMock = new {UseOperation.Name}FeedbackMock(Inference);");
     W.WriteLine($"var Feedback = new {FeedbackType}(");
     W.Indent++;
@@ -252,20 +248,27 @@ static class MindRenderer
     W.WriteLine("FeedbackMock.Commit");
     W.Indent--;
     W.WriteLine(");");
-
-    W.WriteLine("R.SetFeedback(Feedback);");
     W.WriteLine();
-    var Unwrap = ActionSurface.AssociatedInterpreter!.RequiresAwait ? "await " : "";
+
+    var (ThoughtMethod, FromLogicMethod, Async, Unwrap) = MethodIsAsync ? ("ThinkAsync", "FromLogicAsync", "async ", "await ") : ("Think", "FromLogic", "", "");
+    W.WriteLine($"return Thought.{ThoughtMethod}({Async}R =>");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine($"return {Unwrap}ThoughtResult.FromFeedback(Feedback)");
+    W.Indent++;
+    W.WriteLine($".{FromLogicMethod}({Async}_ => ");
+    W.WriteLine("{");
+    W.Indent++;
+
+    W.WriteLine();
     W.WriteLine(
       $"var MoreActions = R.Consume({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name}));");
 
     W.WriteLine();
-    W.WriteLine("return (");
-    W.Indent++;
-    W.WriteLine("MoreActions,");
-    W.WriteLine("Feedback");
+    W.WriteLine("return MoreActions;");
     W.Indent--;
-    W.WriteLine(");");
+    W.WriteLine("});");
+    W.Indent--;
     W.Indent--;
     W.WriteLine("});");
     W.Indent--;
@@ -283,13 +286,24 @@ static class MindRenderer
     W.WriteLine("{");
     W.Indent++;
     W.WriteLine("return Thought.Think(R =>");
+    W.Indent++;
+    W.WriteLine("ThoughtResult.FromFeedbackSource(");
+    W.Indent++;
+    W.WriteLine($"ChooseFeedback<{ChooseOperation.SelectableTypeName}>.GetSource(");
+    W.Indent++;
+    W.WriteLine($"[..{ChooseOperation.CategoryParameter}.AllOptions.Select(O => O.Payload)],");
+    W.WriteLine(
+      $"I => new Output {{ Parameters = {{ {ChooseOperation.Name} = {{ {ChooseOperation.CategoryParameter} = {{ Selection = I }} }} }} }}");
+    W.Indent--;
+    W.WriteLine(")");
+    W.Indent--;
+    W.WriteLine(").FromLogic(Source =>");
     W.WriteLine("{");
     W.Indent++;
-
+    
     W.WriteLine("using var _ = EnterChainedReasoning();");
 
     W.WriteLine("Output FinalOutputObject = default!;");
-    W.WriteLine("Inference FinalInference = default!;");
 
     W.WriteLine($"foreach (var Batch in {ChooseOperation.CategoryParameter}.ToInputBatches())");
     W.WriteLine("{");
@@ -306,7 +320,7 @@ static class MindRenderer
     W.WriteLine();
     RenderMakeInference(W, MindModel);
     W.WriteLine("FinalOutputObject = OutputObject;");
-    W.WriteLine("FinalInference = Inference;");
+    W.WriteLine("Source.FinalInference = Inference;");
     W.WriteLine();
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index;");
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{ChooseOperation.Name}Parameters.Length;");
@@ -314,23 +328,12 @@ static class MindRenderer
     W.Indent--;
     W.WriteLine("}");
 
-    W.WriteLine("return (");
-    W.Indent++;
-    W.WriteLine(
-      $"{ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}),");
-    W.WriteLine($"ChooseFeedback<{ChooseOperation.SelectableTypeName}>.Get(");
-    W.Indent++;
-    W.WriteLine("new(FinalInference),");
-    W.WriteLine($"[..{ChooseOperation.CategoryParameter}.AllOptions.Select(O => O.Payload)],");
-    W.WriteLine(
-      $"I => new Output {{ Parameters = {{ {ChooseOperation.Name} = {{ {ChooseOperation.CategoryParameter} = {{ Selection = I }} }} }} }}");
+    W.WriteLine($"return {ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter});");
     W.Indent--;
-    W.WriteLine(")");
-    W.Indent--;
-    W.WriteLine(");");
+    W.WriteLine("})");
 
     W.Indent--;
-    W.WriteLine("});");
+    W.WriteLine(");");
     W.Indent--;
     W.WriteLine("}");
   }

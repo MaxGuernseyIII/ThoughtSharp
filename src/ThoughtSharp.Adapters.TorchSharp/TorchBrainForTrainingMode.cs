@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using ThoughtSharp.Runtime;
-using TorchSharp;
 using TorchSharp.Modules;
 using static TorchSharp.torch;
 
@@ -84,4 +83,9 @@ public class TorchBrainForTrainingMode(
     //  Console.WriteLine($"Grad mean: {grad?.mean().item<float>()}, zero? {grad?.allclose(torch.zeros_like(grad))}");
     //}
   }
+}
+
+interface TorchModel : IDisposable
+{
+  void ApplyLoss(Tensor TensorForBackPropagation, Tensor TensorWithExpectedValues);
 }

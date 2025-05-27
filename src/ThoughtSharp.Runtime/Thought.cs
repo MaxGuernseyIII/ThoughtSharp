@@ -20,21 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.ExceptionServices;
-
 namespace ThoughtSharp.Runtime;
 
 public abstract partial class Thought : IDisposable
 {
   readonly IReadOnlyList<IDisposable> Disposables;
-  readonly ExceptionDispatchInfo? ExceptionInfo;
+  readonly ThoughtResult Result;
   readonly IReadOnlyDictionary<Thought, float> Weights;
 
   // prevents foreign inheritors
-  internal Thought(Reasoning LineOfReasoning, ExceptionDispatchInfo? ExceptionInfo)
+  internal Thought(Reasoning LineOfReasoning, ThoughtResult Result)
   {
-    this.ExceptionInfo = ExceptionInfo;
+    this.Result = Result;
     Children = LineOfReasoning.Children;
     Weights = LineOfReasoning.ChildrenWeights;
     Disposables = LineOfReasoning.DisposableResources;
@@ -53,154 +50,127 @@ public abstract partial class Thought : IDisposable
     foreach (var Disposable in Disposables)
       Disposable.Dispose();
   }
-  
+
   public static Thought<TProduct, TFeedback> Capture<TProduct, TFeedback>(TProduct Product, TFeedback Feedback)
   {
-    return new(Product, Feedback, null, new());
+    return new(ThoughtResult.FromOutput(Product, Feedback), new());
   }
 
-  public static Thought<TProduct, NullFeedback> Capture<TProduct>(TProduct Product) =>
-    Capture(Product, NullFeedback.Instance);
-
-  public static class WithFeedback<TFeedback>
+  public static Thought<TProduct, NullFeedback> Capture<TProduct>(TProduct Product)
   {
-    public static Thought<TProduct, TFeedback> Think<TProduct>(
-      Func<Thought<TFeedback>.Reasoning, (TProduct Product, TFeedback Feedback)> Produce)
-    {
-      var Reasoning = new Thought<TFeedback>.Reasoning();
-      TProduct? Product;
-      TFeedback? Feedback;
-
-      ExceptionDispatchInfo? ExceptionInfo;
-      try
-      {
-        (Product, Feedback) = Produce(Reasoning);
-        ExceptionInfo = null;
-      }
-      catch (Exception Exception)
-      {
-        (Product, Feedback) = (default, default);
-        ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
-      }
-
-      Feedback ??= Reasoning.Feedback;
-
-        var Result = new Thought<TProduct, TFeedback>(Product, Feedback, ExceptionInfo, Reasoning);
-      Reasoning.Parent = Result;
-      return Result;
-    }
-
-    public static async Task<Thought<TProduct, TFeedback>> ThinkAsync<TProduct>(
-      Func<Thought<TFeedback>.Reasoning, Task<(TProduct, TFeedback)>> Produce)
-    {
-      var Reasoning = new Thought<TFeedback>.Reasoning();
-      TProduct? Product;
-      TFeedback? Feedback;
-
-      ExceptionDispatchInfo? ExceptionInfo;
-      try
-      {
-        (Product, Feedback) = await Produce(Reasoning);
-        ExceptionInfo = null;
-      }
-      catch (Exception Exception)
-      {
-        Product = default;
-        Feedback = default;
-        ExceptionInfo = ExceptionDispatchInfo.Capture(Exception);
-      }
-
-      var Result = new Thought<TProduct, TFeedback>(Product, Feedback, ExceptionInfo, Reasoning);
-      Reasoning.Parent = Result;
-      return Result;
-    }
-
-    public static Thought<TFeedback> Do(Action<Thought<TFeedback>.Reasoning> ToDo)
-    {
-      return Think<object?>(R =>
-      {
-        ToDo(R);
-        return (null, R.Feedback!);
-      });
-    }
-
-    public static async Task<Thought> DoAsync(Func<Reasoning, Task> ToDo)
-    {
-      var Result = await ThinkAsync(async Task<(object?, TFeedback)> (R) =>
-      {
-        await ToDo(R);
-
-        return (null, R.Feedback!);
-      });
-
-      return Result;
-    }
+    return Capture(Product, NullFeedback.Instance);
   }
 
   public static Thought<TProduct, TFeedback> Think<TProduct, TFeedback>(
-    Func<Reasoning, (TProduct Product, TFeedback Feedback)> Produce)
+    Func<Reasoning, ThoughtResult<TProduct, TFeedback>> Produce)
   {
-    return WithFeedback<TFeedback>.Think(Produce);
-  }
-
-  public static Thought Do(Action<Reasoning> ToDo)
-  {
-    return WithFeedback<object?>.Do(ToDo);
+    var Reasoning = new Reasoning();
+    var ThoughtResult = Produce(Reasoning);
+    var Result = new Thought<TProduct, TFeedback>(ThoughtResult, Reasoning);
+    Reasoning.Parent = Result;
+    return Result;
   }
 
   public static Thought<TFeedback> Do<TFeedback>(Func<Reasoning, TFeedback> ToDo)
   {
-    return WithFeedback<TFeedback>.Think<object?>(R =>
-    {
-      var Feedback = ToDo(R);
-      return (null, Feedback);
-    });
+    return Think(R => ThoughtResult
+      .FromFeedbackSource(FeedbackSource.FromFunc(() => ToDo(R)))
+      .FromLogic(object? (_) => null)
+    );
+  }
+
+  public static async Task<Thought<TFeedback>> DoAsync<TFeedback>(Func<Reasoning, Task<TFeedback>> ToDo)
+  {
+    return await ThinkAsync(R => ThoughtResult
+      .FromFeedbackSource(FeedbackSource.Deferred<TFeedback>())
+      .FromLogicAsync(async D =>
+      {
+        D.Value = await ToDo(R);
+
+        return (object?) null;
+      })
+    );
   }
 
   public static Thought Done()
   {
-    return Do(R => { });
+    return WithoutFeedback.Do(_ => { });
   }
 
-  public static Task<Thought<TProduct, TFeedback>> ThinkAsync<TProduct, TFeedback>(
-    Func<Reasoning, Task<(TProduct, TFeedback)>> Produce)
+  public static async Task<Thought<TProduct, TFeedback>> ThinkAsync<TProduct, TFeedback>(
+    Func<Reasoning, Task<ThoughtResult<TProduct, TFeedback>>> Produce)
   {
-    return WithFeedback<TFeedback>.ThinkAsync(Produce);
+
+    var Reasoning = new Reasoning();
+    var ThoughtResult = await Produce(Reasoning);
+    var Result = new Thought<TProduct, TFeedback>(ThoughtResult, Reasoning);
+    Reasoning.Parent = Result;
+    return Result;
   }
 
-  public static Task<Thought> DoAsync(Func<Reasoning, Task> ToDo)
+  public static class WithoutFeedback
   {
-    return WithFeedback<NullFeedback>.DoAsync(ToDo);
+    public static Task<Thought<TProduct, NullFeedback>> ThinkAsync<TProduct>(Func<Reasoning, Task<TProduct>> Produce)
+    {
+      return Thought.ThinkAsync(
+        R => ThoughtResult
+          .FromFeedbackSource(FeedbackSource.Null)
+          .FromLogicAsync(_ => Produce(R)));
+    }
+
+    public static Thought<TProduct, NullFeedback> Think<TProduct>(Func<Reasoning, TProduct> Produce)
+    {
+      return Thought.Think(
+        R => ThoughtResult
+          .FromFeedbackSource(FeedbackSource.Null)
+          .FromLogic(_ => Produce(R)));
+    }
+
+    public static async Task<Thought> DoAsync(Func<Reasoning, Task> ToDo)
+    {
+      return await Thought.DoAsync(async R =>
+      {
+        await ToDo(R);
+
+        return NullFeedback.Instance;
+      });
+    }
+
+    public static Thought Do(Action<Reasoning> ToDo)
+    {
+      return Thought.Do(R =>
+      {
+        ToDo(R);
+
+        return NullFeedback.Instance;
+      });
+    }
   }
 
   public void RaiseAnyExceptions()
   {
-    if (ExceptionInfo is not null)
-      ExceptionInfo.Throw();
+    Result.RaiseAnyExceptions();
   }
 }
 
-public abstract partial class Thought<TFeedback>(
+public abstract class Thought<TFeedback>(
   Thought.Reasoning LineOfReasoning,
-  ExceptionDispatchInfo? ExceptionInfo,
-  TFeedback? Feedback)
-  : Thought(LineOfReasoning, ExceptionInfo)
+  ThoughtResult<TFeedback> Result)
+  : Thought(LineOfReasoning, Result)
 {
-  public TFeedback Feedback { get; } = Feedback!;
+  public TFeedback Feedback => Result.Feedback;
 }
 
 public sealed class Thought<TProduct, TFeedback> : Thought<TFeedback>
 {
-  readonly TProduct? Product;
+  readonly ThoughtResult<TProduct, TFeedback> Result;
 
   internal Thought(
-    TProduct? Product, 
-    TFeedback? Feedback,
-    ExceptionDispatchInfo? ExceptionInfo, 
+    ThoughtResult<TProduct, TFeedback> Result,
     Reasoning LineOfReasoning)
-    : base(LineOfReasoning, ExceptionInfo, Feedback)
+    : base(LineOfReasoning, Result)
   {
-    this.Product = Product;
+    this.Result = Result;
   }
 
   public TProduct ConsumeDetached()
@@ -210,6 +180,42 @@ public sealed class Thought<TProduct, TFeedback> : Thought<TFeedback>
 
   internal TProduct GetProduct()
   {
-    return Product!;
+    return Result.Product;
   }
 }
+
+public class DeferredFeedback<TFeedback>
+{
+  public TFeedback Value { get; set; } = default!;
+}
+
+public static class FeedbackSource
+{
+  public static FeedbackSource<TFeedback, TFeedback> FromInstance<TFeedback>(TFeedback Instance)
+  {
+    return new(Instance, () => Instance);
+  }
+
+  public static FeedbackSource<DeferredFeedback<TFeedback>, TFeedback> Deferred<TFeedback>()
+  {
+    var Deferred = new DeferredFeedback<TFeedback>();
+
+    return new(Deferred, () => Deferred.Value);
+  }
+
+  public static FeedbackSource<NullFeedbackConfigurator, TFeedback> FromFunc<TFeedback>(Func<TFeedback> CreateMethod)
+  {
+    return new(NullFeedbackConfigurator.Instance, CreateMethod);
+  }
+
+  public static FeedbackSource<NullFeedbackConfigurator, NullFeedback> Null { get; } = new(NullFeedbackConfigurator.Instance, () => NullFeedback.Instance);
+}
+
+public class NullFeedbackConfigurator
+{
+  NullFeedbackConfigurator() {}
+
+  public static NullFeedbackConfigurator Instance { get; } = new();
+}
+
+public record FeedbackSource<TConfigurator, TFeedback>(TConfigurator Configurator, Func<TFeedback> CreateFeedback);

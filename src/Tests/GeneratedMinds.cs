@@ -524,7 +524,7 @@ public partial class GeneratedMinds
 
     public Thought DoSomething2(float SomeOtherData)
     {
-      return Thought.Do(_ => { this.SomeOtherData = SomeOtherData; });
+      return Thought.WithoutFeedback.Do(_ => { this.SomeOtherData = SomeOtherData; });
     }
   }
 
@@ -540,7 +540,7 @@ public partial class GeneratedMinds
 
     public Task<Thought> DoSomething2(float SomeOtherData)
     {
-      return Task.FromResult(Thought.Do(_ => { this.SomeOtherData = SomeOtherData; }));
+      return Task.FromResult(Thought.WithoutFeedback.Do(_ => { this.SomeOtherData = SomeOtherData; }));
     }
   }
 

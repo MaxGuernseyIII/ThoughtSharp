@@ -49,9 +49,9 @@ static class CognitiveDataInterpreterRenderer
           W.WriteLine("var Parameters = this.Parameters;");
           W.WriteLine();
           if (MethodIsAsync)
-            W.WriteLine("return Thought.ThinkAsync(async R =>");
+            W.WriteLine("return Thought.WithoutFeedback.ThinkAsync(async R =>");
           else
-            W.WriteLine("return Thought.Think(R =>");
+            W.WriteLine("return Thought.WithoutFeedback.Think(R =>");
           W.Indent++;
           W.WriteLine("{");
           W.Indent++;
@@ -90,7 +90,7 @@ static class CognitiveDataInterpreterRenderer
           W.Indent--;
           W.WriteLine("}");
           W.WriteLine();
-          W.WriteLine("return (MoreActions, NullFeedback.Instance);");
+          W.WriteLine("return MoreActions;");
           W.Indent--;
           W.WriteLine("}");
           W.Indent--;

@@ -71,7 +71,7 @@ public sealed class ThoughtTraceability
   public void InternalReasoning()
   {
     var Expected = new MockProduct();
-    var T = Thought.Think(_ => (Expected, NullFeedback.Instance));
+    var T = Thought.Think(_ => ThoughtResult.FromOutput(Expected, NullFeedback.Instance));
 
     var Actual = T.ConsumeDetached();
 
@@ -82,23 +82,26 @@ public sealed class ThoughtTraceability
   public void FeedbackCanBeSetEarlyAndIsStillAccessibleAfterException()
   {
     var Expected = new object();
-    var T = Thought.WithFeedback<object>.Think(R =>
+    var T = Thought.Think(_ =>
     {
-      R.SetFeedback(Expected);
+      return ThoughtResult.FromFeedback(Expected)
+        .FromLogic(() =>
+          {
+            Assert.Fail("This exception should not be raised.");
 
-      Assert.Fail("This exception should not be raised.");
-
-      return (new MockProduct(), Expected);
+            return new MockProduct();
+          }
+        );
     });
 
     T.Feedback.Should().BeSameAs(Expected);
   }
-  
+
   [TestMethod]
   public void ThoughtsCaptureAndReleaseExceptions()
   {
     var Expected = new Exception();
-    var T = Thought.Do(_ => throw Expected);
+    var T = Thought.WithoutFeedback.Think<object?>(_ => throw Expected);
 
     T.Invoking(It => new Thought.Reasoning().Incorporate(It)).Should().Throw<Exception>().And.Should().Be(Expected);
   }
@@ -107,7 +110,7 @@ public sealed class ThoughtTraceability
   public async Task AsynchronousThoughtsCaptureAndReleaseExceptions()
   {
     var Expected = new Exception();
-    var T = await Thought.DoAsync(_ => Task.FromException(Expected));
+    var T = await Thought.WithoutFeedback.DoAsync(_ => Task.FromException(Expected));
 
     T.Invoking(It => new Thought.Reasoning().Incorporate(It)).Should().Throw<Exception>().And.Should().Be(Expected);
   }
@@ -116,7 +119,7 @@ public sealed class ThoughtTraceability
   public void SynchronousCleanup()
   {
     var Disposable = new MockDisposable();
-    var T = Thought.Do(R => { R.RegisterDisposable(Disposable); });
+    var T = Thought.WithoutFeedback.Do(R => { R.RegisterDisposable(Disposable); });
 
     T.Dispose();
 
@@ -127,7 +130,7 @@ public sealed class ThoughtTraceability
   public void CleanupIsDistributive()
   {
     var Disposable = new MockDisposable();
-    var T = Thought.Do(R => { R.Incorporate(Thought.Do(R2 => R2.RegisterDisposable(Disposable))); });
+    var T = Thought.WithoutFeedback.Do(R => { R.Incorporate(Thought.WithoutFeedback.Do(R2 => R2.RegisterDisposable(Disposable))); });
 
     T.Dispose();
 
@@ -138,7 +141,7 @@ public sealed class ThoughtTraceability
   public async Task AsynchronousCleanup()
   {
     var Disposable = new MockDisposable();
-    var T = await Thought.DoAsync(R =>
+    var T = await Thought.WithoutFeedback.DoAsync(R =>
     {
       R.RegisterDisposable(Disposable);
       return Task.CompletedTask;
@@ -153,7 +156,7 @@ public sealed class ThoughtTraceability
   public void ThoughtChildrenIsReasoningChildrenAtEndOfProduction()
   {
     Thought.Reasoning CapturedReasoning = null!;
-    var T = Thought.Think(R =>
+    var T = Thought.WithoutFeedback.Think(R =>
     {
       CapturedReasoning = R;
       R.Consume(Thought.Capture(new MockProduct()));
@@ -172,7 +175,7 @@ public sealed class ThoughtTraceability
   public void ThoughtChildrenAreAttachedToParentThought()
   {
     var Subthought = Thought.Capture(new MockProduct());
-    var Superthought = Thought.Do(R => { R.Consume(Subthought); });
+    var Superthought = Thought.WithoutFeedback.Do(R => { R.Consume(Subthought); });
 
     Subthought.Parent.Should().BeSameAs(Superthought);
   }
@@ -181,7 +184,7 @@ public sealed class ThoughtTraceability
   public void UsedThoughtParentIsCorrectAtEndOfReasoning()
   {
     var Subthought = Thought.Capture(new MockProduct());
-    var T = Thought.Think(R =>
+    var T = Thought.WithoutFeedback.Think(R =>
     {
       R.Consume(Subthought);
 
@@ -197,14 +200,14 @@ public sealed class ThoughtTraceability
   public void SubthoughtCannotBeUsedTwice()
   {
     var Subthought = Thought.Capture(new MockProduct());
-    Thought.Think(R =>
+    Thought.WithoutFeedback.Think(R =>
     {
       R.Consume(Subthought);
       return (new object(), NullFeedback.Instance);
     });
     var SubthoughtParent = Subthought.Parent;
 
-    var FailedThought = Thought.Think(R =>
+    var FailedThought = Thought.WithoutFeedback.Think(R =>
     {
       R
         .Invoking(Reasoning => Reasoning.Consume(Subthought))
@@ -222,7 +225,7 @@ public sealed class ThoughtTraceability
   public async Task AsynchronousThinkingYieldsProduct()
   {
     var Expected = new MockProduct();
-    var T = await Thought.ThinkAsync(_ => Task.FromResult((Expected, NullFeedback.Instance)));
+    var T = await Thought.WithoutFeedback.ThinkAsync(_ => Task.FromResult(Expected));
 
     var Actual = T.ConsumeDetached();
 
@@ -234,7 +237,7 @@ public sealed class ThoughtTraceability
   {
     var Subthought = Thought.Capture(new MockProduct());
 
-    var T = await Thought.DoAsync(R =>
+    var T = await Thought.WithoutFeedback.DoAsync(R =>
     {
       R.Consume(Subthought);
       return Task.CompletedTask;
@@ -248,7 +251,7 @@ public sealed class ThoughtTraceability
   {
     var Subthought = Thought.Capture(new MockProduct());
 
-    var T = await Thought.DoAsync(R =>
+    var T = await Thought.WithoutFeedback.DoAsync(R =>
     {
       R.Consume(Subthought);
       return Task.CompletedTask;

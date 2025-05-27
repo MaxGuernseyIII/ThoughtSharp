@@ -70,26 +70,3 @@ public class AsyncUseFeedback<TSurface>(TSurface Mock, Action<bool> Commit)
     Commit(ShouldHaveRequestedMore.Value);
   }
 }
-
-public class ChooseFeedback<TSelectable>(InferenceFeedback Underlying, IReadOnlyList<TSelectable> Options, Func<ushort, float[]> ToExpectedOutput)
-{
-  public static ChooseFeedback<TSelectable> Get<TOutput>(InferenceFeedback Underlying,
-    IReadOnlyList<TSelectable> Options, Func<ushort, TOutput> GetOutputObject)
-    where TOutput : CognitiveData<TOutput>
-  {
-    return new(Underlying, Options, I =>
-    {
-      var Buffer = new float[TOutput.Length];
-      var Output = GetOutputObject(I);
-      Output.MarshalTo(Buffer);
-
-      return Buffer;
-    });
-  }
-
-  public void SelectionShouldHaveBeen(TSelectable Payload)
-  {
-    var ExpectedOutput = ToExpectedOutput((ushort) Options.ToList().IndexOf(Payload));
-    Underlying.OutputShouldHaveBeen(ExpectedOutput);
-  }
-}

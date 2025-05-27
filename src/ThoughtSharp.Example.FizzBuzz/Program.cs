@@ -211,9 +211,12 @@ void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
 
     var Input = Random.Next(1, 101);
     var Terminal = new StringBuilderTerminal();
-    var T = Thought.WithFeedback<IReadOnlyList<UseFeedback<Terminal>>>.Do(R =>
+    var T = Thought.Do(R =>
     {
-      FizzBuzzHybridReasoning.WriteForOneNumber(Mind, 5, R, Terminal, Input);
+      var Feedback = new List<UseFeedback<Terminal>>();
+      FizzBuzzHybridReasoning.WriteForOneNumber(Mind, 5, R, Terminal, Input, Feedback);
+
+      return Feedback;
     });
 
     var Failure = false;

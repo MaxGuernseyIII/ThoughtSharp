@@ -45,13 +45,11 @@ static class FizzBuzzHybridReasoning
   public static void WriteForOneNumber(
     FizzBuzzMind Mind, 
     short MaximumOperationsPerStep, 
-    Thought<IReadOnlyList<UseFeedback<Terminal>>>.Reasoning R,
+    Thought.Reasoning R,
     Terminal Terminal, 
-    int I)
+    int I, List<UseFeedback<Terminal>> Feedback)
   {
     using var Reasoning = Mind.EnterChainedReasoning();
-    var Feedback = new List<UseFeedback<Terminal>>();
-    R.SetFeedback(Feedback);
 
     foreach (var _ in Enumerable.Range(0, MaximumOperationsPerStep))
     {

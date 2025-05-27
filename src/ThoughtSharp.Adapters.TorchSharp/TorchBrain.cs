@@ -58,3 +58,22 @@ public class TorchBrain(Sequential Model, torch.Device Device, int StateSize) : 
     };
   }
 }
+
+class StatefulModule : torch.nn.Module
+{
+  protected StatefulModule(string name) : base(name)
+  {
+  }
+}
+
+class StatelessModule : torch.nn.Module<torch.Tensor, torch.Tensor>
+{
+  public StatelessModule(string name) : base(name)
+  {
+  }
+
+  public override torch.Tensor forward(torch.Tensor input)
+  {
+    throw new NotImplementedException();
+  }
+}

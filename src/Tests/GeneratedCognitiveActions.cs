@@ -115,7 +115,7 @@ public partial class GeneratedCognitiveActions
       ActionHandler = delegate
       {
         Invoked = true;
-        return Task.FromResult(Thought.Do(_ => { }));
+        return Task.FromResult(Thought.WithoutFeedback.Do(_ => { }));
       }
     };
     var P = new AsyncThoughtfulAction.Output
@@ -243,7 +243,7 @@ public partial class GeneratedCognitiveActions
   {
     public Func<Task<Thought>> ActionHandler { get; set; } = delegate
     {
-      return Task.FromResult(Thought.Do(_ => Assert.Fail("Action should not be invoked")));
+      return Task.FromResult(Thought.WithoutFeedback.Do(_ => Assert.Fail("Action should not be invoked")));
     };
 
     public Task<Thought> Action()
@@ -256,7 +256,7 @@ public partial class GeneratedCognitiveActions
   {
     public Func<Thought> ActionHandler { get; init; } = delegate
     {
-      return Thought.Do(_ => Assert.Fail("Action should not be invoked"));
+      return Thought.WithoutFeedback.Do(_ => Assert.Fail("Action should not be invoked"));
     };
 
     public Thought Action()
