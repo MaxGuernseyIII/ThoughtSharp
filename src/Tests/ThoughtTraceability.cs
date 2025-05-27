@@ -84,7 +84,7 @@ public sealed class ThoughtTraceability
     var Expected = new object();
     var T = Thought.Think(_ =>
     {
-      return ThoughtResult.FromFeedback(Expected)
+      return ThoughtResult.WithFeedback(Expected)
         .FromLogic(() =>
           {
             Assert.Fail("This exception should not be raised.");

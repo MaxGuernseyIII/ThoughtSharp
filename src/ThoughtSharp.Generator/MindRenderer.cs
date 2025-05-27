@@ -254,7 +254,7 @@ static class MindRenderer
     W.WriteLine($"return Thought.{ThoughtMethod}({Async}R =>");
     W.WriteLine("{");
     W.Indent++;
-    W.WriteLine($"return {Unwrap}ThoughtResult.FromFeedback(Feedback)");
+    W.WriteLine($"return {Unwrap}ThoughtResult.WithFeedback(Feedback)");
     W.Indent++;
     W.WriteLine($".{FromLogicMethod}({Async}_ => ");
     W.WriteLine("{");
@@ -287,7 +287,7 @@ static class MindRenderer
     W.Indent++;
     W.WriteLine("return Thought.Think(R =>");
     W.Indent++;
-    W.WriteLine("ThoughtResult.FromFeedbackSource(");
+    W.WriteLine("ThoughtResult.WithFeedbackSource(");
     W.Indent++;
     W.WriteLine($"ChooseFeedback<{ChooseOperation.SelectableTypeName}>.GetSource(");
     W.Indent++;

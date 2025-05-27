@@ -62,7 +62,7 @@ public abstract class ThoughtResult(ExceptionDispatchInfo? Exception)
     Exception?.Throw();
   }
 
-  public static WithFeedback<TFeedback, TFeedback> FromFeedback<TFeedback>(TFeedback Feedback)
+  public static WithFeedbackFactory<TFeedback, TFeedback> WithFeedback<TFeedback>(TFeedback Feedback)
   {
     return new(FeedbackSource.FromInstance(Feedback));
   }
@@ -79,11 +79,11 @@ public abstract class ThoughtResult(ExceptionDispatchInfo? Exception)
     return new(default, Feedback, ExceptionDispatchInfo.Capture(Exception));
   }
 
-  public static WithFeedback<TConfigurator, TFeedback> FromFeedbackSource<TConfigurator, TFeedback>(
+  public static WithFeedbackFactory<TConfigurator, TFeedback> WithFeedbackSource<TConfigurator, TFeedback>(
     FeedbackSource<TConfigurator, TFeedback> Source)
     => new(Source);
 
-  public readonly struct WithFeedback<TConfigurator, TFeedback>(FeedbackSource<TConfigurator, TFeedback> Source)
+  public readonly struct WithFeedbackFactory<TConfigurator, TFeedback>(FeedbackSource<TConfigurator, TFeedback> Source)
   {
     public ThoughtResult<TProduct, TFeedback> FromLogic<TProduct>(
       Func<TConfigurator, TProduct> MakeProduct)
@@ -99,8 +99,8 @@ public abstract class ThoughtResult(ExceptionDispatchInfo? Exception)
         return FromException<TProduct, TFeedback>(Source.CreateFeedback(), Ex);
       }
     }
-    public ThoughtResult<TProduct, TFeedback> FromLogic<TProduct>(
-      Func<TProduct> MakeProduct)
+
+    public ThoughtResult<TProduct, TFeedback> FromLogic<TProduct>(Func<TProduct> MakeProduct)
     {
       return FromLogic(_ => MakeProduct());
     }
@@ -119,8 +119,7 @@ public abstract class ThoughtResult(ExceptionDispatchInfo? Exception)
       }
     }
 
-    public Task<ThoughtResult<TProduct, TFeedback>> FromLogicAsync<TProduct>(
-      Func<Task<TProduct>> MakeProduct)
+    public Task<ThoughtResult<TProduct, TFeedback>> FromLogicAsync<TProduct>(Func<Task<TProduct>> MakeProduct)
     {
       return FromLogicAsync(_ => MakeProduct());
     }

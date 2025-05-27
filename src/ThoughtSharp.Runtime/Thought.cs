@@ -74,7 +74,7 @@ public abstract partial class Thought : IDisposable
   public static Thought<TFeedback> Do<TFeedback>(Func<Reasoning, TFeedback> ToDo)
   {
     return Think(R => ThoughtResult
-      .FromFeedbackSource(FeedbackSource.FromFunc(() => ToDo(R)))
+      .WithFeedbackSource(FeedbackSource.FromFunc(() => ToDo(R)))
       .FromLogic(object? (_) => null)
     );
   }
@@ -82,7 +82,7 @@ public abstract partial class Thought : IDisposable
   public static async Task<Thought<TFeedback>> DoAsync<TFeedback>(Func<Reasoning, Task<TFeedback>> ToDo)
   {
     return await ThinkAsync(R => ThoughtResult
-      .FromFeedbackSource(FeedbackSource.Deferred<TFeedback>())
+      .WithFeedbackSource(FeedbackSource.Deferred<TFeedback>())
       .FromLogicAsync(async D =>
       {
         D.Value = await ToDo(R);
@@ -114,7 +114,7 @@ public abstract partial class Thought : IDisposable
     {
       return Thought.ThinkAsync(
         R => ThoughtResult
-          .FromFeedbackSource(FeedbackSource.Null)
+          .WithFeedbackSource(FeedbackSource.Null)
           .FromLogicAsync(_ => Produce(R)));
     }
 
@@ -122,7 +122,7 @@ public abstract partial class Thought : IDisposable
     {
       return Thought.Think(
         R => ThoughtResult
-          .FromFeedbackSource(FeedbackSource.Null)
+          .WithFeedbackSource(FeedbackSource.Null)
           .FromLogic(_ => Produce(R)));
     }
 
