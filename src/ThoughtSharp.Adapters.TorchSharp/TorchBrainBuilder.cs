@@ -98,6 +98,12 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     return new(TInput.Length, TOutput.Length);
   }
 
+  public static TorchBrainBuilder For<TMind>()
+    where TMind : Mind
+  {
+    return new(TMind.InputLength, TMind.OutputLength);
+  }
+
   public TorchBrainBuilder ForClassification()
   {
     FinalActivationType = OutputLength == 1 ? ActivationType.Sigmoid : ActivationType.Softmax;
@@ -105,26 +111,34 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     return this;
   }
 
-  public TorchBrainBuilder ForLogic(ushort ScaleBy = 16, ushort Depth = 2)
+  public TorchBrainBuilder ForLogic(ushort Layer1ScaleBy = 4, ushort Layer2ScaleBy = 32, ushort? Layer3ScaleBy = null)
   {
     Layers.Clear();
-    var WidestFeatureCount = 3 + InputLength * ScaleBy;
-    foreach (var _ in Enumerable.Range(0, Depth))
-      Layers.Add(new()
-      {
-        Features = WidestFeatureCount,
-        ActivationType = ActivationType.Tanh
-      });
-    Layers.Add(
+
+    Layers.AddRange([
       new()
       {
-        Features = (WidestFeatureCount + OutputLength) / 2,
+        Features = InputLength * Layer1ScaleBy,
         ActivationType = ActivationType.Tanh
+      },
+      new()
+      {
+        Features = InputLength * Layer2ScaleBy,
+        ActivationType = ActivationType.ReLU
       }
-    );
+      ]);
 
-    FinalActivationType = ActivationType.None;
-    LossFunction = LossFunctions.BinaryCrossEntropyWithLogits;
+    if (Layer3ScaleBy is {} Scale)
+    {
+      Layers.Add(new()
+      {
+        Features = InputLength * Scale,
+        ActivationType = ActivationType.Tanh
+      });
+    }
+    
+    FinalActivationType = ActivationType.Sigmoid;
+    LossFunction = LossFunctions.BinaryCrossEntropy;
 
     return this;
   }

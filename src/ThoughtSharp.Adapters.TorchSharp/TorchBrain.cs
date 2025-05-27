@@ -27,9 +27,9 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 
 public class TorchBrain(Sequential Model, torch.Device Device, int StateSize) : IDisposable
 {
-  internal Sequential Model { get; } = Model;
-  internal torch.Device Device { get; } = Device;
-  internal int StateSize { get; } = StateSize;
+  protected Sequential Model { get; } = Model;
+  torch.Device Device { get; } = Device;
+  int StateSize { get; } = StateSize;
 
   public torch.Tensor EmptyState => torch.zeros(new long[] { 1, StateSize }, dtype: torch.ScalarType.Float32, device: Device);
 

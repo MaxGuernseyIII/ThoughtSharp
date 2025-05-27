@@ -35,17 +35,25 @@ static class MindRenderer
         W.WriteLine("using ThoughtSharp.Runtime;");
         W.WriteLine();
       },
-      WriteAfterTypeName = W => { W.Write("(Brain Brain) : Mind"); },
+      WriteAfterTypeName = W => { W.Write($"(Brain Brain) : Mind"); },
       WriteBody = W =>
       {
         ushort OperationCode = 1;
 
+        WriteInterfaceMembers(W, M);
         WriteCognitionModeMembers(W, M);
         RenderDisposeMembers(W);
 
         RenderModelMembers(W, M, OperationCode);
       }
     });
+  }
+
+  static void WriteInterfaceMembers(IndentedTextWriter W, MindModel M)
+  {
+    W.WriteLine($"public static int InputLength {{ get; }} = { M.TypeName.FullName}.Input.Length;");
+    W.WriteLine($"public static int OutputLength {{ get; }} = { M.TypeName.FullName}.Output.Length;");
+    W.WriteLine();
   }
 
   static void WriteCognitionModeMembers(IndentedTextWriter W, MindModel M)

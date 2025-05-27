@@ -26,4 +26,7 @@ namespace Tests.Mocks;
 
 class MockMind : MockDisposable, Mind
 {
+  public static int InputLength => throw new NotImplementedException();
+
+  public static int OutputLength => throw new NotImplementedException();
 }

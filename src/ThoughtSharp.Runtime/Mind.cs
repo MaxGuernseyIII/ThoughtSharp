@@ -24,4 +24,6 @@ namespace ThoughtSharp.Runtime;
 
 public interface Mind : IDisposable
 {
+  public static abstract int InputLength { get; }
+  public static abstract int OutputLength { get; } 
 }

@@ -29,7 +29,7 @@ Console.WriteLine("Training...");
 const int TotalTrainingPasses = 40000;
 const int ReportEvery = 1000;
 
-ComparisonCheck(TotalTrainingPasses, ReportEvery);
+DoFizzBuzz(TotalTrainingPasses, ReportEvery);
 
 void DoForcedTraining(int TotalTrainingPasses1, int ReportEvery1)
 {
@@ -194,8 +194,8 @@ void DoAreaRaw(int TotalTrainingPasses1, int ReportEvery1)
 
 void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
 {
-  var BrainBuilder = TorchBrainBuilder.For<FizzBuzzMind.Input, FizzBuzzMind.Output>();
-  BrainBuilder.StateSize = 16;
+  var BrainBuilder = TorchBrainBuilder.For<FizzBuzzMind>().ForLogic();
+  BrainBuilder.StateSize = 32;
   var Mind = new FizzBuzzMind(BrainBuilder.Build());
   var Random = new Random();
   var Successes = 0;
@@ -255,25 +255,25 @@ void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
       Exceptions++;
     }
 
-    if (Failure)
+    //if (Failure)
       switch (Expected)
       {
         case "Fizz":
-          T.Feedback.FirstOrDefault()?.ExpectationsWere((Mock, More) =>
+          T.Feedback.First().ExpectationsWere((Mock, More) =>
           {
             Mock.Fizz();
             More.Value = false;
           });
-          return;
+          break;
         case "Buzz":
-          T.Feedback.FirstOrDefault()?.ExpectationsWere((Mock, More) =>
+          T.Feedback.First().ExpectationsWere((Mock, More) =>
           {
             Mock.Buzz();
             More.Value = false;
           });
-          return;
+          break;
         case "FizzBuzz":
-          T.Feedback.FirstOrDefault()?.ExpectationsWere((Mock, More) =>
+          T.Feedback.First().ExpectationsWere((Mock, More) =>
           {
             Mock.Fizz();
             More.Value = true;
@@ -283,9 +283,9 @@ void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
             Mock.Buzz();
             More.Value = false;
           });
-          return;
+          break;
         default:
-          T.Feedback.FirstOrDefault()?.ExpectationsWere((Mock, More) =>
+          T.Feedback.First().ExpectationsWere((Mock, More) =>
           {
             Mock.WriteNumber((short) Input);
             More.Value = false;
@@ -356,6 +356,72 @@ void ComparisonCheck(int TotalTrainingPasses1, int ReportEvery1)
 
     //if (Failure)
       Inference.Train([Expected ? 1 : 0]);
+  }
+
+  Report(TotalTrainingPasses1);
+
+  Console.WriteLine("Done.");
+
+  void Report(int I)
+  {
+    Console.WriteLine(
+      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+    if (I >= 1000)
+      Console.WriteLine($"  Errors Per 1000: {FailureLog[^1000..].Count(F => F)}");
+  }
+}
+
+void MindfulComparisonCheck(int TotalTrainingPasses1, int ReportEvery1)
+{
+  var Brain = TorchBrainBuilder.For<ComparisonMind>().ForLogic().Build();
+  var Mind = new ComparisonMind(Brain);
+  var Random = new Random();
+  var Successes = 0;
+  var Failures = 0;
+  var Exceptions = 0;
+
+  List<bool> FailureLog = [];
+
+  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
+  {
+    if (Iteration % ReportEvery1 == 0)
+      Report(Iteration);
+
+    var Input1 = Random.Next(0, byte.MaxValue);
+    var Input2 = Random.Next(0, byte.MaxValue);
+    var Expected = Input1.CompareTo(Input2);
+
+    var T = Mind.Compare(new() { Left = (byte)Input1, Right = (byte)Input2 });
+
+    bool Failure;
+    try
+    {
+      var Actual = T.ConsumeDetached();
+      if (Actual.Comparison != Expected)
+      {
+        Failures++;
+        Failure = true;
+      }
+      else
+      {
+        Successes++;
+        Failure = false;
+      }
+    }
+    catch
+    {
+      Exceptions++;
+      Failures++;
+      Failure = true;
+    }
+
+    FailureLog.Add(Failure);
+
+    //if (Failure)
+    T.Feedback.ResultShouldHaveBeen(new()
+    {
+      Comparison = (short)Expected
+    });
   }
 
   Report(TotalTrainingPasses1);

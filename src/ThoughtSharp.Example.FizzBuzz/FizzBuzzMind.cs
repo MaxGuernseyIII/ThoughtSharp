@@ -21,14 +21,23 @@
 // SOFTWARE.
 
 using ThoughtSharp.Runtime;
+using ThoughtSharp.Runtime.Codecs;
 
 namespace ThoughtSharp.Example.FizzBuzz;
+
+[CognitiveData]
+partial class FizzBuzzInput
+{
+  public byte Value { get; set; }
+
+  public static CognitiveDataCodec<byte> ValueCodec { get; } = new BitwiseOneHotNumberCodec<byte>();
+}
 
 [Mind]
 partial class FizzBuzzMind
 {
   [Use]
-  public partial Thought<bool, UseFeedback<Terminal>> WriteForNumber(Terminal Surface, int Index);
+  public partial Thought<bool, UseFeedback<Terminal>> WriteForNumber(Terminal Surface, FizzBuzzInput InputData);
 }
 
 [CognitiveData]
@@ -43,4 +52,28 @@ partial class ShapesMind
 {
   [Make]
   public partial Thought<ShapeInfo, MakeFeedback<ShapeInfo>> MakeSquare([CognitiveDataBounds<float>(-1e3f, 1e3f)] float SideLength);
+}
+
+[CognitiveData]
+public partial class ComparisonData
+{
+  [CognitiveDataBounds<short>(-1, 1)]
+  public short Comparison { get; set; }
+}
+
+[CognitiveData]
+public partial class ComparisonInputData
+{
+  public byte Left { get; set; }
+  static readonly CognitiveDataCodec<byte> LeftCodec = new BitwiseOneHotNumberCodec<byte>();
+  public byte Right { get; set; }
+  static readonly CognitiveDataCodec<byte> RightCodec = new BitwiseOneHotNumberCodec<byte>();
+
+}
+
+[Mind]
+public partial class ComparisonMind
+{
+  [Make]
+  public partial Thought<ComparisonData, MakeFeedback<ComparisonData>> Compare(ComparisonInputData Parameters);
 }
