@@ -37,11 +37,6 @@ public class TorchInferenceForProductionMode(
     return Brain.ExecuteInference(StateOutputTensor, Parameters);
   }
 
-  public void Train(ReadOnlySpan<float> Expected)
-  {
-    throw new NotSupportedException("You cannot train a neural network in production mode.");
-  }
-
   public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
   {
     throw new NotSupportedException("You cannot train a neural network in production mode.");

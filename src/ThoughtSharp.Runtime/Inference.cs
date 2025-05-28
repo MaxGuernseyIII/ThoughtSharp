@@ -26,6 +26,5 @@ public interface Inference : IDisposable, InferenceSource
 {
   ReadOnlySpan<float> Result { get; }
 
-  void Train(ReadOnlySpan<float> Expected);
   void Train(params IReadOnlyList<(int, LossRule)> LossRules);
 }

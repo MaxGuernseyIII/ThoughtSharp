@@ -37,16 +37,6 @@ public class TorchInferenceForTrainingMode(
 {
   protected TorchBrainForTrainingMode Brain { get; } = Brain;
 
-  public void Train(ReadOnlySpan<float> Expected)
-  {
-    var TensorForBackPropagation = Replay().Payload;
-    var Parameters = Expected.ToArray();
-    
-    var TensorWithExpectedValues = Brain.ConvertFloatsToTensor(Parameters);
-
-    Brain.ApplyLoss(TensorForBackPropagation, TensorWithExpectedValues);
-  }
-
   public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
   {
     var Visitor = new TorchLossRuleVisitor(Brain);

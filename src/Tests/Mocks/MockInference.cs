@@ -33,12 +33,6 @@ class MockInference(int InputLength, float[] Floats) : MockInferenceSource(Input
 
   public ReadOnlySpan<float> Result => Floats;
 
-  public void Train(ReadOnlySpan<float> Expected)
-  {
-    TrainedData.Should().BeNull();
-    TrainedData = Expected.ToArray();
-  }
-
   public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
   {
     throw new NotImplementedException();

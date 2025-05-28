@@ -52,7 +52,7 @@ void DoForcedTraining(int TotalTrainingPasses1, int ReportEvery1)
     var Expected = Input > .9 ? 0f : 1f;
     if (Inference.Result[0] - Expected > 0.01)
     {
-      Inference.Train([Expected]);
+      Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected])));
       Failures++;
     }
     else
@@ -178,7 +178,7 @@ void DoAreaRaw(int TotalTrainingPasses1, int ReportEvery1)
     }
 
     if (Failure)
-      Output.Train([Expected]);
+      Output.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected]));
   }
 
   Report(TotalTrainingPasses1);
@@ -400,7 +400,7 @@ void Modulo3Check(int TotalTrainingPasses1, int ReportEvery1)
     FailureLog.Add(Failure);
 
     //if (Failure)
-    Inference.Train([Expected ? 1 : 0]);
+    Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected ? 1 : 0])));
   }
 
   Report(TotalTrainingPasses1);
@@ -467,7 +467,7 @@ void Modulo3AndCheck(int TotalTrainingPasses1, int ReportEvery1)
     FailureLog.Add(Failure);
 
     //if (Failure)
-    Inference.Train([Expected ? 1 : 0]);
+    Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected ? 1 : 0])));
   }
 
   Report(TotalTrainingPasses1);
@@ -533,7 +533,7 @@ void ComparisonCheck(int TotalTrainingPasses1, int ReportEvery1)
     FailureLog.Add(Failure);
 
     //if (Failure)
-      Inference.Train([Expected ? 1 : 0]);
+      Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected ? 1 : 0])));
   }
 
   Report(TotalTrainingPasses1);
@@ -680,7 +680,7 @@ void DoFizzBuzzRaw(int TotalTrainingPasses1, int ReportEvery1)
     }
 
     if (Failure)
-      Inference.Train([ExpectedFizz ? 1 : 0, ExpectedBuzz ? 1 : 0]);
+      Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([ExpectedFizz ? 1 : 0, ExpectedBuzz ? 1 : 0])));
   }
 
   Report(TotalTrainingPasses1);
