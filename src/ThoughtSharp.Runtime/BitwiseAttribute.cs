@@ -20,25 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-using TorchSharp;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
-
-public class TorchInferenceForProductionMode(
-  TorchBrainForProductionMode Brain, 
-  TorchInferenceStateNode StateOutput, 
-  torch.Tensor ProductOutputTensor) 
-  : TorchInference(StateOutput, ProductOutputTensor), Inference
-
-{
-  public Inference MakeInference(float[] Parameters)
-  {
-    return Brain.ExecuteInference(StateOutput, Parameters);
-  }
-
-  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
-  {
-    throw new NotSupportedException("You cannot train a neural network in production mode.");
-  }
-}
+[AttributeUsage(AttributeConstants.ValueTargets)]
+public class BitwiseAttribute : Attribute;

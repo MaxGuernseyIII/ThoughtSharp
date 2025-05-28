@@ -150,10 +150,12 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
   static string GetIntLikeNumberCodec(ITypeSymbol EncodedType, IValueSymbol Member)
   {
     var Bounds = GetExplicitBounds(Member.Raw) ?? GetImplicitBounds(EncodedType);
+    var IsBitwise = Member.Raw.HasAttribute(CognitiveAttributeNames.BitwiseAttributeName);
 
-    if (Bounds is var (Minimum, Maximum))
-      return
-        GetBoundedIntLikeCodecName(EncodedType.GetFullPath(), Minimum, Maximum);
+    if (!IsBitwise && Bounds is var (Minimum, Maximum))
+      return Member.Raw.HasAttribute(CognitiveAttributeNames.CategoricalAttributeName)
+        ? $"new ValueWiseOneHotNumberCodec<{EncodedType.GetFullPath()}>({Minimum.ToLiteralExpression()}, {Maximum.ToLiteralExpression()})"
+        : GetBoundedIntLikeCodecName(EncodedType.GetFullPath(), Minimum, Maximum);
 
     return $"new BitwiseOneHotNumberCodec<{EncodedType.GetFullPath()}>()";
   }
@@ -244,7 +246,8 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
 
   public void SetCompilerDefinedBoundedOpcodeParameter(string Name, ushort MaximumValue)
   {
-    var Parameter = new CognitiveParameter(Name, $"new ValueWiseOneHotNumberCodec<ushort>(0, {MaximumValue.ToLiteralExpression()})", null, true, "ushort", "0");
+    var Parameter = new CognitiveParameter(Name,
+      $"new ValueWiseOneHotNumberCodec<ushort>(0, {MaximumValue.ToLiteralExpression()})", null, true, "ushort", "0");
 
     SetCompilerDefinedParameter(Name, Parameter);
   }

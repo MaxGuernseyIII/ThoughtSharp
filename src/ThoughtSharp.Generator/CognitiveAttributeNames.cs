@@ -39,4 +39,6 @@ static class CognitiveAttributeNames
   public const string DataCountAttributeName = "CognitiveDataCountAttribute";
   public const string DataLengthAttributeName = "CognitiveDataLengthAttribute";
   public const string DataBoundsAttributeName = "CognitiveDataBoundsAttribute";
+  public const string BitwiseAttributeName = "BitwiseAttribute";
+  public const string CategoricalAttributeName = "CategoricalAttribute";
 }

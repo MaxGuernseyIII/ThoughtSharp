@@ -20,28 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Text;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Example.FizzBuzz;
-
-class StringBuilderTerminal : Terminal
-{
-  public List<byte> WrittenBytes = [];
-  public readonly StringBuilder Content = new();
-
-  public void WriteNumber(byte ToWrite)
-  {
-    WrittenBytes.Add(ToWrite);
-    Content.Append(ToWrite);
-  }
-
-  public void Fizz()
-  {
-    Content.Append("fizz");
-  }
-
-  public void Buzz()
-  {
-    Content.Append("buzz");
-  }
-}
+[AttributeUsage(AttributeConstants.ValueTargets)]
+public class CategoricalAttribute : Attribute;

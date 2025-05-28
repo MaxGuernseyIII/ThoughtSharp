@@ -46,14 +46,14 @@ static class FizzBuzzHybridReasoning
     FizzBuzzMind Mind, 
     short MaximumOperationsPerStep, 
     Thought.Reasoning R,
-    Terminal Terminal, 
-    int I, List<UseFeedback<Terminal>> Feedback)
+    FizzBuzzTerminal FizzBuzzTerminal, 
+    int I, List<UseFeedback<FizzBuzzTerminal>> Feedback)
   {
     using var Reasoning = Mind.EnterChainedReasoning();
 
     foreach (var _ in Enumerable.Range(0, MaximumOperationsPerStep))
     {
-      var Thought = Mind.WriteForNumber(Terminal, new() { Value = (byte) I});
+      var Thought = Mind.WriteForNumber(FizzBuzzTerminal, new() { Value = (byte) I});
       Feedback.Add(Thought.Feedback);
         
       if (!R.Consume(Thought))

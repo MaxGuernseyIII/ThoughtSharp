@@ -25,13 +25,14 @@ using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrain(Module<TorchInferenceParts, TorchInferenceParts> Model, Device Device, int StateSize) : IDisposable
+public class TorchBrain(
+  Module<TorchInferenceParts, TorchInferenceParts> Model, Device Device,
+  Func<TorchInferenceStateNode> MakeEmptyState) : IDisposable
 {
   protected Module<TorchInferenceParts, TorchInferenceParts> Model { get; } = Model;
   Device Device { get; } = Device;
-  int StateSize { get; } = StateSize;
 
-  public Tensor EmptyState => zeros(new long[] { 1, StateSize }, dtype: ScalarType.Float32, device: Device);
+  public TorchInferenceStateNode EmptyState => MakeEmptyState();
 
   public virtual void Dispose()
   {
@@ -43,12 +44,12 @@ public class TorchBrain(Module<TorchInferenceParts, TorchInferenceParts> Model, 
     return tensor(Parameters, ScalarType.Float32).unsqueeze(0).to(Device);
   }
 
-  internal TorchInferenceParts Forward(float[] Parameters, Tensor StateInputTensor)
+  internal TorchInferenceParts Forward(float[] Parameters, TorchInferenceStateNode State)
   {
     return Model.forward(new()
     {
       Payload = ConvertFloatsToTensor(Parameters),
-      State = StateInputTensor
+      State = State
     });
   }
 }

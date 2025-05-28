@@ -31,7 +31,7 @@ public class ValueWiseOneHotNumberCodec<T>(T Bound1, T Bound2) : CognitiveDataCo
   readonly T Minimum = T.MinNumber(Bound1, Bound2);
   readonly T Maximum = T.MaxNumber(Bound1, Bound2);
 
-  public int Length => int.CreateChecked(Maximum - Minimum + T.One);
+  public int Length => int.CreateChecked(Maximum) - int.CreateChecked(Minimum) + 1;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

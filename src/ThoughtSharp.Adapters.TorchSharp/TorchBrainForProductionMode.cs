@@ -27,15 +27,18 @@ using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrainForProductionMode(Module<TorchInferenceParts, TorchInferenceParts> Model, torch.Device Device, int StateSize)
-  : TorchBrain(Model, Device, StateSize), Brain
+public class TorchBrainForProductionMode(
+  Module<TorchInferenceParts, TorchInferenceParts> Model,
+  torch.Device Device,
+  Func<TorchInferenceStateNode> MakeEmptyStates)
+  : TorchBrain(Model, Device, MakeEmptyStates), Brain
 {
   public Inference MakeInference(float[] Parameters)
   {
     return ExecuteInference(EmptyState, Parameters);
   }
 
-  internal Inference ExecuteInference(torch.Tensor StateInput, float[] Parameters)
+  internal Inference ExecuteInference(TorchInferenceStateNode StateInput, float[] Parameters)
   {
     var Tensors = Forward(Parameters, StateInput);
 

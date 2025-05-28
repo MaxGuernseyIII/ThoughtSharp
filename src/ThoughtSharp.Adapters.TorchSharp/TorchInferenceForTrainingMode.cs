@@ -31,9 +31,9 @@ public class TorchInferenceForTrainingMode(
   TorchBrainForTrainingMode Brain,
   TorchInferenceForTrainingMode? Predecessor,
   float[] OriginalParameters,
-  Tensor StateOutputTensor,
+  TorchInferenceStateNode StateOutput,
   Tensor ProductOutputTensor) 
-  : TorchInference(StateOutputTensor, ProductOutputTensor), Inference
+  : TorchInference(StateOutput, ProductOutputTensor), Inference
 {
   protected TorchBrainForTrainingMode Brain { get; } = Brain;
 
@@ -62,6 +62,6 @@ public class TorchInferenceForTrainingMode(
 
   public Inference MakeInference(float[] Parameters)
   {
-    return Brain.ExecuteInference(this, StateOutputTensor, Parameters);
+    return Brain.ExecuteInference(this, StateOutput, Parameters);
   }
 }

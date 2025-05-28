@@ -20,14 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
+using System.Text;
 
 namespace ThoughtSharp.Example.FizzBuzz;
 
-[CognitiveActions]
-public partial interface Terminal
+class StringBuilderFizzBuzzTerminal : FizzBuzzTerminal
 {
-  void WriteNumber(byte ToWrite);
-  void Fizz();
-  void Buzz();
+  public List<byte> WrittenBytes = [];
+  public readonly StringBuilder Content = new();
+
+  public void WriteNumber(byte ToWrite)
+  {
+    WrittenBytes.Add(ToWrite);
+    Content.Append(ToWrite);
+  }
+
+  public void Fizz()
+  {
+    Content.Append("fizz");
+  }
+
+  public void Buzz()
+  {
+    Content.Append("buzz");
+  }
 }

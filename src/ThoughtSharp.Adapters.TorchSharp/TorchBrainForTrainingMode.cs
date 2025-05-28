@@ -30,7 +30,7 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 public class TorchBrainForTrainingMode(
   Module<TorchInferenceParts, TorchInferenceParts> Model,
   Device Device,
-  int StateSize) : TorchBrain(Model, Device, StateSize), Brain
+  Func<TorchInferenceStateNode> MakeEmptyState) : TorchBrain(Model, Device, MakeEmptyState), Brain
 {
   optim.Optimizer Optimizer { get; } = optim.Adam(Model.parameters());
 
@@ -46,7 +46,7 @@ public class TorchBrainForTrainingMode(
 
   internal Inference ExecuteInference(
     TorchInferenceForTrainingMode? Predecessor,
-    Tensor StateInputTensor,
+    TorchInferenceStateNode StateInputTensor,
     float[] Parameters)
   {
     var Tensors = Forward(Parameters, StateInputTensor);
@@ -101,26 +101,36 @@ public class StatePassThroughModule : Module<TorchInferenceParts, TorchInference
   }
 }
 
-public sealed class ParallelModule : Module<Tensor, Tensor>
+public sealed class ParallelModule : Module<TorchInferenceParts, TorchInferenceParts>
 {
-  readonly Module<Tensor, Tensor> Left;
-  readonly Module<Tensor, Tensor> Right;
+  readonly Module<TorchInferenceParts, TorchInferenceParts> Left;
+  readonly Module<TorchInferenceParts, TorchInferenceParts> Right;
 
   public ParallelModule(
-    Module<Tensor, Tensor> Left,
-    Module<Tensor, Tensor> Right,
+    Module<TorchInferenceParts, TorchInferenceParts> Left,
+    Module<TorchInferenceParts, TorchInferenceParts> Right,
     string Name = "_unnamed") : base(Name)
   {
     this.Left = Left;
     this.Right = Right;
+
     RegisterComponents();
   }
 
-  public override Tensor forward(Tensor Input)
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var LeftProduct = Left.forward(Input);
-    var RightProduct = Right.forward(Input);
-    return cat([LeftProduct, RightProduct], 1);
+    var LeftOutput = Left.forward(Input with { State = Input.State.Left! });
+    var RightOutput = Right.forward(Input with{ State = Input.State.Right! });
+
+    return new()
+    {
+      Payload = cat([LeftOutput.Payload, RightOutput.Payload], 1),
+      State = new(null)
+      {
+        Left = LeftOutput.State,
+        Right = RightOutput.State
+      }
+    };
   }
 }
 
@@ -181,14 +191,14 @@ public class DoubleTensorToTorchInferencePartsAdapter : Module<TorchInferencePar
 
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.shape)}");
+    //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.State!.shape)}");
 
-    var Output = Underlying.forward(Input.Payload, Input.State);
+    var Output = Underlying.forward(Input.Payload, Input.State.State!);
 
     return new()
     {
       Payload = Output.Payload,
-      State = Output.State
+      State = new(Output.State)
     };
   }
 }

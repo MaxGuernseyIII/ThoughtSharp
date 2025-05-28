@@ -21,24 +21,13 @@
 // SOFTWARE.
 
 using ThoughtSharp.Runtime;
-using TorchSharp;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
+namespace ThoughtSharp.Example.FizzBuzz;
 
-public class TorchInferenceForProductionMode(
-  TorchBrainForProductionMode Brain, 
-  TorchInferenceStateNode StateOutput, 
-  torch.Tensor ProductOutputTensor) 
-  : TorchInference(StateOutput, ProductOutputTensor), Inference
-
+[CognitiveActions]
+public partial interface FizzBuzzTerminal
 {
-  public Inference MakeInference(float[] Parameters)
-  {
-    return Brain.ExecuteInference(StateOutput, Parameters);
-  }
-
-  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
-  {
-    throw new NotSupportedException("You cannot train a neural network in production mode.");
-  }
+  void WriteNumber([Categorical]byte ToWrite);
+  void Fizz();
+  void Buzz();
 }

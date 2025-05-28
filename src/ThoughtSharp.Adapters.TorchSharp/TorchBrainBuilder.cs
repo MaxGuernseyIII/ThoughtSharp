@@ -22,7 +22,6 @@
 
 using ThoughtSharp.Runtime;
 using TorchSharp;
-using TorchSharp.Modules;
 using static TorchSharp.torch;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
@@ -46,11 +45,6 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     CPU
   }
 
-  public sealed record Path
-  {
-    public List<Layer> Layers { get; set; } = [];
-  }
-
   public List<Path> Paths { get; set; } =
   [
     new()
@@ -70,10 +64,9 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
   ];
 
 
-  public int StateCoefficient { get; set; } = 0;
   public bool AllowTraining { get; set; } = true;
 
-  public ExecutionDevice Device { get; set; } = torch.cuda.is_available() ? ExecutionDevice.CUDA : ExecutionDevice.CPU;
+  public ExecutionDevice Device { get; set; } = cuda.is_available() ? ExecutionDevice.CUDA : ExecutionDevice.CPU;
 
   public static TorchBrainBuilder For<TInput, TOutput>()
     where TInput : CognitiveData<TInput>
@@ -105,7 +98,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
 
   public TorchBrainBuilder AddMathPath(ushort Layer1ScaleBy = 4, ushort Layer2ScaleBy = 4, ushort? Layer3ScaleBy = null)
   {
-    var Path = new Path()
+    var Path = new Path
     {
       Layers =
       [
@@ -118,7 +111,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
         {
           Features = InputLength * Layer2ScaleBy,
           ActivationType = ActivationType.Tanh
-        },
+        }
       ]
     };
 
@@ -134,7 +127,8 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     return this;
   }
 
-  public TorchBrainBuilder AddLogicPath(ushort Layer1ScaleBy = 16, ushort Layer2ScaleBy = 4, ushort? Layer3ScaleBy = null)
+  public TorchBrainBuilder AddLogicPath(ushort Layer1ScaleBy = 16, ushort Layer2ScaleBy = 4,
+    ushort? Layer3ScaleBy = null)
   {
     var Path = new Path();
 
@@ -151,21 +145,19 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
       }
     ]);
 
-    if (Layer3ScaleBy is {} Scale)
-    {
+    if (Layer3ScaleBy is { } Scale)
       Path.Layers.Add(new()
       {
         Features = InputLength * Scale,
         ActivationType = ActivationType.ReLU
       });
-    }
-    
+
     Paths.Add(Path);
 
     return this;
   }
 
-  TorchBrainBuilder Blank()
+  public TorchBrainBuilder Blank()
   {
     Paths.Clear();
     return this;
@@ -173,9 +165,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
 
   public Brain Build()
   {
-    var TotalStateSize = StateCoefficient * InputLength;
-    var TotalInputFeatures = TotalStateSize > 0 ? TotalStateSize : InputLength;
-    var TotalOutputFeatures = OutputLength;
+    var TotalInputFeatures = InputLength;
 
     var DeviceType = Device switch
     {
@@ -183,83 +173,89 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
       _ => global::TorchSharp.DeviceType.CPU
     };
     var FirstPath = Paths.First();
-    var (Transformer, CombinedWidth) = BuildTorchModules(FirstPath, TotalInputFeatures, TotalOutputFeatures, DeviceType);
-    (Transformer, CombinedWidth) = Paths.Skip(1).Aggregate((Transformer, Width: CombinedWidth),
+    var DeviceInstance = new Device(DeviceType);
+    var (Transformer, CombinedWidth, MakeState) = BuildTorchModules(FirstPath, TotalInputFeatures, DeviceInstance);
+    (Transformer, CombinedWidth, MakeState) = Paths.Skip(1).Aggregate((Transformer, Width: CombinedWidth, MakeState),
       (Current, NextPath) =>
       {
-        var (NewPipeline, AdditionalWidth) = BuildTorchModules(NextPath, TotalInputFeatures, TotalOutputFeatures, DeviceType);
+        var (NewPipeline, AdditionalWidth, NewMakeState) =
+          BuildTorchModules(NextPath, TotalInputFeatures, DeviceInstance);
         return (new ParallelModule(Current.Transformer, NewPipeline),
-          Current.Width + AdditionalWidth);
+          Current.Width + AdditionalWidth, () => new(null)
+          {
+            Left = Current.MakeState(),
+            Right = NewMakeState()
+          });
       });
 
     var FinalTransform = MakeLinearTransform(CombinedWidth, OutputLength);
-    var FullPipeline = nn.Sequential(Transformer, FinalTransform);
-
-    nn.Module<TorchInferenceParts, TorchInferenceParts> PassThrough = new StatePassThroughModule(FullPipeline);
-    var Module = PassThrough;
-    if (TotalStateSize > 0)
-      Module = new CompositeModule(new AdditionalDimensionForSubModule(new DoubleTensorToTorchInferencePartsAdapter(nn.GRU(
-        inputSize: InputLength,
-        hiddenSize: TotalStateSize)
-      )), Module);
+    var FullPipeline = new CompositeModule(Transformer, FinalTransform);
 
     return AllowTraining
-      ? new TorchBrainForTrainingMode(Module, new(DeviceType), TotalStateSize)
-      : new TorchBrainForProductionMode(Module, new(DeviceType), TotalStateSize);
+      ? new TorchBrainForTrainingMode(FullPipeline, DeviceInstance, MakeState)
+      : new TorchBrainForProductionMode(FullPipeline, DeviceInstance, MakeState);
   }
 
-  (nn.Module<Tensor, Tensor>, int FinalWidth) BuildTorchModules(Path Path, int TotalInputFeatures, int TotalOutputFeatures, DeviceType DeviceType)
+  (nn.Module<TorchInferenceParts, TorchInferenceParts>, int FinalWidth, Func<TorchInferenceStateNode>)
+    BuildTorchModules(Path Path, int TotalInputFeatures, Device Device)
   {
-    var TorchLayers = new List<torch.nn.Module<torch.Tensor, torch.Tensor>>();
+    var PathStateSize = Path.StateCoefficient * TotalInputFeatures;
+    var TorchLayers = new List<nn.Module<Tensor, Tensor>>();
     var FinalWidth = TotalInputFeatures;
-    foreach (var Layer in Path.Layers) 
+    if (PathStateSize != 0)
+      FinalWidth = PathStateSize;
+    foreach (var Layer in Path.Layers)
       FinalWidth = AddModulesForLayer(Layer, TorchLayers, FinalWidth);
 
-    
 
-    var Transformer = nn.Sequential(TorchLayers.ToArray()).to(DeviceType);
-    return (Transformer, FinalWidth);
+    nn.Module<TorchInferenceParts, TorchInferenceParts> Transformer =
+      new StatePassThroughModule(nn.Sequential(TorchLayers.ToArray()).to(Device.type));
+    Transformer = Path.StateCoefficient > 0
+      ?
+        //new CompositeModule(
+        //(MakeLinearTransform(TotalInputFeatures, PathStateSize)),
+        new CompositeModule(
+          new AdditionalDimensionForSubModule(new DoubleTensorToTorchInferencePartsAdapter(nn.GRU(
+            InputLength,
+            PathStateSize)
+          )), Transformer)
+        //)
+      : Transformer;
+    return (Transformer, FinalWidth, () =>
+    {
+      var Tensor = zeros(new long[] {1, PathStateSize}, ScalarType.Float32, Device);
+      return new(Tensor);
+    });
   }
 
-  protected static int AddModulesForLayer(Layer Layer, List<torch.nn.Module<torch.Tensor, torch.Tensor>> TorchLayers,
+  protected static int AddModulesForLayer(Layer Layer, List<nn.Module<Tensor, Tensor>> TorchLayers,
     int InFeatures)
   {
     var OutFeatures = Layer.Features;
-    var Linear = MakeLinearTransform(InFeatures, OutFeatures);
+    var Linear = nn.Linear(InFeatures, OutFeatures);
+    nn.init.kaiming_uniform_(Linear.weight);
+    nn.init.zeros_(Linear.bias);
     TorchLayers.Add(Linear);
     var ActivationLayer = Layer.ActivationType switch
     {
-      ActivationType.LeakyReLU => torch.nn.LeakyReLU(),
-      ActivationType.ReLU => torch.nn.ReLU(),
-      ActivationType.Sigmoid => torch.nn.Sigmoid(),
-      ActivationType.Tanh => torch.nn.Tanh(),
-      ActivationType.Softmax => torch.nn.Softmax(1),
-      _ => (torch.nn.Module<torch.Tensor, torch.Tensor>?) null
+      ActivationType.LeakyReLU => nn.LeakyReLU(),
+      ActivationType.ReLU => nn.ReLU(),
+      ActivationType.Sigmoid => nn.Sigmoid(),
+      ActivationType.Tanh => nn.Tanh(),
+      ActivationType.Softmax => nn.Softmax(1),
+      _ => (nn.Module<Tensor, Tensor>?) null
     };
     if (ActivationLayer is not null)
       TorchLayers.Add(ActivationLayer);
     return OutFeatures;
   }
 
-  static Linear MakeLinearTransform(int InFeatures, int OutFeatures)
+  static nn.Module<TorchInferenceParts, TorchInferenceParts> MakeLinearTransform(int InFeatures, int OutFeatures)
   {
-    var Linear = torch.nn.Linear(InFeatures, OutFeatures);
-    torch.nn.init.kaiming_uniform_(Linear.weight);
-    torch.nn.init.zeros_(Linear.bias);
-    return Linear;
-  }
-
-  public sealed record Layer
-  {
-    public required int Features { get; set; }
-    public ActivationType ActivationType { get; set; } = ActivationType.Tanh;
-  }
-
-  public TorchBrainBuilder WithStateCoefficient(int Coefficient)
-  {
-    StateCoefficient = Coefficient;
-
-    return this;
+    var Linear = nn.Linear(InFeatures, OutFeatures);
+    nn.init.kaiming_uniform_(Linear.weight);
+    nn.init.zeros_(Linear.bias);
+    return new StatePassThroughModule(Linear);
   }
 
   public TorchBrainBuilder WithPath(List<Layer> Layers)
@@ -270,5 +266,18 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     });
 
     return this;
+  }
+
+  public sealed record Path
+  {
+    public int StateCoefficient { get; set; } = 0;
+
+    public List<Layer> Layers { get; set; } = [];
+  }
+
+  public sealed record Layer
+  {
+    public required int Features { get; set; }
+    public ActivationType ActivationType { get; set; } = ActivationType.Tanh;
   }
 }

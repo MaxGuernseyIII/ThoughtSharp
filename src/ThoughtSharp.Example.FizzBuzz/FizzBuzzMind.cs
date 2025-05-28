@@ -41,7 +41,7 @@ partial class FizzBuzzInput
 partial class FizzBuzzMind
 {
   [Use]
-  public partial Thought<bool, UseFeedback<Terminal>> WriteForNumber(Terminal Surface, FizzBuzzInput InputData);
+  public partial Thought<bool, UseFeedback<FizzBuzzTerminal>> WriteForNumber(FizzBuzzTerminal Surface, FizzBuzzInput InputData);
 }
 
 [CognitiveData]

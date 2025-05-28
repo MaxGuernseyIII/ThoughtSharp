@@ -26,7 +26,7 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 
 public record TorchInferenceParts
 {
-  public required torch.Tensor State { get; set; }
+  public required TorchInferenceStateNode State { get; set; }
   public required torch.Tensor Payload { get; set; }
 
   public TorchInferenceParts UnSqueeze()
@@ -34,7 +34,7 @@ public record TorchInferenceParts
     return new()
     {
       Payload = Payload.unsqueeze(0),
-      State = State.unsqueeze(0)
+      State = State.UnSqueeze()
     };
   }
 
@@ -43,7 +43,32 @@ public record TorchInferenceParts
     return new()
     {
       Payload = Payload.squeeze(0),
-      State = State.squeeze(0),
+      State = State.Squeeze()
     };
+  }
+}
+
+public record TorchInferenceStateNode(torch.Tensor? State) : IDisposable
+{
+  public TorchInferenceStateNode? Left { get; init; }
+  public TorchInferenceStateNode? Right { get; init; }
+
+  public TorchInferenceStateNode UnSqueeze() => new(State?.unsqueeze(0))
+  {
+    Left = Left?.UnSqueeze(),
+    Right = Right?.UnSqueeze()
+  };
+
+  public TorchInferenceStateNode Squeeze() => new(State?.squeeze(0))
+  {
+    Left = Left?.Squeeze(),
+    Right = Right?.Squeeze()
+  };
+
+  public void Dispose()
+  {
+    Left?.Dispose();
+    Right?.Dispose();
+    State?.Dispose();
   }
 }

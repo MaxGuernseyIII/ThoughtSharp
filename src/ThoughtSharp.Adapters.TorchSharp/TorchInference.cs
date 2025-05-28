@@ -25,11 +25,11 @@ using TorchSharp;
 namespace ThoughtSharp.Adapters.TorchSharp;
 
 public class TorchInference(
-  torch.Tensor StateOutputTensor,
+  TorchInferenceStateNode StateOutput,
   torch.Tensor ProductOutputTensor
 ) : IDisposable
 {
-  internal torch.Tensor StateOutputTensor { get; } = StateOutputTensor;
+  internal TorchInferenceStateNode StateOutput { get; } = StateOutput;
   internal torch.Tensor ProductOutputTensor { get; } = ProductOutputTensor;
 
   public ReadOnlySpan<float> Result
@@ -50,7 +50,7 @@ public class TorchInference(
 
   public void Dispose()
   {
-    StateOutputTensor.Dispose();
+    StateOutput.Dispose();
     ProductOutputTensor.Dispose();
   }
 }
