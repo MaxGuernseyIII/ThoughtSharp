@@ -30,8 +30,7 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 public class TorchBrainForTrainingMode(
   Module<TorchInferenceParts, TorchInferenceParts> Model,
   Device Device,
-  int StateSize,
-  Func<Tensor, Tensor, Tensor> LossFunction) : TorchBrain(Model, Device, StateSize), Brain
+  int StateSize) : TorchBrain(Model, Device, StateSize), Brain
 {
   optim.Optimizer Optimizer { get; } = optim.Adam(Model.parameters());
 
@@ -53,12 +52,6 @@ public class TorchBrainForTrainingMode(
     var Tensors = Forward(Parameters, StateInputTensor);
 
     return new TorchInferenceForTrainingMode(this, Predecessor, Parameters, Tensors.State, Tensors.Payload);
-  }
-
-  public void ApplyLoss(Tensor TensorForBackPropagation, Tensor TensorWithExpectedValues)
-  {
-    var Loss = LossFunction(TensorForBackPropagation, TensorWithExpectedValues);
-    ApplyLoss(Loss);
   }
 
   public void ApplyLoss(Tensor Loss)
@@ -112,31 +105,22 @@ public sealed class ParallelModule : Module<Tensor, Tensor>
 {
   readonly Module<Tensor, Tensor> Left;
   readonly Module<Tensor, Tensor> Right;
-  readonly Func<Tensor, Tensor, Tensor> Combine;
 
   public ParallelModule(
     Module<Tensor, Tensor> Left,
     Module<Tensor, Tensor> Right,
-    Func<Tensor, Tensor, Tensor>? Combine = null,
     string Name = "_unnamed") : base(Name)
   {
     this.Left = Left;
     this.Right = Right;
-    this.Combine = Combine ?? Add;
     RegisterComponents();
-  }
-
-  static Tensor Add(Tensor L, Tensor R)
-  {
-    return L + R;
   }
 
   public override Tensor forward(Tensor Input)
   {
     var LeftProduct = Left.forward(Input);
     var RightProduct = Right.forward(Input);
-
-    return Combine(LeftProduct, RightProduct);
+    return cat([LeftProduct, RightProduct], 1);
   }
 }
 

@@ -20,38 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-using static TorchSharp.torch;
+namespace ThoughtSharp.Runtime.Codecs;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
-
-class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
+public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T> Second) : CognitiveDataCodec<T>
 {
-  public Tensor Visit(BinaryCrossEntropyWithLogitsLossRule Rule, Tensor Prediction)
+  public int Length => First.Length + Second.Length;
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
-    var Target = Brain.ConvertFloatsToTensor(Rule.Target);
-    return nn.functional.binary_cross_entropy_with_logits(Prediction, Target);
+    First.EncodeTo(ObjectToEncode, Target[..First.Length]);
+    Second.EncodeTo(ObjectToEncode, Target[First.Length..]);
   }
 
-  public Tensor Visit(MeanSquareErrorLossRule Rule, Tensor Prediction)
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
   {
-    var Target = Brain.ConvertFloatsToTensor(Rule.Target);
-    return nn.functional.mse_loss(Prediction
-      .sigmoid()
-      , Target);
+    First.WriteLossRulesFor(Target, Writer);
   }
 
-  public Tensor Visit(CrossEntropyLossRule Rule, Tensor Prediction)
+  public T DecodeFrom(ReadOnlySpan<float> Source)
   {
-    var Target = tensor([Rule.Index], ScalarType.Int64);
-    return nn.functional.cross_entropy(Prediction, Target);
-  }
-
-  public Tensor Visit(HuberLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.ConvertFloatsToTensor(Rule.Target);
-    return nn.functional.huber_loss(Prediction
-      .sigmoid()
-      , Target);
+    return First.DecodeFrom(Source[..First.Length]);
   }
 }

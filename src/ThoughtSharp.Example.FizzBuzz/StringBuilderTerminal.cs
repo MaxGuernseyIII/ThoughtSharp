@@ -26,10 +26,12 @@ namespace ThoughtSharp.Example.FizzBuzz;
 
 class StringBuilderTerminal : Terminal
 {
+  public List<byte> WrittenBytes = [];
   public readonly StringBuilder Content = new();
 
   public void WriteNumber(byte ToWrite)
   {
+    WrittenBytes.Add(ToWrite);
     Content.Append(ToWrite);
   }
 
