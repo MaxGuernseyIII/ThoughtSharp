@@ -24,19 +24,19 @@ namespace ThoughtSharp.Runtime;
 
 public class InferenceFeedback(Inference Target)
 {
-  public void OutputShouldHaveBeen(float[] ExpectedOutput)
+  public void ApplyLoses(params IReadOnlyList<(int, LossRule)> LossRules)
   {
-    Target.Train(ExpectedOutput);
+    Target.Train(LossRules);
   }
 }
 
-public class MakeFeedback<TMade>(InferenceFeedback Underlying, Func<TMade, float[]> ToExpectedOutput)
+public class MakeFeedback<TMade>(InferenceFeedback Underlying, Func<TMade, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
   where TMade : CognitiveData<TMade>
 {
   public void ResultShouldHaveBeen(TMade Expected)
   {
     var Buffer = ToExpectedOutput(Expected);
-    Underlying.OutputShouldHaveBeen(Buffer);
+    Underlying.ApplyLoses(Buffer);
   }
 }
 

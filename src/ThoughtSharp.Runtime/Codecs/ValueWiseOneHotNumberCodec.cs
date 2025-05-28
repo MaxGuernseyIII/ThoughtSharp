@@ -39,6 +39,11 @@ public class ValueWiseOneHotNumberCodec<T>(T Bound1, T Bound2) : CognitiveDataCo
       Target[I] = T.CreateChecked(I) + Minimum == ObjectToEncode ? 1 : 0;
   }
 
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+  {
+    Writer.WriteLossRule(0, new CrossEntropyLossRule(long.CreateChecked(Target - Minimum), Length));
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     var LargestScale = Source[0];

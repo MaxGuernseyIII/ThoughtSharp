@@ -33,6 +33,11 @@ public class SubDataCodec<T> : CognitiveDataCodec<T>
     ObjectToEncode.MarshalTo(Target);
   }
 
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+  {
+    Target.WriteAsLossRules(Writer);
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     return T.UnmarshalFrom(Source);

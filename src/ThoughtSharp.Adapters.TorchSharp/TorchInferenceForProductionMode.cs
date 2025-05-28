@@ -41,4 +41,9 @@ public class TorchInferenceForProductionMode(
   {
     throw new NotSupportedException("You cannot train a neural network in production mode.");
   }
+
+  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  {
+    throw new NotSupportedException("You cannot train a neural network in production mode.");
+  }
 }

@@ -24,8 +24,26 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-record TorchInferenceParts
+public record TorchInferenceParts
 {
   public required torch.Tensor State { get; set; }
-  public required torch.Tensor Product { get; set; }
+  public required torch.Tensor Payload { get; set; }
+
+  public TorchInferenceParts UnSqueeze()
+  {
+    return new()
+    {
+      Payload = Payload.unsqueeze(0),
+      State = State.unsqueeze(0)
+    };
+  }
+
+  public TorchInferenceParts Squeeze()
+  {
+    return new()
+    {
+      Payload = Payload.squeeze(0),
+      State = State.squeeze(0),
+    };
+  }
 }

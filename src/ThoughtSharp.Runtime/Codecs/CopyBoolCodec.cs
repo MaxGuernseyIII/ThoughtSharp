@@ -32,6 +32,11 @@ public class CopyBoolCodec(float Threshold = .001f) : CognitiveDataCodec<bool>
     Target[0] = ObjectToEncode ? 1 : 0;
   }
 
+  public void WriteLossRulesFor(bool Target, LossRuleWriter Writer)
+  {
+    this.WriteStandardLossRulesFor(Target, Writer);
+  }
+
   public bool DecodeFrom(ReadOnlySpan<float> Source)
   {
     return Source[0] > Threshold;

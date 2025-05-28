@@ -32,7 +32,21 @@ public class TorchInference(
   internal torch.Tensor StateOutputTensor { get; } = StateOutputTensor;
   internal torch.Tensor ProductOutputTensor { get; } = ProductOutputTensor;
 
-  public ReadOnlySpan<float> Result => ProductOutputTensor.squeeze(0).to(torch.CPU).data<float>().ToArray();
+  public ReadOnlySpan<float> Result
+  {
+    get
+    {
+      var Result = ProductOutputTensor.squeeze(0).to(torch.CPU).data<float>().ToArray();
+
+      foreach (var I in Enumerable.Range(0, Result.Length))
+        Result[I] = Sigmoid(Result[I]);
+
+      return Result;
+    }
+  }
+
+  static float Sigmoid(float X) =>
+    1f / (1f + MathF.Exp(-X));
 
   public void Dispose()
   {

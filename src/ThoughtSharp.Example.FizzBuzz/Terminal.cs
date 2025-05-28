@@ -27,7 +27,7 @@ namespace ThoughtSharp.Example.FizzBuzz;
 [CognitiveActions]
 public partial interface Terminal
 {
-  void WriteNumber(short ToWrite);
+  void WriteNumber(byte ToWrite);
   void Fizz();
   void Buzz();
 }

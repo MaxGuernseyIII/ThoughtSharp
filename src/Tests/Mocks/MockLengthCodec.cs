@@ -33,6 +33,11 @@ public class MockLengthCodec<T>(int Length) : CognitiveDataCodec<T>
     throw new NotImplementedException();
   }
 
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+  {
+    throw new NotImplementedException();
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     throw new NotImplementedException();

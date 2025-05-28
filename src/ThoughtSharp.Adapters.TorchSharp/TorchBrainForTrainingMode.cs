@@ -21,15 +21,15 @@
 // SOFTWARE.
 
 using ThoughtSharp.Runtime;
-using TorchSharp.Modules;
 using static TorchSharp.torch;
+using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
 // ReSharper disable once UnusedMember.Global
 public class TorchBrainForTrainingMode(
-  Sequential Model, 
-  Device Device, 
+  Module<TorchInferenceParts, TorchInferenceParts> Model,
+  Device Device,
   int StateSize,
   Func<Tensor, Tensor, Tensor> LossFunction) : TorchBrain(Model, Device, StateSize), Brain
 {
@@ -40,24 +40,29 @@ public class TorchBrainForTrainingMode(
     return ExecuteInference(null, EmptyState, Parameters);
   }
 
-  internal Inference ExecuteInference(
-    TorchInferenceForTrainingMode? Predecessor,
-    Tensor StateInputTensor,
-    float[] Parameters)
-  {
-    var Tensors = Forward(StateInputTensor, Parameters);
-
-    return new TorchInferenceForTrainingMode(this, Predecessor, Parameters, Tensors.State, Tensors.Product);
-  }
-
   public override void Dispose()
   {
     Optimizer.Dispose();
   }
 
+  internal Inference ExecuteInference(
+    TorchInferenceForTrainingMode? Predecessor,
+    Tensor StateInputTensor,
+    float[] Parameters)
+  {
+    var Tensors = Forward(Parameters, StateInputTensor);
+
+    return new TorchInferenceForTrainingMode(this, Predecessor, Parameters, Tensors.State, Tensors.Payload);
+  }
+
   public void ApplyLoss(Tensor TensorForBackPropagation, Tensor TensorWithExpectedValues)
   {
     var Loss = LossFunction(TensorForBackPropagation, TensorWithExpectedValues);
+    ApplyLoss(Loss);
+  }
+
+  public void ApplyLoss(Tensor Loss)
+  {
     Model.zero_grad();
     //Console.WriteLine($"Before step: {Model.parameters().First().data<float>()[0]}");
     Loss.backward();
@@ -85,7 +90,121 @@ public class TorchBrainForTrainingMode(
   }
 }
 
-interface TorchModel : IDisposable
+public class StatePassThroughModule : Module<TorchInferenceParts, TorchInferenceParts>
 {
-  void ApplyLoss(Tensor TensorForBackPropagation, Tensor TensorWithExpectedValues);
+  readonly Module<Tensor, Tensor> Transformer;
+
+  public StatePassThroughModule(Module<Tensor, Tensor> Transformer, string Name = "_unnamed") : base(Name)
+  {
+    this.Transformer = Transformer;
+
+    // ReSharper disable once VirtualMemberCallInConstructor
+    RegisterComponents();
+  }
+
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    return Input with {Payload = Transformer.forward(Input.Payload)};
+  }
+}
+
+public sealed class ParallelModule : Module<Tensor, Tensor>
+{
+  readonly Module<Tensor, Tensor> Left;
+  readonly Module<Tensor, Tensor> Right;
+  readonly Func<Tensor, Tensor, Tensor> Combine;
+
+  public ParallelModule(
+    Module<Tensor, Tensor> Left,
+    Module<Tensor, Tensor> Right,
+    Func<Tensor, Tensor, Tensor>? Combine = null,
+    string Name = "_unnamed") : base(Name)
+  {
+    this.Left = Left;
+    this.Right = Right;
+    this.Combine = Combine ?? Add;
+    RegisterComponents();
+  }
+
+  static Tensor Add(Tensor L, Tensor R)
+  {
+    return L + R;
+  }
+
+  public override Tensor forward(Tensor Input)
+  {
+    var LeftProduct = Left.forward(Input);
+    var RightProduct = Right.forward(Input);
+
+    return Combine(LeftProduct, RightProduct);
+  }
+}
+
+public class CompositeModule : Module<TorchInferenceParts, TorchInferenceParts>
+{
+  readonly Module<TorchInferenceParts, TorchInferenceParts> First;
+  readonly Module<TorchInferenceParts, TorchInferenceParts> Second;
+
+  public CompositeModule(Module<TorchInferenceParts, TorchInferenceParts> First,
+    Module<TorchInferenceParts, TorchInferenceParts> Second, string Name = "_unnamed") : base(Name)
+  {
+    this.First = First;
+    this.Second = Second;
+
+    // ReSharper disable once VirtualMemberCallInConstructor
+    RegisterComponents();
+  }
+
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    var Intermediate = First.forward(Input);
+    return Second.forward(Intermediate);
+  }
+}
+
+public sealed class AdditionalDimensionForSubModule : Module<TorchInferenceParts, TorchInferenceParts>
+{
+  readonly Module<TorchInferenceParts, TorchInferenceParts> Underlying;
+
+  public AdditionalDimensionForSubModule(Module<TorchInferenceParts, TorchInferenceParts> Underlying,
+    string Name = "_unnamed") : base(Name)
+  {
+    this.Underlying = Underlying;
+
+    RegisterComponents();
+  }
+
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    var NewInput = Input.UnSqueeze();
+    var Next = Underlying.forward(NewInput);
+
+    return Next.Squeeze();
+  }
+}
+
+public class DoubleTensorToTorchInferencePartsAdapter : Module<TorchInferenceParts, TorchInferenceParts>
+{
+  readonly Module<Tensor, Tensor, (Tensor Payload, Tensor State)> Underlying;
+
+  public DoubleTensorToTorchInferencePartsAdapter(Module<Tensor, Tensor, (Tensor Payload, Tensor State)> Underlying,
+    string Name = "_unnamed") : base(Name)
+  {
+    this.Underlying = Underlying;
+    // ReSharper disable once VirtualMemberCallInConstructor
+    RegisterComponents();
+  }
+
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.shape)}");
+
+    var Output = Underlying.forward(Input.Payload, Input.State);
+
+    return new()
+    {
+      Payload = Output.Payload,
+      State = Output.State
+    };
+  }
 }

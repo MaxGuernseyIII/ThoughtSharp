@@ -27,6 +27,80 @@ public interface CognitiveData<out T> where T : CognitiveData<T>
   static abstract int Length { get; }
 
   void MarshalTo(Span<float> Target);
+  void WriteAsLossRules(LossRuleWriter Target);
 
   static abstract T UnmarshalFrom(ReadOnlySpan<float> Source);
+}
+
+public class LossRuleStream
+{
+  readonly List<(int At, LossRule Rule)> WriteableRules = [];
+  public IReadOnlyList<(int At, LossRule Rule)> PositionRulePairs => WriteableRules;
+
+  public void WriteRule(int Offset, LossRule Rule)
+  {
+    WriteableRules.Add((Offset, Rule));
+  }
+}
+
+public interface LossRule
+{
+  int Length { get; }
+  U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor);
+}
+
+public interface LossRuleVisitor<in TPrediction, out TTarget>
+{
+  TTarget Visit(BinaryCrossEntropyWithLogitsLossRule Rule, TPrediction Prediction);
+  TTarget Visit(MeanSquareErrorLossRule Rule, TPrediction Prediction);
+  TTarget Visit(CrossEntropyLossRule Rule, TPrediction Prediction);
+  TTarget Visit(HuberLossRule Rule, TPrediction Prediction);
+}
+
+public class OneDimensionalTarget(float[] Target)
+{
+  public float[] Target { get; } = Target;
+  public int Length { get; } = Target.Length;
+}
+
+public class BinaryCrossEntropyWithLogitsLossRule(float[] Target) : OneDimensionalTarget(Target), LossRule
+{
+  public U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor)
+  {
+    return Visitor.Visit(this, Prediction);
+  }
+}
+
+public class MeanSquareErrorLossRule(float[] Target) : OneDimensionalTarget(Target), LossRule
+{
+  public U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor)
+  {
+    return Visitor.Visit(this, Prediction);
+  }
+}
+
+public class HuberLossRule(float[] Target) : OneDimensionalTarget(Target), LossRule
+{
+  public U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor)
+  {
+    return Visitor.Visit(this, Prediction);
+  }
+}
+
+public class CrossEntropyLossRule(long Index, int Length) : LossRule
+{
+  public long Index { get; } = Index;
+  public int Length { get; }= Length;
+
+  public U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor)
+  {
+    return Visitor.Visit(this, Prediction);
+  }
+}
+
+public class LossRuleWriter(LossRuleStream Stream, int Base)
+{
+  public LossRuleWriter ForOffset(int Offset) => new(Stream, Base + Offset);
+
+  public void WriteLossRule(int Offset, LossRule Rule) => Stream.WriteRule(Base + Offset, Rule);
 }

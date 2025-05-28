@@ -20,60 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using TorchSharp;
-using TorchSharp.Modules;
+using static TorchSharp.torch;
+using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrain(Sequential Model, torch.Device Device, int StateSize) : IDisposable
+public class TorchBrain(Module<TorchInferenceParts, TorchInferenceParts> Model, Device Device, int StateSize) : IDisposable
 {
-  protected Sequential Model { get; } = Model;
-  torch.Device Device { get; } = Device;
+  protected Module<TorchInferenceParts, TorchInferenceParts> Model { get; } = Model;
+  Device Device { get; } = Device;
   int StateSize { get; } = StateSize;
 
-  public torch.Tensor EmptyState => torch.zeros(new long[] { 1, StateSize }, dtype: torch.ScalarType.Float32, device: Device);
+  public Tensor EmptyState => zeros(new long[] { 1, StateSize }, dtype: ScalarType.Float32, device: Device);
 
   public virtual void Dispose()
   {
     Model.Dispose();
   }
 
-  internal torch.Tensor ConvertFloatsToTensor(float[] Parameters)
+  internal Tensor ConvertFloatsToTensor(float[] Parameters)
   {
-    return torch.tensor(Parameters, torch.ScalarType.Float32).unsqueeze(0).to(Device);
+    return tensor(Parameters, ScalarType.Float32).unsqueeze(0).to(Device);
   }
 
-  internal TorchInferenceParts Forward(torch.Tensor StateInputTensor, float[] Parameters)
+  internal TorchInferenceParts Forward(float[] Parameters, Tensor StateInputTensor)
   {
-    var ParametersInputTensor = ConvertFloatsToTensor(Parameters);
-    var NewInput = torch.cat([StateInputTensor, ParametersInputTensor], 1);
-    var NewOutput = Model.forward(NewInput);
-    var NewStateTensor = NewOutput.slice(1, 0, StateSize, 1);
-    var NewProductTensor = NewOutput.slice(1, StateSize, NewOutput.size(1), 1);
-
-    return new()
+    return Model.forward(new()
     {
-      State = NewStateTensor,
-      Product = NewProductTensor
-    };
-  }
-}
-
-class StatefulModule : torch.nn.Module
-{
-  protected StatefulModule(string name) : base(name)
-  {
-  }
-}
-
-class StatelessModule : torch.nn.Module<torch.Tensor, torch.Tensor>
-{
-  public StatelessModule(string name) : base(name)
-  {
-  }
-
-  public override torch.Tensor forward(torch.Tensor input)
-  {
-    throw new NotImplementedException();
+      Payload = ConvertFloatsToTensor(Parameters),
+      State = StateInputTensor
+    });
   }
 }

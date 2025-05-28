@@ -20,41 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime.Codecs;
+using ThoughtSharp.Runtime;
+using static TorchSharp.torch;
 
-// ReSharper disable once UnusedMember.Global
-public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
+namespace ThoughtSharp.Adapters.TorchSharp;
+
+class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
 {
-  static readonly BitwiseOneHotNumberCodec<char> Inner = new();
-
-  // ReSharper disable once ReplaceWithPrimaryConstructorParameter
-  readonly int MaximumCharacters = Length;
-  public int Length { get; } = Length * Inner.Length;
-
-  public void EncodeTo(string ObjectToEncode, Span<float> Target)
+  public Tensor Visit(BinaryCrossEntropyWithLogitsLossRule Rule, Tensor Prediction)
   {
-    var Padded = ObjectToEncode.PadRight(MaximumCharacters, (char) 0);
-    var Index = 0;
-
-    foreach (var C in Padded)
-    {
-      Inner.EncodeTo(C, Target[Index..(Index + Inner.Length)]);
-      Index += Inner.Length;
-    }
+    var Target = Brain.ConvertFloatsToTensor(Rule.Target);
+    return nn.functional.binary_cross_entropy_with_logits(Prediction, Target);
   }
 
-  public void WriteLossRulesFor(string Target, LossRuleWriter Writer)
+  public Tensor Visit(MeanSquareErrorLossRule Rule, Tensor Prediction)
   {
-    this.WriteStandardLossRulesFor(Target, Writer);
+    var Target = Brain.ConvertFloatsToTensor(Rule.Target);
+    return nn.functional.mse_loss(Prediction.sigmoid(), Target);
   }
 
-  public string DecodeFrom(ReadOnlySpan<float> Source)
+  public Tensor Visit(CrossEntropyLossRule Rule, Tensor Prediction)
   {
-    var ResultBuffer = new char[MaximumCharacters];
+    var Target = tensor([Rule.Index], ScalarType.Int64);
+    return nn.functional.cross_entropy(Prediction, Target);
+  }
 
-    foreach (var I in Enumerable.Range(0, MaximumCharacters))
-      ResultBuffer[I] = Inner.DecodeFrom(Source[(I * Inner.Length)..((I + 1) * Inner.Length)]);
-
-    return new string(ResultBuffer).TrimEnd((char) 0);
+  public Tensor Visit(HuberLossRule Rule, Tensor Prediction)
+  {
+    var Target = Brain.ConvertFloatsToTensor(Rule.Target);
+    return nn.functional.huber_loss(Prediction.sigmoid(), Target);
   }
 }

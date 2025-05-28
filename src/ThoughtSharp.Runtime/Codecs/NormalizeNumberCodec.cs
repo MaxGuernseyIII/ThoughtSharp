@@ -46,8 +46,18 @@ public class NormalizeNumberCodec<T, U> : CognitiveDataCodec<T>
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
-    var Value = (U.CreateChecked(ObjectToEncode) - TargetTypedMinimum) / Factor;
+    var Value = GetNormalized(ObjectToEncode);
     Inner.EncodeTo(Value, Target);
+  }
+
+  U GetNormalized(T ObjectToEncode)
+  {
+    return (U.CreateChecked(ObjectToEncode) - TargetTypedMinimum) / Factor;
+  }
+
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+  {
+    Inner.WriteLossRulesFor(GetNormalized(Target), Writer);
   }
 
   public T DecodeFrom(ReadOnlySpan<float> Source)

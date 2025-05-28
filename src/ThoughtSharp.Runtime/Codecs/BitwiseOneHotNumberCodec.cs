@@ -52,6 +52,11 @@ public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
     }
   }
 
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+  {
+    this.WriteStandardLossRulesFor(Target, Writer);
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     var Result = T.Zero;

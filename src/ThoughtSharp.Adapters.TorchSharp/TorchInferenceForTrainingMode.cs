@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using ThoughtSharp.Runtime;
+using TorchSharp;
 using static TorchSharp.torch;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
@@ -38,17 +39,35 @@ public class TorchInferenceForTrainingMode(
 
   public void Train(ReadOnlySpan<float> Expected)
   {
-    var TensorForBackPropagation = Replay().Product;
-    var TensorWithExpectedValues = Brain.ConvertFloatsToTensor(Expected.ToArray());
+    var TensorForBackPropagation = Replay().Payload;
+    var Parameters = Expected.ToArray();
+    
+    var TensorWithExpectedValues = Brain.ConvertFloatsToTensor(Parameters);
 
     Brain.ApplyLoss(TensorForBackPropagation, TensorWithExpectedValues);
+  }
+
+  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  {
+    var Visitor = new TorchLossRuleVisitor(Brain);
+    var TensorForBackPropagation = Replay().Payload;
+
+    var CumulativeLoss = tensor(0.0f, requires_grad: true);
+
+    foreach (var (At, Rule) in LossRules)
+    {
+      var AffectedSlice = TensorForBackPropagation.slice(1, At, At + Rule.Length, 1);
+      CumulativeLoss += Rule.Accept(AffectedSlice, Visitor);
+    }
+
+    Brain.ApplyLoss(CumulativeLoss);
   }
 
   TorchInferenceParts Replay()
   {
     var StateTensor = Predecessor?.Replay().State ?? Brain.EmptyState;
 
-    return Brain.Forward(StateTensor, OriginalParameters);
+    return Brain.Forward(OriginalParameters, StateTensor);
   }
 
   public Inference MakeInference(float[] Parameters)

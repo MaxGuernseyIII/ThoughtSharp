@@ -28,7 +28,7 @@ class StringBuilderTerminal : Terminal
 {
   public readonly StringBuilder Content = new();
 
-  public void WriteNumber(short ToWrite)
+  public void WriteNumber(byte ToWrite)
   {
     Content.Append(ToWrite);
   }

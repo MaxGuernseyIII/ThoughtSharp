@@ -22,18 +22,19 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedback<TSelectable>(InferenceFeedback Underlying, IReadOnlyList<TSelectable> Options, Func<ushort, float[]> ToExpectedOutput)
+public class ChooseFeedback<TSelectable>(InferenceFeedback Underlying, IReadOnlyList<TSelectable> Options, Func<ushort, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
 {
   public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseFeedback<TSelectable>> GetSource<TOutput>(IReadOnlyList<TSelectable> Options, Func<ushort, TOutput> GetOutputObject)
     where TOutput : CognitiveData<TOutput>
   {
     var Configurator = new ChooseFeedbackConfigurator<TSelectable>(Options, I =>
     {
-      var Buffer = new float[TOutput.Length];
+      var Stream = new LossRuleStream();
+      var W = new LossRuleWriter(Stream, 0);
       var Output = GetOutputObject(I);
-      Output.MarshalTo(Buffer);
-
-      return Buffer;
+      Output.WriteAsLossRules(W);
+      
+      return Stream.PositionRulePairs;
     });
     return new(Configurator, Configurator.Create);
   }
@@ -41,15 +42,15 @@ public class ChooseFeedback<TSelectable>(InferenceFeedback Underlying, IReadOnly
   public void SelectionShouldHaveBeen(TSelectable Payload)
   {
     var ExpectedOutput = ToExpectedOutput((ushort) Options.ToList().IndexOf(Payload));
-    Underlying.OutputShouldHaveBeen(ExpectedOutput);
+    Underlying.ApplyLoses(ExpectedOutput);
   }
 }
 
-public class ChooseFeedbackConfigurator<TSelectable>(IReadOnlyList<TSelectable> Options, Func<ushort, float[]> ToSelectedOutput)
+public class ChooseFeedbackConfigurator<TSelectable>(IReadOnlyList<TSelectable> Options, Func<ushort, IReadOnlyList<(int, LossRule)>> ToLossRules)
 {
   public Inference FinalInference { get; set; } = null!;
   public ChooseFeedback<TSelectable> Create()
   {
-    return new(new(FinalInference), Options, ToSelectedOutput);
+    return new(new(FinalInference), Options, ToLossRules);
   }
 }

@@ -39,6 +39,11 @@ class MockInference(int InputLength, float[] Floats) : MockInferenceSource(Input
     TrainedData = Expected.ToArray();
   }
 
+  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  {
+    throw new NotImplementedException();
+  }
+
   public void ShouldHaveBeenTrainedWith<T>(T Output)
     where T : CognitiveData<T>
   {

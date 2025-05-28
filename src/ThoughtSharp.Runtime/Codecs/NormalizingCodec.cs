@@ -32,9 +32,12 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
-    var Translated = ObjectToEncode - Minimum;
-    var Normalized = Translated / Size;
-    Inner.EncodeTo(Normalized, Target);
+    Inner.EncodeTo(GetNormalized(ObjectToEncode), Target);
+  }
+
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+  {
+    Inner.WriteLossRulesFor(GetNormalized(Target), Writer);
   }
 
   public T DecodeFrom(ReadOnlySpan<float> Source)
@@ -44,5 +47,10 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
     var Scaled = Normalized * Size;
 
     return Minimum + Scaled;
+  }
+
+  T GetNormalized(T ObjectToEncode)
+  {
+    return (ObjectToEncode - Minimum) / Size;
   }
 }

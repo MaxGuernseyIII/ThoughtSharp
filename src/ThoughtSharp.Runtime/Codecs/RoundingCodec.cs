@@ -34,6 +34,11 @@ public class RoundingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<
     Inner.EncodeTo(ObjectToEncode, Target);
   }
 
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+  {
+    Inner.WriteLossRulesFor(Target, Writer);
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     return T.Round(Inner.DecodeFrom(Source));

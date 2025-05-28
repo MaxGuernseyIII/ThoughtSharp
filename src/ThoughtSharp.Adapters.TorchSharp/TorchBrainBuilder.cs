@@ -86,7 +86,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     }
   ];
 
-  public int StateSize { get; set; } = 0;
+  public int StateCoefficient { get; set; } = 0;
   public bool AllowTraining { get; set; } = true;
 
   public ExecutionDevice Device { get; set; } = torch.cuda.is_available() ? ExecutionDevice.CUDA : ExecutionDevice.CPU;
@@ -111,7 +111,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     return this;
   }
 
-  public TorchBrainBuilder ForLogic(ushort Layer1ScaleBy = 4, ushort Layer2ScaleBy = 32, ushort? Layer3ScaleBy = null)
+  public TorchBrainBuilder ForLogic(ushort Layer1ScaleBy = 16, ushort Layer2ScaleBy = 4, ushort? Layer3ScaleBy = null)
   {
     Layers.Clear();
 
@@ -119,7 +119,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
       new()
       {
         Features = InputLength * Layer1ScaleBy,
-        ActivationType = ActivationType.Tanh
+        ActivationType = ActivationType.ReLU
       },
       new()
       {
@@ -133,20 +133,21 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
       Layers.Add(new()
       {
         Features = InputLength * Scale,
-        ActivationType = ActivationType.Tanh
+        ActivationType = ActivationType.ReLU
       });
     }
     
-    FinalActivationType = ActivationType.Sigmoid;
-    LossFunction = LossFunctions.BinaryCrossEntropy;
+    FinalActivationType = ActivationType.None;
+    LossFunction = LossFunctions.BinaryCrossEntropyWithLogits;
 
     return this;
   }
 
   public Brain Build()
   {
-    var TotalInputFeatures = StateSize + InputLength;
-    var TotalOutputFeatures = StateSize + OutputLength;
+    var TotalStateSize = StateCoefficient * InputLength;
+    var TotalInputFeatures = TotalStateSize > 0 ? TotalStateSize : InputLength;
+    var TotalOutputFeatures = OutputLength;
 
     var TorchLayers = new List<torch.nn.Module<torch.Tensor, torch.Tensor>>();
     var InFeatures = Layers.Aggregate(TotalInputFeatures,
@@ -163,12 +164,17 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
       ExecutionDevice.CUDA => global::TorchSharp.DeviceType.CUDA,
       _ => global::TorchSharp.DeviceType.CPU
     };
-    var NeuralNet = torch.nn.Sequential(TorchLayers.ToArray()).to(DeviceType);
 
+    nn.Module<TorchInferenceParts, TorchInferenceParts> Module = new StatePassThroughModule(nn.Sequential(TorchLayers.ToArray()).to(DeviceType));
+    if (TotalStateSize > 0)
+      Module = new CompositeModule(new AdditionalDimensionForSubModule(new DoubleTensorToTorchInferencePartsAdapter(nn.GRU(
+        inputSize: InputLength,
+        hiddenSize: TotalStateSize)
+      )), Module);
 
     return AllowTraining
-      ? new TorchBrainForTrainingMode(NeuralNet, new(DeviceType), StateSize, LossFunction)
-      : new TorchBrainForProductionMode(NeuralNet, new(DeviceType), StateSize);
+      ? new TorchBrainForTrainingMode(Module, new(DeviceType), TotalStateSize, LossFunction)
+      : new TorchBrainForProductionMode(Module, new(DeviceType), TotalStateSize);
   }
 
   protected static int AddModulesForLayer(Layer Layer, List<torch.nn.Module<torch.Tensor, torch.Tensor>> TorchLayers,

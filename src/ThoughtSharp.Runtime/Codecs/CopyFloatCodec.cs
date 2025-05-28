@@ -32,6 +32,11 @@ public class CopyFloatCodec : CognitiveDataCodec<float>
     Target[0] = ObjectToEncode;
   }
 
+  public void WriteLossRulesFor(float Target, LossRuleWriter Writer)
+  {
+    Writer.WriteLossRule(0, new HuberLossRule([Target]));
+  }
+
   public float DecodeFrom(ReadOnlySpan<float> Source)
   {
     return Source[0];

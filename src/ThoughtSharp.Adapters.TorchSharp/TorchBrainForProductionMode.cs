@@ -23,10 +23,11 @@
 using ThoughtSharp.Runtime;
 using TorchSharp;
 using TorchSharp.Modules;
+using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrainForProductionMode(Sequential Model, torch.Device Device, int StateSize)
+public class TorchBrainForProductionMode(Module<TorchInferenceParts, TorchInferenceParts> Model, torch.Device Device, int StateSize)
   : TorchBrain(Model, Device, StateSize), Brain
 {
   public Inference MakeInference(float[] Parameters)
@@ -36,8 +37,8 @@ public class TorchBrainForProductionMode(Sequential Model, torch.Device Device, 
 
   internal Inference ExecuteInference(torch.Tensor StateInput, float[] Parameters)
   {
-    var Tensors = Forward(StateInput, Parameters);
+    var Tensors = Forward(Parameters, StateInput);
 
-    return new TorchInferenceForProductionMode(this, Tensors.State, Tensors.Product);
+    return new TorchInferenceForProductionMode(this, Tensors.State, Tensors.Payload);
   }
 }
