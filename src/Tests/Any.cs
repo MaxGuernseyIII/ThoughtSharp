@@ -44,6 +44,16 @@ static class Any
     return Min + Core.Next(Gap);
   }
 
+  public static int Int()
+  {
+    return Int(1, 100);
+  }
+
+  public static float[] FloatArray()
+  {
+    return FloatArray(Int());
+  }
+
   public static string ASCIIString(int Length)
   {
     var ResultBuilder = new StringBuilder();

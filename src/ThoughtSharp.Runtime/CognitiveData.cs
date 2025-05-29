@@ -61,6 +61,24 @@ public class OneDimensionalTarget(float[] Target)
 {
   public float[] Target { get; } = Target;
   public int Length { get; } = Target.Length;
+
+  bool Equals(OneDimensionalTarget Other)
+  {
+    return Target.SequenceEqual(Other.Target);
+  }
+
+  public override bool Equals(object? Other)
+  {
+    if (Other is null) return false;
+    if (ReferenceEquals(this, Other)) return true;
+    if (Other.GetType() != GetType()) return false;
+    return Equals((OneDimensionalTarget) Other);
+  }
+
+  public override int GetHashCode()
+  {
+    return Target.GetHashCode();
+  }
 }
 
 public class BinaryCrossEntropyWithLogitsLossRule(float[] Target) : OneDimensionalTarget(Target), LossRule
@@ -69,6 +87,8 @@ public class BinaryCrossEntropyWithLogitsLossRule(float[] Target) : OneDimension
   {
     return Visitor.Visit(this, Prediction);
   }
+
+
 }
 
 public class MeanSquareErrorLossRule(float[] Target) : OneDimensionalTarget(Target), LossRule
@@ -90,16 +110,38 @@ public class HuberLossRule(float[] Target) : OneDimensionalTarget(Target), LossR
 public class CrossEntropyLossRule(long Index, int Length) : LossRule
 {
   public long Index { get; } = Index;
-  public int Length { get; }= Length;
+  public int Length { get; } = Length;
 
   public U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor)
   {
     return Visitor.Visit(this, Prediction);
   }
+
+  bool Equals(CrossEntropyLossRule Other)
+  {
+    return Index == Other.Index && Length == Other.Length;
+  }
+
+  public override bool Equals(object? Other)
+  {
+    if (Other is null) return false;
+    if (ReferenceEquals(this, Other)) return true;
+    if (Other.GetType() != GetType()) return false;
+    return Equals((CrossEntropyLossRule) Other);
+  }
+
+  public override int GetHashCode()
+  {
+    return HashCode.Combine(Index, Length);
+  }
 }
 
 public class LossRuleWriter(LossRuleStream Stream, int Base)
 {
+  public LossRuleWriter() : this(new(), 0) { }
+
+  public LossRuleStream Stream { get; } = Stream;
+
   public LossRuleWriter ForOffset(int Offset) => new(Stream, Base + Offset);
 
   public void WriteLossRule(int Offset, LossRule Rule) => Stream.WriteRule(Base + Offset, Rule);

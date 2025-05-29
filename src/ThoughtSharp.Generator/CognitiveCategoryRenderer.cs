@@ -59,24 +59,16 @@ static class CognitiveCategoryRenderer
       GenerateInterpretLegacyMethod(W);
       GenerateGetContestBetweenMethod(W);
       GenerateInterpretMethod(W);
-      GenerateReverseInterpretMethod(W);
     }
 
     void GenerateInterpretMethod(IndentedTextWriter W)
     {
+      var PayloadType = Model.PayloadType.FullName;
+      var FeedbackType = $"SingleChoiceFeedback<{PayloadType}, Output>";
       using (W.DeclareWithBlock(
-               $"public static {Model.PayloadType.FullName} Interpret({Model.PayloadType.FullName} Left, {Model.PayloadType.FullName} Right, Output O)"))
+               $"public static Thought<{PayloadType}, {FeedbackType}> Interpret({PayloadType} Left, {PayloadType} Right, Output O, Inference I, int Offset)"))
       {
-        W.WriteLine("return O.RightIsWinner ? Right : Left;");
-      }
-    }
-
-    void GenerateReverseInterpretMethod(IndentedTextWriter W)
-    {
-      using (W.DeclareWithBlock(
-               $"public static Output ReverseInterpret({Model.PayloadType.FullName} Left, {Model.PayloadType.FullName} Right, {Model.PayloadType.FullName} Selection)"))
-      {
-        W.WriteLine("return new() { RightIsWinner = Object.ReferenceEquals(Selection, Right) };");
+        W.WriteLine($"return Thought.Capture(O.RightIsWinner ? Right : Left, new {FeedbackType}(I, Left, Right, B => new() {{ RightIsWinner = B }}, Offset));");
       }
     }
 

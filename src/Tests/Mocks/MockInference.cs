@@ -27,22 +27,30 @@ namespace Tests.Mocks;
 
 class MockInference(int InputLength, float[] Floats) : MockInferenceSource(InputLength, Floats.Length), Inference
 {
-  float[]? TrainedData;
-
+  IReadOnlyList<(int, LossRule)>? TrainedLossRules;
   public readonly List<(float Reward, IReadOnlyList<Range> Ranges)> Incentives = [];
 
   public ReadOnlySpan<float> Result => Floats;
 
   public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
   {
-    throw new NotImplementedException();
+    TrainedLossRules = LossRules;
   }
 
   public void ShouldHaveBeenTrainedWith<T>(T Output)
     where T : CognitiveData<T>
   {
-    var Buffer = new float[T.Length];
-    Output.MarshalTo(Buffer);
-    TrainedData.Should().Equal(Buffer);
+    var Stream = new LossRuleStream();
+    var Writer = new LossRuleWriter(Stream, 0);
+    Output.WriteAsLossRules(Writer);
+
+    var Expected = Stream.PositionRulePairs;
+
+    ShouldHaveBeenTrainedWith(Expected);
+  }
+
+  public void ShouldHaveBeenTrainedWith(params IReadOnlyList<(int At, LossRule Rule)> Expected)
+  {
+    TrainedLossRules.Should().Equal(Expected);
   }
 }

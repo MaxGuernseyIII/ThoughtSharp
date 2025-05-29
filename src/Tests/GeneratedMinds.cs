@@ -360,22 +360,35 @@ public partial class GeneratedMinds
 
   static void TestChooseBatches(MockCategory Category)
   {
-    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
-    var SelectedIndex = (ushort) Any.Int(0, Category.AllOptions.Count - 1);
-    var StipulatedOutput = new MockCategory.Output
-    {
-      Selection = SelectedIndex
-    };
-
+    var Selected = Any.Of(Category.AllOptions);
     var ArgumentA = Any.Float;
     var Argument2 = Any.Float;
     var AThirdArg = Any.Float;
-    SetUpOptionsBatchReadsAndWrites(Category, StipulatedOutput, Brain, ArgumentA, Argument2, AThirdArg);
+    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    Brain.MakeInferenceFunc = MakeInferenceFunction;
+
     var Mind = new StatelessMind(Brain);
 
     var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg).ConsumeDetached();
 
-    Result.Should().BeSameAs(Category.InterpretLegacy(StipulatedOutput));
+    Result.Should().BeSameAs(Selected.Payload);
+
+    Inference MakeInferenceFunction(float[] Tensor)
+    {
+      var Input = StatelessMind.Input.UnmarshalFrom(Tensor);
+      Input.OperationCode.Should().Be(3);
+      Input.Parameters.ChooseItems.ArgumentA.Should().Be(ArgumentA);
+      Input.Parameters.ChooseItems.Argument2.Should().Be(Argument2);
+      Input.Parameters.ChooseItems.AThirdArg.Should().Be(AThirdArg);
+      var RightOption = Category.AllOptions.Single(C => C.Descriptor == Input.Parameters.ChooseItems.Category.Right);
+
+      var Output = new StatelessMind.Output();
+      Output.Parameters.ChooseItems.Category.RightIsWinner = RightOption == Selected;
+      var OutputTensor = new float[StatelessMind.OutputLength];
+      Output.MarshalTo(OutputTensor);
+
+      return new MockInference(StatelessMind.InputLength, OutputTensor) {MakeInferenceFunc = MakeInferenceFunction};
+    }
   }
 
   static MockInference SetUpOptionsBatchReadsAndWrites(MockCategory Category, MockCategory.Output StipulatedOutput,
@@ -454,10 +467,9 @@ public partial class GeneratedMinds
       }
     };
     Brain.SetOutputForOnlyInput(ExpectedInput, StipulatedOutput);
-    var Thought1 = new StatelessMind(Brain).SynchronousUseSomeInterface(Surface,
+    var Thought = new StatelessMind(Brain).SynchronousUseSomeInterface(Surface,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument1,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument2);
-    var Thought = Thought1;
     var More = Thought.ConsumeDetached();
     return More;
   }
@@ -604,10 +616,10 @@ public partial class GeneratedMinds
   class MockSelectable;
 
   [CognitiveData]
-  partial class MockDescriptor
+  partial record MockDescriptor
   {
-    public float P1;
-    public float P2;
+    public float P1 { get; set; } = Any.Float;
+    public float P2 { get; set; } = Any.Float;
   }
 
   [CognitiveCategory<MockSelectable, MockDescriptor>(3)]

@@ -22,6 +22,7 @@
 
 using ThoughtSharp.Runtime;
 using FluentAssertions;
+using Tests.Mocks;
 
 namespace Tests;
 
@@ -47,7 +48,7 @@ public partial class CognitiveCategoryTests
     var Right = new TestOption();
     var Output = new TestCategory.Output { RightIsWinner = false };
 
-    var Selected = TestCategory.Interpret(Left, Right, Output);
+    var Selected = TestCategory.Interpret(Left, Right, Output, new MockInference(Any.Int(), Any.FloatArray()), Any.Int(0, 100)).ConsumeDetached();
 
     Selected.Should().BeSameAs(Left);
   }
@@ -59,33 +60,37 @@ public partial class CognitiveCategoryTests
     var Right = new TestOption();
     var Output = new TestCategory.Output { RightIsWinner = true };
 
-    var Selected = TestCategory.Interpret(Left, Right, Output);
+    var Selected = TestCategory.Interpret(Left, Right, Output, new MockInference(Any.Int(), Any.FloatArray()), Any.Int(0, 100)).ConsumeDetached();
 
     Selected.Should().BeSameAs(Right);
   }
 
   [TestMethod]
-  public void ReverseInterpretLeftSelection()
+  public void TrainLeftSelection()
   {
     var Left = new TestOption();
     var Right = new TestOption();
-    var Selected = Left;
+    var MockInference = new MockInference(Any.Int(), Any.FloatArray());
+    var Offset = Any.Int(0, 100);
+    var T = TestCategory.Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    var Output = TestCategory.ReverseInterpret(Left, Right, Selected);
+    T.Feedback.WinnerShouldBe(Left);
 
-    Output.Should().Be(new TestCategory.Output { RightIsWinner = false });
+    MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = false }.ExtractLossRules(Offset));
   }
 
   [TestMethod]
-  public void ReverseInterpretRightSelection()
+  public void TrainRightSelection()
   {
     var Left = new TestOption();
     var Right = new TestOption();
-    var Selected = Right;
+    var MockInference = new MockInference(Any.Int(), Any.FloatArray());
+    var Offset = Any.Int(0, 100);
+    var T = TestCategory.Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    var Output = TestCategory.ReverseInterpret(Left, Right, Selected);
+    T.Feedback.WinnerShouldBe(Right);
 
-    Output.Should().Be(new TestCategory.Output { RightIsWinner = true });
+    MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = true }.ExtractLossRules(Offset));
   }
 
   class TestOption;
@@ -93,12 +98,23 @@ public partial class CognitiveCategoryTests
   [CognitiveData]
   partial record TestDescriptor
   {
-    internal float ArbitraryValue { get; set; } = Any.Float;
+    float ArbitraryValue { get; set; } = Any.Float;
   }
 
   [CognitiveCategory<TestOption, TestDescriptor>(3)]
-  partial class TestCategory
-  {
+  partial class TestCategory;
+}
 
+static class LossRuleExtensions
+{
+  public static IReadOnlyList<(int, LossRule)> ExtractLossRules<T>(this T This, int Offset)
+    where T : CognitiveData<T>
+  {
+    var Stream = new LossRuleStream();
+    var Writer = new LossRuleWriter(Stream, Offset);
+
+    This.WriteAsLossRules(Writer);
+
+    return Stream.PositionRulePairs;
   }
 }

@@ -46,6 +46,24 @@ public class ChooseFeedback<TSelectable>(InferenceFeedback Underlying, IReadOnly
   }
 }
 
+public class SingleChoiceFeedback<TSelectable, TOutput>(
+  Inference Inference,
+  TSelectable Left,
+  TSelectable Right,
+  Func<bool, TOutput> MakeOutput,
+  int Offset)
+  where TOutput : CognitiveData<TOutput>
+  where TSelectable : class
+{
+  public void WinnerShouldBe(TSelectable ExpectedWinner)
+  {
+    var Output = MakeOutput(ReferenceEquals(ExpectedWinner, Right));
+    var Writer = new LossRuleWriter(new(), Offset);
+    Output.WriteAsLossRules(Writer);
+    Inference.Train(Writer.Stream.PositionRulePairs);
+  }
+}
+
 public class ChooseFeedbackConfigurator<TSelectable>(IReadOnlyList<TSelectable> Options, Func<ushort, IReadOnlyList<(int, LossRule)>> ToLossRules)
 {
   public Inference FinalInference { get; set; } = null!;
