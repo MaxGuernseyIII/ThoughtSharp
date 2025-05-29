@@ -22,15 +22,14 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedbackConfigurator<TSelectable>(IReadOnlyList<TSelectable> Options, Func<ushort, IReadOnlyList<(int, LossRule)>> ToLossRules)
+public class ChooseFeedbackConfigurator<TSelectable>()
 {
   readonly List<SingleChoiceFeedback<TSelectable>> SingleChoices = [];
 
   public void AddSingleChoice(SingleChoiceFeedback<TSelectable> SingleChoice) => SingleChoices.Add(SingleChoice);
 
-  public Inference FinalInference { get; set; } = null!;
   public ChooseFeedback<TSelectable> Create()
   {
-    return new(new(FinalInference), Options, ToLossRules);
+    return new(SingleChoices);
   }
 }

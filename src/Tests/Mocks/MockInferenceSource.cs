@@ -100,20 +100,20 @@ class MockInferenceSource : MockDisposable, InferenceSource
 
 class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
   where TInput : CognitiveData<TInput>
-  where TOutput : CognitiveData<TOutput>
+  where TOutput : CognitiveData<TOutput>, new()
 {
   public MockInferenceSource()
   {
     MakeInferenceFunc = _ =>
     {
-      var MockInference = new MockInference(TInput.Length, new float[TOutput.Length]);
+      var MockInference = new MockInference<TInput, TOutput>(new());
       MockInferences.Add(MockInference);
       return MockInference;
     };
   }
 
   public Func<TInput, Inference> MakeInferenceFunc;
-  public List<MockInference> MockInferences = [];
+  public List<MockInference<TInput, TOutput>> MockInferences = [];
 
   public Inference MakeInference(float[] Parameters)
   {
@@ -127,8 +127,7 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
 
   public MockInference<TInput, TOutput> SetOutputForOnlyInput(TInput ExpectedInput, TOutput StipulatedOutput)
   {
-    var StipulatedBrainOutput = MakeReferenceFloats(StipulatedOutput);
-    var ResultInference = new MockInference<TInput, TOutput>(StipulatedBrainOutput);
+    var ResultInference = new MockInference<TInput, TOutput>(StipulatedOutput);
 
     MakeInferenceFunc = ActualInput =>
     {
@@ -136,15 +135,6 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
       
       return ResultInference;
     };
-
-    static float[] MakeReferenceFloats<T>(T ToPersist) where T : CognitiveData<T>
-    {
-      var Result = new float[T.Length];
-
-      ToPersist.MarshalTo(Result);
-
-      return Result;
-    }
 
     return ResultInference;
   }

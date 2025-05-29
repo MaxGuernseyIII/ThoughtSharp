@@ -308,8 +308,6 @@ static class MindRenderer
     W.WriteLine("{");
     W.Indent++;
 
-    W.WriteLine("Output FinalOutputObject = default!;");
-
     W.WriteLine($"var Champion = {ChooseOperation.CategoryParameter}.AllOptions.First();");
     W.WriteLine();
     W.WriteLine($"foreach (var Contender in {ChooseOperation.CategoryParameter}.AllOptions.Skip(1))");
@@ -325,7 +323,7 @@ static class MindRenderer
       W.WriteLine();
       RenderMakeInference(W, MindModel);
 
-      W.WriteLine($"var Offset = Input.ParametersIndex + Input.InputParameters.{ChooseOperation.Name}Index + Input.InputParameters.{ChooseOperation.Name}Parameters.{ChooseOperation.CategoryParameter}Index;");
+      W.WriteLine($"var Offset = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index + Output.OutputParameters.{ChooseOperation.Name}Parameters.{ChooseOperation.CategoryParameter}Index;");
       W.WriteLine($"var T = {ChooseOperation.CategoryParameter}.Interpret(Champion, Contender, OutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}, Inference, Offset);");
       W.WriteLine("Source.AddSingleChoice(T.Feedback);");
       W.WriteLine("Champion = R.Consume(T);");

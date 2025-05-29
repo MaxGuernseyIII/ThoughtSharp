@@ -22,30 +22,21 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedback<TSelectable>(
-  InferenceFeedback Underlying, 
-  IReadOnlyList<TSelectable> Options, 
-  Func<ushort, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
+public class ChooseFeedback<TSelectable>(List<SingleChoiceFeedback<TSelectable>> SingleChoices)
 {
   public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseFeedback<TSelectable>> GetSource<TOutput>(IReadOnlyList<TSelectable> Options, Func<ushort, TOutput> GetOutputObject)
     where TOutput : CognitiveData<TOutput>
   {
-    var Configurator = new ChooseFeedbackConfigurator<TSelectable>(Options, I =>
-    {
-      var Stream = new LossRuleStream();
-      var W = new LossRuleWriter(Stream, 0);
-      var Output = GetOutputObject(I);
-      Output.WriteAsLossRules(W);
-      
-      return Stream.PositionRulePairs;
-    });
+    var Configurator = new ChooseFeedbackConfigurator<TSelectable>();
     return new(Configurator, Configurator.Create);
   }
 
   public void SelectionShouldHaveBeen(TSelectable Payload)
   {
-    var ExpectedOutput = ToExpectedOutput((ushort) Options.ToList().IndexOf(Payload));
-    Underlying.ApplyLoses(ExpectedOutput);
+    foreach (var SingleChoice in SingleChoices)
+    {
+      SingleChoice.WinnerShouldBe(Payload);
+    }
   }
 }
 

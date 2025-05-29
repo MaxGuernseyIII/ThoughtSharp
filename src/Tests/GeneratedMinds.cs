@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
@@ -327,30 +326,53 @@ public partial class GeneratedMinds
       AnyMockOption()
     ]);
 
-    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
-    var SelectedIndex = (ushort) Any.Int(0, Category.AllOptions.Count - 1);
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
+    var Mind = new StatelessMind(Brain);
     var ArgumentA = Any.Float;
     var Argument2 = Any.Float;
     var AThirdArgument = Any.Float;
-    var Inference = SetUpOptionsBatchReadsAndWrites(Category, new() {Selection = SelectedIndex}, Brain, ArgumentA,
-      Argument2, AThirdArgument);
-    var Mind = new StatelessMind(Brain);
-    var T = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArgument);
-    T.Feedback.SelectionShouldHaveBeen(Category.AllOptions[SelectedIndex].Payload);
 
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output()
+    var SelectionLog = new List<(CognitiveOption<MockSelectable, MockDescriptor> Left, CognitiveOption<MockSelectable, MockDescriptor> Right, MockInference<StatelessMind.Input, StatelessMind.Output> Inference)>();
+
+    Brain.MakeInferenceFunc = Input =>
     {
-      Parameters =
+      var Cat = Input.Parameters.ChooseItems.Category;
+      var Output = new StatelessMind.Output
       {
-        ChooseItems =
+        Parameters =
         {
-          Category =
+          ChooseItems =
           {
-            Selection = SelectedIndex
+            Category =
+            {
+              RightIsWinner = Any.Bool
+            }
           }
         }
-      }
-    });
+      };
+
+      var MockInference = new MockInference<StatelessMind.Input, StatelessMind.Output>(Output);
+      SelectionLog.Add((Category.AllOptions.Single(C => Equals(C.Descriptor, Cat.Left)), Category.AllOptions.Single(C => Equals(C.Descriptor, Cat.Right)), MockInference));
+
+      return MockInference;
+    };
+    var T = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArgument);
+    var Selected = Any.Of(Category.AllOptions);
+    T.RaiseAnyExceptions();
+
+    T.Feedback.SelectionShouldHaveBeen(Selected.Payload);
+
+    var Offset = StatelessMind.Output.ParametersIndex + StatelessMind.Output.OutputParameters.ChooseItemsIndex +
+                 StatelessMind.Output.OutputParameters.ChooseItemsParameters.CategoryIndex;
+
+    var LeftItems = SelectionLog.Where(I => I.Left == Selected);
+    var RightItems = SelectionLog.Where(I => I.Right == Selected);
+    foreach (var Item in LeftItems)
+      Item.Inference.ShouldHaveBeenTrainedWith(new MockCategory.Output() { RightIsWinner = false }.ExtractLossRules(Offset));
+    foreach (var Item in RightItems)
+      Item.Inference.ShouldHaveBeenTrainedWith(new MockCategory.Output() { RightIsWinner = true }.ExtractLossRules(Offset));
+    foreach (var Item in SelectionLog.Except(LeftItems).Except(RightItems))
+      Item.Inference.ShouldNotHaveBeenTrained();
   }
 
   static CognitiveOption<MockSelectable, MockDescriptor> AnyMockOption()
@@ -383,52 +405,11 @@ public partial class GeneratedMinds
 
       var Output = new StatelessMind.Output();
       Output.Parameters.ChooseItems.Category.RightIsWinner = RightOption == Selected;
-      var OutputTensor = new float[StatelessMind.OutputLength];
-      Output.MarshalTo(OutputTensor);
-
-      return new MockInference<StatelessMind.Input, StatelessMind.Output>(OutputTensor) {MakeInferenceFunc = 
+      
+      return new MockInference<StatelessMind.Input, StatelessMind.Output>(Output) {MakeInferenceFunc = 
         _ => throw new InvalidOperationException("Should not get here.")
       };
     }
-  }
-
-  static MockInference SetUpOptionsBatchReadsAndWrites(MockCategory Category, MockCategory.Output StipulatedOutput,
-    MockBrain Brain,
-    float ArgumentA, float Argument2, float AThirdArg)
-  {
-    var AllBatches = Category.ToInputBatches().ToImmutableArray();
-    var NonFinalBatches = AllBatches[..^1];
-    var FinalBatches = AllBatches[^1];
-    var Inputs = new List<(MockCategory.Input I, MockCategory.Output O)>();
-    foreach (var NonFinalBatch in NonFinalBatches)
-      Inputs.Add((NonFinalBatch, new()));
-    Inputs.Add((FinalBatches, StipulatedOutput));
-    return Brain.SetChainedOutputsForInputs(Inputs.Select(Pair =>
-    (
-      new StatelessMind.Input
-      {
-        OperationCode = 4,
-        Parameters =
-        {
-          ChooseItems =
-          {
-            ArgumentA = ArgumentA,
-            Argument2 = Argument2,
-            AThirdArg = AThirdArg,
-            Category = Pair.I
-          }
-        }
-      },
-      new StatelessMind.Output
-      {
-        Parameters =
-        {
-          ChooseItems =
-          {
-            Category = Pair.O
-          }
-        }
-      })).ToList());
   }
 
   static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,

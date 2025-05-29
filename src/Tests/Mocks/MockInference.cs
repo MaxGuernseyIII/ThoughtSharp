@@ -60,14 +60,23 @@ class MockInference(int InputLength, float[] Floats) : MockInferenceSource(Input
   }
 }
 
-class MockInference<TInput, TOutput>(float[] Floats)
+class MockInference<TInput, TOutput>(TOutput ResultOutput)
   : MockInferenceSource<TInput, TOutput>, Inference
   where TInput : CognitiveData<TInput>
-  where TOutput : CognitiveData<TOutput>
+  where TOutput : CognitiveData<TOutput>, new()
 {
+  public TOutput ResultOutput { get; } = ResultOutput;
   IReadOnlyList<(int, LossRule)>? TrainedLossRules;
 
-  public ReadOnlySpan<float> Result => Floats;
+  public ReadOnlySpan<float> Result
+  {
+    get
+    {
+      var Buffer = new float[TOutput.Length];
+      ResultOutput.MarshalTo(Buffer);
+      return Buffer;
+    }
+  }
 
   public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
   {
