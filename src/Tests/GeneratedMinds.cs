@@ -375,7 +375,7 @@ public partial class GeneratedMinds
 
     var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg).ConsumeDetached();
 
-    Result.Should().BeSameAs(Category.Interpret(StipulatedOutput));
+    Result.Should().BeSameAs(Category.InterpretLegacy(StipulatedOutput));
   }
 
   static MockInference SetUpOptionsBatchReadsAndWrites(MockCategory Category, MockCategory.Output StipulatedOutput,

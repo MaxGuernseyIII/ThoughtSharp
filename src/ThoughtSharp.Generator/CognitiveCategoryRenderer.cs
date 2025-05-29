@@ -56,7 +56,41 @@ static class CognitiveCategoryRenderer
     {
       GenerateAllOptionsProperty(W);
       GenerateToInputBatchesMethod(W);
+      GenerateInterpretLegacyMethod(W);
+      GenerateGetContestBetweenMethod(W);
       GenerateInterpretMethod(W);
+      GenerateReverseInterpretMethod(W);
+    }
+
+    void GenerateInterpretMethod(IndentedTextWriter W)
+    {
+      using (W.DeclareWithBlock(
+               $"public static {Model.PayloadType.FullName} Interpret({Model.PayloadType.FullName} Left, {Model.PayloadType.FullName} Right, Output O)"))
+      {
+        W.WriteLine("return O.RightIsWinner ? Right : Left;");
+      }
+    }
+
+    void GenerateReverseInterpretMethod(IndentedTextWriter W)
+    {
+      using (W.DeclareWithBlock(
+               $"public static Output ReverseInterpret({Model.PayloadType.FullName} Left, {Model.PayloadType.FullName} Right, {Model.PayloadType.FullName} Selection)"))
+      {
+        W.WriteLine("return new() { RightIsWinner = Object.ReferenceEquals(Selection, Right) };");
+      }
+    }
+
+    void GenerateGetContestBetweenMethod(IndentedTextWriter W)
+    {
+      using (
+        W.DeclareWithBlock($"public static Input GetContestBetween({Model.DescriptorType.FullName} Left, {Model.DescriptorType.FullName} Right)"))
+      {
+        using (W.EnterBlock("return new()", ";"))
+        {
+          W.WriteLine("Left = Left,");
+          W.WriteLine("Right = Right");
+        }
+      }
     }
 
     void GenerateAllOptionsProperty(IndentedTextWriter W)
@@ -158,9 +192,9 @@ static class CognitiveCategoryRenderer
       }
     }
 
-    void GenerateInterpretMethod(IndentedTextWriter W)
+    void GenerateInterpretLegacyMethod(IndentedTextWriter W)
     {
-      W.WriteLine($"public {Model.PayloadType.FullName} Interpret(Output O)");
+      W.WriteLine($"public {Model.PayloadType.FullName} InterpretLegacy(Output O)");
       W.WriteLine("{");
       W.Indent++;
       W.WriteLine("return AllOptions[O.Selection % AllOptions.Count].Payload;");

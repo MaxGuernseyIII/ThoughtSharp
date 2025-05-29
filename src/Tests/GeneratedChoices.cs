@@ -292,7 +292,7 @@ public partial class GeneratedChoices
     var Index = (ushort) Any.Int(0, Category.AllOptions.Count - 1);
     var Output = new MockCategory.Output {Selection = Index};
 
-    var Selection = Category.Interpret(Output);
+    var Selection = Category.InterpretLegacy(Output);
 
     Selection.Should().BeSameAs(Category.AllOptions[Index].Payload);
   }

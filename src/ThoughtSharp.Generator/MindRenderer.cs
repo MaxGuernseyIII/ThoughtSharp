@@ -330,7 +330,7 @@ static class MindRenderer
     W.Indent--;
     W.WriteLine("}");
 
-    W.WriteLine($"return {ChooseOperation.CategoryParameter}.Interpret(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter});");
+    W.WriteLine($"return {ChooseOperation.CategoryParameter}.InterpretLegacy(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter});");
     W.Indent--;
     W.WriteLine("})");
 
