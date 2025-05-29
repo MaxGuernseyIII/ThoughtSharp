@@ -29,26 +29,31 @@ namespace Tests;
 [TestClass]
 public partial class CognitiveCategoryTests
 {
+  static CognitiveOption<TestOption, TestDescriptor> AnyCognitiveOption()
+  {
+    return new(new(), new());
+  }
+
   [TestMethod]
   public void GenerateInputForSelection()
   {
-    var Left = new TestDescriptor();
-    var Right = new TestDescriptor();
+    var Left = AnyCognitiveOption();
+    var Right = AnyCognitiveOption();
 
-    var I = TestCategory.GetContestBetween(Left, Right);
+    var I = new TestCategory([]).GetContestBetween(Left, Right);
 
-    I.Left.Should().BeSameAs(Left);
-    I.Right.Should().BeSameAs(Right);
+    I.Left.Should().BeSameAs(Left.Descriptor);
+    I.Right.Should().BeSameAs(Right.Descriptor);
   }
 
   [TestMethod]
   public void InterpretLeftSelection()
   {
-    var Left = new TestOption();
-    var Right = new TestOption();
+    var Left = AnyCognitiveOption();
+    var Right = AnyCognitiveOption();
     var Output = new TestCategory.Output { RightIsWinner = false };
 
-    var Selected = TestCategory.Interpret(Left, Right, Output, new MockInference(Any.Int(), Any.FloatArray()), Any.Int(0, 100)).ConsumeDetached();
+    var Selected = new TestCategory([]).Interpret(Left, Right, Output, new MockInference(Any.Int(), Any.FloatArray()), Any.Int(0, 100)).ConsumeDetached();
 
     Selected.Should().BeSameAs(Left);
   }
@@ -56,11 +61,11 @@ public partial class CognitiveCategoryTests
   [TestMethod]
   public void InterpretRightSelection()
   {
-    var Left = new TestOption();
-    var Right = new TestOption();
+    var Left = AnyCognitiveOption();
+    var Right = AnyCognitiveOption();
     var Output = new TestCategory.Output { RightIsWinner = true };
 
-    var Selected = TestCategory.Interpret(Left, Right, Output, new MockInference(Any.Int(), Any.FloatArray()), Any.Int(0, 100)).ConsumeDetached();
+    var Selected = new TestCategory([]).Interpret(Left, Right, Output, new MockInference(Any.Int(), Any.FloatArray()), Any.Int(0, 100)).ConsumeDetached();
 
     Selected.Should().BeSameAs(Right);
   }
@@ -68,13 +73,13 @@ public partial class CognitiveCategoryTests
   [TestMethod]
   public void TrainLeftSelection()
   {
-    var Left = new TestOption();
-    var Right = new TestOption();
+    var Left = AnyCognitiveOption();
+    var Right = AnyCognitiveOption();
     var MockInference = new MockInference(Any.Int(), Any.FloatArray());
     var Offset = Any.Int(0, 100);
-    var T = TestCategory.Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
+    var T = new TestCategory([]).Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    T.Feedback.WinnerShouldBe(Left);
+    T.Feedback.WinnerShouldBe(Left.Payload);
 
     MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = false }.ExtractLossRules(Offset));
   }
@@ -82,13 +87,13 @@ public partial class CognitiveCategoryTests
   [TestMethod]
   public void TrainRightSelection()
   {
-    var Left = new TestOption();
-    var Right = new TestOption();
+    var Left = AnyCognitiveOption();
+    var Right = AnyCognitiveOption();
     var MockInference = new MockInference(Any.Int(), Any.FloatArray());
     var Offset = Any.Int(0, 100);
-    var T = TestCategory.Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
+    var T = new TestCategory([]).Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    T.Feedback.WinnerShouldBe(Right);
+    T.Feedback.WinnerShouldBe(Right.Payload);
 
     MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = true }.ExtractLossRules(Offset));
   }
@@ -96,11 +101,11 @@ public partial class CognitiveCategoryTests
   [TestMethod]
   public void TrainOtherSelection()
   {
-    var Left = new TestOption();
-    var Right = new TestOption();
+    var Left = AnyCognitiveOption();
+    var Right = AnyCognitiveOption();
     var MockInference = new MockInference(Any.Int(), Any.FloatArray());
     var Offset = Any.Int(0, 100);
-    var T = TestCategory.Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
+    var T = new TestCategory([]).Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
     T.Feedback.WinnerShouldBe(new());
 

@@ -164,9 +164,9 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
 
 public static class AssertEx
 {
-  public static void AssertJsonDiff<T>(T expected, T actual)
+  public static void AssertJsonDiff<T>(T Expected, T Actual)
   {
-    var settings = new JsonSerializerSettings
+    var Settings = new JsonSerializerSettings
     {
       Formatting = Formatting.Indented,
       ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
@@ -175,16 +175,16 @@ public static class AssertEx
       }
     };
 
-    var expectedJ = JToken.FromObject(expected, JsonSerializer.Create(settings));
-    var actualJ = JToken.FromObject(actual, JsonSerializer.Create(settings));
+    var ExpectedJ = JToken.FromObject(Expected!, JsonSerializer.Create(Settings));
+    var ActualJ = JToken.FromObject(Actual!, JsonSerializer.Create(Settings));
 
-    var jdp = new JsonDiffPatch();
-    var patch = jdp.Diff(expectedJ, actualJ);
+    var DiffPatch = new JsonDiffPatch();
+    var Patch = DiffPatch.Diff(ExpectedJ, ActualJ);
 
-    if (patch != null)
+    if (Patch != null)
     {
       Console.WriteLine("❌ Objects differ:");
-      Console.WriteLine(patch.ToString(Formatting.Indented));
+      Console.WriteLine(Patch.ToString(Formatting.Indented));
       Assert.Fail("Objects differ. See diff above.");
     }
   }

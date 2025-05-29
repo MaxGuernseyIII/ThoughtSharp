@@ -61,33 +61,36 @@ static class CognitiveCategoryRenderer
       GenerateInterpretMethod(W);
     }
 
-    void GenerateInterpretMethod(IndentedTextWriter W)
-    {
-      var PayloadType = Model.PayloadType.FullName;
-      var FeedbackType = $"SingleChoiceFeedback<{PayloadType}, Output>";
-      using (W.DeclareWithBlock(
-               $"public static Thought<{PayloadType}, {FeedbackType}> Interpret({PayloadType} Left, {PayloadType} Right, Output O, Inference I, int Offset)"))
-      {
-        W.WriteLine($"return Thought.Capture(O.RightIsWinner ? Right : Left, new {FeedbackType}(I, Left, Right, B => new() {{ RightIsWinner = B }}, Offset));");
-      }
-    }
-
     void GenerateGetContestBetweenMethod(IndentedTextWriter W)
     {
       using (
-        W.DeclareWithBlock($"public static Input GetContestBetween({Model.DescriptorType.FullName} Left, {Model.DescriptorType.FullName} Right)"))
+        W.DeclareWithBlock($"public Input GetContestBetween({OptionType} Left, {OptionType} Right)"))
       {
         using (W.EnterBlock("return new()", ";"))
         {
-          W.WriteLine("Left = Left,");
-          W.WriteLine("Right = Right");
+          W.WriteLine("Left = Left.Descriptor,");
+          W.WriteLine("Right = Right.Descriptor");
         }
       }
     }
 
+    void GenerateInterpretMethod(IndentedTextWriter W)
+    {
+      var PayloadType = Model.PayloadType.FullName;
+      var FeedbackType = $"SingleChoiceFeedback<{PayloadType}, Output>";
+      var FeedbackReturnType = $"SingleChoiceFeedback<{PayloadType}>";
+      using (W.DeclareWithBlock(
+               $"public Thought<{OptionType}, {FeedbackReturnType}> Interpret({OptionType} Left, {OptionType} Right, Output O, Inference I, int Offset)"))
+      {
+        W.WriteLine($"return Thought.Capture<{OptionType}, {FeedbackReturnType}>(O.RightIsWinner ? Right : Left, new {FeedbackType}(I, Left.Payload, Right.Payload, B => new() {{ RightIsWinner = B }}, Offset));");
+      }
+    }
+
+    string OptionType => $"CognitiveOption<{Model.PayloadType.FullName}, {Model.DescriptorType.FullName}>";
+
     void GenerateAllOptionsProperty(IndentedTextWriter W)
     {
-      W.WriteLine($"public IReadOnlyList<CognitiveOption{TypeParameters}> AllOptions {{ get; }} = Options;");
+      W.WriteLine($"public IReadOnlyList<{OptionType}> AllOptions {{ get; }} = Options;");
       W.WriteLine();
     }
 

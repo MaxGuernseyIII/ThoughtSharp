@@ -364,7 +364,7 @@ public partial class GeneratedMinds
     var ArgumentA = Any.Float;
     var Argument2 = Any.Float;
     var AThirdArg = Any.Float;
-    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
     Brain.MakeInferenceFunc = MakeInferenceFunction;
 
     var Mind = new StatelessMind(Brain);
@@ -373,21 +373,22 @@ public partial class GeneratedMinds
 
     Result.Should().BeSameAs(Selected.Payload);
 
-    Inference MakeInferenceFunction(float[] Tensor)
+    Inference MakeInferenceFunction(StatelessMind.Input Input)
     {
-      var Input = StatelessMind.Input.UnmarshalFrom(Tensor);
-      Input.OperationCode.Should().Be(3);
+      Input.OperationCode.Should().Be(4);
       Input.Parameters.ChooseItems.ArgumentA.Should().Be(ArgumentA);
       Input.Parameters.ChooseItems.Argument2.Should().Be(Argument2);
       Input.Parameters.ChooseItems.AThirdArg.Should().Be(AThirdArg);
-      var RightOption = Category.AllOptions.Single(C => C.Descriptor == Input.Parameters.ChooseItems.Category.Right);
+      var RightOption = Category.AllOptions.Single(C => Equals(C.Descriptor, Input.Parameters.ChooseItems.Category.Right));
 
       var Output = new StatelessMind.Output();
       Output.Parameters.ChooseItems.Category.RightIsWinner = RightOption == Selected;
       var OutputTensor = new float[StatelessMind.OutputLength];
       Output.MarshalTo(OutputTensor);
 
-      return new MockInference(StatelessMind.InputLength, OutputTensor) {MakeInferenceFunc = MakeInferenceFunction};
+      return new MockInference<StatelessMind.Input, StatelessMind.Output>(OutputTensor) {MakeInferenceFunc = 
+        _ => throw new InvalidOperationException("Should not get here.")
+      };
     }
   }
 

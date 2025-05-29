@@ -22,7 +22,10 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedback<TSelectable>(InferenceFeedback Underlying, IReadOnlyList<TSelectable> Options, Func<ushort, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
+public class ChooseFeedback<TSelectable>(
+  InferenceFeedback Underlying, 
+  IReadOnlyList<TSelectable> Options, 
+  Func<ushort, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
 {
   public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseFeedback<TSelectable>> GetSource<TOutput>(IReadOnlyList<TSelectable> Options, Func<ushort, TOutput> GetOutputObject)
     where TOutput : CognitiveData<TOutput>
@@ -46,19 +49,23 @@ public class ChooseFeedback<TSelectable>(InferenceFeedback Underlying, IReadOnly
   }
 }
 
+public interface SingleChoiceFeedback<in TSelectable>
+{
+  void WinnerShouldBe(TSelectable ExpectedWinner);
+}
+
 public class SingleChoiceFeedback<TSelectable, TOutput>(
   Inference Inference,
   TSelectable Left,
   TSelectable Right,
   Func<bool, TOutput> MakeOutput,
-  int Offset)
+  int Offset) : SingleChoiceFeedback<TSelectable>
   where TOutput : CognitiveData<TOutput>
-  where TSelectable : class
 {
   public void WinnerShouldBe(TSelectable ExpectedWinner)
   {
-    var WinnerIsLeft = ReferenceEquals(ExpectedWinner, Left);
-    var WinnerIsRight = ReferenceEquals(ExpectedWinner, Right);
+    var WinnerIsLeft = Equals(ExpectedWinner, Left);
+    var WinnerIsRight = Equals(ExpectedWinner, Right);
 
     if (!(WinnerIsLeft || WinnerIsRight))
       return;
@@ -67,14 +74,5 @@ public class SingleChoiceFeedback<TSelectable, TOutput>(
     var Writer = new LossRuleWriter(new(), Offset);
     Output.WriteAsLossRules(Writer);
     Inference.Train(Writer.Stream.PositionRulePairs);
-  }
-}
-
-public class ChooseFeedbackConfigurator<TSelectable>(IReadOnlyList<TSelectable> Options, Func<ushort, IReadOnlyList<(int, LossRule)>> ToLossRules)
-{
-  public Inference FinalInference { get; set; } = null!;
-  public ChooseFeedback<TSelectable> Create()
-  {
-    return new(new(FinalInference), Options, ToLossRules);
   }
 }

@@ -35,7 +35,7 @@ static class MindRenderer
         W.WriteLine("using ThoughtSharp.Runtime;");
         W.WriteLine();
       },
-      WriteAfterTypeName = W => { W.Write($"(Brain Brain) : Mind"); },
+      WriteAfterTypeName = W => { W.Write("(Brain Brain) : Mind"); },
       WriteBody = W =>
       {
         ushort OperationCode = 1;
@@ -51,8 +51,8 @@ static class MindRenderer
 
   static void WriteInterfaceMembers(IndentedTextWriter W, MindModel M)
   {
-    W.WriteLine($"public static int InputLength {{ get; }} = { M.TypeName.FullName}.Input.Length;");
-    W.WriteLine($"public static int OutputLength {{ get; }} = { M.TypeName.FullName}.Output.Length;");
+    W.WriteLine($"public static int InputLength {{ get; }} = {M.TypeName.FullName}.Input.Length;");
+    W.WriteLine($"public static int OutputLength {{ get; }} = {M.TypeName.FullName}.Output.Length;");
     W.WriteLine();
   }
 
@@ -187,17 +187,20 @@ static class MindRenderer
     ushort ActionCode = 1;
     foreach (var Path in ActionSurface.AssociatedInterpreter!.Paths)
     {
-      W.WriteLine($"public {Path.ReturnType} {Path.MethodName}({string.Join(", ", Path.ParametersClass.Parameters.Select(P => $"{P.FullType} {P.Name}"))})");
+      W.WriteLine(
+        $"public {Path.ReturnType} {Path.MethodName}({string.Join(", ", Path.ParametersClass.Parameters.Select(P => $"{P.FullType} {P.Name}"))})");
       W.WriteLine("{");
       W.Indent++;
       W.WriteLine("if (Conditioned) throw new InvalidOperationException(\"Cannot condition a training mock twice.\");");
       W.WriteLine("Conditioned = true;");
-      W.WriteLine($"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.ActionCode = {ActionCode.ToLiteralExpression()};");
+      W.WriteLine(
+        $"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.ActionCode = {ActionCode.ToLiteralExpression()};");
 
-      foreach (var Parameter in Path.ParametersClass.Parameters) 
-        W.WriteLine($"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.Parameters.{Path.MethodName}.{Parameter.Name} = {Parameter.Name};");
+      foreach (var Parameter in Path.ParametersClass.Parameters)
+        W.WriteLine(
+          $"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.Parameters.{Path.MethodName}.{Parameter.Name} = {Parameter.Name};");
 
-      var ReturnValue = Path.IsThoughtful? "Thought.Done()" : "";
+      var ReturnValue = Path.IsThoughtful ? "Thought.Done()" : "";
       if (Path.RequiresAwait)
         ReturnValue = $"Task.FromResult({ReturnValue})";
 
@@ -246,13 +249,15 @@ static class MindRenderer
     W.WriteLine($"var FeedbackMock = new {UseOperation.Name}FeedbackMock(Inference);");
     W.WriteLine($"var Feedback = new {FeedbackType}(");
     W.Indent++;
-    W.WriteLine($"FeedbackMock,");
+    W.WriteLine("FeedbackMock,");
     W.WriteLine("FeedbackMock.Commit");
     W.Indent--;
     W.WriteLine(");");
     W.WriteLine();
 
-    var (ThoughtMethod, FromLogicMethod, Async, Unwrap) = MethodIsAsync ? ("ThinkAsync", "FromLogicAsync", "async ", "await ") : ("Think", "FromLogic", "", "");
+    var (ThoughtMethod, FromLogicMethod, Async, Unwrap) = MethodIsAsync
+      ? ("ThinkAsync", "FromLogicAsync", "async ", "await ")
+      : ("Think", "FromLogic", "", "");
     W.WriteLine($"return Thought.{ThoughtMethod}({Async}R =>");
     W.WriteLine("{");
     W.Indent++;
@@ -302,35 +307,32 @@ static class MindRenderer
     W.WriteLine(").FromLogic(Source =>");
     W.WriteLine("{");
     W.Indent++;
-    
-    W.WriteLine("using var _ = EnterChainedReasoning();");
 
     W.WriteLine("Output FinalOutputObject = default!;");
 
-    W.WriteLine($"foreach (var Batch in {ChooseOperation.CategoryParameter}.ToInputBatches())");
-    W.WriteLine("{");
-    W.Indent++;
-    RenderInputObjectForOpCode(W, OpCode);
-    foreach (var Parameter in ChooseOperation.Parameters)
+    W.WriteLine($"var Champion = {ChooseOperation.CategoryParameter}.AllOptions.First();");
+    W.WriteLine();
+    W.WriteLine($"foreach (var Contender in {ChooseOperation.CategoryParameter}.AllOptions.Skip(1))");
+    using (W.EnterBlock())
     {
-      W.Write($"InputObject.Parameters.{ChooseOperation.Name}.{Parameter.Name} = ");
-      W.Write(Parameter.Name == ChooseOperation.CategoryParameter ? "Batch" : Parameter.Name);
+      RenderInputObjectForOpCode(W, OpCode);
+      foreach (var Parameter in ChooseOperation.Parameters)
+        if (Parameter.Name != ChooseOperation.CategoryParameter)
+          W.WriteLine($"InputObject.Parameters.{ChooseOperation.Name}.{Parameter.Name} = {Parameter.Name};");
 
-      W.WriteLine(";");
+      W.WriteLine($"InputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter} = {ChooseOperation.CategoryParameter}.GetContestBetween(Champion, Contender);");
+
+      W.WriteLine();
+      RenderMakeInference(W, MindModel);
+
+      W.WriteLine($"var Offset = Input.ParametersIndex + Input.InputParameters.{ChooseOperation.Name}Index + Input.InputParameters.{ChooseOperation.Name}Parameters.{ChooseOperation.CategoryParameter}Index;");
+      W.WriteLine($"var T = {ChooseOperation.CategoryParameter}.Interpret(Champion, Contender, OutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}, Inference, Offset);");
+      W.WriteLine("Source.AddSingleChoice(T.Feedback);");
+      W.WriteLine("Champion = R.Consume(T);");
     }
 
-    W.WriteLine();
-    RenderMakeInference(W, MindModel);
-    W.WriteLine("FinalOutputObject = OutputObject;");
-    W.WriteLine("Source.FinalInference = Inference;");
-    W.WriteLine();
-    W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index;");
-    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{ChooseOperation.Name}Parameters.Length;");
-    W.WriteLine();
-    W.Indent--;
-    W.WriteLine("}");
-
-    W.WriteLine($"return {ChooseOperation.CategoryParameter}.InterpretLegacy(FinalOutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter});");
+    W.WriteLine(
+      $"return Champion.Payload;");
     W.Indent--;
     W.WriteLine("})");
 
