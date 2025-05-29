@@ -93,6 +93,20 @@ public partial class CognitiveCategoryTests
     MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = true }.ExtractLossRules(Offset));
   }
 
+  [TestMethod]
+  public void TrainOtherSelection()
+  {
+    var Left = new TestOption();
+    var Right = new TestOption();
+    var MockInference = new MockInference(Any.Int(), Any.FloatArray());
+    var Offset = Any.Int(0, 100);
+    var T = TestCategory.Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
+
+    T.Feedback.WinnerShouldBe(new());
+
+    MockInference.ShouldNotHaveBeenTrained();
+  }
+
   class TestOption;
 
   [CognitiveData]

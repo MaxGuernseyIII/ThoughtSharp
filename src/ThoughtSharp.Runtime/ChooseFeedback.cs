@@ -57,7 +57,13 @@ public class SingleChoiceFeedback<TSelectable, TOutput>(
 {
   public void WinnerShouldBe(TSelectable ExpectedWinner)
   {
-    var Output = MakeOutput(ReferenceEquals(ExpectedWinner, Right));
+    var WinnerIsLeft = ReferenceEquals(ExpectedWinner, Left);
+    var WinnerIsRight = ReferenceEquals(ExpectedWinner, Right);
+
+    if (!(WinnerIsLeft || WinnerIsRight))
+      return;
+
+    var Output = MakeOutput(WinnerIsRight);
     var Writer = new LossRuleWriter(new(), Offset);
     Output.WriteAsLossRules(Writer);
     Inference.Train(Writer.Stream.PositionRulePairs);

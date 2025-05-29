@@ -53,4 +53,9 @@ class MockInference(int InputLength, float[] Floats) : MockInferenceSource(Input
   {
     TrainedLossRules.Should().Equal(Expected);
   }
+
+  public void ShouldNotHaveBeenTrained()
+  {
+    TrainedLossRules.Should().BeNull();
+  }
 }
