@@ -25,3 +25,7 @@ using ThoughtSharp.Runtime;
 namespace Tests.Mocks;
 
 class MockBrain(int InputLength, int OutputLength) : MockInferenceSource(InputLength, OutputLength), Brain;
+
+class MockBrain<TInput, TOutput> : MockInferenceSource<TInput, TOutput>, Brain
+  where TInput : CognitiveData<TInput> 
+  where TOutput : CognitiveData<TOutput>;

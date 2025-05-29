@@ -20,7 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+
 using FluentAssertions;
+using JsonDiffPatchDotNet;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
@@ -61,7 +65,7 @@ class MockInferenceSource : MockDisposable, InferenceSource
 
     MakeInferenceFunc = Parameters =>
     {
-      Parameters.Should().BeEquivalentTo(ExpectedBrainInput);
+      Parameters.Should().BeEquivalentTo(ExpectedBrainInput, Options => Options);
 
       return ResultInference;
     };
@@ -90,5 +94,98 @@ class MockInferenceSource : MockDisposable, InferenceSource
       Source = Last = Source.SetOutputForOnlyInput(Input, Output);
 
     return Last;
+  }
+
+}
+
+class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
+  where TInput : CognitiveData<TInput>
+  where TOutput : CognitiveData<TOutput>
+{
+  public MockInferenceSource()
+  {
+    MakeInferenceFunc = _ =>
+    {
+      var MockInference = new MockInference(TInput.Length, new float[TOutput.Length]);
+      MockInferences.Add(MockInference);
+      return MockInference;
+    };
+  }
+
+  public Func<TInput, Inference> MakeInferenceFunc;
+  public List<MockInference> MockInferences = [];
+
+  public Inference MakeInference(float[] Parameters)
+  {
+    Parameters.Length.Should().Be(TInput.Length);
+    var Input = TInput.UnmarshalFrom(Parameters);
+
+    var Result = MakeInferenceFunc(Input);
+
+    return Result;
+  }
+
+  public MockInference<TInput, TOutput> SetOutputForOnlyInput(TInput ExpectedInput, TOutput StipulatedOutput)
+  {
+    var StipulatedBrainOutput = MakeReferenceFloats(StipulatedOutput);
+    var ResultInference = new MockInference<TInput, TOutput>(StipulatedBrainOutput);
+
+    MakeInferenceFunc = ActualInput =>
+    {
+      AssertEx.AssertJsonDiff(ExpectedInput, ActualInput);
+      
+      return ResultInference;
+    };
+
+    static float[] MakeReferenceFloats<T>(T ToPersist) where T : CognitiveData<T>
+    {
+      var Result = new float[T.Length];
+
+      ToPersist.MarshalTo(Result);
+
+      return Result;
+    }
+
+    return ResultInference;
+  }
+
+  public MockInference<TInput, TOutput> SetChainedOutputsForInputs(
+    IReadOnlyList<(TInput ExpectedInput, TOutput StipulatedOutput)> Sequence)
+  {
+    var Source = this;
+    MockInference<TInput, TOutput> Last = null!;
+
+    foreach (var (Input, Output) in Sequence) 
+      Source = Last = Source.SetOutputForOnlyInput(Input, Output);
+
+    return Last;
+  }
+}
+
+public static class AssertEx
+{
+  public static void AssertJsonDiff<T>(T expected, T actual)
+  {
+    var settings = new JsonSerializerSettings
+    {
+      Formatting = Formatting.Indented,
+      ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
+      {
+        IgnoreSerializableAttribute = true
+      }
+    };
+
+    var expectedJ = JToken.FromObject(expected, JsonSerializer.Create(settings));
+    var actualJ = JToken.FromObject(actual, JsonSerializer.Create(settings));
+
+    var jdp = new JsonDiffPatch();
+    var patch = jdp.Diff(expectedJ, actualJ);
+
+    if (patch != null)
+    {
+      Console.WriteLine("❌ Objects differ:");
+      Console.WriteLine(patch.ToString(Formatting.Indented));
+      Assert.Fail("Objects differ. See diff above.");
+    }
   }
 }

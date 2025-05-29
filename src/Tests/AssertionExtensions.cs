@@ -23,6 +23,7 @@
 using System.Collections.Immutable;
 using FluentAssertions;
 using FluentAssertions.Collections;
+using FluentAssertions.Primitives;
 using ThoughtSharp.Runtime;
 
 namespace Tests;
@@ -35,6 +36,17 @@ static class AssertionExtensions
   {
     var ActualBuffer = MarshalToBuffer(Assertions.Subject);
     var ExpectedBuffer = MarshalToBuffer(Expected);
+
+    ActualBuffer.Should().Equal(ExpectedBuffer);
+
+    return Assertions;
+  }
+  public static ObjectAssertions MarshalToSameTensor<T>(this ObjectAssertions Assertions,
+    T Expected)
+    where T : CognitiveData<T>
+  {
+    var ActualBuffer = MarshalToBuffer<T>([(T)Assertions.Subject]);
+    var ExpectedBuffer = MarshalToBuffer([Expected]);
 
     ActualBuffer.Should().Equal(ExpectedBuffer);
 

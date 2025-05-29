@@ -27,8 +27,8 @@ namespace Tests.Mocks;
 
 class MockInference(int InputLength, float[] Floats) : MockInferenceSource(InputLength, Floats.Length), Inference
 {
-  IReadOnlyList<(int, LossRule)>? TrainedLossRules;
   public readonly List<(float Reward, IReadOnlyList<Range> Ranges)> Incentives = [];
+  IReadOnlyList<(int, LossRule)>? TrainedLossRules;
 
   public ReadOnlySpan<float> Result => Floats;
 
@@ -39,6 +39,42 @@ class MockInference(int InputLength, float[] Floats) : MockInferenceSource(Input
 
   public void ShouldHaveBeenTrainedWith<T>(T Output)
     where T : CognitiveData<T>
+  {
+    var Stream = new LossRuleStream();
+    var Writer = new LossRuleWriter(Stream, 0);
+    Output.WriteAsLossRules(Writer);
+
+    var Expected = Stream.PositionRulePairs;
+
+    ShouldHaveBeenTrainedWith(Expected);
+  }
+
+  public void ShouldHaveBeenTrainedWith(params IReadOnlyList<(int At, LossRule Rule)> Expected)
+  {
+    TrainedLossRules.Should().Equal(Expected);
+  }
+
+  public void ShouldNotHaveBeenTrained()
+  {
+    TrainedLossRules.Should().BeNull();
+  }
+}
+
+class MockInference<TInput, TOutput>(float[] Floats)
+  : MockInferenceSource<TInput, TOutput>, Inference
+  where TInput : CognitiveData<TInput>
+  where TOutput : CognitiveData<TOutput>
+{
+  IReadOnlyList<(int, LossRule)>? TrainedLossRules;
+
+  public ReadOnlySpan<float> Result => Floats;
+
+  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  {
+    TrainedLossRules = LossRules;
+  }
+
+  public void ShouldHaveBeenTrainedWith(TOutput Output)
   {
     var Stream = new LossRuleStream();
     var Writer = new LossRuleWriter(Stream, 0);

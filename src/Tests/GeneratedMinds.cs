@@ -442,7 +442,7 @@ public partial class GeneratedMinds
 
   static bool ExecuteSynchronousUseOperation(SynchronousActionSurface.Output Selection, MockSynchronousSurface Surface)
   {
-    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
     var ExpectedInput = new StatelessMind.Input
     {
       OperationCode = 2,
@@ -487,7 +487,7 @@ public partial class GeneratedMinds
   static async Task<bool> ExecuteAsynchronousUseOperation(AsynchronousActionSurface.Output Selection,
     MockAsynchronousSurface Surface)
   {
-    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
     var ExpectedInput = new StatelessMind.Input
     {
       OperationCode = 3,
@@ -618,8 +618,14 @@ public partial class GeneratedMinds
   [CognitiveData]
   partial record MockDescriptor
   {
-    public float P1 { get; set; } = Any.Float;
-    public float P2 { get; set; } = Any.Float;
+    public float P1 { get; set; }
+    public float P2 { get; set; }
+
+    public static MockDescriptor Random => new()
+    {
+      P1 = Any.Float,
+      P2 = Any.Float
+    };
   }
 
   [CognitiveCategory<MockSelectable, MockDescriptor>(3)]
