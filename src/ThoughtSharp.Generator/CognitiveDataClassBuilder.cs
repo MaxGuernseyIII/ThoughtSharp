@@ -252,6 +252,14 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     SetCompilerDefinedParameter(Name, Parameter);
   }
 
+  public void SetCompilerDefinedUnboundedSelectionCodeParameter(string Name)
+  {
+    var Parameter = new CognitiveParameter(Name,
+      $"new BitwiseOneHotNumberCodec<ushort>()", null, true, "ushort", "0");
+
+    SetCompilerDefinedParameter(Name, Parameter);
+  }
+
   void SetCompilerDefinedParameter(string Name, CognitiveParameter Parameter)
   {
     var Index = Parameters.FindIndex(P => P.Name == Name);

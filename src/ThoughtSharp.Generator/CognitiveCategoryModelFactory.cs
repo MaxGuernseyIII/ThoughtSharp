@@ -64,7 +64,7 @@ static class CognitiveCategoryModelFactory
         IsPublic = true,
         ExplicitConstructor = true
       };
-    Answer.AddCompilerDefinedBoundedIntLikeParameter("Selection", ushort.MinValue, ushort.MaxValue);
+    Answer.SetCompilerDefinedUnboundedSelectionCodeParameter("Selection");
     DataObjects.Add(Answer.Build());
 
     return (Category: new(TypeName, TypeAddress.ForSymbol(PayloadType), DescriptorTypeAddress, Count),

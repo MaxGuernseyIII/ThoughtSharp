@@ -20,17 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+using System.Numerics;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Example.FizzBuzz;
 using ThoughtSharp.Runtime;
 
 Console.WriteLine("Training...");
 const int TotalTrainingPasses = 1000000;
-const int ReportEvery = 1000;
+const int ReportEvery = 10;
 
-DoFizzBuzz(TotalTrainingPasses, ReportEvery);
+DoChooseShape();
 
-void DoForcedTraining(int TotalTrainingPasses1, int ReportEvery1)
+void DoForcedTraining()
 {
   var Builder = new TorchBrainBuilder(1, 1);
 
@@ -41,9 +43,9 @@ void DoForcedTraining(int TotalTrainingPasses1, int ReportEvery1)
   var Failures = 0;
   var Exceptions = 0;
 
-  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
+  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
   {
-    if (Iteration % ReportEvery1 == 0)
+    if (Iteration % ReportEvery == 0)
       Report(Iteration);
 
     var Input = Random.NextSingle();
@@ -60,7 +62,7 @@ void DoForcedTraining(int TotalTrainingPasses1, int ReportEvery1)
     }
   }
 
-  Report(TotalTrainingPasses1);
+  Report(TotalTrainingPasses);
 
   Console.WriteLine("Done.");
 
@@ -68,11 +70,11 @@ void DoForcedTraining(int TotalTrainingPasses1, int ReportEvery1)
   void Report(int I)
   {
     Console.WriteLine(
-      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
   }
 }
 
-void DoArea(int TotalTrainingPasses1, int ReportEvery1)
+void DoArea()
 {
   var BrainBuilder = TorchBrainBuilder.For<ShapesMind.Input, ShapesMind.Output>();
 
@@ -83,10 +85,10 @@ void DoArea(int TotalTrainingPasses1, int ReportEvery1)
 
   var ShapesMind = new ShapesMind(BrainBuilder.Build());
 
-  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
+  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
   {
     var Failure = false;
-    if (Iteration % ReportEvery1 == 0)
+    if (Iteration % ReportEvery == 0)
       Report(Iteration);
 
     var Input = Random.NextSingle() * 200 - 100;
@@ -120,18 +122,18 @@ void DoArea(int TotalTrainingPasses1, int ReportEvery1)
       T.Feedback.ResultShouldHaveBeen(new() {Area = Expected});
   }
 
-  Report(TotalTrainingPasses1);
+  Report(TotalTrainingPasses);
 
   Console.WriteLine("Done.");
 
   void Report(int I)
   {
     Console.WriteLine(
-      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
   }
 }
 
-void DoAreaRaw(int TotalTrainingPasses1, int ReportEvery1)
+void DoAreaRaw()
 {
   var BrainBuilder = new TorchBrainBuilder(1, 1);
 
@@ -142,10 +144,10 @@ void DoAreaRaw(int TotalTrainingPasses1, int ReportEvery1)
   var Failures = 0;
   var Exceptions = 0;
 
-  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
+  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
   {
     var Failure = false;
-    if (Iteration % ReportEvery1 == 0)
+    if (Iteration % ReportEvery == 0)
       Report(Iteration);
 
     var Input = Random.NextSingle();
@@ -180,32 +182,32 @@ void DoAreaRaw(int TotalTrainingPasses1, int ReportEvery1)
       Output.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected])));
   }
 
-  Report(TotalTrainingPasses1);
+  Report(TotalTrainingPasses);
 
   Console.WriteLine("Done.");
 
   void Report(int I)
   {
     Console.WriteLine(
-      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
   }
 }
 
-void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
+void DoFizzBuzz()
 {
   var BrainBuilder = TorchBrainBuilder.For<FizzBuzzMind>().Blank().AddLogicPath(16, 4, 8);
   BrainBuilder.Paths.Single().StateCoefficient = 16;
   BrainBuilder.WithPath([]);
 
   var Mind = new FizzBuzzMind(BrainBuilder.Build());
+  var HybridReasoning = new FizzBuzzHybridReasoning(Mind);
   var Random = new Random();
   var Successes = 0;
   var Failures = 0;
   var Exceptions = 0;
+  var ContiguousSuccessBatches = 0;
 
   var BatchSuccesses = 0;
-
-  //var ShapesMind = new ShapesMind(TorchBrainBuilder.For<ShapesMind.Input, ShapesMind.Output>().Build());
 
   var BatchFizzFailures = 0;
   var BatchBuzzFailures = 0;
@@ -214,21 +216,17 @@ void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
   var LastWriteFailure = string.Empty;
   List<int> ByteDeviationPerBatch = [];
   List<int> ByteDeviation = [];
-  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
+  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
   {
-    if (Iteration % ReportEvery1 == 0)
+    if (Iteration % ReportEvery == 0)
       Report(Iteration);
 
-    var Input = Random.Next(byte.MinValue, byte.MaxValue);
+    if (ContiguousSuccessBatches >= 5)
+      break;
+
+    var Input = Iteration % byte.MaxValue;
     var Terminal = new StringBuilderFizzBuzzTerminal();
-    var T = Thought.Do(R =>
-    {
-      var Feedback = new List<UseFeedback<FizzBuzzTerminal>>();
-      FizzBuzzHybridReasoning.WriteForOneNumber(Mind, 5, R, Terminal, Input, Feedback);
-
-      return Feedback;
-    });
-
+    var T = HybridReasoning.WriteForOneNumber(Terminal, (byte) Input);
     var Failure = false;
     string Expected;
     const string Fizz = "fizz";
@@ -332,14 +330,22 @@ void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
     }
   }
 
-  Report(TotalTrainingPasses1);
+  Report(TotalTrainingPasses);
 
   Console.WriteLine("Done.");
 
+  Console.WriteLine(HybridReasoning.DoFizzBuzz(1, 100).ConsumeDetached());
+
   void Report(int I)
   {
+    if (BatchBuzzFailures + BatchFizzFailures + BatchFizzBuzzFailures + BatchWriteFailures == 0)
+      ContiguousSuccessBatches++;
+    else
+      ContiguousSuccessBatches = 0;
+
     Console.WriteLine(
-      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+    Console.WriteLine($"  Contiguous success batches:          {ContiguousSuccessBatches}");
     Console.WriteLine($"  Batch success rate:                  {BatchSuccesses * 1f / ReportEvery:P}");
     Console.WriteLine($"  Batch fizz failure rate:             {BatchFizzFailures * 1f / ReportEvery:P}");
     Console.WriteLine($"  Batch buzz failure rate:             {BatchBuzzFailures * 1f / ReportEvery:P}");
@@ -349,13 +355,15 @@ void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
     if (ByteDeviationPerBatch.Any())
     {
       ByteDeviation.AddRange(ByteDeviationPerBatch);
-      Console.WriteLine($"  Written byte deviation (this batch): {ByteDeviationPerBatch.Select(D => D * 1f).Average():0.00}");
+      Console.WriteLine(
+        $"  Written byte deviation (this batch): {ByteDeviationPerBatch.Select(D => D * 1f).Average():0.00}");
       Console.WriteLine($"  Written byte deviation (running):    {ByteDeviation.Select(D => D * 1f).Average():0.00}");
     }
     else
     {
       Console.WriteLine("  No deviation this batch.");
     }
+
     BatchSuccesses = 0;
     BatchFizzFailures = 0;
     BatchBuzzFailures = 0;
@@ -365,207 +373,7 @@ void DoFizzBuzz(int TotalTrainingPasses1, int ReportEvery1)
   }
 }
 
-//void Modulo3Check(int TotalTrainingPasses1, int ReportEvery1)
-//{
-//  //var BrainBuilder = new TorchBrainBuilder(2, 1).ForLogic();
-//  //BrainBuilder.StateCoefficient = 16;
-//  var Brain = new TorchBrainForTrainingMode(new StatePassThroughModule(torch.nn.Sequential(
-//    torch.nn.Linear(8, 64),
-//    torch.nn.ReLU(),
-//    torch.nn.Linear(64, 32),
-//    torch.nn.ReLU(),
-//    torch.nn.Linear(32, 1)
-//  )), new(DeviceType.CPU), TODO);
-//  //var Brain = BrainBuilder.Build();
-//  var Random = new Random();
-//  var Successes = 0;
-//  var Failures = 0;
-//  var Exceptions = 0;
-
-//  //var ShapesMind = new ShapesMind(TorchBrainBuilder.For<ShapesMind.Input, ShapesMind.Output>().Build());
-
-//  List<bool> FailureLog = [];
-
-//  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
-//  {
-//    if (Iteration % ReportEvery1 == 0)
-//      Report(Iteration);
-
-//    var Input = (byte) Random.Next(byte.MinValue, byte.MaxValue + 1);
-//    var InputVector = new float[8];
-//    foreach (var I in Enumerable.Range(0, 8))
-//      InputVector[I] = (Input >> I) & 1;
-
-//    var Expected = Input % 3 == 0;
-
-//    var Inference = Brain.MakeInference(InputVector);
-//    var Actual = Inference.Result[0] > .5;
-
-//    var Failure = false;
-
-//    if (Actual != Expected)
-//    {
-//      Failure = true;
-//      Failures++;
-//    }
-//    else
-//    {
-//      Successes++;
-//    }
-
-//    FailureLog.Add(Failure);
-
-//    //if (Failure)
-//    Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected ? 1 : 0])));
-//  }
-
-//  Report(TotalTrainingPasses1);
-
-//  Console.WriteLine("Done.");
-
-//  void Report(int I)
-//  {
-//    Console.WriteLine(
-//      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
-//    if (I >= 1000)
-//      Console.WriteLine($"  Errors Per 1000: {FailureLog[^1000..].Count(F => F)}");
-//  }
-//}
-
-//void Modulo3AndCheck(int TotalTrainingPasses1, int ReportEvery1)
-//{
-//  //var BrainBuilder = new TorchBrainBuilder(2, 1).ForLogic();
-//  //BrainBuilder.StateCoefficient = 16;
-//  var Brain = new TorchBrainForTrainingMode(new StatePassThroughModule(torch.nn.Sequential(
-//    torch.nn.Linear(8, 32),
-//    torch.nn.ReLU(),
-//    torch.nn.Linear(32, 32),
-//    torch.nn.ReLU(),
-//    torch.nn.Linear(32, 1)
-//  )), new(DeviceType.CPU), TODO);
-//  //var Brain = BrainBuilder.Build();
-//  var Random = new Random();
-//  var Successes = 0;
-//  var Failures = 0;
-//  var Exceptions = 0;
-
-//  //var ShapesMind = new ShapesMind(TorchBrainBuilder.For<ShapesMind.Input, ShapesMind.Output>().Build());
-
-//  List<bool> FailureLog = [];
-
-//  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
-//  {
-//    if (Iteration % ReportEvery1 == 0)
-//      Report(Iteration);
-
-//    var Input = (byte) Random.Next(byte.MinValue, byte.MaxValue + 1);
-//    var InputVector = new float[8];
-//    foreach (var I in Enumerable.Range(0, 8))
-//      InputVector[I] = (Input >> I) & 1;
-
-//    var Expected = Input % 3 == 0;
-
-//    var Inference = Brain.MakeInference(InputVector);
-//    var Actual = Inference.Result[0] > .5;
-
-//    var Failure = false;
-
-//    if (Actual != Expected)
-//    {
-//      Failure = true;
-//      Failures++;
-//    }
-//    else
-//    {
-//      Successes++;
-//    }
-
-//    FailureLog.Add(Failure);
-
-//    //if (Failure)
-//    Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected ? 1 : 0])));
-//  }
-
-//  Report(TotalTrainingPasses1);
-
-//  Console.WriteLine("Done.");
-
-//  void Report(int I)
-//  {
-//    Console.WriteLine(
-//      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
-//    if (I >= 1000)
-//      Console.WriteLine($"  Errors Per 1000: {FailureLog[^1000..].Count(F => F)}");
-//  }
-//}
-
-
-//void ComparisonCheck(int TotalTrainingPasses1, int ReportEvery1)
-//{
-//  //var BrainBuilder = new TorchBrainBuilder(2, 1).ForLogic();
-//  //BrainBuilder.StateCoefficient = 16;
-//  var Brain = new TorchBrainForTrainingMode(new StatePassThroughModule(torch.nn.Sequential(
-//    torch.nn.Linear(2, 64),
-//    torch.nn.Tanh(),
-//    torch.nn.Linear(64, 32),
-//    torch.nn.ReLU(),
-//    torch.nn.Linear(32, 1),
-//    torch.nn.Sigmoid()
-//  )), new(DeviceType.CPU), TODO);
-//  //var Brain = BrainBuilder.Build();
-//  var Random = new Random();
-//  var Successes = 0;
-//  var Failures = 0;
-//  var Exceptions = 0;
-
-//  //var ShapesMind = new ShapesMind(TorchBrainBuilder.For<ShapesMind.Input, ShapesMind.Output>().Build());
-
-//  List<bool> FailureLog = [];
-
-//  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
-//  {
-//    if (Iteration % ReportEvery1 == 0)
-//      Report(Iteration);
-
-//    var Input1 = Random.NextSingle() * 2 - 1;
-//    var Input2 = Random.NextSingle() * 2 - 1;
-//    var Expected = Input1 > Input2;
-
-//    var Inference = Brain.MakeInference([Input1, Input2]);
-//    var Actual = Inference.Result[0] > .5;
-
-//    var Failure = false;
-
-//    if (Actual != Expected)
-//    {
-//      Failure = true;
-//      Failures++;
-//    }
-//    else
-//    {
-//      Successes++;
-//    }
-
-//    FailureLog.Add(Failure);
-
-//    //if (Failure)
-//    Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected ? 1 : 0])));
-//  }
-
-//  Report(TotalTrainingPasses1);
-
-//  Console.WriteLine("Done.");
-
-//  void Report(int I)
-//  {
-//    Console.WriteLine(
-//      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
-//    if (I >= 1000)
-//      Console.WriteLine($"  Errors Per 1000: {FailureLog[^1000..].Count(F => F)}");
-//  }
-//}
-
-void MindfulComparisonCheck(int TotalTrainingPasses1, int ReportEvery1)
+void MindfulComparisonCheck()
 {
   var Brain = TorchBrainBuilder.For<ComparisonMind>().ForLogic().Build();
   var Mind = new ComparisonMind(Brain);
@@ -576,9 +384,9 @@ void MindfulComparisonCheck(int TotalTrainingPasses1, int ReportEvery1)
 
   List<bool> FailureLog = [];
 
-  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
+  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
   {
-    if (Iteration % ReportEvery1 == 0)
+    if (Iteration % ReportEvery == 0)
       Report(Iteration);
 
     var Input1 = Random.Next(0, byte.MaxValue);
@@ -618,111 +426,531 @@ void MindfulComparisonCheck(int TotalTrainingPasses1, int ReportEvery1)
     });
   }
 
-  Report(TotalTrainingPasses1);
+  Report(TotalTrainingPasses);
 
   Console.WriteLine("Done.");
 
   void Report(int I)
   {
     Console.WriteLine(
-      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
     if (I >= 1000)
       Console.WriteLine($"  Errors Per 1000: {FailureLog[^1000..].Count(F => F)}");
   }
 }
 
-//void DoFizzBuzzRaw(int TotalTrainingPasses1, int ReportEvery1)
-//{
-//  var Builder = new TorchBrainBuilder(1, 2);
-//  Builder.Layers.Clear();
-//  Builder.Layers.Add(new()
-//  {
-//    Features = 100,
-//    ActivationType = TorchBrainBuilder.ActivationType.ReLU
-//  });
-//  Builder.Layers.Add(new()
-//  {
-//    Features = 100
-//  });
-//  Builder.ForClassification();
-//  var Brain = Builder.Build();
+void DoChooseShape()
+{
+  var BrainBuilder = TorchBrainBuilder.For<ShapeClassifyingMind>().Blank().AddLogicPath().AddMathPath();
+  foreach (var Path in BrainBuilder.Paths) 
+    Path.StateCoefficient = 16;
 
-//  var Random = new Random();
-//  var Successes = 0;
-//  var Failures = 0;
-//  var Exceptions = 0;
+  var Brain = BrainBuilder.Build();
+  var Mind = new ShapeClassifyingMind(Brain);
 
-//  //var ShapesMind = new ShapesMind(TorchBrainBuilder.For<ShapesMind.Input, ShapesMind.Output>().Build());
+  var Random = new Random();
+  Dictionary<ShapeType, (CognitiveOption<ShapeHandler, ShapeHandlerDescriptor> Option, Func<IEnumerable<Point>>
+    MakeShapePoints)> OptionsMap = new()
+  {
+    [ShapeType.Line] = (new(new LineHandler(), new()
+    {
+      HandlesConcaveDepressions = false,
+      HandlesRadialFlatFaces = false,
+      HandlesRounding = false,
+      HandlesVertices = false,
+      RequiresVertices = false,
+      RequiresClosed = false,
+      RequiresRightAngles = false,
+      RequiresStraightLines = true
+    }), Geometry.MakeLine),
+    [ShapeType.Rectangle] = (new(new RectangleHandler(), new()
+    {
+      HandlesConcaveDepressions = false,
+      HandlesRadialFlatFaces = true,
+      HandlesRounding = false,
+      HandlesVertices = true,
+      RequiresVertices = true,
+      RequiresStraightLines = true,
+      RequiresClosed = true,
+      RequiresRightAngles = true
+    }), Geometry.MakeBox),
+    [ShapeType.Irregular] = (new(new IrregularHandler(), new()
+    {
+      HandlesConcaveDepressions = true,
+      HandlesRadialFlatFaces = true,
+      HandlesRounding = true,
+      HandlesVertices = true,
+      RequiresClosed = true,
+      RequiresRightAngles = false,
+      RequiresStraightLines = false,
+      RequiresVertices = true
+    }), Geometry.MakeIrregular),
+    [ShapeType.Circle] = (new(new CircleHandler(),
+      new()
+      {
+        HandlesConcaveDepressions = false,
+        HandlesRounding = true,
+        HandlesVertices = false,
+        HandlesRadialFlatFaces = false,
+        RequiresClosed = true,
+        RequiresRightAngles = false,
+        RequiresStraightLines = false,
+        RequiresVertices = false
+      }), Geometry.MakeCircle),
+    [ShapeType.Star] = (new(new StarHandler(),
+      new()
+      {
+        HandlesConcaveDepressions = true,
+        HandlesRounding = false,
+        HandlesRadialFlatFaces = false,
+        HandlesVertices = true,
+        RequiresStraightLines = true,
+        RequiresRightAngles = true,
+        RequiresClosed = true,
+        RequiresVertices = true
+      }), Geometry.MakeStar),
+    [ShapeType.Arc] = (new(new ArcHandler(),
+      new()
+      {
+        HandlesConcaveDepressions = true,
+        HandlesRadialFlatFaces = false,
+        HandlesRounding = true,
+        HandlesVertices = false,
+        RequiresClosed = false,
+        RequiresRightAngles = false,
+        RequiresStraightLines = false,
+        RequiresVertices = false
+      }), Geometry.MakeArc),
+    [ShapeType.Plus] = (new(new PlusHandler(),
+      new()
+      {
+        HandlesConcaveDepressions = true,
+        HandlesRadialFlatFaces = true,
+        HandlesRounding = false,
+        HandlesVertices = true,
+        RequiresVertices = true,
+        RequiresStraightLines = true,
+        RequiresRightAngles = true,
+        RequiresClosed = true
+      }), Geometry.MakePlus)
+  };
 
-//  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses1))
-//  {
-//    if (Iteration % ReportEvery1 == 0)
-//      Report(Iteration);
+  var ShapeTypes = new List<ShapeType>(OptionsMap.Keys).ToImmutableArray();
+  var RawOptions =
+    new List<CognitiveOption<ShapeHandler, ShapeHandlerDescriptor>>(OptionsMap.Values.Select(Details => Details.Option))
+      .ToImmutableArray();
+  var Failures = 0;
+  var Exceptions = 0;
 
-//    var Failure = false;
-//    var Input = Random.Next(1, 101);
+  foreach (var I in Enumerable.Range(0, TotalTrainingPasses))
+  {
+    if (I % ReportEvery == 0) Report(I);
 
-//    var ExpectedFizz = Input % 3 == 0;
-//    var ExpectedBuzz = Input % 5 == 0;
+    var ThisTrialShapeType = RandomOneOf(ShapeTypes);
+    var ThisTrialOptions = RandomizeOrderOf(RawOptions);
+    var Category = new ShapeHandlerCategory(ThisTrialOptions);
+    var Shape = new Shape
+    {
+      Points = Geometry.PrepareForUseInTraining(OptionsMap[ThisTrialShapeType].MakeShapePoints()).ToArray()
+    };
 
-//    var Inference = Brain.MakeInference([Input * 0.01f]);
+    var T = Mind.ChooseHandlerFor(Shape, Category);
 
-//    try
-//    {
-//      var Results = Inference.Result;
-//      var Fizz = Results[0] > .5;
-//      var Buzz = Results[1] > .5;
+    var Expected = OptionsMap[ThisTrialShapeType].Option.Payload;
+    try
+    {
+      var Actual = T.ConsumeDetached();
+      if (Actual != Expected)
+        Failures++;
+    }
+    catch
+    {
+      Failures++;
+      Exceptions++;
+      throw;
+    }
 
-//      if ((Fizz, Buzz) != (ExpectedFizz, ExpectedBuzz))
-//      {
-//        Failure = true;
-//        Failures++;
-//      }
-//      else
-//      {
-//        Successes++;
-//      }
-//    }
-//    catch (Exception)
-//    {
-//      //Console.WriteLine("Original exception:");
-//      //Console.WriteLine(Ex);
+    T.Feedback.SelectionShouldHaveBeen(Expected);
+  }
 
-//      //Console.WriteLine();
-//      //Console.WriteLine();
-//      Failure = true;
-//      Failures++;
-//      Exceptions++;
-//    }
+  T RandomOneOf<T>(IReadOnlyList<T> Samples)
+  {
+    return Samples[Random.Next(Samples.Count)];
+  }
 
-//    if (Failure)
-//      Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([ExpectedFizz ? 1 : 0, ExpectedBuzz ? 1 : 0])));
-//  }
+  List<T> RandomizeOrderOf<T>(IReadOnlyList<T> Samples)
+  {
+    var Copy = new List<T>(Samples);
+    var Result = new List<T>();
 
-//  Report(TotalTrainingPasses1);
+    while (Copy.Any())
+    {
+      var Sample = RandomOneOf(Copy);
+      Copy.Remove(Sample);
+      Result.Add(Sample);
+    }
 
-//  Console.WriteLine("Done.");
+    return Result;
+  }
 
-//  Console.WriteLine();
+  void Report(int I)
+  {
+    Console.WriteLine($"Runs: {I}");
+    Console.WriteLine($"    Failures: {Failures}");
+    Console.WriteLine($"    Exceptions: {Exceptions}");
+  }
+}
 
-//  for (var I = 1; I <= 100; ++I)
-//  {
-//    using var Inference = Brain.MakeInference([I * 0.01f]);
-//    var InferenceResult = Inference.Result;
-//    var Fizz = InferenceResult[0] > .5;
-//    var Buzz = InferenceResult[1] > .5;
+enum ShapeType
+{
+  Line,
+  Rectangle,
+  Irregular,
+  Circle,
+  Star,
+  Arc,
+  Plus
+}
 
-//    if (Fizz)
-//      Console.Write("Fizz");
-//    if (Buzz)
-//      Console.Write("Fizz");
-//    if (!(Fizz || Buzz))
-//      Console.Write(I);
-//  }
+interface ShapeHandler
+{
+  void Handle();
+}
 
-//  void Report(int I)
-//  {
-//    Console.WriteLine(
-//      $"{I * 100 / TotalTrainingPasses1}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
-//  }
-//}
+class RectangleHandler : ShapeHandler
+{
+  public void Handle()
+  {
+    Console.WriteLine("It's a square. I'll draw on it.");
+  }
+}
+
+class IrregularHandler : ShapeHandler
+{
+  public void Handle()
+  {
+    Console.WriteLine("It's irregular. I'll put it in a puzzle.");
+  }
+}
+
+class LineHandler : ShapeHandler
+{
+  public void Handle()
+  {
+    Console.WriteLine("It's a line. I'll connect it to something.");
+  }
+}
+
+class CircleHandler : ShapeHandler
+{
+  public void Handle()
+  {
+    Console.WriteLine("It's a line. I'll connect it to something.");
+  }
+}
+
+class StarHandler : ShapeHandler
+{
+  public void Handle()
+  {
+    Console.WriteLine("It's a star. I'll throw it at an enemy.");
+  }
+}
+
+class ArcHandler : ShapeHandler
+{
+  public void Handle()
+  {
+    Console.WriteLine("It's an arc. I will use it to build something.");
+  }
+}
+
+class PlusHandler : ShapeHandler
+{
+  public void Handle()
+  {
+    Console.WriteLine("It's a plus. I'll rotate it and use it to multiply.");
+  }
+}
+
+[Mind]
+partial class ShapeClassifyingMind
+{
+  [Choose]
+  public partial Thought<ShapeHandler, ChooseFeedback<ShapeHandler>> ChooseHandlerFor(Shape Shape,
+    ShapeHandlerCategory Handlers);
+}
+
+[CognitiveCategory<ShapeHandler, ShapeHandlerDescriptor>(3)]
+partial class ShapeHandlerCategory;
+
+[CognitiveData]
+partial class Shape
+{
+  public const int PointCount = 50;
+  [CognitiveDataCount(PointCount)] public Point[] Points { get; set; } = new Point[PointCount];
+
+  public Shape Normalize()
+  {
+    var HotPoints = Points.Where(P => P.IsHot).ToArray();
+    var ColdPoints = Points.Where(P => !P.IsHot).ToArray();
+
+    if (!HotPoints.Any())
+      return this;
+
+    var MinX = HotPoints.Select(P => P.X).Min();
+    var MinY = HotPoints.Select(P => P.Y).Min();
+    var MaxX = HotPoints.Select(P => P.X).Max();
+    var MaxY = HotPoints.Select(P => P.Y).Max();
+    var ScaleX = MaxX - MinX;
+    var ScaleY = MaxY - MinY;
+    var Scale = 1 / MathF.Max(ScaleX, ScaleY);
+    var CenterX = (MinX + MaxX) / 2;
+    var CenterY = (MinY + MaxY) / 2;
+
+    if (Scale <= float.Epsilon)
+      return this;
+
+    return new()
+    {
+      Points =
+      [
+        ..HotPoints.Select(P => P with
+        {
+          X = (P.X - CenterX) * Scale + .5f,
+          Y = (P.Y - CenterY) * Scale + .5f
+        }),
+        ..ColdPoints.Select(_ => new Point())
+      ]
+    };
+  }
+}
+
+[CognitiveData]
+partial class ShapeHandlerDescriptor
+{
+  public bool HandlesRounding { get; set; }
+  public bool HandlesConcaveDepressions { get; set; }
+  public bool HandlesRadialFlatFaces { get; set; }
+  public bool HandlesVertices { get; set; }
+  public bool RequiresVertices { get; set; }
+  public bool RequiresRightAngles { get; set; }
+  public bool RequiresClosed { get; set; }
+  public bool RequiresStraightLines { get; set; }
+}
+
+[CognitiveData]
+partial record Point
+{
+  public bool IsHot { get; set; }
+  public float X { get; set; } = .5f;
+  public float Y { get; set; } = .5f;
+}
+
+static class Geometry
+{
+  static readonly Random Random = new();
+
+  static float RandomScale => Random.NextSingle() * 100f;
+  static Vector2 RandomVector => new(RandomScale, RandomScale);
+
+  static Matrix3x2 RandomTransform => CreateTransform(RandomVector, RandomRadians, RandomScale, RandomVector);
+
+  static float RandomRadians => Random.NextSingle() * MathF.PI * 2;
+
+  static Matrix3x2 CreateTransform(Vector2 Center, float RotationRadians, float Scale, Vector2 Translation)
+  {
+    return
+      Matrix3x2.CreateTranslation(-Center) *
+      Matrix3x2.CreateRotation(RotationRadians) *
+      Matrix3x2.CreateScale(Scale) *
+      Matrix3x2.CreateTranslation(Translation);
+  }
+
+  static IEnumerable<Point> AddNoise(IEnumerable<Point> Points, float Radius)
+  {
+    return Points.Select(P => AddNoise(P, Radius));
+  }
+
+  static IEnumerable<Point> Transform(IEnumerable<Point> Points, Matrix3x2 Transform)
+  {
+    return Points.Select(P => TransformPoint(P, Transform));
+  }
+
+  static Point AddNoise(Point Point, float Radius)
+  {
+    var Direction = RandomRadians;
+    var Length = Random.NextSingle() * Radius;
+
+    return Point with
+    {
+      X = Point.X + MathF.Sin(Direction) * Length,
+      Y = Point.Y + MathF.Cos(Direction) * Length
+    };
+  }
+
+  static Point TransformPoint(Point Point, Matrix3x2 Transform)
+  {
+    var Vector = new Vector2(Point.X, Point.Y);
+    var NewVector = Vector2.Transform(Vector, Transform);
+
+    return Point with {X = NewVector.X, Y = NewVector.Y};
+  }
+
+  public static IEnumerable<Point> PrepareForUseInTraining(IEnumerable<Point> Points)
+  {
+    List<Point> Result = [.. Transform(AddNoise(Points, 0.05f), RandomTransform).Take(Shape.PointCount)];
+    Result.AddRange(Enumerable.Repeat(new Point(), Shape.PointCount - Result.Count));
+    return Result;
+  }
+
+  public static List<Point> MakeLine()
+  {
+    return MakeLine(new(0, 0), new(0, 1), Random.Next(20, Shape.PointCount + 1), false);
+  }
+
+  public static List<Point> MakeLine(Vector2 From, Vector2 To, int Samples, bool SkipFrom)
+  {
+    var Result = new List<Point>();
+    var SegmentLength = (To - From) / (Samples - 1);
+
+    for (var I = SkipFrom ? 1 : 0; I < Samples; ++I)
+    {
+      var Vector = From + SegmentLength * I;
+
+      Result.Add(new() {IsHot = true, X = Vector.X, Y = Vector.Y});
+    }
+
+    return Result;
+  }
+
+  public static List<Point> MakeIrregular()
+  {
+    const int MinPoints = 10;
+    const int MaxPoints = Shape.PointCount;
+    var Count = Random.Next(MinPoints, MaxPoints + 1);
+
+    var BaseRadius = 0.5f;
+    var FlareStrength = 0.3f;
+    var NoiseStrength = 0.05f;
+
+    var Center = new Vector2(0, 0);
+    var Points = new List<Point>();
+    var FlareIndexes = Enumerable.Range(0, Count).OrderBy(_ => Random.Next()).Take(Count / 3).ToHashSet();
+
+    for (var i = 0; i < Count; i++)
+    {
+      var Angle = i / (float) Count * MathF.PI * 2;
+      var Direction = new Vector2(MathF.Cos(Angle), MathF.Sin(Angle));
+
+      // Flare some points out to break symmetry
+      var Flare = FlareIndexes.Contains(i) ? FlareStrength * (0.5f + Random.NextSingle()) : 0;
+      var Noise = (Random.NextSingle() - 0.5f) * 2 * NoiseStrength;
+
+      var Radius = BaseRadius + Flare + Noise;
+      var PointVec = Center + Direction * Radius;
+
+      Points.Add(new()
+      {
+        IsHot = true,
+        X = PointVec.X,
+        Y = PointVec.Y
+      });
+    }
+
+    return Points;
+  }
+
+  public static List<Point> MakeBox()
+  {
+    var AspectRatio = .5f + Random.NextSingle();
+    var LinePartCount = 4 + Random.Next(7);
+    var Result = new List<Point>();
+    Result.AddRange(MakeLine(new(0, 0), new(AspectRatio, 0), LinePartCount, true));
+    Result.AddRange(MakeLine(new(AspectRatio, 0), new(AspectRatio, 1), LinePartCount, true));
+    Result.AddRange(MakeLine(new(AspectRatio, 1), new(0, 1), LinePartCount, true));
+    Result.AddRange(MakeLine(new(0, 1), new(0, 1), LinePartCount, true));
+
+    return Result;
+  }
+
+  public static List<Point> MakeStar()
+  {
+    var Count = 3 + Random.Next(5);
+    var SpokeRadianStep = MathF.PI * 2 / Count;
+    var SpokeRadianHalfStep = SpokeRadianStep / 2;
+    var SpokeLength = 1.1f + Random.NextSingle();
+    var PitLength = .5f + Random.NextSingle() * .25f;
+    var Result = new List<Point>();
+    var SegmentSamples = 4;
+
+    foreach (var I in Enumerable.Range(0, Count))
+    {
+      var ThisSpokeVertex = GetVertex(I * SpokeRadianStep) * SpokeLength;
+      var ThisPitVertex = GetVertex(I * SpokeRadianStep + SpokeRadianHalfStep) * PitLength;
+      var NextSpokeVertex = GetVertex((I + 1) * SpokeRadianStep) * SpokeLength;
+
+      Result.AddRange(MakeLine(ThisSpokeVertex, ThisPitVertex, SegmentSamples, true));
+      Result.AddRange(MakeLine(ThisPitVertex, NextSpokeVertex, SegmentSamples, true));
+    }
+
+    return Result;
+
+    Vector2 GetVertex(float Radians)
+    {
+      return new(MathF.Sin(Radians), MathF.Cos(Radians));
+    }
+  }
+
+  public static List<Point> MakePlus()
+  {
+    var SegmentsPerLine = 3 + Random.Next(2);
+    var AspectRatio = .5f + Random.NextSingle();
+    var XCutFactor = .1f + Random.NextSingle() * .2f;
+    var YCutFactor = .1f + Random.NextSingle() * .2f;
+    var XCut = AspectRatio * XCutFactor;
+    var YCut = YCutFactor;
+    var Result = new List<Point>();
+    Result.AddRange(MakeLine(new(XCut, YCut), new(XCut, 0), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(XCut, 0), new(AspectRatio - XCut, 0), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(AspectRatio - XCut, 0), new(AspectRatio - XCut, YCut), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(AspectRatio - XCut, YCut), new(AspectRatio, YCut), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(AspectRatio, YCut), new(AspectRatio, 1 - YCut), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(AspectRatio, 1 - YCut), new(AspectRatio - XCut, 1 - YCut), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(AspectRatio - XCut, 1 - YCut), new(AspectRatio - XCut, 1), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(AspectRatio - XCut, 1), new(XCut, 1), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(XCut, 1), new(XCut, 1 - YCut), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(XCut, 1 - YCut), new(0, 1 - YCut), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(0, 1 - YCut), new(0, YCut), SegmentsPerLine, true));
+    Result.AddRange(MakeLine(new(0, YCut), new(XCut, YCut), SegmentsPerLine, true));
+    return Result;
+  }
+
+  public static List<Point> MakeArc()
+  {
+    return MakeArc(RandomRadians, RandomRadians, 5 + Random.Next(10), false);
+  }
+
+  public static List<Point> MakeCircle()
+  {
+    return MakeArc(0f, MathF.PI * 2, 10 + Random.Next(10), true);
+  }
+
+  static List<Point> MakeArc(float StartAngleRadians, float EndAngleRadians, int SampleCount, bool SkipFirst)
+  {
+    var Center = new Vector2(0, 0);
+    var Result = new List<Point>();
+    var Step = (EndAngleRadians - StartAngleRadians) / (SampleCount - 1);
+
+    for (var I = SkipFirst ? 1 : 0; I < SampleCount; I++)
+    {
+      var Angle = StartAngleRadians + I * Step;
+      var X = Center.X + MathF.Cos(Angle);
+      var Y = Center.Y + MathF.Sin(Angle);
+
+      Result.Add(new() {IsHot = true, X = X, Y = Y});
+    }
+
+    return Result;
+  }
+}

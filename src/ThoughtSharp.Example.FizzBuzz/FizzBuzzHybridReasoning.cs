@@ -24,40 +24,40 @@ using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Example.FizzBuzz;
 
-static class FizzBuzzHybridReasoning
+class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
 {
-  //public static Thought<string, NullFeedback> DoFizzBuzz(
-  //  FizzBuzzMind Mind,
-  //  short Start, 
-  //  short End, 
-  //  short MaximumOperationsPerStep = 5)
-  //{
-  //  return Thought.Think(R =>
-  //  {
-  //    var Terminal = new StringBuilderTerminal();
-
-  //    foreach (var I in Enumerable.Range(Start, End - Start)) WriteForOneNumber(Mind, MaximumOperationsPerStep, R, Terminal, I);
-
-  //    return (Terminal.Content.ToString(), NullFeedback.Instance);
-  //  });
-  //}
-
-  public static void WriteForOneNumber(
-    FizzBuzzMind Mind, 
-    short MaximumOperationsPerStep, 
-    Thought.Reasoning R,
-    FizzBuzzTerminal FizzBuzzTerminal, 
-    int I, List<UseFeedback<FizzBuzzTerminal>> Feedback)
+  public Thought<string, NullFeedback> DoFizzBuzz(
+    byte Start,
+    byte End)
   {
-    using var Reasoning = Mind.EnterChainedReasoning();
-
-    foreach (var _ in Enumerable.Range(0, MaximumOperationsPerStep))
+    return Thought.WithoutFeedback.Think(R =>
     {
-      var Thought = Mind.WriteForNumber(FizzBuzzTerminal, new() { Value = (byte) I});
-      Feedback.Add(Thought.Feedback);
+      var Terminal = new StringBuilderFizzBuzzTerminal();
+
+      foreach (var I in Enumerable.Range(Start, End - Start + 1))
+        R.Incorporate(WriteForOneNumber(Terminal, (byte) I));
+
+      return Terminal.Content.ToString();
+    });
+  }
+
+  public Thought<List<UseFeedback<FizzBuzzTerminal>>> WriteForOneNumber(FizzBuzzTerminal Terminal, byte Input)
+  {
+    return Thought.Do(R =>
+    {
+      var Feedback = new List<UseFeedback<FizzBuzzTerminal>>();
+      using var Chaining = Mind.EnterChainedReasoning();
+
+      foreach (var _ in Enumerable.Range(0, 5))
+      {
+        var Thought = Mind.WriteForNumber(Terminal, new() { Value = Input});
+        Feedback.Add(Thought.Feedback);
         
-      if (!R.Consume(Thought))
-        break;
-    }
+        if (!R.Consume(Thought))
+          break;
+      }
+
+      return Feedback;
+    });
   }
 }

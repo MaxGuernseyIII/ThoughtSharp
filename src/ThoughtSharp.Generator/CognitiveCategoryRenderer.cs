@@ -163,7 +163,7 @@ static class CognitiveCategoryRenderer
       W.WriteLine($"public {Model.PayloadType.FullName} Interpret(Output O)");
       W.WriteLine("{");
       W.Indent++;
-      W.WriteLine("return AllOptions[O.Selection].Payload;");
+      W.WriteLine("return AllOptions[O.Selection % AllOptions.Count].Payload;");
       W.Indent--;
       W.WriteLine("}");
     }
