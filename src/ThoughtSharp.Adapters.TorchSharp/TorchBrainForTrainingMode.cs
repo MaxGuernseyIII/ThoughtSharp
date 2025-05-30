@@ -34,7 +34,7 @@ public class TorchBrainForTrainingMode(
 {
   optim.Optimizer Optimizer { get; } = optim.Adam(Model.parameters());
 
-  public Inference MakeInference(float[] Parameters)
+  public override Inference MakeInference(float[] Parameters)
   {
     return ExecuteInference(null, EmptyState, Parameters);
   }

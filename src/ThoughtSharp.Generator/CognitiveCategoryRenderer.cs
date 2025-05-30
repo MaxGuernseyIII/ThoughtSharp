@@ -55,8 +55,6 @@ static class CognitiveCategoryRenderer
     public void GenerateBody(IndentedTextWriter W)
     {
       GenerateAllOptionsProperty(W);
-      GenerateToInputBatchesMethod(W);
-      GenerateInterpretLegacyMethod(W);
       GenerateGetContestBetweenMethod(W);
       GenerateInterpretMethod(W);
     }
@@ -92,109 +90,6 @@ static class CognitiveCategoryRenderer
     {
       W.WriteLine($"public IReadOnlyList<{OptionType}> AllOptions {{ get; }} = Options;");
       W.WriteLine();
-    }
-
-    void GenerateToInputBatchesMethod(IndentedTextWriter W)
-    {
-      MethodHeader();
-      DefineVariables();
-      Spacer();
-      BatchesGenerationLoop();
-      Spacer();
-      SetLastBatch();
-      MethodFooter();
-
-      void MethodHeader()
-      {
-        W.WriteLine("public IReadOnlyList<Input> ToInputBatches()");
-        Open();
-      }
-
-      void SetLastBatch()
-      {
-        W.WriteLine("if (Batches.Any())");
-        Open();
-        W.WriteLine("var LastBatch = Batches[^1];");
-        W.WriteLine("LastBatch.IsFinalBatch = true;");
-        W.WriteLine("Batches[^1] = LastBatch;");
-        Close();
-      }
-
-      void MethodFooter()
-      {
-        Spacer();
-        W.WriteLine("return Batches;");
-        Close();
-      }
-
-      void Spacer()
-      {
-        W.WriteLine();
-      }
-
-      void Open()
-      {
-        W.WriteLine("{");
-        W.Indent++;
-      }
-
-      void Close(string Suffix = "")
-      {
-        W.Indent--;
-        W.Write("}");
-        W.WriteLine(Suffix);
-      }
-
-      void DefineVariables()
-      {
-        W.WriteLine("var Batches = new List<Input>();");
-        W.WriteLine("ushort CurrentIndex = 0;");
-      }
-
-      void BatchesGenerationLoop()
-      {
-        W.WriteLine("while(AllOptions.Count > CurrentIndex)");
-        Open();
-        W.WriteLine("var Batch = new Input();");
-        SingleBatchGenerationLoop();
-        W.WriteLine("Batches.Add(Batch);");
-        Close();
-      }
-
-      void SingleBatchGenerationLoop()
-      {
-        W.WriteLine($"for (ushort I = 0; I < {Model.Count.ToLiteralExpression()}; ++I, ++CurrentIndex)");
-        Open();
-        W.WriteLine("if (CurrentIndex < AllOptions.Count)");
-        Open();
-        W.WriteLine("Batch.Items[I] = new()");
-        Open();
-        W.WriteLine("IsHot = true,");
-        W.WriteLine("ItemNumber = CurrentIndex,");
-        W.WriteLine("Descriptor = AllOptions[CurrentIndex].Descriptor");
-        Close(";");
-        Close();
-        W.WriteLine("else");
-        Open();
-        W.WriteLine("Batch.Items[I] = new()");
-        Open();
-        W.WriteLine("IsHot = false,");
-        W.WriteLine("ItemNumber = 0,");
-        W.WriteLine("Descriptor = new()");
-        Close(";");
-        Close();
-        Close();
-      }
-    }
-
-    void GenerateInterpretLegacyMethod(IndentedTextWriter W)
-    {
-      W.WriteLine($"public {Model.PayloadType.FullName} InterpretLegacy(Output O)");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("return AllOptions[O.Selection % AllOptions.Count].Payload;");
-      W.Indent--;
-      W.WriteLine("}");
     }
 
     public void GenerateHeader(IndentedTextWriter W)

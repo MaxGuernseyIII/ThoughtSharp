@@ -24,7 +24,7 @@ namespace ThoughtSharp.Runtime;
 
 public class ChooseFeedback<TSelectable>(List<SingleChoiceFeedback<TSelectable>> SingleChoices)
 {
-  public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseFeedback<TSelectable>> GetSource<TOutput>(IReadOnlyList<TSelectable> Options, Func<ushort, TOutput> GetOutputObject)
+  public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseFeedback<TSelectable>> GetSource<TOutput>()
     where TOutput : CognitiveData<TOutput>
   {
     var Configurator = new ChooseFeedbackConfigurator<TSelectable>();

@@ -20,17 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using ThoughtSharp.Runtime;
 using static TorchSharp.torch;
 using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrain(
+public abstract class TorchBrain(
   Module<TorchInferenceParts, TorchInferenceParts> Model, Device Device,
-  Func<TorchInferenceStateNode> MakeEmptyState) : IDisposable
+  Func<TorchInferenceStateNode> MakeEmptyState) : Brain, IDisposable
 {
   protected Module<TorchInferenceParts, TorchInferenceParts> Model { get; } = Model;
   Device Device { get; } = Device;
+
+  public void Save(string Path)
+  {
+    Model.save(Path);
+  }
+
+  public void Load(string Path)
+  {
+    Model.load(Path);
+  }
 
   public TorchInferenceStateNode EmptyState => MakeEmptyState();
 
@@ -52,4 +63,6 @@ public class TorchBrain(
       State = State
     });
   }
+
+  public abstract Inference MakeInference(float[] Parameters);
 }

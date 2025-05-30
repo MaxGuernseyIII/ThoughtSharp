@@ -296,13 +296,7 @@ static class MindRenderer
     W.Indent++;
     W.WriteLine("ThoughtResult.WithFeedbackSource(");
     W.Indent++;
-    W.WriteLine($"ChooseFeedback<{ChooseOperation.SelectableTypeName}>.GetSource(");
-    W.Indent++;
-    W.WriteLine($"[..{ChooseOperation.CategoryParameter}.AllOptions.Select(O => O.Payload)],");
-    W.WriteLine(
-      $"I => new Output {{ Parameters = {{ {ChooseOperation.Name} = {{ {ChooseOperation.CategoryParameter} = {{ Selection = I }} }} }} }}");
-    W.Indent--;
-    W.WriteLine(")");
+    W.WriteLine($"ChooseFeedback<{ChooseOperation.SelectableTypeName}>.GetSource<{ChooseOperation.Parameters.Single(P => P.Name == ChooseOperation.CategoryParameter).TypeName}.Output>()");
     W.Indent--;
     W.WriteLine(").FromLogic(Source =>");
     W.WriteLine("{");

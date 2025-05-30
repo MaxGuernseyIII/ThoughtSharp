@@ -54,10 +54,8 @@ static class CognitiveCategoryModelFactory
         IsPublic = true,
         ExplicitConstructor = true
       };
-    QuestionBuilder.AddCompilerDefinedSubDataArrayParameter("Items", ItemClassName, Count, "new()");
     QuestionBuilder.AddCompilerDefinedSubDataParameter("Left", DescriptorType.GetFullPath());
     QuestionBuilder.AddCompilerDefinedSubDataParameter("Right", DescriptorType.GetFullPath());
-    QuestionBuilder.AddCompilerDefinedBoolParameter("IsFinalBatch");
     DataObjects.Add(QuestionBuilder.Build());
 
     var Answer =
@@ -66,7 +64,6 @@ static class CognitiveCategoryModelFactory
         IsPublic = true,
         ExplicitConstructor = true
       };
-    Answer.SetCompilerDefinedUnboundedSelectionCodeParameter("Selection");
     Answer.AddCompilerDefinedBoolParameter("RightIsWinner");
     DataObjects.Add(Answer.Build());
 

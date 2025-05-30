@@ -163,7 +163,7 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     return this;
   }
 
-  public Brain Build()
+  public TorchBrain Build()
   {
     var TotalInputFeatures = InputLength;
 

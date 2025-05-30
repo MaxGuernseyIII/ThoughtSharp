@@ -33,7 +33,7 @@ public class TorchBrainForProductionMode(
   Func<TorchInferenceStateNode> MakeEmptyStates)
   : TorchBrain(Model, Device, MakeEmptyStates), Brain
 {
-  public Inference MakeInference(float[] Parameters)
+  public override Inference MakeInference(float[] Parameters)
   {
     return ExecuteInference(EmptyState, Parameters);
   }

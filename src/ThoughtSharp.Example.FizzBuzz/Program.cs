@@ -28,7 +28,7 @@ using ThoughtSharp.Runtime;
 
 Console.WriteLine("Training...");
 const int TotalTrainingPasses = 1000000;
-const int ReportEvery = 10;
+const int ReportEvery = 1000;
 
 DoChooseShape();
 
@@ -441,11 +441,37 @@ void MindfulComparisonCheck()
 
 void DoChooseShape()
 {
+  const string FileName = "choose-shape.pt";
   var BrainBuilder = TorchBrainBuilder.For<ShapeClassifyingMind>().Blank().AddLogicPath().AddMathPath();
-  foreach (var Path in BrainBuilder.Paths) 
-    Path.StateCoefficient = 16;
-
   var Brain = BrainBuilder.Build();
+
+  try
+  {
+    Brain.Load(FileName);
+  }
+  catch
+  {
+    Console.WriteLine($"Could not load {FileName}, starting from scratch...");
+  }
+
+  Console.CancelKeyPress +=
+    delegate
+    {
+      Save();
+    };
+
+  AppDomain.CurrentDomain.ProcessExit +=
+    delegate
+    {
+      Save();
+    };
+
+  void Save()
+  {
+    Console.WriteLine("Saving...");
+    Brain.Save(FileName);
+  }
+
   var Mind = new ShapeClassifyingMind(Brain);
 
   var Random = new Random();
@@ -459,9 +485,13 @@ void DoChooseShape()
       HandlesRounding = false,
       HandlesVertices = false,
       RequiresVertices = false,
+      HandlesFlatSurfaces = true,
       RequiresClosed = false,
+      RequiresOpen = true,
       RequiresRightAngles = false,
-      RequiresStraightLines = true
+      RequiresStraightLines = true,
+      RequiresTwoEndPoints = true,
+
     }), Geometry.MakeLine),
     [ShapeType.Rectangle] = (new(new RectangleHandler(), new()
     {
@@ -469,10 +499,14 @@ void DoChooseShape()
       HandlesRadialFlatFaces = true,
       HandlesRounding = false,
       HandlesVertices = true,
+      HandlesFlatSurfaces = true,
       RequiresVertices = true,
       RequiresStraightLines = true,
       RequiresClosed = true,
-      RequiresRightAngles = true
+      RequiresRightAngles = true,
+      RequiresOpen = false,
+      RequiresTwoEndPoints = false,
+
     }), Geometry.MakeBox),
     [ShapeType.Irregular] = (new(new IrregularHandler(), new()
     {
@@ -480,10 +514,13 @@ void DoChooseShape()
       HandlesRadialFlatFaces = true,
       HandlesRounding = true,
       HandlesVertices = true,
+      HandlesFlatSurfaces = true,
       RequiresClosed = true,
       RequiresRightAngles = false,
       RequiresStraightLines = false,
-      RequiresVertices = true
+      RequiresVertices = true,
+      RequiresOpen = false,
+      RequiresTwoEndPoints = false,
     }), Geometry.MakeIrregular),
     [ShapeType.Circle] = (new(new CircleHandler(),
       new()
@@ -492,10 +529,13 @@ void DoChooseShape()
         HandlesRounding = true,
         HandlesVertices = false,
         HandlesRadialFlatFaces = false,
+        HandlesFlatSurfaces = false,
         RequiresClosed = true,
         RequiresRightAngles = false,
         RequiresStraightLines = false,
-        RequiresVertices = false
+        RequiresVertices = false,
+        RequiresOpen = false,
+        RequiresTwoEndPoints = false,
       }), Geometry.MakeCircle),
     [ShapeType.Star] = (new(new StarHandler(),
       new()
@@ -504,10 +544,13 @@ void DoChooseShape()
         HandlesRounding = false,
         HandlesRadialFlatFaces = false,
         HandlesVertices = true,
+        HandlesFlatSurfaces = true,
         RequiresStraightLines = true,
         RequiresRightAngles = true,
         RequiresClosed = true,
-        RequiresVertices = true
+        RequiresVertices = true,
+        RequiresOpen = false,
+        RequiresTwoEndPoints = false,
       }), Geometry.MakeStar),
     [ShapeType.Arc] = (new(new ArcHandler(),
       new()
@@ -516,10 +559,13 @@ void DoChooseShape()
         HandlesRadialFlatFaces = false,
         HandlesRounding = true,
         HandlesVertices = false,
+        HandlesFlatSurfaces = false,
         RequiresClosed = false,
+        RequiresOpen = true,
         RequiresRightAngles = false,
         RequiresStraightLines = false,
-        RequiresVertices = false
+        RequiresVertices = false,
+        RequiresTwoEndPoints = true,
       }), Geometry.MakeArc),
     [ShapeType.Plus] = (new(new PlusHandler(),
       new()
@@ -528,49 +574,153 @@ void DoChooseShape()
         HandlesRadialFlatFaces = true,
         HandlesRounding = false,
         HandlesVertices = true,
+        HandlesFlatSurfaces = true,
         RequiresVertices = true,
         RequiresStraightLines = true,
         RequiresRightAngles = true,
-        RequiresClosed = true
+        RequiresClosed = true,
+        RequiresOpen = false,
+        RequiresTwoEndPoints = false,
       }), Geometry.MakePlus)
   };
 
-  var ShapeTypes = new List<ShapeType>(OptionsMap.Keys).ToImmutableArray();
-  var RawOptions =
-    new List<CognitiveOption<ShapeHandler, ShapeHandlerDescriptor>>(OptionsMap.Values.Select(Details => Details.Option))
-      .ToImmutableArray();
+  ImmutableArray<ImmutableArray<ShapeType>> ShapeSamplesPlan =
+  [
+    [ShapeType.Line, ShapeType.Rectangle],
+    [ShapeType.Rectangle, ShapeType.Circle],
+    [ShapeType.Star, ShapeType.Plus],
+    [ShapeType.Arc, ShapeType.Circle],
+    [..OptionsMap.Keys.Except([ShapeType.Irregular])],
+    [..OptionsMap.Keys],
+  ];
+
+  ImmutableArray<(ImmutableArray<ShapeType> ShapeSamples, ImmutableArray<ShapeType> AvailableOptions, int
+    ConfidenceThreshold, int ConfidenceSampleCount)> ProduceCurriculum()
+  {
+    var Result = new List<(ImmutableArray<ShapeType> ShapeSamples, ImmutableArray<ShapeType> AvailableOptions, int
+      ConfidenceThreshold, int ConfidenceSampleCount)>();
+
+    foreach (var ShapeSamples in ShapeSamplesPlan)
+    {
+      var Surplus = OptionsMap.Keys.Except(ShapeSamples);
+
+      foreach (var I in Enumerable.Range(0, Surplus.Count() +1))
+      {
+        Result.Add((ShapeSamples, [..ShapeSamples.Concat(Surplus.Take(I))], 98*5, 100*5));
+      }
+    }
+
+    var Last = Result.Last();
+
+    Result.Add((Last.ShapeSamples, Last.AvailableOptions, 3000, 3000));
+
+    return [..Result];
+  }
+
+  var Curriculum = ProduceCurriculum();
+
+  //foreach (var ToRemove in OptionsMap.Keys.Except([ShapeType.Line, ShapeType.Circle]).ToArray()) 
+  //  OptionsMap.Remove(ToRemove);
+
   var Failures = 0;
   var Exceptions = 0;
 
-  foreach (var I in Enumerable.Range(0, TotalTrainingPasses))
+  var FailureDictionary = new Dictionary<ShapeType, int>();
+  void RecordFailure(ShapeType ForType)
   {
-    if (I % ReportEvery == 0) Report(I);
+    if (!FailureDictionary.TryGetValue(ForType, out var Value))
+      FailureDictionary[ForType] = Value = 0;
 
-    var ThisTrialShapeType = RandomOneOf(ShapeTypes);
-    var ThisTrialOptions = RandomizeOrderOf(RawOptions);
-    var Category = new ShapeHandlerCategory(ThisTrialOptions);
-    var Shape = new Shape
+    Value += 1;
+
+    FailureDictionary[ForType] = Value;
+  }
+
+
+  var RecentSample = new Queue<bool>();
+  int RecentSampleSuccessRate()
+  {
+    return RecentSample.Count(V => V);
+  }
+
+  foreach (var ((CourseShapeTypes, CourseOptions, CourseConfidenceThreshold, CourseConfidenceSampleCount), Level) in Curriculum.Select((Course, I) => (Course, I + 1)))
+  {
+    var RawOptions =
+      new List<CognitiveOption<ShapeHandler, ShapeHandlerDescriptor>>(OptionsMap.Where(Pair => CourseOptions.Contains(Pair.Key)).Select(Pair => Pair.Value.Option))
+        .ToImmutableArray();
+    Console.WriteLine($"Starting level {Level}: shapes {string.Join(", ", CourseShapeTypes)} with options {string.Join(", ", CourseOptions)}");
+
+    void RecordSuccess(bool IsSuccess)
     {
-      Points = Geometry.PrepareForUseInTraining(OptionsMap[ThisTrialShapeType].MakeShapePoints()).ToArray()
-    };
+      RecentSample.Enqueue(IsSuccess);
+      while (RecentSample.Count > CourseConfidenceSampleCount)
+        RecentSample.Dequeue();
+    }
 
-    var T = Mind.ChooseHandlerFor(Shape, Category);
-
-    var Expected = OptionsMap[ThisTrialShapeType].Option.Payload;
-    try
+    foreach (var I in Enumerable.Range(0, TotalTrainingPasses))
     {
-      var Actual = T.ConsumeDetached();
-      if (Actual != Expected)
+      if (I % ReportEvery == 0 && I != 0) Report();
+
+      var ThisTrialShapeType = RandomOneOf(CourseShapeTypes);
+      //var ThisTrialShapeType = ShapeType.Line;
+      var ThisTrialOptions = RandomizeOrderOf(RawOptions);
+      var Category = new ShapeHandlerCategory(ThisTrialOptions);
+      var Shape = new Shape
+      {
+        Points = Geometry.PrepareForUseInTraining(OptionsMap[ThisTrialShapeType].MakeShapePoints()).ToArray()
+        //Points = Geometry.GetSimplified(OptionsMap[ThisTrialShapeType].MakeShapePoints()).ToArray()
+      };
+
+      var T = Mind.ChooseHandlerFor(Shape.Normalize(), Category);
+
+      var Expected = OptionsMap[ThisTrialShapeType].Option.Payload;
+      var Failure = false;
+      try
+      {
+        var Actual = T.ConsumeDetached();
+        if (Actual != Expected)
+        {
+          Failure = true;
+          Failures++;
+        }
+      }
+      catch
+      {
+        Failure = true;
         Failures++;
-    }
-    catch
-    {
-      Failures++;
-      Exceptions++;
-      throw;
-    }
+        Exceptions++;
+      }
 
-    T.Feedback.SelectionShouldHaveBeen(Expected);
+      T.Feedback.SelectionShouldHaveBeen(Expected);
+
+      RecordSuccess(!Failure);
+      if (Failure)
+        RecordFailure(ThisTrialShapeType);
+
+      if (RecentSample.Count >= CourseConfidenceSampleCount && RecentSampleSuccessRate() >= CourseConfidenceThreshold)
+      {
+        Console.WriteLine($"Finished with level {Level} in {I + 1} runs.");
+        Failures = 0;
+        Exceptions = 0;
+        RecentSample.Clear();
+        FailureDictionary.Clear();
+        break;
+      }
+
+      void Report()
+      {
+        Console.WriteLine($"Runs: {I}");
+        Console.WriteLine($"    Failures:         {Failures}");
+        Console.WriteLine($"    Exceptions:       {Exceptions}");
+        Console.WriteLine($"    Recent Successes: {RecentSampleSuccessRate()} out of {CourseConfidenceSampleCount}");
+        Console.WriteLine("    Batch Failures:");
+        foreach (var (Type, FailureCount) in FailureDictionary)
+          Console.WriteLine($"        {$"{Type}:",-12}{FailureCount}");
+        FailureDictionary.Clear();
+        Save();
+        Console.WriteLine();
+      }
+    }
   }
 
   T RandomOneOf<T>(IReadOnlyList<T> Samples)
@@ -593,12 +743,7 @@ void DoChooseShape()
     return Result;
   }
 
-  void Report(int I)
-  {
-    Console.WriteLine($"Runs: {I}");
-    Console.WriteLine($"    Failures: {Failures}");
-    Console.WriteLine($"    Exceptions: {Exceptions}");
-  }
+  
 }
 
 enum ShapeType
@@ -737,6 +882,9 @@ partial class ShapeHandlerDescriptor
   public bool RequiresRightAngles { get; set; }
   public bool RequiresClosed { get; set; }
   public bool RequiresStraightLines { get; set; }
+  public bool RequiresTwoEndPoints { get; set; }
+  public bool RequiresOpen { get; set; }
+  public bool HandlesFlatSurfaces { get; set; }
 }
 
 [CognitiveData]
@@ -799,7 +947,13 @@ static class Geometry
 
   public static IEnumerable<Point> PrepareForUseInTraining(IEnumerable<Point> Points)
   {
-    List<Point> Result = [.. Transform(AddNoise(Points, 0.05f), RandomTransform).Take(Shape.PointCount)];
+    return NormalizePointsArraySize(Transform(AddNoise(Points, 0.05f), RandomTransform));
+  }
+
+  static IEnumerable<Point> NormalizePointsArraySize(IEnumerable<Point> Noisy2)
+  {
+    var PossiblyNoisy = Noisy2.Take(Shape.PointCount);
+    List<Point> Result = [.. PossiblyNoisy];
     Result.AddRange(Enumerable.Repeat(new Point(), Shape.PointCount - Result.Count));
     return Result;
   }
@@ -952,5 +1106,10 @@ static class Geometry
     }
 
     return Result;
+  }
+
+  public static IEnumerable<Point> GetSimplified(IEnumerable<Point> MakeShapePoints)
+  {
+    return NormalizePointsArraySize(MakeShapePoints);
   }
 }

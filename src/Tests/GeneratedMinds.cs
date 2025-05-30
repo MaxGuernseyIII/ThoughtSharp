@@ -32,7 +32,7 @@ public partial class GeneratedMinds
   [TestMethod]
   public void DisposeCleansUpBrain()
   {
-    var Brain = new MockBrain(0, 0);
+    var Brain = new MockBrain<SimpleMakeMockMind.Input, SimpleMakeMockMind.Output>();
     var Mind = new SimpleMakeMockMind(Brain);
 
     Mind.Dispose();
@@ -43,7 +43,7 @@ public partial class GeneratedMinds
   [TestMethod]
   public void DoSimpleMake()
   {
-    var Brain = new MockBrain(SimpleMakeMockMind.Input.Length, SimpleMakeMockMind.Output.Length);
+    var Brain = new MockBrain<SimpleMakeMockMind.Input, SimpleMakeMockMind.Output>();
     var Mind = new SimpleMakeMockMind(Brain);
     var InputToMakeCall = new SimpleInputData
     {
@@ -54,7 +54,7 @@ public partial class GeneratedMinds
     {
       R1 = Any.Float
     };
-    Brain.SetOutputForOnlyInput(new SimpleMakeMockMind.Input
+    Brain.SetOutputForOnlyInput(new()
     {
       OperationCode = 1,
       Parameters =
@@ -64,7 +64,7 @@ public partial class GeneratedMinds
           Simple1 = InputToMakeCall
         }
       }
-    }, new SimpleMakeMockMind.Output
+    }, new()
     {
       Parameters =
       {
@@ -83,7 +83,7 @@ public partial class GeneratedMinds
   [TestMethod]
   public void TrainingOfMakeAsOutputThought()
   {
-    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
     var Mind = new StatelessMind(Brain);
     var T = Mind.MakeSimpleOutput(new());
     var ExpectedObject = new SimpleOutputData
@@ -94,7 +94,7 @@ public partial class GeneratedMinds
     T.Feedback.ResultShouldHaveBeen(ExpectedObject);
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output()
+    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
     {
       Parameters =
       {
@@ -177,7 +177,7 @@ public partial class GeneratedMinds
     });
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output()
+    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
     {
       Parameters =
       {
@@ -256,7 +256,7 @@ public partial class GeneratedMinds
   [TestMethod]
   public async Task TrainingOfAsynchronousUseAsOutputThought()
   {
-    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
     var Mind = new StatelessMind(Brain);
 
     var T = await Mind.AsynchronousUseSomeInterface(new MockAsynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100));
@@ -272,11 +272,11 @@ public partial class GeneratedMinds
     });
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output()
+    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
     {
       Parameters =
       {
-        AsynchronousUseSomeInterface = 
+        AsynchronousUseSomeInterface =
         {
           Surface =
           {
@@ -332,7 +332,9 @@ public partial class GeneratedMinds
     var Argument2 = Any.Float;
     var AThirdArgument = Any.Float;
 
-    var SelectionLog = new List<(CognitiveOption<MockSelectable, MockDescriptor> Left, CognitiveOption<MockSelectable, MockDescriptor> Right, MockInference<StatelessMind.Input, StatelessMind.Output> Inference)>();
+    var SelectionLog =
+      new List<(CognitiveOption<MockSelectable, MockDescriptor> Left, CognitiveOption<MockSelectable, MockDescriptor>
+        Right, MockInference<StatelessMind.Input, StatelessMind.Output> Inference)>();
 
     Brain.MakeInferenceFunc = Input =>
     {
@@ -352,7 +354,8 @@ public partial class GeneratedMinds
       };
 
       var MockInference = new MockInference<StatelessMind.Input, StatelessMind.Output>(Output);
-      SelectionLog.Add((Category.AllOptions.Single(C => Equals(C.Descriptor, Cat.Left)), Category.AllOptions.Single(C => Equals(C.Descriptor, Cat.Right)), MockInference));
+      SelectionLog.Add((Category.AllOptions.Single(C => Equals(C.Descriptor, Cat.Left)),
+        Category.AllOptions.Single(C => Equals(C.Descriptor, Cat.Right)), MockInference));
 
       return MockInference;
     };
@@ -368,9 +371,10 @@ public partial class GeneratedMinds
     var LeftItems = SelectionLog.Where(I => I.Left == Selected);
     var RightItems = SelectionLog.Where(I => I.Right == Selected);
     foreach (var Item in LeftItems)
-      Item.Inference.ShouldHaveBeenTrainedWith(new MockCategory.Output() { RightIsWinner = false }.ExtractLossRules(Offset));
+      Item.Inference.ShouldHaveBeenTrainedWith(
+        new MockCategory.Output {RightIsWinner = false}.ExtractLossRules(Offset));
     foreach (var Item in RightItems)
-      Item.Inference.ShouldHaveBeenTrainedWith(new MockCategory.Output() { RightIsWinner = true }.ExtractLossRules(Offset));
+      Item.Inference.ShouldHaveBeenTrainedWith(new MockCategory.Output {RightIsWinner = true}.ExtractLossRules(Offset));
     foreach (var Item in SelectionLog.Except(LeftItems).Except(RightItems))
       Item.Inference.ShouldNotHaveBeenTrained();
   }
@@ -401,13 +405,16 @@ public partial class GeneratedMinds
       Input.Parameters.ChooseItems.ArgumentA.Should().Be(ArgumentA);
       Input.Parameters.ChooseItems.Argument2.Should().Be(Argument2);
       Input.Parameters.ChooseItems.AThirdArg.Should().Be(AThirdArg);
-      var RightOption = Category.AllOptions.Single(C => Equals(C.Descriptor, Input.Parameters.ChooseItems.Category.Right));
+      var RightOption =
+        Category.AllOptions.Single(C => Equals(C.Descriptor, Input.Parameters.ChooseItems.Category.Right));
 
       var Output = new StatelessMind.Output();
       Output.Parameters.ChooseItems.Category.RightIsWinner = RightOption == Selected;
-      
-      return new MockInference<StatelessMind.Input, StatelessMind.Output>(Output) {MakeInferenceFunc = 
-        _ => throw new InvalidOperationException("Should not get here.")
+
+      return new MockInference<StatelessMind.Input, StatelessMind.Output>(Output)
+      {
+        MakeInferenceFunc =
+          _ => throw new InvalidOperationException("Should not get here.")
       };
     }
   }
@@ -591,7 +598,8 @@ public partial class GeneratedMinds
       int Argument2);
 
     [Choose]
-    public partial Thought<MockSelectable, ChooseFeedback<MockSelectable>> ChooseItems(MockCategory Category, float ArgumentA, float Argument2,
+    public partial Thought<MockSelectable, ChooseFeedback<MockSelectable>> ChooseItems(MockCategory Category,
+      float ArgumentA, float Argument2,
       float AThirdArg);
   }
 
