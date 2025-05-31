@@ -83,7 +83,7 @@ public class TorchBrainForTrainingMode(
   }
 }
 
-public class StatePassThroughModule : Module<TorchInferenceParts, TorchInferenceParts>
+public sealed class StatePassThroughModule : Module<TorchInferenceParts, TorchInferenceParts>
 {
   readonly Module<Tensor, Tensor> Transformer;
 
@@ -91,7 +91,6 @@ public class StatePassThroughModule : Module<TorchInferenceParts, TorchInference
   {
     this.Transformer = Transformer;
 
-    // ReSharper disable once VirtualMemberCallInConstructor
     RegisterComponents();
   }
 
