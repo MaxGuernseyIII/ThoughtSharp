@@ -20,8 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Linq;
-
 namespace ThoughtSharp.Runtime;
 
 public static class BrainBuilderExtensions
@@ -38,19 +36,19 @@ public static class BrainBuilderExtensions
   public static BrainBuilder<BuiltBrain, BuiltModel> ForLogic<BuiltBrain, BuiltModel>(
     this BrainBuilder<BuiltBrain, BuiltModel> Builder, params IEnumerable<int> LogicLayerCounts)
   {
-    return Builder.UsingSequence(S => S.AddLogicLayers(Builder, LogicLayerCounts));
+    return Builder.UsingSequence(S => S.AddLogicLayers(LogicLayerCounts));
   }
 
   public static BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor AddLogicLayers<BuiltBrain, BuiltModel>(
-    this BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor S, BrainBuilder<BuiltBrain, BuiltModel> Host, params IEnumerable<int> LayerCounts)
+    this BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor S, params IEnumerable<int> LayerCounts)
   {
     return LayerCounts.Aggregate(S, (Previous, Features) => Previous.AddLinear(S.Host.InputFeatures * Features).AddReLU()) ;
   }
 
   public static BrainBuilder<BuiltBrain, BuiltModel>.ParallelConstructor AddLogicPath<BuiltBrain, BuiltModel>(
-    this BrainBuilder<BuiltBrain, BuiltModel>.ParallelConstructor P, BrainBuilder<BuiltBrain, BuiltModel> Host,
+    this BrainBuilder<BuiltBrain, BuiltModel>.ParallelConstructor P,
     params IEnumerable<int> LayerCounts)
   {
-    return P.AddPath(Path => Path.AddLogicLayers(Host, LayerCounts));
+    return P.AddPath(Path => Path.AddLogicLayers(LayerCounts));
   }
 }

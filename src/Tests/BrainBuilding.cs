@@ -65,7 +65,7 @@ public class BrainBuilding
   {
     var LayerCounts = AnyLayerFeatureCounts(AtLeast: 1);
 
-    var Actual = BrainBuilder.UsingSequence(S => S.AddLogicLayers(null!, LayerCounts)).Build();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLogicLayers(LayerCounts)).Build();
 
     Actual.Should().Be(BrainBuilder.UsingSequence(S => LayerCounts.Aggregate(S,
       (Previous, Features) => Previous.AddLinear(Features * BrainBuilder.InputFeatures).AddReLU())).Build());
@@ -76,9 +76,9 @@ public class BrainBuilding
   {
     var LayerCounts = AnyLayerFeatureCounts(AtLeast: 1);
 
-    var Actual = BrainBuilder.UsingParallel(P => P.AddLogicPath(BrainBuilder, LayerCounts)).Build();
+    var Actual = BrainBuilder.UsingParallel(P => P.AddLogicPath(LayerCounts)).Build();
 
-    Actual.Should().Be(BrainBuilder.UsingParallel(P => P.AddPath(S => S.AddLogicLayers(BrainBuilder, LayerCounts)))
+    Actual.Should().Be(BrainBuilder.UsingParallel(P => P.AddPath(S => S.AddLogicLayers(LayerCounts)))
       .Build());
   }
 
@@ -89,7 +89,7 @@ public class BrainBuilding
 
     var Actual = BrainBuilder.ForLogic(LayerCounts).Build();
 
-    Actual.Should().Be(BrainBuilder.UsingSequence(S => S.AddLogicLayers(BrainBuilder, LayerCounts)).Build());
+    Actual.Should().Be(BrainBuilder.UsingSequence(S => S.AddLogicLayers(LayerCounts)).Build());
   }
 
   [TestMethod]
