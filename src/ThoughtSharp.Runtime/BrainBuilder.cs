@@ -63,32 +63,6 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
     BuiltModel Build();
   }
 
-  record DefaultConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures)
-    : ModelConstructor
-  {
-    public BuiltModel Build()
-    {
-      return BrainFactory.CreateLinear(InputFeatures, OutputFeatures);
-    }
-  }
-
-  record StandardConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures)
-    : ModelConstructor
-  {
-    public BuiltModel Build()
-    {
-      var Layer1Features = InputFeatures * 20;
-      var Layer2Features = (Layer1Features + OutputFeatures) / 2;
-      return BrainFactory.CreateSequence(
-        BrainFactory.CreateLinear(InputFeatures, Layer1Features),
-        BrainFactory.CreateTanh(),
-        BrainFactory.CreateLinear(Layer1Features, Layer2Features),
-        BrainFactory.CreateTanh(),
-        BrainFactory.CreateLinear(Layer2Features, OutputFeatures)
-      );
-    }
-  }
-
   public sealed record SequenceBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor)
     : ModelConstructor
   {
