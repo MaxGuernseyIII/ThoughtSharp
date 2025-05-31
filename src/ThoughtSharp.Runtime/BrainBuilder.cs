@@ -1,10 +1,12 @@
-﻿namespace ThoughtSharp.Runtime;
+﻿using System.Collections.Immutable;
+
+namespace ThoughtSharp.Runtime;
 
 public sealed record BrainBuilder<BuiltBrain, BuiltModel>(BrainFactory<BuiltBrain, BuiltModel> Factory, int InputFeatures, int OutputFeatures)
 {
   public interface ModelConstructor
   {
-    BuiltBrain Build();
+    BuiltModel Build();
   }
 
   readonly BrainFactory<BuiltBrain, BuiltModel> Factory = Factory;
@@ -12,7 +14,7 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(BrainFactory<BuiltBrai
 
   public BuiltBrain Build()
   {
-    return Constructor.Build();
+    return Factory.CreateBrain(Constructor.Build());
   }
 
   public BrainBuilder<BuiltBrain, BuiltModel> UsingStandard()
@@ -20,29 +22,51 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(BrainFactory<BuiltBrai
     return this with {Constructor = new StandardConstructor(Factory, InputFeatures, OutputFeatures) };
   }
 
+  public BrainBuilder<BuiltBrain, BuiltModel> UsingSequence(Func<SequenceBuilder, SequenceBuilder> TransformSequenceBuilder)
+  {
+    return this with {Constructor = TransformSequenceBuilder(new(Factory, InputFeatures, OutputFeatures))};
+  }
+
   record DefaultConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures) : ModelConstructor
   {
-    public BuiltBrain Build()
+    public BuiltModel Build()
     {
-      return 
-        BrainFactory.CreateBrain(BrainFactory.CreateLinear(InputFeatures, OutputFeatures));
+      return BrainFactory.CreateLinear(InputFeatures, OutputFeatures);
     }
   }
 
   record StandardConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures) : ModelConstructor
   {
-    public BuiltBrain Build()
+    public BuiltModel Build()
     {
       var Layer1Features = InputFeatures * 20;
       var Layer2Features = (Layer1Features + OutputFeatures) / 2;
-      return BrainFactory.CreateBrain(
-        BrainFactory.CreateSequence(
-          BrainFactory.CreateLinear(InputFeatures, Layer1Features),
-          BrainFactory.CreateTanh(),
-          BrainFactory.CreateLinear(Layer1Features, Layer2Features),
-          BrainFactory.CreateTanh(),
-          BrainFactory.CreateLinear(Layer2Features, OutputFeatures)
-        ));
+      return BrainFactory.CreateSequence(
+        BrainFactory.CreateLinear(InputFeatures, Layer1Features),
+        BrainFactory.CreateTanh(),
+        BrainFactory.CreateLinear(Layer1Features, Layer2Features),
+        BrainFactory.CreateTanh(),
+        BrainFactory.CreateLinear(Layer2Features, OutputFeatures)
+      );
+    }
+  }
+
+  public sealed record SequenceBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int NextInputFeatures, int FinalOutputFeatures) : ModelConstructor
+  {
+    ImmutableArray<BuiltModel> Models { get; init; } = [];
+
+    BuiltModel ModelConstructor.Build()
+    {
+      return BrainFactory.CreateSequence(
+        [
+          ..Models,
+          BrainFactory.CreateLinear(NextInputFeatures, FinalOutputFeatures)
+        ]);
+    }
+
+    public SequenceBuilder AddLinear(int Features)
+    {
+      return this with { Models = [..Models, BrainFactory.CreateLinear(NextInputFeatures, Features)], NextInputFeatures = Features};
     }
   }
 }

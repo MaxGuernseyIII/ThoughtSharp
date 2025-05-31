@@ -74,6 +74,48 @@ public class BrainBuilding
     Actual.Should().Be(Expected);
   }
 
+  [TestMethod]
+  public void UsingSequence()
+  {
+    var FeatureLayerCounts = AnyFeatureLayerCounts();
+    var Mappings = GetExpectedSequenceLayersFromCounts(FeatureLayerCounts);
+    var ExpectedLayers = Mappings.Aggregate(new List<MockBuiltModel>(),
+      (Previous, Mapping) => [..Previous, Factory.CreateLinear(Mapping.InputFeatures, Mapping.OutputFeatures)]);
+    var Builder = BrainBuilder.UsingSequence(Sequence => FeatureLayerCounts.Aggregate(Sequence,
+      (Previous, Features) => Previous.AddLinear(Features)));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(
+      Factory.CreateBrain(
+        Factory.CreateSequence(ExpectedLayers)));
+  }
+
+  List<(int InputFeatures, int OutputFeatures)> GetExpectedSequenceLayersFromCounts(List<int> LayerFeatureCounts)
+  {
+    var Result = new List<(int InputFeatures, int OutputFeatures)>();
+    var PreviousFeatureCount = InputFeatures;
+
+    foreach (var LayerFeatureCount in LayerFeatureCounts)
+    {
+      Result.Add((PreviousFeatureCount, LayerFeatureCount));
+      PreviousFeatureCount = LayerFeatureCount;
+    }
+
+    Result.Add((PreviousFeatureCount, OutputFeatures));
+
+    return Result;
+  }
+
+  static List<int> AnyFeatureLayerCounts()
+  {
+    var LayerCount = Any.Int(0, 4);
+    var LayerFeatureCounts = new List<int>();
+    foreach (var I in Enumerable.Range(0, LayerCount)) 
+      LayerFeatureCounts.Add(Any.Int(1, 1000));
+    return LayerFeatureCounts;
+  }
+
   class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel>
   {
     public MockBuiltModel CreateLinear(int InputFeatures, int OutputFeatures)
