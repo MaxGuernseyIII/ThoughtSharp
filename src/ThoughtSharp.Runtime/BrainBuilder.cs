@@ -91,6 +91,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   public interface ModelConstructor
   {
     int OutputFeatures { get; }
+    string CompactDescriptiveText { get; }
     TModel Build();
   }
 
@@ -104,6 +105,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     ModelConstructor Tail => Constructors.LastOrDefault() ?? Predecessor;
 
     public int OutputFeatures => Tail.OutputFeatures;
+
+    public string CompactDescriptiveText => string.Join("", Constructors.Select(C => C.CompactDescriptiveText));
 
     TModel ModelConstructor.Build()
     {
@@ -168,7 +171,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
         Constructors =
         [
           ..Constructors,
-          new ReLUConstructor(Host.Factory, Predecessor)
+          new ReLUConstructor(Host.Factory, Tail)
         ]
       };
     }
@@ -179,6 +182,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     ModelConstructor Predecessor,
     int OutputFeatures) : ModelConstructor
   {
+    public string CompactDescriptiveText => $"x{OutputFeatures}";
+
     TModel ModelConstructor.Build()
     {
       return BrainFactory.CreateLinear(Predecessor.OutputFeatures, OutputFeatures);
@@ -194,6 +199,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public int OutputFeatures => Paths.Select(P => P.OutputFeatures).Sum();
 
+    public string CompactDescriptiveText => string.Join("_", Paths.Select(P => P.CompactDescriptiveText));
+
     TModel ModelConstructor.Build()
     {
       return Host.Factory.CreateParallel(Paths.Select(P => P.Build()));
@@ -207,6 +214,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
   sealed record VirtualConstructor(int OutputFeatures) : ModelConstructor
   {
+    public string CompactDescriptiveText => "!";
+
     public TModel Build()
     {
       throw new NotSupportedException("This is a placeholder on top of which other models should be built.");
@@ -218,6 +227,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     ModelConstructor CoreConstructor,
     int OutputFeatures) : ModelConstructor
   {
+    public string CompactDescriptiveText => CoreConstructor.CompactDescriptiveText;
+
     public TModel Build()
     {
       return Factory.CreateSequence(
@@ -231,6 +242,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     ModelConstructor Predecessor,
     int OutputFeatures) : ModelConstructor
   {
+    public string CompactDescriptiveText => $"s{OutputFeatures}";
+
     public TModel Build()
     {
       return Host.Factory.CreateGRU(Predecessor.OutputFeatures, OutputFeatures, Host.Device);
@@ -241,6 +254,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     : ModelConstructor
   {
     public int OutputFeatures => Predecessor.OutputFeatures;
+
+    public string CompactDescriptiveText => "[t]";
 
     public TModel Build()
     {
@@ -253,9 +268,13 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   {
     public int OutputFeatures => Predecessor.OutputFeatures;
 
+    public string CompactDescriptiveText => "[r]";
+
     public TModel Build()
     {
       return BrainFactory.CreateReLU();
     }
   }
+
+  public string CompactDescriptiveText => Constructor.CompactDescriptiveText;
 }

@@ -285,24 +285,17 @@ public class BrainBuilding
   [TestMethod]
   public void AddTanh()
   {
-    var Actual = BrainBuilder.UsingSequence(S => S.AddTanh()).Build();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(2).AddTanh().AddLinear(1)).Build();
 
-    MockBuiltModel Expected = Factory.CreateTanh();
-    ShouldBeAdaptedContainerFor(Actual, InputFeatures, [Expected]);
+    ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2), Factory.CreateTanh(), Factory.CreateLinear(2, 1));
   }
 
   [TestMethod]
   public void AddReLU()
   {
-    var Actual = BrainBuilder.UsingSequence(S => S.AddReLU()).Build();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(2).AddReLU().AddLinear(1)).Build();
 
-    MockBuiltModel Expected = Factory.CreateReLU();
-    ShouldBeAdaptedContainerFor(Actual, InputFeatures, Expected);
-  }
-
-  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, params IEnumerable<MockBuiltModel> ExpectedModels)
-  {
-    ShouldBeAdaptedContainerFor(Actual, Features, Factory.GetDefaultOptimumDevice(), ExpectedModels);
+    ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2), Factory.CreateReLU(), Factory.CreateLinear(2, 1));
   }
 
   void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device,

@@ -24,18 +24,18 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public record TorchInferenceStateNode(torch.Tensor? State) : IDisposable
+public record TorchInferenceStateNode(params IEnumerable<torch.Tensor> State) : IDisposable
 {
   public TorchInferenceStateNode? Left { get; init; }
   public TorchInferenceStateNode? Right { get; init; }
 
-  public TorchInferenceStateNode UnSqueeze() => new(State?.unsqueeze(0))
+  public TorchInferenceStateNode UnSqueeze() => new(State.Select(S => S.unsqueeze(0)))
   {
     Left = Left?.UnSqueeze(),
     Right = Right?.UnSqueeze()
   };
 
-  public TorchInferenceStateNode Squeeze() => new(State?.squeeze(0))
+  public TorchInferenceStateNode Squeeze() => new(State.Select(S => S.squeeze(0)))
   {
     Left = Left?.Squeeze(),
     Right = Right?.Squeeze()
@@ -45,6 +45,7 @@ public record TorchInferenceStateNode(torch.Tensor? State) : IDisposable
   {
     Left?.Dispose();
     Right?.Dispose();
-    State?.Dispose();
+    foreach (var Tensor in State) 
+      Tensor.Dispose();
   }
 }

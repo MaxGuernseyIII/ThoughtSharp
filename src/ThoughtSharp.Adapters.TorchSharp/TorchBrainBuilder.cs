@@ -30,6 +30,13 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 // ReSharper disable once UnusedMember.Global
 public class TorchBrainBuilder(int InputLength, int OutputLength)
 {
+  public static BrainBuilder<TorchBrainForTrainingMode, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device>
+    ForTraining<TMind>()
+    where TMind : Mind
+  {
+    return new(TorchBrainFactory.ForTraining, TMind.InputLength, TMind.OutputLength);
+  }
+
   public enum ActivationType
   {
     LeakyReLU,
@@ -74,12 +81,6 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
     where TOutput : CognitiveData<TOutput>
   {
     return new(TInput.Length, TOutput.Length);
-  }
-
-  public static TorchBrainBuilder For<TMind>()
-    where TMind : Mind
-  {
-    return new(TMind.InputLength, TMind.OutputLength);
   }
 
   public TorchBrainBuilder ForClassification()

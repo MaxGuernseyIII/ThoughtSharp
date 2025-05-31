@@ -199,9 +199,10 @@ void DoAreaRaw()
 
 void DoFizzBuzz()
 {
-  var BrainBuilder = TorchBrainBuilder.For<FizzBuzzMind>().Blank().AddLogicPath(16, 4, 8);
-  BrainBuilder.Paths.Single().StateCoefficient = 16;
-  BrainBuilder.WithPath([]);
+  var BrainBuilder = TorchBrainBuilder.ForTraining<FizzBuzzMind>()
+    .UsingParallel(P => P
+      .AddLogicPath(16, 4, 8)
+      .AddPath(S => S));
 
   var Mind = new FizzBuzzMind(BrainBuilder.Build());
   var HybridReasoning = new FizzBuzzHybridReasoning(Mind);
@@ -379,7 +380,7 @@ void DoFizzBuzz()
 
 void MindfulComparisonCheck()
 {
-  var Brain = TorchBrainBuilder.For<ComparisonMind>().ForLogic().Build();
+  var Brain = TorchBrainBuilder.ForTraining<ComparisonMind>().ForLogic().Build();
   var Mind = new ComparisonMind(Brain);
   var Random = new Random();
   var Successes = 0;
@@ -414,11 +415,13 @@ void MindfulComparisonCheck()
         Failure = false;
       }
     }
-    catch
+    catch (Exception Ex)
     {
       Exceptions++;
       Failures++;
       Failure = true;
+
+      Console.Write(Ex);
     }
 
     FailureLog.Add(Failure);
@@ -445,14 +448,10 @@ void MindfulComparisonCheck()
 
 void DoChooseShape()
 {
-  var BrainBuilder = TorchBrainBuilder.For<ShapeClassifyingMind>().Blank().AddLogicPath(4, 2).AddMathPath(4, 2);
+  var BrainBuilder = TorchBrainBuilder.ForTraining<ShapeClassifyingMind>().UsingParallel(P => P.AddLogicPath(4, 2).AddMathPath(4, 2));
   var Brain = BrainBuilder.Build();
 
-  const string FileNameStub = "choose-shape";
-  var LogicPath = BrainBuilder.Paths[0];
-  var MathPath = BrainBuilder.Paths[1];
-  var FileName =
-    $"{FileNameStub}_l{string.Join("", LogicPath.Layers.Select(L => $"x{L.Features}"))}_m{string.Join("", MathPath.Layers.Select(L => $"x{L.Features}"))}.pt";
+  var FileName = $"choose-shape_{BrainBuilder.CompactDescriptiveText}.pt";
   try
   {
     Brain.Load(FileName);
@@ -734,11 +733,13 @@ void DoChooseShape()
           Failures++;
         }
       }
-      catch
+      catch (Exception Ex)
       {
         Failure = true;
         Failures++;
         Exceptions++;
+
+        Console.Write(Ex);
       }
 
       T.Feedback.SelectionShouldHaveBeen(Expected);

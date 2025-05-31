@@ -199,7 +199,7 @@ public class DoubleTensorToTorchInferencePartsAdapter : Module<TorchInferencePar
   {
     //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.State!.shape)}");
 
-    var Output = Underlying.forward(Input.Payload, Input.State.State ?? zeros(new long[] { 1, OutputFeatures, }, ScalarType.Float32, Device));
+    var Output = Underlying.forward(Input.Payload, Input.State.State.FirstOrDefault() ?? zeros(new long[] { 1, OutputFeatures, }, ScalarType.Float32, Device));
 
     return new()
     {

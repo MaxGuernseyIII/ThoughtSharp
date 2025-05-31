@@ -28,7 +28,7 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 
 public abstract class TorchBrain(
   Module<TorchInferenceParts, TorchInferenceParts> Model, Device Device,
-  Func<TorchInferenceStateNode> MakeEmptyState) : Brain, IDisposable
+  Func<TorchInferenceStateNode> MakeEmptyState) : Brain
 {
   protected Module<TorchInferenceParts, TorchInferenceParts> Model { get; } = Model;
   Device Device { get; } = Device;
@@ -43,7 +43,7 @@ public abstract class TorchBrain(
     Model.load(Path);
   }
 
-  public TorchInferenceStateNode EmptyState => MakeEmptyState();
+  public TorchInferenceStateNode EmptyState => new(null);
 
   public virtual void Dispose()
   {

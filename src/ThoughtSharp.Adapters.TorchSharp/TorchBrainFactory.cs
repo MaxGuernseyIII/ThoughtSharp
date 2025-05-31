@@ -25,59 +25,73 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-//static class TorchBrainFactory
-//{
-//  static TorchBrainForProductionMode MakeProductionTorchBrain(
-//    torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Module) => new TorchBrainForProductionMode(Module,
-//    delegate { return new TorchInferenceStateNode(null); });
-//}
+static class TorchBrainFactory
+{
+  public static TorchBrainFactory<TorchBrainForProductionMode> ForProduction => new((M,D) => new(M, D, null));
+  public static TorchBrainFactory<TorchBrainForTrainingMode> ForTraining => new((M,D) => new(M, D, null));
+}
 
-//class TorchBrainFactory<TTorchBrain> : BrainFactory<TTorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device>
-//  where TTorchBrain : TorchBrain
-//{
-//  readonly Func<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, TTorchBrain> MakeBrain;
+class TorchBrainFactory<TTorchBrain> : BrainFactory<TTorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device>
+  where TTorchBrain : TorchBrain
+{
+  readonly Func<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device, TTorchBrain> MakeBrain;
 
-//  public TorchBrainFactory(Func<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, TTorchBrain> MakeBrain)
-//  {
-//    this.MakeBrain = MakeBrain;
-//  }
+  internal TorchBrainFactory(Func<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device, TTorchBrain> MakeBrain)
+  {
+    this.MakeBrain = MakeBrain;
+  }
 
-//  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLinear(int InputFeatures, int OutputFeatures)
-//  {
-//    var Unwrapped = torch.nn.Linear(InputFeatures, OutputFeatures);
-//    torch.nn.init.kaiming_uniform_(Unwrapped.weight);
-//    torch.nn.init.zeros_(Unwrapped.bias);
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLinear(int InputFeatures, int OutputFeatures)
+  {
+    var Unwrapped = torch.nn.Linear(InputFeatures, OutputFeatures);
+    torch.nn.init.kaiming_uniform_(Unwrapped.weight);
+    torch.nn.init.zeros_(Unwrapped.bias);
 
-//    return new StatePassThroughModule(Unwrapped);
-//  }
+    return new StatePassThroughModule(Unwrapped);
+  }
 
-//  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateTanh()
-//  {
-//    return new StatePassThroughModule(torch.nn.Tanh());
-//  }
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateTanh()
+  {
+    return new StatePassThroughModule(torch.nn.Tanh());
+  }
 
-//  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateSequence(params IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children)
-//  {
-//    return Children.Skip(1).Aggregate(Children.First(), (Current1, Module) => new CompositeModule(Current1, Module));
-//  }
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateSequence(params IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children)
+  {
+    return Children.Skip(1).Aggregate(Children.First(), (Current1, Module) => new CompositeModule(Current1, Module));
+  }
 
-//  public TTorchBrain CreateBrain(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Model)
-//  {
-//    return MakeBrain(Model);
-//  }
+  public TTorchBrain CreateBrain(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Model, torch.Device Device)
+  {
+    return MakeBrain(Model, Device);
+  }
 
-//  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateParallel(params IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children)
-//  {
-//    return Children.Skip(1).Aggregate(Children.First(), (Previous, Current) => new ParallelModule(Previous, Current));
-//  }
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateParallel(params IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children)
+  {
+    return Children.Skip(1).Aggregate(Children.First(), (Previous, Current) => new ParallelModule(Previous, Current));
+  }
 
-//  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(int InputFeatures, int OutputFeatures)
-//  {
-//    return new AdditionalDimensionForSubModule(new DoubleTensorToTorchInferencePartsAdapter(torch.nn.GRU(InputFeatures, OutputFeatures)));
-//  }
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(int InputFeatures, int OutputFeatures, torch.Device Device)
+  {
+    return new AdditionalDimensionForSubModule(new DoubleTensorToTorchInferencePartsAdapter(torch.nn.GRU(InputFeatures, OutputFeatures), OutputFeatures, Device));
+  }
 
-//  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateReLU()
-//  {
-//    return new StatePassThroughModule(torch.nn.ReLU());
-//  }
-//}
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateReLU()
+  {
+    return new StatePassThroughModule(torch.nn.ReLU());
+  }
+
+  public torch.Device GetDefaultOptimumDevice()
+  {
+    return torch.cuda.is_available() ? GetCUDADevice() : GetCPUDevice();
+  }
+
+  public torch.Device GetCPUDevice()
+  {
+    return new(DeviceType.CPU);
+  }
+
+  public torch.Device GetCUDADevice()
+  {
+    return new(DeviceType.CUDA);
+  }
+}
