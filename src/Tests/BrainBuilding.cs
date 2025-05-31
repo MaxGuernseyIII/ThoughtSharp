@@ -65,7 +65,7 @@ public class BrainBuilding
   {
     var LayerCounts = AnyLayerFeatureCounts(AtLeast: 1);
 
-    var Actual = BrainBuilder.UsingSequence(S => S.AddLogicLayers(BrainBuilder, LayerCounts)).Build();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLogicLayers(null!, LayerCounts)).Build();
 
     Actual.Should().Be(BrainBuilder.UsingSequence(S => LayerCounts.Aggregate(S,
       (Previous, Features) => Previous.AddLinear(Features * BrainBuilder.InputFeatures).AddReLU())).Build());
@@ -225,8 +225,8 @@ public class BrainBuilding
           Factory.CreateLinear(Features, OutputFeatures))));
   }
 
-  static BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder ApplyFeatureLayerCountsToSequenceBuilder(
-    List<int> FeatureLayerCounts, BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder Sequence)
+  static BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceConstructor ApplyFeatureLayerCountsToSequenceBuilder(
+    List<int> FeatureLayerCounts, BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceConstructor Sequence)
   {
     return FeatureLayerCounts.Aggregate(Sequence,
       (Previous, Features) => Previous.AddLinear(Features));

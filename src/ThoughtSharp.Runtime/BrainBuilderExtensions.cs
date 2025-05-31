@@ -41,14 +41,14 @@ public static class BrainBuilderExtensions
     return Builder.UsingSequence(S => S.AddLogicLayers(Builder, LogicLayerCounts));
   }
 
-  public static BrainBuilder<BuiltBrain, BuiltModel>.SequenceBuilder AddLogicLayers<BuiltBrain, BuiltModel>(
-    this BrainBuilder<BuiltBrain, BuiltModel>.SequenceBuilder S, BrainBuilder<BuiltBrain, BuiltModel> Host, params IEnumerable<int> LayerCounts)
+  public static BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor AddLogicLayers<BuiltBrain, BuiltModel>(
+    this BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor S, BrainBuilder<BuiltBrain, BuiltModel> Host, params IEnumerable<int> LayerCounts)
   {
-    return LayerCounts.Aggregate(S, (Previous, Features) => Previous.AddLinear(Host.InputFeatures * Features).AddReLU()) ;
+    return LayerCounts.Aggregate(S, (Previous, Features) => Previous.AddLinear(S.Host.InputFeatures * Features).AddReLU()) ;
   }
 
-  public static BrainBuilder<BuiltBrain, BuiltModel>.ParallelBuilder AddLogicPath<BuiltBrain, BuiltModel>(
-    this BrainBuilder<BuiltBrain, BuiltModel>.ParallelBuilder P, BrainBuilder<BuiltBrain, BuiltModel> Host,
+  public static BrainBuilder<BuiltBrain, BuiltModel>.ParallelConstructor AddLogicPath<BuiltBrain, BuiltModel>(
+    this BrainBuilder<BuiltBrain, BuiltModel>.ParallelConstructor P, BrainBuilder<BuiltBrain, BuiltModel> Host,
     params IEnumerable<int> LayerCounts)
   {
     return P.AddPath(Path => Path.AddLogicLayers(Host, LayerCounts));

@@ -25,15 +25,25 @@ using System.Net.Http.Headers;
 
 namespace ThoughtSharp.Runtime;
 
-public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
-  BrainFactory<BuiltBrain, BuiltModel> Factory,
-  int InputFeatures,
-  int OutputFeatures)
+public sealed record BrainBuilder<BuiltBrain, BuiltModel>
 {
-  readonly BrainFactory<BuiltBrain, BuiltModel> Factory = Factory;
-  readonly ModelConstructor Input = new VirtualConstructor(InputFeatures);
+  readonly BrainFactory<BuiltBrain, BuiltModel> Factory;
+  readonly ModelConstructor Input;
 
-  ModelConstructor Constructor { get; init; } = new AdaptOutputConstructor(Factory, new SequenceBuilder(Factory, new VirtualConstructor(InputFeatures)), OutputFeatures);
+  public BrainBuilder(BrainFactory<BuiltBrain, BuiltModel> Factory,
+    int InputFeatures,
+    int OutputFeatures)
+  {
+    this.InputFeatures = InputFeatures;
+    this.OutputFeatures = OutputFeatures;
+    this.Factory = Factory;
+    Input = new VirtualConstructor(InputFeatures);
+    Constructor = new AdaptOutputConstructor(Factory, new SequenceConstructor(this, new VirtualConstructor(InputFeatures)), OutputFeatures);
+  }
+
+  ModelConstructor Constructor { get; init; }
+  public int InputFeatures { get; init; }
+  public int OutputFeatures { get; init; }
 
   public BuiltBrain Build()
   {
@@ -41,19 +51,19 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
   }
 
   public BrainBuilder<BuiltBrain, BuiltModel> UsingSequence(
-    Func<SequenceBuilder, SequenceBuilder> TransformSequenceBuilder)
+    Func<SequenceConstructor, SequenceConstructor> TransformSequenceBuilder)
   {
     return this with
     {
-      Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(Factory, Input)), OutputFeatures)
+      Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(this, Input)), OutputFeatures)
     };
   }
 
-  public BrainBuilder<BuiltBrain, BuiltModel> UsingParallel(Func<ParallelBuilder, ParallelBuilder> Transform)
+  public BrainBuilder<BuiltBrain, BuiltModel> UsingParallel(Func<ParallelConstructor, ParallelConstructor> Transform)
   {
     return this with
     {
-      Constructor = new AdaptOutputConstructor(Factory, Transform(new(Factory, Input)), OutputFeatures)
+      Constructor = new AdaptOutputConstructor(Factory, Transform(new(this, Input)), OutputFeatures)
     };
   }
 
@@ -63,7 +73,9 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
     BuiltModel Build();
   }
 
-  public sealed record SequenceBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor)
+  public sealed record SequenceConstructor(
+    BrainBuilder<BuiltBrain, BuiltModel> Host,
+    ModelConstructor Predecessor)
     : ModelConstructor
   {
     ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
@@ -74,68 +86,68 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
 
     BuiltModel ModelConstructor.Build()
     {
-      return BrainFactory.CreateSequence(
+      return Host.Factory.CreateSequence(
       [
         ..Constructors.Select(M => M.Build())
       ]);
     }
 
-    public SequenceBuilder AddLinear(int Features)
+    public SequenceConstructor AddLinear(int Features)
     {
       return this with
       {
         Constructors =
         [
           ..Constructors,
-          new LinearConstructor(BrainFactory, Tail, Features)
+          new LinearConstructor(Host.Factory, Tail, Features)
         ]
       };
     }
 
-    public SequenceBuilder AddParallel(Func<ParallelBuilder, ParallelBuilder> Transform)
+    public SequenceConstructor AddParallel(Func<ParallelConstructor, ParallelConstructor> Transform)
     {
       return this with
       {
         Constructors =
         [
           ..Constructors,
-          Transform(new(BrainFactory, Tail))
+          Transform(new(Host, Tail))
         ]
       };
     }
 
-    public SequenceBuilder AddGRU(int Features)
+    public SequenceConstructor AddGRU(int Features)
     {
       return this with
       {
         Constructors =
         [
           ..Constructors,
-          new GRUConstructor(BrainFactory, Tail, Features)
+          new GRUConstructor(Host.Factory, Tail, Features)
         ]
       };
     }
 
-    public SequenceBuilder AddTanh()
+    public SequenceConstructor AddTanh()
     {
       return this with
       {
         Constructors =
         [
           ..Constructors,
-          new TanhConstructor(BrainFactory, Predecessor)
+          new TanhConstructor(Host.Factory, Predecessor)
         ]
       };
     }
 
-    public SequenceBuilder AddReLU()
+    public SequenceConstructor AddReLU()
     {
       return this with
       {
         Constructors =
         [
           ..Constructors,
-          new ReLUConstructor(BrainFactory, Predecessor)
+          new ReLUConstructor(Host.Factory, Predecessor)
           ]
       };
     }
@@ -152,7 +164,9 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
     }
   }
 
-  public sealed record ParallelBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor)
+  public sealed record ParallelConstructor(
+    BrainBuilder<BuiltBrain, BuiltModel> Host,
+    ModelConstructor Predecessor)
     : ModelConstructor
   {
     ImmutableArray<ModelConstructor> Paths { get; init; } = [];
@@ -161,12 +175,12 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
 
     BuiltModel ModelConstructor.Build()
     {
-      return BrainFactory.CreateParallel(Paths.Select(P => P.Build()));
+      return Host.Factory.CreateParallel(Paths.Select(P => P.Build()));
     }
 
-    public ParallelBuilder AddPath(Func<SequenceBuilder, SequenceBuilder> Transform)
+    public ParallelConstructor AddPath(Func<SequenceConstructor, SequenceConstructor> Transform)
     {
-      return this with {Paths = [..Paths, Transform(new(BrainFactory, Predecessor))]};
+      return this with {Paths = [..Paths, Transform(new(Host, Predecessor))]};
     }
   }
 
@@ -220,5 +234,12 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
     {
       return BrainFactory.CreateReLU();
     }
+  }
+
+  public void Deconstruct(out BrainFactory<BuiltBrain, BuiltModel> Factory, out int InputFeatures, out int OutputFeatures)
+  {
+    Factory = this.Factory;
+    InputFeatures = this.InputFeatures;
+    OutputFeatures = this.OutputFeatures;
   }
 }
