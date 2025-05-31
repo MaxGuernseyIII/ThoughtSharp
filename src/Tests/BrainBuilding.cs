@@ -62,7 +62,17 @@ public class BrainBuilding
   }
 
   [TestMethod]
-  public void Standard()
+  public void AddLogicLayers()
+  {
+    var LayerCounts = AnyLayerFeatureCounts();
+
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLogicLayers(BrainBuilder, LayerCounts)).Build();
+
+    Actual.Should().Be(BrainBuilder.UsingSequence(S => LayerCounts.Aggregate(S, (Previous, Features) => Previous.AddLinear(Features * BrainBuilder.InputFeatures).AddReLU())).Build());
+  }
+
+  [TestMethod]
+  public void UsingStandard()
   {
     var Actual = BrainBuilder.UsingStandard().Build();
 
@@ -212,15 +222,11 @@ public class BrainBuilding
 
   (List<int> FeatureLayerCounts, List<MockBuiltModel> ExpectedLayers) GetExpectedLayers()
   {
-    var LayerCount = Any.Int(0, 4);
-    var LayerFeatureCounts = new List<int>();
-    foreach (var I in Enumerable.Range(0, LayerCount))
-      LayerFeatureCounts.Add(Any.Int(1, 1000));
-    var FeatureLayerCounts = LayerFeatureCounts;
+    var LayerFeatureCounts = AnyLayerFeatureCounts();
     var Result = new List<(int InputFeatures, int OutputFeatures)>();
     var PreviousFeatureCount = InputFeatures;
 
-    foreach (var LayerFeatureCount in FeatureLayerCounts)
+    foreach (var LayerFeatureCount in LayerFeatureCounts)
     {
       Result.Add((PreviousFeatureCount, LayerFeatureCount));
       PreviousFeatureCount = LayerFeatureCount;
@@ -228,7 +234,16 @@ public class BrainBuilding
 
     var ExpectedLayers = Result.Aggregate(new List<MockBuiltModel>(),
       (Previous, Mapping) => [.. Previous, Factory.CreateLinear(Mapping.InputFeatures, Mapping.OutputFeatures)]);
-    return (FeatureLayerCounts, ExpectedLayers);
+    return (FeatureLayerCounts: LayerFeatureCounts, ExpectedLayers);
+  }
+
+  static List<int> AnyLayerFeatureCounts()
+  {
+    var LayerCount = Any.Int(0, 4);
+    var LayerFeatureCounts = new List<int>();
+    foreach (var I in Enumerable.Range(0, LayerCount))
+      LayerFeatureCounts.Add(Any.Int(1, 1000));
+    return LayerFeatureCounts;
   }
 
   class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel>

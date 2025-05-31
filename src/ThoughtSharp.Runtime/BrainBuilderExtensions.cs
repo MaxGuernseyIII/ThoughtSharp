@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Linq;
+
 namespace ThoughtSharp.Runtime;
 
 public static class BrainBuilderExtensions
@@ -31,5 +33,11 @@ public static class BrainBuilderExtensions
       .AddTanh()
       .AddLinear((Builder.InputFeatures * 20 + Builder.OutputFeatures) / 2)
       .AddTanh());
+  }
+
+  public static BrainBuilder<BuiltBrain, BuiltModel>.SequenceBuilder AddLogicLayers<BuiltBrain, BuiltModel>(
+    this BrainBuilder<BuiltBrain, BuiltModel>.SequenceBuilder S, BrainBuilder<BuiltBrain, BuiltModel> Host, params IEnumerable<int> LayerCounts)
+  {
+    return LayerCounts.Aggregate(S, (Previous, Features) => Previous.AddLinear(Host.InputFeatures * Features).AddReLU()) ;
   }
 }
