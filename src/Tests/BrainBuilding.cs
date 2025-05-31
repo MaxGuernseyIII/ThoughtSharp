@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using FluentAssertions;
+using FluentAssertions.Primitives;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
 
@@ -170,12 +171,25 @@ public class BrainBuilding
 
     var Actual = BrainBuilder.UsingSequence(S => S.AddGRU(Features)).Build();
 
+    ShouldBeAdaptedContainerFor(Actual, Factory.CreateGRU(InputFeatures, Features), Features);
+  }
+
+  [TestMethod]
+  public void AddTanh()
+  {
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTanh()).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, Factory.CreateTanh(), InputFeatures);
+  }
+
+  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, MockBuiltModel Expected, int Features)
+  {
     Actual.Should().Be(
       Factory.CreateBrain(
         Factory.CreateSequence(
           Factory.CreateSequence(
-            Factory.CreateGRU(InputFeatures, Features)
-            ),
+            Expected
+          ),
           Factory.CreateLinear(Features, OutputFeatures))));
   }
 

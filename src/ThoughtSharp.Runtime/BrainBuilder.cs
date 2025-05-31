@@ -98,6 +98,8 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
   {
     ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
 
+    ModelConstructor Tail => Constructors.LastOrDefault() ?? Predecessor;
+
     public int OutputFeatures => Tail.OutputFeatures;
 
     BuiltModel ModelConstructor.Build()
@@ -144,7 +146,17 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
       };
     }
 
-    ModelConstructor Tail => Constructors.LastOrDefault() ?? Predecessor;
+    public SequenceBuilder AddTanh()
+    {
+      return this with
+      {
+        Constructors =
+        [
+          ..Constructors,
+          new TanhConstructor(BrainFactory, Predecessor)
+        ]
+      };
+    }
   }
 
   sealed record LinearConstructor(
@@ -205,6 +217,16 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
     public BuiltModel Build()
     {
       return BrainFactory.CreateGRU(Predecessor.OutputFeatures, OutputFeatures);
+    }
+  }
+
+  sealed record TanhConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
+  {
+    public int OutputFeatures => Predecessor.OutputFeatures;
+
+    public BuiltModel Build()
+    {
+      return BrainFactory.CreateTanh();
     }
   }
 }
