@@ -40,4 +40,11 @@ public static class BrainBuilderExtensions
   {
     return LayerCounts.Aggregate(S, (Previous, Features) => Previous.AddLinear(Host.InputFeatures * Features).AddReLU()) ;
   }
+
+  public static BrainBuilder<BuiltBrain, BuiltModel>.ParallelBuilder AddLogicPath<BuiltBrain, BuiltModel>(
+    this BrainBuilder<BuiltBrain, BuiltModel>.ParallelBuilder P, BrainBuilder<BuiltBrain, BuiltModel> Host,
+    params IEnumerable<int> LayerCounts)
+  {
+    return P.AddPath(Path => Path.AddLogicLayers(Host, LayerCounts));
+  }
 }

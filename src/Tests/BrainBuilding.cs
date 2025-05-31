@@ -21,8 +21,7 @@
 // SOFTWARE.
 
 using FluentAssertions;
-using FluentAssertions.Primitives;
-using Tests.Mocks;
+using FluentAssertions.Execution;
 using ThoughtSharp.Runtime;
 
 // ReSharper disable NotAccessedPositionalProperty.Local
@@ -72,8 +71,20 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void AddLogicPath()
+  {
+    var LayerCounts = AnyLayerFeatureCounts();
+
+    var Actual = BrainBuilder.UsingParallel(P => P.AddLogicPath(BrainBuilder, LayerCounts)).Build();
+
+    Actual.Should().Be(BrainBuilder.UsingParallel(P => P.AddPath(S => S.AddLogicLayers(BrainBuilder, LayerCounts))).Build());
+  }
+
+  [TestMethod]
   public void UsingStandard()
   {
+    using var Scope = new AssertionScope();
+
     var Actual = BrainBuilder.UsingStandard().Build();
 
     Actual.Should().Be(BrainBuilder.UsingSequence(
@@ -335,5 +346,15 @@ public class BrainBuilding
       Assert.Fail();
       return null!;
     }
+  }
+}
+
+[TestClass]
+public static class AssemblySetup
+{
+  [AssemblyInitialize]
+  public static void Initialize(TestContext _)
+  {
+    AssertionScope.Current.FormattingOptions.MaxDepth = 100;
   }
 }
