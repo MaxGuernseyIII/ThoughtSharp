@@ -95,18 +95,24 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     TModel Build();
   }
 
-  public sealed record SequenceConstructor(
-    BrainBuilder<TBrain, TModel, TDevice> Host,
-    ModelConstructor Predecessor)
-    : ModelConstructor
+  public sealed record SequenceConstructor : ModelConstructor
   {
+    public SequenceConstructor(BrainBuilder<TBrain, TModel, TDevice> Host,
+      ModelConstructor Predecessor)
+    {
+      this.Host = Host;
+      Predecessors = [Predecessor];
+    }
+
     ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
 
-    ModelConstructor Tail => Constructors.LastOrDefault() ?? Predecessor;
+    ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
 
     public int OutputFeatures => Tail.OutputFeatures;
 
     public string CompactDescriptiveText => string.Join("", Constructors.Select(C => C.CompactDescriptiveText));
+    public BrainBuilder<TBrain, TModel, TDevice> Host { get; init; }
+    readonly ImmutableArray<ModelConstructor> Predecessors;
 
     TModel ModelConstructor.Build()
     {
