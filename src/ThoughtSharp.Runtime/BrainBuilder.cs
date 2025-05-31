@@ -8,7 +8,7 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(BrainFactory<BuiltBrai
   }
 
   readonly BrainFactory<BuiltBrain, BuiltModel> Factory = Factory;
-  ModelConstructor Constructor { get; init; } = null!;
+  ModelConstructor Constructor { get; init; } = new DefaultConstructor(Factory, InputFeatures, OutputFeatures);
 
   public BuiltBrain Build()
   {
@@ -20,7 +20,16 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(BrainFactory<BuiltBrai
     return this with {Constructor = new StandardConstructor(Factory, InputFeatures, OutputFeatures) };
   }
 
-  class StandardConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures) : ModelConstructor
+  record DefaultConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures) : ModelConstructor
+  {
+    public BuiltBrain Build()
+    {
+      return 
+        BrainFactory.CreateBrain(BrainFactory.CreateLinear(InputFeatures, OutputFeatures));
+    }
+  }
+
+  record StandardConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures) : ModelConstructor
   {
     public BuiltBrain Build()
     {

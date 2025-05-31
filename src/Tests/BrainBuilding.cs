@@ -47,6 +47,18 @@ public class BrainBuilding
   [TestMethod]
   public void DefaultBuild()
   {
+    var Actual = BrainBuilder.Build();
+
+    var Expected =
+      Factory.CreateBrain(
+        Factory.CreateLinear(InputFeatures, OutputFeatures)
+      );
+    Actual.Should().Be(Expected);
+  }
+
+  [TestMethod]
+  public void StandardBuild()
+  {
     var Actual = BrainBuilder.UsingStandard().Build();
 
     var Expected =
