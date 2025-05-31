@@ -174,6 +174,14 @@ public class BrainBuilding
     ShouldBeAdaptedContainerFor(Actual, Factory.CreateTanh(), InputFeatures);
   }
 
+  [TestMethod]
+  public void AddReLU()
+  {
+    var Actual = BrainBuilder.UsingSequence(S => S.AddReLU()).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, Factory.CreateReLU(), InputFeatures);
+  }
+
   void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, MockBuiltModel Expected, int Features)
   {
     Actual.Should().Be(
@@ -254,6 +262,13 @@ public class BrainBuilding
     {
       return new MockGRU(InputFeatures, OutputFeatures);
     }
+
+    public MockBuiltModel CreateReLU()
+    {
+      return new MockReLU();
+    }
+
+    record MockReLU : MockBuiltModel;
 
     record MockGRU(int InputFeatures, int OutputFeatures) : MockBuiltModel;
 

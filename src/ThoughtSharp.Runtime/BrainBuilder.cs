@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
+using System.Net.Http.Headers;
 
 namespace ThoughtSharp.Runtime;
 
@@ -152,6 +153,18 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
         ]
       };
     }
+
+    public SequenceBuilder AddReLU()
+    {
+      return this with
+      {
+        Constructors =
+        [
+          ..Constructors,
+          new ReLUConstructor(BrainFactory, Predecessor)
+          ]
+      };
+    }
   }
 
   sealed record LinearConstructor(
@@ -224,16 +237,14 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
       return BrainFactory.CreateTanh();
     }
   }
-}
 
-public static class BrainBuilderExtensions
-{
-  public static BrainBuilder<BuiltBrain, BuiltModel> UsingStandard<BuiltBrain, BuiltModel>(this BrainBuilder<BuiltBrain, BuiltModel> Builder)
+  record ReLUConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
   {
-    return Builder.UsingSequence(S => S
-      .AddLinear(Builder.InputFeatures * 20)
-      .AddTanh()
-      .AddLinear((Builder.InputFeatures * 20 + Builder.OutputFeatures) / 2)
-      .AddTanh());
+    public int OutputFeatures => Predecessor.OutputFeatures;
+
+    public BuiltModel Build()
+    {
+      return BrainFactory.CreateReLU();
+    }
   }
 }

@@ -8,4 +8,5 @@ public interface BrainFactory<out TBrain, TModel>
   TBrain CreateBrain(TModel Model);
   TModel CreateParallel(params IEnumerable<TModel> Children);
   TModel CreateGRU(int InputFeatures, int OutputFeatures);
+  TModel CreateReLU();
 }
