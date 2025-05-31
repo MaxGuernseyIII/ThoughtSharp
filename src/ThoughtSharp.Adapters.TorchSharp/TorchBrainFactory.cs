@@ -25,17 +25,13 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-static class TorchBrainFactory
+class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device>
 {
-  public static TorchBrainFactory<TorchBrain> Instance => new((M,D) => new(M, D));
-}
+  public static TorchBrainFactory Instance => new((M, D) => new(M, D));
 
-class TorchBrainFactory<TTorchBrain> : BrainFactory<TTorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device>
-  where TTorchBrain : TorchBrain
-{
-  readonly Func<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device, TTorchBrain> MakeBrain;
+  readonly Func<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device, TorchBrain> MakeBrain;
 
-  internal TorchBrainFactory(Func<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device, TTorchBrain> MakeBrain)
+  internal TorchBrainFactory(Func<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device, TorchBrain> MakeBrain)
   {
     this.MakeBrain = MakeBrain;
   }
@@ -59,7 +55,7 @@ class TorchBrainFactory<TTorchBrain> : BrainFactory<TTorchBrain, torch.nn.Module
     return Children.Skip(1).Aggregate(Children.First(), (Current1, Module) => new CompositeModule(Current1, Module));
   }
 
-  public TTorchBrain CreateBrain(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Model, torch.Device Device)
+  public TorchBrain CreateBrain(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Model, torch.Device Device)
   {
     return MakeBrain(Model, Device);
   }
