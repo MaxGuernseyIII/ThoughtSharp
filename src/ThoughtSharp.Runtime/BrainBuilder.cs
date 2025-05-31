@@ -28,7 +28,6 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 {
   readonly BrainFactory<TBrain, TModel, TDevice> Factory;
   readonly ModelConstructor Input;
-  TDevice Device { get; init; }
 
   public BrainBuilder(BrainFactory<TBrain, TModel, TDevice> Factory,
     int InputFeatures,
@@ -38,9 +37,12 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     this.OutputFeatures = OutputFeatures;
     this.Factory = Factory;
     Input = new VirtualConstructor(InputFeatures);
-    Constructor = new AdaptOutputConstructor(Factory, new SequenceConstructor(this, new VirtualConstructor(InputFeatures)), OutputFeatures);
+    Constructor = new AdaptOutputConstructor(Factory,
+      new SequenceConstructor(this, new VirtualConstructor(InputFeatures)), OutputFeatures);
     Device = this.Factory.GetDefaultOptimumDevice();
   }
+
+  TDevice Device { get; init; }
 
   ModelConstructor Constructor { get; init; }
   public int InputFeatures { get; init; }
@@ -66,6 +68,24 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       Constructor = new AdaptOutputConstructor(Factory, Transform(new(this, Input)), OutputFeatures)
     };
+  }
+
+  public void Deconstruct(out BrainFactory<TBrain, TModel, TDevice> Factory, out int InputFeatures,
+    out int OutputFeatures)
+  {
+    Factory = this.Factory;
+    InputFeatures = this.InputFeatures;
+    OutputFeatures = this.OutputFeatures;
+  }
+
+  public BrainBuilder<TBrain, TModel, TDevice> UsingCPU()
+  {
+    return this with {Device = Factory.GetCPUDevice()};
+  }
+
+  public BrainBuilder<TBrain, TModel, TDevice> UsingCUDA()
+  {
+    return this with {Device = Factory.GetCUDADevice()};
   }
 
   public interface ModelConstructor
@@ -149,7 +169,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
         [
           ..Constructors,
           new ReLUConstructor(Host.Factory, Predecessor)
-          ]
+        ]
       };
     }
   }
@@ -217,7 +237,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     }
   }
 
-  sealed record TanhConstructor(BrainFactory<TBrain, TModel, TDevice> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
+  sealed record TanhConstructor(BrainFactory<TBrain, TModel, TDevice> BrainFactory, ModelConstructor Predecessor)
+    : ModelConstructor
   {
     public int OutputFeatures => Predecessor.OutputFeatures;
 
@@ -227,7 +248,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     }
   }
 
-  record ReLUConstructor(BrainFactory<TBrain, TModel, TDevice> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
+  record ReLUConstructor(BrainFactory<TBrain, TModel, TDevice> BrainFactory, ModelConstructor Predecessor)
+    : ModelConstructor
   {
     public int OutputFeatures => Predecessor.OutputFeatures;
 
@@ -235,17 +257,5 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return BrainFactory.CreateReLU();
     }
-  }
-
-  public void Deconstruct(out BrainFactory<TBrain, TModel, TDevice> Factory, out int InputFeatures, out int OutputFeatures)
-  {
-    Factory = this.Factory;
-    InputFeatures = this.InputFeatures;
-    OutputFeatures = this.OutputFeatures;
-  }
-
-  public BrainBuilder<TBrain, TModel, TDevice> UsingCPU()
-  {
-    return this with {Device = Factory.GetCPUDevice()};
   }
 }

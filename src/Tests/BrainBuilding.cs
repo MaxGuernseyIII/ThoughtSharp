@@ -69,6 +69,14 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void UsingCUDA()
+  {
+    var Actual = BrainBuilder.UsingCUDA().Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures, Factory.GetCUDADevice());
+  }
+
+  [TestMethod]
   public void AddLogicLayers()
   {
     var LayerCounts = AnyLayerFeatureCounts(AtLeast: 1);
@@ -392,6 +400,11 @@ public class BrainBuilding
     public MockDevice GetCPUDevice()
     {
       return new MockCPUDevice();
+    }
+
+    public MockDevice GetCUDADevice()
+    {
+      return new MockCUDADevice();
     }
 
     record MockReLU : MockBuiltModel;

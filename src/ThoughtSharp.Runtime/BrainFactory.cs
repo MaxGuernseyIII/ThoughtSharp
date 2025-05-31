@@ -18,4 +18,5 @@ public interface BrainFactory<
 
   TDevice GetDefaultOptimumDevice();
   TDevice GetCPUDevice();
+  TDevice GetCUDADevice();
 }
