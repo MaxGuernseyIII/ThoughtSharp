@@ -29,9 +29,8 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
   int InputFeatures,
   int OutputFeatures)
 {
-  readonly ModelConstructor Input = new VirtualConstructor(InputFeatures);
-
   readonly BrainFactory<BuiltBrain, BuiltModel> Factory = Factory;
+  readonly ModelConstructor Input = new VirtualConstructor(InputFeatures);
 
   ModelConstructor Constructor { get; init; } = new DefaultConstructor(Factory, InputFeatures, OutputFeatures);
 
@@ -48,12 +47,18 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
   public BrainBuilder<BuiltBrain, BuiltModel> UsingSequence(
     Func<SequenceBuilder, SequenceBuilder> TransformSequenceBuilder)
   {
-    return this with {Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(Factory, Input)), OutputFeatures) };
+    return this with
+    {
+      Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(Factory, Input)), OutputFeatures)
+    };
   }
 
   public BrainBuilder<BuiltBrain, BuiltModel> UsingParallel(Func<ParallelBuilder, ParallelBuilder> Transform)
   {
-    return this with {Constructor = new AdaptOutputConstructor(Factory, Transform(new(Factory, Input)), OutputFeatures)};
+    return this with
+    {
+      Constructor = new AdaptOutputConstructor(Factory, Transform(new(Factory, Input)), OutputFeatures)
+    };
   }
 
   public interface ModelConstructor
@@ -91,10 +96,9 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
   public sealed record SequenceBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor)
     : ModelConstructor
   {
-    IEnumerable<ModelConstructor> ModelConstructorsIncludingContext => new[] {Predecessor}.Concat(Constructors);
     ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
 
-    public int OutputFeatures => ModelConstructorsIncludingContext.Last().OutputFeatures;
+    public int OutputFeatures => Tail.OutputFeatures;
 
     BuiltModel ModelConstructor.Build()
     {
@@ -111,7 +115,7 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
         Constructors =
         [
           ..Constructors,
-          new LinearConstructor(BrainFactory, ModelConstructorsIncludingContext.Last(), Features)
+          new LinearConstructor(BrainFactory, Tail, Features)
         ]
       };
     }
@@ -123,13 +127,30 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
         Constructors =
         [
           ..Constructors,
-          Transform(new(BrainFactory, Predecessor))
+          Transform(new(BrainFactory, Tail))
         ]
       };
     }
+
+    public SequenceBuilder AddGRU(int Features)
+    {
+      return this with
+      {
+        Constructors =
+        [
+          ..Constructors,
+          new GRUConstructor(BrainFactory, Tail, Features)
+        ]
+      };
+    }
+
+    ModelConstructor Tail => Constructors.LastOrDefault() ?? Predecessor;
   }
 
-  sealed record LinearConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor, int OutputFeatures) : ModelConstructor
+  sealed record LinearConstructor(
+    BrainFactory<BuiltBrain, BuiltModel> BrainFactory,
+    ModelConstructor Predecessor,
+    int OutputFeatures) : ModelConstructor
   {
     BuiltModel ModelConstructor.Build()
     {
@@ -137,7 +158,8 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
     }
   }
 
-  public sealed record ParallelBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
+  public sealed record ParallelBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor)
+    : ModelConstructor
   {
     ImmutableArray<ModelConstructor> Paths { get; init; } = [];
 
@@ -172,6 +194,17 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
       return Factory.CreateSequence(
         CoreConstructor.Build(),
         Factory.CreateLinear(CoreConstructor.OutputFeatures, OutputFeatures));
+    }
+  }
+
+  sealed record GRUConstructor(
+    BrainFactory<BuiltBrain, BuiltModel> BrainFactory,
+    ModelConstructor Predecessor,
+    int OutputFeatures) : ModelConstructor
+  {
+    public BuiltModel Build()
+    {
+      return BrainFactory.CreateGRU(Predecessor.OutputFeatures, OutputFeatures);
     }
   }
 }

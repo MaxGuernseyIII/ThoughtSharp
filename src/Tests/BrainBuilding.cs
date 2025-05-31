@@ -46,7 +46,7 @@ public class BrainBuilding
   }
 
   [TestMethod]
-  public void DefaultBuild()
+  public void Default()
   {
     var Actual = BrainBuilder.Build();
 
@@ -58,7 +58,7 @@ public class BrainBuilding
   }
 
   [TestMethod]
-  public void StandardBuild()
+  public void Standard()
   {
     var Actual = BrainBuilder.UsingStandard().Build();
 
@@ -138,7 +138,7 @@ public class BrainBuilding
 
     var Actual = Builder.Build();
 
-    Actual.Should().Be(
+    Actual.Model.Should().Be(
       Factory.CreateBrain(
         Factory.CreateSequence(
           Factory.CreateSequence(
@@ -153,7 +153,23 @@ public class BrainBuilding
             Factory.CreateLinear(Layer2A1Features + Layer2B2Features, Layer3Features)
           ),
           Factory.CreateLinear(Layer3Features, OutputFeatures))
-      ));
+      ).Model);
+  }
+
+  [TestMethod]
+  public void AddGRU()
+  {
+    var Features = Any.Int(1, 1000);
+
+    var Actual = BrainBuilder.UsingSequence(S => S.AddGRU(Features)).Build();
+
+    Actual.Should().Be(
+      Factory.CreateBrain(
+        Factory.CreateSequence(
+          Factory.CreateSequence(
+            Factory.CreateGRU(InputFeatures, Features)
+            ),
+          Factory.CreateLinear(Features, OutputFeatures))));
   }
 
   static BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder ApplyFeatureLayerCountsToSequenceBuilder(
@@ -221,24 +237,29 @@ public class BrainBuilding
       return new MockParallel(Children);
     }
 
-    record MockLinear(int InputFeatures, int OutputFeatures) : MockBuiltModel;
-
-    record MockTanh : MockBuiltModel
+    public MockBuiltModel CreateGRU(int InputFeatures, int OutputFeatures)
     {
+      return new MockGRU(InputFeatures, OutputFeatures);
     }
 
-    record MockSequence(IReadOnlyList<MockBuiltModel> MockBuiltModels) : MockBuiltModel
+    record MockGRU(int InputFeatures, int OutputFeatures) : MockBuiltModel;
+
+    record MockLinear(int InputFeatures, int OutputFeatures) : MockBuiltModel;
+
+    record MockTanh : MockBuiltModel;
+
+    record MockSequence(IReadOnlyList<MockBuiltModel> Children) : MockBuiltModel
     {
       public virtual bool Equals(MockSequence? Other)
       {
         if (Other is null) return false;
         if (ReferenceEquals(this, Other)) return true;
-        return base.Equals(Other) && MockBuiltModels.SequenceEqual(Other.MockBuiltModels);
+        return base.Equals(Other) && Children.SequenceEqual(Other.Children);
       }
 
       public override int GetHashCode()
       {
-        return HashCode.Combine(base.GetHashCode(), MockBuiltModels);
+        return HashCode.Combine(base.GetHashCode(), Children);
       }
     }
 
@@ -269,7 +290,7 @@ public class BrainBuilding
     public Inference MakeInference(float[] Parameters)
     {
       Assert.Fail();
-      return new MockInference(0, Parameters);
+      return null!;
     }
   }
 }

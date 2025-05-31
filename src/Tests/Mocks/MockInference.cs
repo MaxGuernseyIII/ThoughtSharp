@@ -25,41 +25,6 @@ using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-class MockInference(int InputLength, float[] Floats) : MockInferenceSource(InputLength, Floats.Length), Inference
-{
-  public readonly List<(float Reward, IReadOnlyList<Range> Ranges)> Incentives = [];
-  IReadOnlyList<(int, LossRule)>? TrainedLossRules;
-
-  public ReadOnlySpan<float> Result => Floats;
-
-  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
-  {
-    TrainedLossRules = LossRules;
-  }
-
-  public void ShouldHaveBeenTrainedWith<T>(T Output)
-    where T : CognitiveData<T>
-  {
-    var Stream = new LossRuleStream();
-    var Writer = new LossRuleWriter(Stream, 0);
-    Output.WriteAsLossRules(Writer);
-
-    var Expected = Stream.PositionRulePairs;
-
-    ShouldHaveBeenTrainedWith(Expected);
-  }
-
-  public void ShouldHaveBeenTrainedWith(params IReadOnlyList<(int At, LossRule Rule)> Expected)
-  {
-    TrainedLossRules.Should().Equal(Expected);
-  }
-
-  public void ShouldNotHaveBeenTrained()
-  {
-    TrainedLossRules.Should().BeNull();
-  }
-}
-
 class MockInference<TInput, TOutput>(TOutput ResultOutput)
   : MockInferenceSource<TInput, TOutput>, Inference
   where TInput : CognitiveData<TInput>

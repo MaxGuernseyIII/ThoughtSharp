@@ -162,7 +162,7 @@ public partial class GeneratedMinds
   [TestMethod]
   public void TrainingOfSynchronousUseAsOutputThought()
   {
-    var Brain = new MockBrain(StatelessMind.Input.Length, StatelessMind.Output.Length);
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
     var Mind = new StatelessMind(Brain);
 
     var T = Mind.SynchronousUseSomeInterface(new MockSynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100));
