@@ -56,10 +56,7 @@ abstract class TorchBrainFactory<TTorchBrain> : BrainFactory<TTorchBrain, torch.
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(int InputFeatures, int OutputFeatures)
   {
-    return new AdditionalDimensionForSubModule(new DoubleTensorToTorchInferencePartsAdapter(torch.nn.GRU(
-      InputFeatures,
-      OutputFeatures)
-    ));
+    return new AdditionalDimensionForSubModule(new DoubleTensorToTorchInferencePartsAdapter(torch.nn.GRU(InputFeatures, OutputFeatures)));
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateReLU()
