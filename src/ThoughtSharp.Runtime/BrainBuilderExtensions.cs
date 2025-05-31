@@ -34,9 +34,9 @@ public static class BrainBuilderExtensions
   }
 
   public static BrainBuilder<BuiltBrain, BuiltModel> ForLogic<BuiltBrain, BuiltModel>(
-    this BrainBuilder<BuiltBrain, BuiltModel> Builder, params IEnumerable<int> LogicLayerCounts)
+    this BrainBuilder<BuiltBrain, BuiltModel> Builder, params IEnumerable<int> LayerCounts)
   {
-    return Builder.UsingSequence(S => S.AddLogicLayers(LogicLayerCounts));
+    return Builder.UsingSequence(S => S.AddLogicLayers(LayerCounts));
   }
 
   public static BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor AddLogicLayers<BuiltBrain, BuiltModel>(
@@ -53,5 +53,27 @@ public static class BrainBuilderExtensions
     params IEnumerable<int> LayerCounts)
   {
     return P.AddPath(Path => Path.AddLogicLayers(LayerCounts));
+  }
+
+  public static BrainBuilder<BuiltBrain, BuiltModel> ForMath<BuiltBrain, BuiltModel>(
+    this BrainBuilder<BuiltBrain, BuiltModel> Builder, params IEnumerable<int> LayerCounts)
+  {
+    return Builder.UsingSequence(S => S.AddMathLayers(LayerCounts));
+  }
+
+  public static BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor AddMathLayers<BuiltBrain, BuiltModel>(
+    this BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor S, params IEnumerable<int> LayerCounts)
+  {
+    if (!LayerCounts.Any())
+      LayerCounts = [4, 2];
+
+    return LayerCounts.Aggregate(S, (Previous, Features) => Previous.AddLinear(S.Host.InputFeatures * Features).AddTanh());
+  }
+
+  public static BrainBuilder<BuiltBrain, BuiltModel>.ParallelConstructor AddMathPath<BuiltBrain, BuiltModel>(
+    this BrainBuilder<BuiltBrain, BuiltModel>.ParallelConstructor P,
+    params IEnumerable<int> LayerCounts)
+  {
+    return P.AddPath(S => S.AddMathLayers(LayerCounts));
   }
 }

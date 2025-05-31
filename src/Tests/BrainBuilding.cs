@@ -101,6 +101,46 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void AddMathLayers()
+  {
+    var LayerCounts = AnyLayerFeatureCounts(AtLeast: 1);
+
+    var Actual = BrainBuilder.UsingSequence(S => S.AddMathLayers(LayerCounts)).Build();
+
+    Actual.Should().Be(BrainBuilder.UsingSequence(S => LayerCounts.Aggregate(S,
+      (Previous, Features) => Previous.AddLinear(Features * BrainBuilder.InputFeatures).AddTanh())).Build());
+  }
+
+  [TestMethod]
+  public void AddDefaultMathLayers()
+  {
+    var Actual = BrainBuilder.UsingSequence(S => S.AddMathLayers()).Build();
+
+    Actual.Should().Be(BrainBuilder.UsingSequence(S => S.AddMathLayers(4, 2)).Build());
+  }
+
+  [TestMethod]
+  public void AddMathPath()
+  {
+    var LayerCounts = AnyLayerFeatureCounts(AtLeast: 1);
+
+    var Actual = BrainBuilder.UsingParallel(P => P.AddMathPath(LayerCounts)).Build();
+
+    Actual.Should().Be(BrainBuilder.UsingParallel(P => P.AddPath(S => S.AddMathLayers(LayerCounts)))
+      .Build());
+  }
+
+  [TestMethod]
+  public void ForMath()
+  {
+    var LayerCounts = AnyLayerFeatureCounts(AtLeast: 1);
+
+    var Actual = BrainBuilder.ForMath(LayerCounts).Build();
+
+    Actual.Should().Be(BrainBuilder.UsingSequence(S => S.AddMathLayers(LayerCounts)).Build());
+  }
+
+  [TestMethod]
   public void UsingStandard()
   {
     using var Scope = new AssertionScope();

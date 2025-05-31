@@ -135,7 +135,7 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>
         Constructors =
         [
           ..Constructors,
-          new TanhConstructor(Host.Factory, Predecessor)
+          new TanhConstructor(Host.Factory, Tail)
         ]
       };
     }
