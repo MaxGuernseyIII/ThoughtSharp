@@ -129,12 +129,20 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
         SpecialType.System_Char
       } => GetIntLikeNumberCodec(EncodedType, Member),
       INamedTypeSymbol {TypeKind: TypeKind.Enum} Enum =>
-        $"new BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>()",
+        GetEnumCodecExpression(Enum),
       {SpecialType: SpecialType.System_String} => GetStringCodec(Member),
       var T when T.GetAttributes().Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.DataAttributeName)
         => "new SubDataCodec<" + T.GetFullPath() + ">()",
       _ => "new UnknownCodec()"
     };
+  }
+
+  static string GetEnumCodecExpression(INamedTypeSymbol Enum)
+  {
+    if (Enum.HasAttribute("FlagsAttribute"))
+      return $"new BitwiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>()";
+    
+    return $"new ValueWiseOneHotEnumCodec<{Enum.Name}, {Enum.EnumUnderlyingType?.Name ?? "int"}>()";
   }
 
   static string GetFloatCodecExpression(IValueSymbol Member)

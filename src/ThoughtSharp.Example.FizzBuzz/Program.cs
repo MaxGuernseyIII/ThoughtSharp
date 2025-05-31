@@ -21,10 +21,14 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Numerics;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Example.FizzBuzz;
 using ThoughtSharp.Runtime;
+using static Disposition;
+
+Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal;
 
 Console.WriteLine("Training...");
 const int TotalTrainingPasses = 1000000;
@@ -441,10 +445,14 @@ void MindfulComparisonCheck()
 
 void DoChooseShape()
 {
-  const string FileName = "choose-shape.pt";
-  var BrainBuilder = TorchBrainBuilder.For<ShapeClassifyingMind>().Blank().AddLogicPath().AddMathPath();
+  var BrainBuilder = TorchBrainBuilder.For<ShapeClassifyingMind>().Blank().AddLogicPath(4, 2).AddMathPath(4, 2);
   var Brain = BrainBuilder.Build();
 
+  const string FileNameStub = "choose-shape";
+  var LogicPath = BrainBuilder.Paths[0];
+  var MathPath = BrainBuilder.Paths[1];
+  var FileName =
+    $"{FileNameStub}_l{string.Join("", LogicPath.Layers.Select(L => $"x{L.Features}"))}_m{string.Join("", MathPath.Layers.Select(L => $"x{L.Features}"))}.pt";
   try
   {
     Brain.Load(FileName);
@@ -455,20 +463,14 @@ void DoChooseShape()
   }
 
   Console.CancelKeyPress +=
-    delegate
-    {
-      Save();
-    };
+    delegate { Save(); };
 
   AppDomain.CurrentDomain.ProcessExit +=
-    delegate
-    {
-      Save();
-    };
+    delegate { Save(); };
 
   void Save()
   {
-    Console.WriteLine("Saving...");
+    Console.WriteLine("Saving to: " + Path.GetFullPath(FileName));
     Brain.Save(FileName);
   }
 
@@ -480,118 +482,160 @@ void DoChooseShape()
   {
     [ShapeType.Line] = (new(new LineHandler(), new()
     {
-      HandlesConcaveDepressions = false,
-      HandlesRadialFlatFaces = false,
-      HandlesRounding = false,
-      HandlesVertices = false,
-      RequiresVertices = false,
-      HandlesFlatSurfaces = true,
-      RequiresClosed = false,
-      RequiresOpen = true,
-      RequiresRightAngles = false,
-      RequiresStraightLines = true,
-      RequiresTwoEndPoints = true,
-
+      Features =
+      {
+        Open = Required,
+        Closed = Prohibited,
+        ConcaveDepressions = Prohibited,
+        ConvexProtrusions = Prohibited,
+        FlatSurfaces = Prohibited,
+        RadialFlatSurfaces = Prohibited,
+        Corners = Prohibited,
+        RoundedSegments = Prohibited,
+        StraightSegments = Required
+      },
+      Constraints =
+      {
+        MaximumVertices = 2,
+        MinimumVertices = 2
+      }
     }), Geometry.MakeLine),
     [ShapeType.Rectangle] = (new(new RectangleHandler(), new()
     {
-      HandlesConcaveDepressions = false,
-      HandlesRadialFlatFaces = true,
-      HandlesRounding = false,
-      HandlesVertices = true,
-      HandlesFlatSurfaces = true,
-      RequiresVertices = true,
-      RequiresStraightLines = true,
-      RequiresClosed = true,
-      RequiresRightAngles = true,
-      RequiresOpen = false,
-      RequiresTwoEndPoints = false,
-
+      Features =
+      {
+        Open = Prohibited,
+        Closed = Required,
+        ConcaveDepressions = Prohibited,
+        ConvexProtrusions = Prohibited,
+        FlatSurfaces = Required,
+        RadialFlatSurfaces = Required,
+        Corners = Required,
+        RoundedSegments = Prohibited,
+        StraightSegments = Required
+      },
+      Constraints =
+      {
+        MaximumVertices = 4,
+        MinimumVertices = 4,
+        MinimumSymmetricalAxes = 2,
+        MinimumVertexAngle = (MathF.PI / 2) *.95f,
+        MaximumVertexAngle = (MathF.PI / 2) *1.05f,
+      }
     }), Geometry.MakeBox),
-    [ShapeType.Irregular] = (new(new IrregularHandler(), new()
-    {
-      HandlesConcaveDepressions = true,
-      HandlesRadialFlatFaces = true,
-      HandlesRounding = true,
-      HandlesVertices = true,
-      HandlesFlatSurfaces = true,
-      RequiresClosed = true,
-      RequiresRightAngles = false,
-      RequiresStraightLines = false,
-      RequiresVertices = true,
-      RequiresOpen = false,
-      RequiresTwoEndPoints = false,
-    }), Geometry.MakeIrregular),
+    [ShapeType.Irregular] = (new(new IrregularHandler(),
+      new()
+      {
+        Features =
+        {
+          Open = Prohibited,
+          Closed = Required,
+          ConcaveDepressions = Supported,
+          ConvexProtrusions = Supported,
+          FlatSurfaces = Supported,
+          RadialFlatSurfaces = Supported,
+          Corners = Supported,
+          RoundedSegments = Prohibited,
+          StraightSegments = Supported
+        }
+      }
+      ), Geometry.MakeIrregular),
     [ShapeType.Circle] = (new(new CircleHandler(),
       new()
       {
-        HandlesConcaveDepressions = false,
-        HandlesRounding = true,
-        HandlesVertices = false,
-        HandlesRadialFlatFaces = false,
-        HandlesFlatSurfaces = false,
-        RequiresClosed = true,
-        RequiresRightAngles = false,
-        RequiresStraightLines = false,
-        RequiresVertices = false,
-        RequiresOpen = false,
-        RequiresTwoEndPoints = false,
+        Features =
+        {
+          Open = Prohibited,
+          Closed = Required,
+          ConcaveDepressions = Prohibited,
+          ConvexProtrusions = Prohibited,
+          FlatSurfaces = Prohibited,
+          RadialFlatSurfaces = Prohibited,
+          Corners = Prohibited,
+          RoundedSegments = Required,
+          StraightSegments = Prohibited
+        },
+        Constraints =
+        {
+          MaximumVertices = 0,
+          MinimumSymmetricalAxes = 8,
+        }
       }), Geometry.MakeCircle),
     [ShapeType.Star] = (new(new StarHandler(),
       new()
       {
-        HandlesConcaveDepressions = true,
-        HandlesRounding = false,
-        HandlesRadialFlatFaces = false,
-        HandlesVertices = true,
-        HandlesFlatSurfaces = true,
-        RequiresStraightLines = true,
-        RequiresRightAngles = true,
-        RequiresClosed = true,
-        RequiresVertices = true,
-        RequiresOpen = false,
-        RequiresTwoEndPoints = false,
+        Features =
+        {
+          Open = Prohibited,
+          Closed = Required,
+          ConcaveDepressions = Required,
+          ConvexProtrusions = Required,
+          FlatSurfaces = Required,
+          RadialFlatSurfaces = Prohibited,
+          Corners = Required,
+          RoundedSegments = Prohibited,
+          StraightSegments = Required
+        },
+        Constraints =
+        {
+          MinimumSymmetricalAxes = 3,
+        }
       }), Geometry.MakeStar),
     [ShapeType.Arc] = (new(new ArcHandler(),
       new()
       {
-        HandlesConcaveDepressions = true,
-        HandlesRadialFlatFaces = false,
-        HandlesRounding = true,
-        HandlesVertices = false,
-        HandlesFlatSurfaces = false,
-        RequiresClosed = false,
-        RequiresOpen = true,
-        RequiresRightAngles = false,
-        RequiresStraightLines = false,
-        RequiresVertices = false,
-        RequiresTwoEndPoints = true,
+        Features =
+        {
+          Open = Required,
+          Closed = Prohibited,
+          ConcaveDepressions = Prohibited,
+          ConvexProtrusions = Prohibited,
+          FlatSurfaces = Prohibited,
+          RadialFlatSurfaces = Prohibited,
+          Corners = Prohibited,
+          RoundedSegments = Required,
+          StraightSegments = Prohibited
+        },
+        Constraints =
+        {
+          MinimumSymmetricalAxes = 1,
+          MaximumVertices = 2,
+          MinimumVertices = 2
+        }
       }), Geometry.MakeArc),
     [ShapeType.Plus] = (new(new PlusHandler(),
       new()
       {
-        HandlesConcaveDepressions = true,
-        HandlesRadialFlatFaces = true,
-        HandlesRounding = false,
-        HandlesVertices = true,
-        HandlesFlatSurfaces = true,
-        RequiresVertices = true,
-        RequiresStraightLines = true,
-        RequiresRightAngles = true,
-        RequiresClosed = true,
-        RequiresOpen = false,
-        RequiresTwoEndPoints = false,
+        Features =
+        {
+          Open = Prohibited,
+          Closed = Required,
+          ConcaveDepressions = Required,
+          ConvexProtrusions = Required,
+          FlatSurfaces = Required,
+          RadialFlatSurfaces = Required,
+          Corners = Required,
+          RoundedSegments = Prohibited,
+          StraightSegments = Required
+        },
+        Constraints =
+        {
+          MinimumSymmetricalAxes = 2,
+          MinimumVertexAngle = (MathF.PI / 2) *.95f,
+          MaximumVertexAngle = (MathF.PI / 2) *1.05f,
+        }
       }), Geometry.MakePlus)
   };
 
   ImmutableArray<ImmutableArray<ShapeType>> ShapeSamplesPlan =
   [
+    [ShapeType.Line],
     [ShapeType.Line, ShapeType.Rectangle],
     [ShapeType.Rectangle, ShapeType.Circle],
     [ShapeType.Star, ShapeType.Plus],
     [ShapeType.Arc, ShapeType.Circle],
     [..OptionsMap.Keys.Except([ShapeType.Irregular])],
-    [..OptionsMap.Keys],
+    [..OptionsMap.Keys]
   ];
 
   ImmutableArray<(ImmutableArray<ShapeType> ShapeSamples, ImmutableArray<ShapeType> AvailableOptions, int
@@ -604,9 +648,10 @@ void DoChooseShape()
     {
       var Surplus = OptionsMap.Keys.Except(ShapeSamples);
 
-      foreach (var I in Enumerable.Range(0, Surplus.Count() +1))
+      foreach (var I in Enumerable.Range(0, Surplus.Count() + 1))
       {
-        Result.Add((ShapeSamples, [..ShapeSamples.Concat(Surplus.Take(I))], 98*5, 100*5));
+        const int SampleScale = 1;
+        Result.Add((ShapeSamples, [..ShapeSamples.Concat(Surplus.Take(I))], 98 * SampleScale, 100 * SampleScale));
       }
     }
 
@@ -626,6 +671,7 @@ void DoChooseShape()
   var Exceptions = 0;
 
   var FailureDictionary = new Dictionary<ShapeType, int>();
+
   void RecordFailure(ShapeType ForType)
   {
     if (!FailureDictionary.TryGetValue(ForType, out var Value))
@@ -638,17 +684,21 @@ void DoChooseShape()
 
 
   var RecentSample = new Queue<bool>();
+
   int RecentSampleSuccessRate()
   {
     return RecentSample.Count(V => V);
   }
 
-  foreach (var ((CourseShapeTypes, CourseOptions, CourseConfidenceThreshold, CourseConfidenceSampleCount), Level) in Curriculum.Select((Course, I) => (Course, I + 1)))
+  foreach (var ((CourseShapeTypes, CourseOptions, CourseConfidenceThreshold, CourseConfidenceSampleCount), Level) in
+           Curriculum.Select((Course, I) => (Course, I + 1)))
   {
     var RawOptions =
-      new List<CognitiveOption<ShapeHandler, ShapeHandlerDescriptor>>(OptionsMap.Where(Pair => CourseOptions.Contains(Pair.Key)).Select(Pair => Pair.Value.Option))
+      new List<CognitiveOption<ShapeHandler, ShapeHandlerDescriptor>>(OptionsMap
+          .Where(Pair => CourseOptions.Contains(Pair.Key)).Select(Pair => Pair.Value.Option))
         .ToImmutableArray();
-    Console.WriteLine($"Starting level {Level}: shapes {string.Join(", ", CourseShapeTypes)} with options {string.Join(", ", CourseOptions)}");
+    Console.WriteLine(
+      $"Starting level {Level}: shapes {string.Join(", ", CourseShapeTypes)} with options {string.Join(", ", CourseOptions)}");
 
     void RecordSuccess(bool IsSuccess)
     {
@@ -742,8 +792,6 @@ void DoChooseShape()
 
     return Result;
   }
-
-  
 }
 
 enum ShapeType
@@ -832,7 +880,7 @@ partial class ShapeHandlerCategory;
 [CognitiveData]
 partial class Shape
 {
-  public const int PointCount = 50;
+  public const byte PointCount = 50;
   [CognitiveDataCount(PointCount)] public Point[] Points { get; set; } = new Point[PointCount];
 
   public Shape Normalize()
@@ -874,17 +922,48 @@ partial class Shape
 [CognitiveData]
 partial class ShapeHandlerDescriptor
 {
-  public bool HandlesRounding { get; set; }
-  public bool HandlesConcaveDepressions { get; set; }
-  public bool HandlesRadialFlatFaces { get; set; }
-  public bool HandlesVertices { get; set; }
-  public bool RequiresVertices { get; set; }
-  public bool RequiresRightAngles { get; set; }
-  public bool RequiresClosed { get; set; }
-  public bool RequiresStraightLines { get; set; }
-  public bool RequiresTwoEndPoints { get; set; }
-  public bool RequiresOpen { get; set; }
-  public bool HandlesFlatSurfaces { get; set; }
+  public ShapeFeatures Features { get; set; } = new();
+  public ShapeLimitations Constraints { get; set; } = new();
+}
+
+enum Disposition
+{
+  Prohibited,
+  Supported,
+  Required
+}
+
+[CognitiveData]
+partial class ShapeFeatures
+{
+  public Disposition RoundedSegments { get; set; }
+  public Disposition StraightSegments { get; set; }
+  public Disposition ConcaveDepressions { get; set; }
+  public Disposition ConvexProtrusions { get; set; }
+  public Disposition FlatSurfaces { get; set; }
+  public Disposition RadialFlatSurfaces { get; set; }
+  public Disposition Corners { get; set; }
+  public Disposition Open { get; set; }
+  public Disposition Closed { get; set; }
+}
+
+[CognitiveData]
+partial class ShapeLimitations
+{
+  [CognitiveDataBounds<byte>(0, Shape.PointCount)]
+  public byte MinimumVertices { get; set; } = 0;
+
+  [CognitiveDataBounds<byte>(0, Shape.PointCount)]
+  public byte MaximumVertices { get; set; } = Shape.PointCount;
+
+  [CognitiveDataBounds<byte>(0, 8)]
+  public byte MinimumSymmetricalAxes { get; set; } = 0;
+
+  [CognitiveDataBounds<float>(0, MathF.PI * 2)]
+  public float MinimumVertexAngle { get; set; } = 0;
+
+  [CognitiveDataBounds<float>(0, MathF.PI * 2)]
+  public float MaximumVertexAngle { get; set; } = MathF.PI;
 }
 
 [CognitiveData]
@@ -980,37 +1059,39 @@ static class Geometry
 
   public static List<Point> MakeIrregular()
   {
-    const int MinPoints = 10;
-    const int MaxPoints = Shape.PointCount;
-    var Count = Random.Next(MinPoints, MaxPoints + 1);
+    const int MinPoints = 3;
+    const int MaxPoints = 8;
+    const float NoiseStrength = 0.3f;
+    var VerticesCount = Random.Next(MinPoints, MaxPoints + 1);
 
     var BaseRadius = 0.5f;
-    var FlareStrength = 0.3f;
-    var NoiseStrength = 0.05f;
 
     var Center = new Vector2(0, 0);
     var Points = new List<Point>();
-    var FlareIndexes = Enumerable.Range(0, Count).OrderBy(_ => Random.Next()).Take(Count / 3).ToHashSet();
 
-    for (var i = 0; i < Count; i++)
+    var VertexBaseStep = MathF.PI * 2 / VerticesCount;
+
+    Vector2 GetVertex(int Index)
     {
-      var Angle = i / (float) Count * MathF.PI * 2;
+      var Angle = Index * VertexBaseStep * (.9f + Random.NextSingle() * .2f);
       var Direction = new Vector2(MathF.Cos(Angle), MathF.Sin(Angle));
-
-      // Flare some points out to break symmetry
-      var Flare = FlareIndexes.Contains(i) ? FlareStrength * (0.5f + Random.NextSingle()) : 0;
-      var Noise = (Random.NextSingle() - 0.5f) * 2 * NoiseStrength;
-
-      var Radius = BaseRadius + Flare + Noise;
-      var PointVec = Center + Direction * Radius;
-
-      Points.Add(new()
-      {
-        IsHot = true,
-        X = PointVec.X,
-        Y = PointVec.Y
-      });
+      var Noise = (Random.NextSingle() - 0.5f) * NoiseStrength;
+      var Radius = BaseRadius + Noise;
+      return Center + Direction * Radius;
     }
+
+    var FirstVertex = GetVertex(0);
+    var LastVertex = FirstVertex;
+
+    for (var I = 1; I < VerticesCount; I++)
+    {
+      var ThisVertex = GetVertex(I);
+
+      Points.AddRange(MakeLine(LastVertex, ThisVertex, Random.Next(4,5)+ 1, true));
+      LastVertex = ThisVertex;
+    }
+
+    Points.AddRange(MakeLine(LastVertex, FirstVertex, Random.Next(4,5) + 1, true));
 
     return Points;
   }
@@ -1082,7 +1163,9 @@ static class Geometry
 
   public static List<Point> MakeArc()
   {
-    return MakeArc(RandomRadians, RandomRadians, 5 + Random.Next(10), false);
+    var Length = RandomRadians * .75f;
+    var StartAngleRadians = RandomRadians;
+    return MakeArc(StartAngleRadians, StartAngleRadians + Length, 5 + Random.Next(10), false);
   }
 
   public static List<Point> MakeCircle()
