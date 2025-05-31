@@ -90,28 +90,30 @@ public class BrainBuilding
         ));
   }
 
-  //[TestMethod]
-  //public void UsingPath()
-  //{
-  //  var Builder = BrainBuilder.UsingParallel(Parallel => Parallel
-  //    .AddPath(Sequence => Sequence.AddLinear(5))
-  //    .AddPath(Sequence => Sequence.AddLinear(10).AddLinear(4))
-  //  );
+  [TestMethod]
+  public void UsingPath()
+  {
+    var Builder = BrainBuilder.UsingParallel(Parallel => Parallel
+      .AddPath(Sequence => Sequence.AddLinear(5))
+      .AddPath(Sequence => Sequence.AddLinear(10).AddLinear(4))
+    );
 
-  //  var Actual = Builder.Build();
+    var Actual = Builder.Build();
 
-  //  Actual.Should().Be(
-  //    Factory.CreateBrain(
-  //      Factory.CreateSequence()
-  //      Factory.CreateParallel(
-  //        Factory.CreateSequence(
-  //          Factory.CreateLinear(InputFeatures, 5)),
-  //        Factory.CreateSequence(
-  //          Factory.CreateLinear(InputFeatures, 10),
-  //          Factory.CreateLinear(10, 4)
-  //          ))
-  //    ));
-  //}
+    Actual.Should().Be(
+      Factory.CreateBrain(
+        Factory.CreateSequence(
+          Factory.CreateParallel(
+            Factory.CreateSequence(
+              Factory.CreateLinear(InputFeatures, 5)),
+            Factory.CreateSequence(
+              Factory.CreateLinear(InputFeatures, 10),
+              Factory.CreateLinear(10, 4)
+            )),
+          Factory.CreateLinear(9, OutputFeatures)
+          )
+      ));
+  }
 
   static BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder ApplyFeatureLayerCountsToSequenceBuilder(List<int> FeatureLayerCounts, BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder Sequence)
   {
@@ -194,7 +196,22 @@ public class BrainBuilding
 
     public MockBuiltModel CreateParallel(params IEnumerable<MockBuiltModel> Children)
     {
-      throw new NotImplementedException();
+      return new MockParallel(Children);
+    }
+
+    record MockParallel(IEnumerable<MockBuiltModel> Children) : MockBuiltModel
+    {
+      public virtual bool Equals(MockParallel? Other)
+      {
+        if (Other is null) return false;
+        if (ReferenceEquals(this, Other)) return true;
+        return base.Equals(Other) && Children.SequenceEqual(Other.Children);
+      }
+
+      public override int GetHashCode()
+      {
+        return HashCode.Combine(base.GetHashCode(), Children);
+      }
     }
   }
 

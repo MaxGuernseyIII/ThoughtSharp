@@ -53,7 +53,7 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
 
   public BrainBuilder<BuiltBrain, BuiltModel> UsingParallel(Func<ParallelBuilder, ParallelBuilder> Transform)
   {
-    throw new NotImplementedException();
+    return this with {Constructor = new AdaptOutputConstructor(Factory, Transform(new(Factory, Input)), OutputFeatures)};
   }
 
   public interface ModelConstructor
@@ -125,18 +125,20 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
     }
   }
 
-  public sealed record ParallelBuilder : ModelConstructor
+  public sealed record ParallelBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
   {
-    public int OutputFeatures => throw new NotImplementedException();
+    ImmutableArray<ModelConstructor> Paths { get; init; } = [];
+
+    public int OutputFeatures => Paths.Select(P => P.OutputFeatures).Sum();
 
     BuiltModel ModelConstructor.Build()
     {
-      throw new NotImplementedException();
+      return BrainFactory.CreateParallel(Paths.Select(P => P.Build()));
     }
 
     public ParallelBuilder AddPath(Func<SequenceBuilder, SequenceBuilder> Transform)
     {
-      throw new NotImplementedException();
+      return this with {Paths = [..Paths, Transform(new(BrainFactory, Predecessor))]};
     }
   }
 
