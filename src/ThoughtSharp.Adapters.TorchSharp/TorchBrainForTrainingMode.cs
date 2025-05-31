@@ -179,11 +179,18 @@ public sealed class AdditionalDimensionForSubModule : Module<TorchInferenceParts
 public class DoubleTensorToTorchInferencePartsAdapter : Module<TorchInferenceParts, TorchInferenceParts>
 {
   readonly Module<Tensor, Tensor, (Tensor Payload, Tensor State)> Underlying;
+  readonly int OutputFeatures;
+  readonly Device Device;
 
-  public DoubleTensorToTorchInferencePartsAdapter(Module<Tensor, Tensor, (Tensor Payload, Tensor State)> Underlying,
+  public DoubleTensorToTorchInferencePartsAdapter(
+    Module<Tensor, Tensor, (Tensor Payload, Tensor State)> Underlying,
+    int OutputFeatures,
+    Device Device,
     string Name = "_unnamed") : base(Name)
   {
     this.Underlying = Underlying;
+    this.OutputFeatures = OutputFeatures;
+    this.Device = Device;
     // ReSharper disable once VirtualMemberCallInConstructor
     RegisterComponents();
   }
@@ -192,7 +199,7 @@ public class DoubleTensorToTorchInferencePartsAdapter : Module<TorchInferencePar
   {
     //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.State!.shape)}");
 
-    var Output = Underlying.forward(Input.Payload, Input.State.State!);
+    var Output = Underlying.forward(Input.Payload, Input.State.State ?? zeros(new long[] { 1, OutputFeatures, }, ScalarType.Float32, Device));
 
     return new()
     {

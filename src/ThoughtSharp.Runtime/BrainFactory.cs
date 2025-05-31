@@ -1,12 +1,19 @@
 ﻿namespace ThoughtSharp.Runtime;
 
-public interface BrainFactory<out TBrain, TModel>
+public interface BrainFactory<
+  out TBrain, 
+  TModel,
+  TDevice>
 {
-  TModel CreateLinear(int InputFeatures, int OutputFeatures);
-  TModel CreateTanh();
+  TBrain CreateBrain(TModel Model, TDevice Device);
+
   TModel CreateSequence(params IEnumerable<TModel> Children);
-  TBrain CreateBrain(TModel Model);
   TModel CreateParallel(params IEnumerable<TModel> Children);
+
+  TModel CreateLinear(int InputFeatures, int OutputFeatures);
   TModel CreateGRU(int InputFeatures, int OutputFeatures);
+
+  TModel CreateTanh();
   TModel CreateReLU();
+  TDevice GetDefaultOptimumDevice();
 }

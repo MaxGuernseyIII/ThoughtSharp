@@ -218,7 +218,8 @@ public class TorchBrainBuilder(int InputLength, int OutputLength)
         new CompositeModule(
           new AdditionalDimensionForSubModule(new DoubleTensorToTorchInferencePartsAdapter(nn.GRU(
             InputLength,
-            PathStateSize)
+            PathStateSize),
+            0, null!
           )), Transformer)
         //)
       : Transformer;

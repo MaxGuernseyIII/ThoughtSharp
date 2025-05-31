@@ -21,16 +21,15 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
-using System.Net.Http.Headers;
 
 namespace ThoughtSharp.Runtime;
 
-public sealed record BrainBuilder<BuiltBrain, BuiltModel>
+public sealed record BrainBuilder<TBrain, TModel, TDevice>
 {
-  readonly BrainFactory<BuiltBrain, BuiltModel> Factory;
+  readonly BrainFactory<TBrain, TModel, TDevice> Factory;
   readonly ModelConstructor Input;
 
-  public BrainBuilder(BrainFactory<BuiltBrain, BuiltModel> Factory,
+  public BrainBuilder(BrainFactory<TBrain, TModel, TDevice> Factory,
     int InputFeatures,
     int OutputFeatures)
   {
@@ -45,12 +44,12 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>
   public int InputFeatures { get; init; }
   public int OutputFeatures { get; init; }
 
-  public BuiltBrain Build()
+  public TBrain Build()
   {
-    return Factory.CreateBrain(Constructor.Build());
+    return Factory.CreateBrain(Constructor.Build(), Factory.GetDefaultOptimumDevice());
   }
 
-  public BrainBuilder<BuiltBrain, BuiltModel> UsingSequence(
+  public BrainBuilder<TBrain, TModel, TDevice> UsingSequence(
     Func<SequenceConstructor, SequenceConstructor> TransformSequenceBuilder)
   {
     return this with
@@ -59,7 +58,7 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>
     };
   }
 
-  public BrainBuilder<BuiltBrain, BuiltModel> UsingParallel(Func<ParallelConstructor, ParallelConstructor> Transform)
+  public BrainBuilder<TBrain, TModel, TDevice> UsingParallel(Func<ParallelConstructor, ParallelConstructor> Transform)
   {
     return this with
     {
@@ -70,11 +69,11 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>
   public interface ModelConstructor
   {
     int OutputFeatures { get; }
-    BuiltModel Build();
+    TModel Build();
   }
 
   public sealed record SequenceConstructor(
-    BrainBuilder<BuiltBrain, BuiltModel> Host,
+    BrainBuilder<TBrain, TModel, TDevice> Host,
     ModelConstructor Predecessor)
     : ModelConstructor
   {
@@ -84,7 +83,7 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>
 
     public int OutputFeatures => Tail.OutputFeatures;
 
-    BuiltModel ModelConstructor.Build()
+    TModel ModelConstructor.Build()
     {
       return Host.Factory.CreateSequence(
       [
@@ -154,18 +153,18 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>
   }
 
   sealed record LinearConstructor(
-    BrainFactory<BuiltBrain, BuiltModel> BrainFactory,
+    BrainFactory<TBrain, TModel, TDevice> BrainFactory,
     ModelConstructor Predecessor,
     int OutputFeatures) : ModelConstructor
   {
-    BuiltModel ModelConstructor.Build()
+    TModel ModelConstructor.Build()
     {
       return BrainFactory.CreateLinear(Predecessor.OutputFeatures, OutputFeatures);
     }
   }
 
   public sealed record ParallelConstructor(
-    BrainBuilder<BuiltBrain, BuiltModel> Host,
+    BrainBuilder<TBrain, TModel, TDevice> Host,
     ModelConstructor Predecessor)
     : ModelConstructor
   {
@@ -173,7 +172,7 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>
 
     public int OutputFeatures => Paths.Select(P => P.OutputFeatures).Sum();
 
-    BuiltModel ModelConstructor.Build()
+    TModel ModelConstructor.Build()
     {
       return Host.Factory.CreateParallel(Paths.Select(P => P.Build()));
     }
@@ -186,18 +185,18 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>
 
   sealed record VirtualConstructor(int OutputFeatures) : ModelConstructor
   {
-    public BuiltModel Build()
+    public TModel Build()
     {
       throw new NotSupportedException("This is a placeholder on top of which other models should be built.");
     }
   }
 
   sealed record AdaptOutputConstructor(
-    BrainFactory<BuiltBrain, BuiltModel> Factory,
+    BrainFactory<TBrain, TModel, TDevice> Factory,
     ModelConstructor CoreConstructor,
     int OutputFeatures) : ModelConstructor
   {
-    public BuiltModel Build()
+    public TModel Build()
     {
       return Factory.CreateSequence(
         CoreConstructor.Build(),
@@ -206,37 +205,37 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>
   }
 
   sealed record GRUConstructor(
-    BrainFactory<BuiltBrain, BuiltModel> BrainFactory,
+    BrainFactory<TBrain, TModel, TDevice> BrainFactory,
     ModelConstructor Predecessor,
     int OutputFeatures) : ModelConstructor
   {
-    public BuiltModel Build()
+    public TModel Build()
     {
       return BrainFactory.CreateGRU(Predecessor.OutputFeatures, OutputFeatures);
     }
   }
 
-  sealed record TanhConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
+  sealed record TanhConstructor(BrainFactory<TBrain, TModel, TDevice> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
   {
     public int OutputFeatures => Predecessor.OutputFeatures;
 
-    public BuiltModel Build()
+    public TModel Build()
     {
       return BrainFactory.CreateTanh();
     }
   }
 
-  record ReLUConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
+  record ReLUConstructor(BrainFactory<TBrain, TModel, TDevice> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
   {
     public int OutputFeatures => Predecessor.OutputFeatures;
 
-    public BuiltModel Build()
+    public TModel Build()
     {
       return BrainFactory.CreateReLU();
     }
   }
 
-  public void Deconstruct(out BrainFactory<BuiltBrain, BuiltModel> Factory, out int InputFeatures, out int OutputFeatures)
+  public void Deconstruct(out BrainFactory<TBrain, TModel, TDevice> Factory, out int InputFeatures, out int OutputFeatures)
   {
     Factory = this.Factory;
     InputFeatures = this.InputFeatures;

@@ -31,8 +31,8 @@ namespace Tests;
 [TestClass]
 public class BrainBuilding
 {
-  BrainBuilder<MockBuiltBrain, MockBuiltModel> BrainBuilder = null!;
-  BrainFactory<MockBuiltBrain, MockBuiltModel> Factory = null!;
+  BrainBuilder<MockBuiltBrain, MockBuiltModel, MockDevice> BrainBuilder = null!;
+  BrainFactory<MockBuiltBrain, MockBuiltModel, MockDevice> Factory = null!;
   int InputFeatures;
   int OutputFeatures;
 
@@ -168,7 +168,8 @@ public class BrainBuilding
       Factory.CreateBrain(
         Factory.CreateSequence(
           Factory.CreateSequence(ExpectedLayers),
-          ExpectedFinalLayer)
+          ExpectedFinalLayer),
+        Factory.GetDefaultOptimumDevice()
       ));
   }
 
@@ -193,7 +194,8 @@ public class BrainBuilding
               Factory.CreateLinear(10, 4)
             )),
           Factory.CreateLinear(9, OutputFeatures)
-        )
+        ),
+        Factory.GetDefaultOptimumDevice()
       ));
   }
 
@@ -232,7 +234,8 @@ public class BrainBuilding
               )),
             Factory.CreateLinear(Layer2A1Features + Layer2B2Features, Layer3Features)
           ),
-          Factory.CreateLinear(Layer3Features, OutputFeatures))
+          Factory.CreateLinear(Layer3Features, OutputFeatures)),
+        Factory.GetDefaultOptimumDevice()
       ).Model);
   }
 
@@ -270,11 +273,14 @@ public class BrainBuilding
           Factory.CreateSequence(
             Expected
           ),
-          Factory.CreateLinear(Features, OutputFeatures))));
+          Factory.CreateLinear(Features, OutputFeatures)),
+        Factory.GetDefaultOptimumDevice()));
   }
 
-  static BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceConstructor ApplyFeatureLayerCountsToSequenceBuilder(
-    List<int> FeatureLayerCounts, BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceConstructor Sequence)
+  static BrainBuilder<MockBuiltBrain, MockBuiltModel, MockDevice>.SequenceConstructor
+    ApplyFeatureLayerCountsToSequenceBuilder(
+      List<int> FeatureLayerCounts,
+      BrainBuilder<MockBuiltBrain, MockBuiltModel, MockDevice>.SequenceConstructor Sequence)
   {
     return FeatureLayerCounts.Aggregate(Sequence,
       (Previous, Features) => Previous.AddLinear(Features));
@@ -316,7 +322,15 @@ public class BrainBuilding
     return LayerFeatureCounts;
   }
 
-  class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel>
+  record MockDevice;
+
+  sealed record MockCPUDevice : MockDevice;
+
+  sealed record MockGPUDevice : MockDevice;
+
+  sealed record MockDefaultOptimalDevice : MockDevice;
+
+  class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel, MockDevice>
   {
     public MockBuiltModel CreateLinear(int InputFeatures, int OutputFeatures)
     {
@@ -333,9 +347,9 @@ public class BrainBuilding
       return new MockSequence([..Children]);
     }
 
-    public MockBuiltBrain CreateBrain(MockBuiltModel Model)
+    public MockBuiltBrain CreateBrain(MockBuiltModel Model, MockDevice Device)
     {
-      return new(Model);
+      return new(Model, Device);
     }
 
     public MockBuiltModel CreateParallel(params IEnumerable<MockBuiltModel> Children)
@@ -351,6 +365,11 @@ public class BrainBuilding
     public MockBuiltModel CreateReLU()
     {
       return new MockReLU();
+    }
+
+    public MockDevice GetDefaultOptimumDevice()
+    {
+      return new MockDefaultOptimalDevice();
     }
 
     record MockReLU : MockBuiltModel;
@@ -394,7 +413,7 @@ public class BrainBuilding
 
   record MockBuiltModel;
 
-  record MockBuiltBrain(MockBuiltModel Model) : Brain
+  record MockBuiltBrain(MockBuiltModel Model, MockDevice Device) : Brain
   {
     public void Dispose()
     {
