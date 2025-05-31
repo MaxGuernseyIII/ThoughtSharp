@@ -6,4 +6,5 @@ public interface BrainFactory<out TBrain, TModel>
   TModel CreateTanh();
   TModel CreateSequence(params IEnumerable<TModel> Children);
   TBrain CreateBrain(TModel Model);
+  TModel CreateParallel(params IEnumerable<TModel> Children);
 }

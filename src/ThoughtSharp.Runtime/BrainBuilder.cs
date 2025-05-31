@@ -1,15 +1,38 @@
-﻿using System.Collections.Immutable;
+﻿// MIT License
+// 
+// Copyright (c) 2025-2025 Hexagon Software LLC
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+using System.Collections.Immutable;
 
 namespace ThoughtSharp.Runtime;
 
-public sealed record BrainBuilder<BuiltBrain, BuiltModel>(BrainFactory<BuiltBrain, BuiltModel> Factory, int InputFeatures, int OutputFeatures)
+public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
+  BrainFactory<BuiltBrain, BuiltModel> Factory,
+  int InputFeatures,
+  int OutputFeatures)
 {
-  public interface ModelConstructor
-  {
-    BuiltModel Build();
-  }
+  readonly ModelConstructor Input = new VirtualConstructor(InputFeatures);
 
   readonly BrainFactory<BuiltBrain, BuiltModel> Factory = Factory;
+
   ModelConstructor Constructor { get; init; } = new DefaultConstructor(Factory, InputFeatures, OutputFeatures);
 
   public BuiltBrain Build()
@@ -19,15 +42,28 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(BrainFactory<BuiltBrai
 
   public BrainBuilder<BuiltBrain, BuiltModel> UsingStandard()
   {
-    return this with {Constructor = new StandardConstructor(Factory, InputFeatures, OutputFeatures) };
+    return this with {Constructor = new StandardConstructor(Factory, InputFeatures, OutputFeatures)};
   }
 
-  public BrainBuilder<BuiltBrain, BuiltModel> UsingSequence(Func<SequenceBuilder, SequenceBuilder> TransformSequenceBuilder)
+  public BrainBuilder<BuiltBrain, BuiltModel> UsingSequence(
+    Func<SequenceBuilder, SequenceBuilder> TransformSequenceBuilder)
   {
-    return this with {Constructor = TransformSequenceBuilder(new(Factory, InputFeatures, OutputFeatures))};
+    return this with {Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(Factory, Input)), OutputFeatures) };
   }
 
-  record DefaultConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures) : ModelConstructor
+  public BrainBuilder<BuiltBrain, BuiltModel> UsingParallel(Func<ParallelBuilder, ParallelBuilder> Transform)
+  {
+    throw new NotImplementedException();
+  }
+
+  public interface ModelConstructor
+  {
+    int OutputFeatures { get; }
+    BuiltModel Build();
+  }
+
+  record DefaultConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures)
+    : ModelConstructor
   {
     public BuiltModel Build()
     {
@@ -35,7 +71,8 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(BrainFactory<BuiltBrai
     }
   }
 
-  record StandardConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures) : ModelConstructor
+  record StandardConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int InputFeatures, int OutputFeatures)
+    : ModelConstructor
   {
     public BuiltModel Build()
     {
@@ -51,22 +88,76 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(BrainFactory<BuiltBrai
     }
   }
 
-  public sealed record SequenceBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, int NextInputFeatures, int FinalOutputFeatures) : ModelConstructor
+  public sealed record SequenceBuilder(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor)
+    : ModelConstructor
   {
-    ImmutableArray<BuiltModel> Models { get; init; } = [];
+    IEnumerable<ModelConstructor> ModelConstructorsIncludingContext => new[] {Predecessor}.Concat(Constructors);
+    ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
+
+    public int OutputFeatures => ModelConstructorsIncludingContext.Last().OutputFeatures;
 
     BuiltModel ModelConstructor.Build()
     {
       return BrainFactory.CreateSequence(
-        [
-          ..Models,
-          BrainFactory.CreateLinear(NextInputFeatures, FinalOutputFeatures)
-        ]);
+      [
+        ..Constructors.Select(M => M.Build())
+      ]);
     }
 
     public SequenceBuilder AddLinear(int Features)
     {
-      return this with { Models = [..Models, BrainFactory.CreateLinear(NextInputFeatures, Features)], NextInputFeatures = Features};
+      return this with
+      {
+        Constructors =
+        [
+          ..Constructors,
+          new LinearConstructor(BrainFactory, ModelConstructorsIncludingContext.Last(), Features)
+        ]
+      };
+    }
+  }
+
+  sealed record LinearConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor, int OutputFeatures) : ModelConstructor
+  {
+    BuiltModel ModelConstructor.Build()
+    {
+      return BrainFactory.CreateLinear(Predecessor.OutputFeatures, OutputFeatures);
+    }
+  }
+
+  public sealed record ParallelBuilder : ModelConstructor
+  {
+    public int OutputFeatures => throw new NotImplementedException();
+
+    BuiltModel ModelConstructor.Build()
+    {
+      throw new NotImplementedException();
+    }
+
+    public ParallelBuilder AddPath(Func<SequenceBuilder, SequenceBuilder> Transform)
+    {
+      throw new NotImplementedException();
+    }
+  }
+
+  sealed record VirtualConstructor(int OutputFeatures) : ModelConstructor
+  {
+    public BuiltModel Build()
+    {
+      throw new NotSupportedException("This is a placeholder on top of which other models should be built.");
+    }
+  }
+
+  sealed record AdaptOutputConstructor(
+    BrainFactory<BuiltBrain, BuiltModel> Factory,
+    ModelConstructor CoreConstructor,
+    int OutputFeatures) : ModelConstructor
+  {
+    public BuiltModel Build()
+    {
+      return Factory.CreateSequence(
+        CoreConstructor.Build(),
+        Factory.CreateLinear(CoreConstructor.OutputFeatures, OutputFeatures));
     }
   }
 }

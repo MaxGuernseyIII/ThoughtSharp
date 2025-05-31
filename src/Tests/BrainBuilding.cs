@@ -77,43 +77,76 @@ public class BrainBuilding
   [TestMethod]
   public void UsingSequence()
   {
-    var FeatureLayerCounts = AnyFeatureLayerCounts();
-    var Mappings = GetExpectedSequenceLayersFromCounts(FeatureLayerCounts);
-    var ExpectedLayers = Mappings.Aggregate(new List<MockBuiltModel>(),
-      (Previous, Mapping) => [..Previous, Factory.CreateLinear(Mapping.InputFeatures, Mapping.OutputFeatures)]);
-    var Builder = BrainBuilder.UsingSequence(Sequence => FeatureLayerCounts.Aggregate(Sequence,
-      (Previous, Features) => Previous.AddLinear(Features)));
+    var (FeatureLayerCounts, ExpectedLayers, ExpectedFinalLayer) = GivenExpectedSequenceAndFinalLayer();
+    var Builder = BrainBuilder.UsingSequence(Sequence => ApplyFeatureLayerCountsToSequenceBuilder(FeatureLayerCounts, Sequence));
 
     var Actual = Builder.Build();
 
     Actual.Should().Be(
       Factory.CreateBrain(
-        Factory.CreateSequence(ExpectedLayers)));
+        Factory.CreateSequence(
+          Factory.CreateSequence(ExpectedLayers),
+          ExpectedFinalLayer)
+        ));
   }
 
-  List<(int InputFeatures, int OutputFeatures)> GetExpectedSequenceLayersFromCounts(List<int> LayerFeatureCounts)
+  //[TestMethod]
+  //public void UsingPath()
+  //{
+  //  var Builder = BrainBuilder.UsingParallel(Parallel => Parallel
+  //    .AddPath(Sequence => Sequence.AddLinear(5))
+  //    .AddPath(Sequence => Sequence.AddLinear(10).AddLinear(4))
+  //  );
+
+  //  var Actual = Builder.Build();
+
+  //  Actual.Should().Be(
+  //    Factory.CreateBrain(
+  //      Factory.CreateSequence()
+  //      Factory.CreateParallel(
+  //        Factory.CreateSequence(
+  //          Factory.CreateLinear(InputFeatures, 5)),
+  //        Factory.CreateSequence(
+  //          Factory.CreateLinear(InputFeatures, 10),
+  //          Factory.CreateLinear(10, 4)
+  //          ))
+  //    ));
+  //}
+
+  static BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder ApplyFeatureLayerCountsToSequenceBuilder(List<int> FeatureLayerCounts, BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder Sequence)
   {
+    return FeatureLayerCounts.Aggregate(Sequence,
+      (Previous, Features) => Previous.AddLinear(Features));
+  }
+
+  (List<int> FeatureLayerCounts, List<MockBuiltModel> ExpectedLayers, MockBuiltModel ExpectedFinalLayer) GivenExpectedSequenceAndFinalLayer()
+  {
+    var (FeatureLayerCounts, ExpectedLayers) = GetExpectedLayers();
+
+    var LastOutputFeatures = FeatureLayerCounts.Any() ? FeatureLayerCounts[^1] : InputFeatures;
+
+    return (FeatureLayerCounts, ExpectedLayers, Factory.CreateLinear(LastOutputFeatures, OutputFeatures));
+  }
+
+  (List<int> FeatureLayerCounts, List<MockBuiltModel> ExpectedLayers) GetExpectedLayers()
+  {
+    var LayerCount = Any.Int(0, 4);
+    var LayerFeatureCounts = new List<int>();
+    foreach (var I in Enumerable.Range(0, LayerCount))
+      LayerFeatureCounts.Add(Any.Int(1, 1000));
+    var FeatureLayerCounts = LayerFeatureCounts;
     var Result = new List<(int InputFeatures, int OutputFeatures)>();
     var PreviousFeatureCount = InputFeatures;
 
-    foreach (var LayerFeatureCount in LayerFeatureCounts)
+    foreach (var LayerFeatureCount in FeatureLayerCounts)
     {
       Result.Add((PreviousFeatureCount, LayerFeatureCount));
       PreviousFeatureCount = LayerFeatureCount;
     }
 
-    Result.Add((PreviousFeatureCount, OutputFeatures));
-
-    return Result;
-  }
-
-  static List<int> AnyFeatureLayerCounts()
-  {
-    var LayerCount = Any.Int(0, 4);
-    var LayerFeatureCounts = new List<int>();
-    foreach (var I in Enumerable.Range(0, LayerCount)) 
-      LayerFeatureCounts.Add(Any.Int(1, 1000));
-    return LayerFeatureCounts;
+    var ExpectedLayers = Result.Aggregate(new List<MockBuiltModel>(),
+      (Previous, Mapping) => [.. Previous, Factory.CreateLinear(Mapping.InputFeatures, Mapping.OutputFeatures)]);
+    return (FeatureLayerCounts, ExpectedLayers);
   }
 
   class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel>
@@ -157,6 +190,11 @@ public class BrainBuilding
     public MockBuiltBrain CreateBrain(MockBuiltModel Model)
     {
       return new(Model);
+    }
+
+    public MockBuiltModel CreateParallel(params IEnumerable<MockBuiltModel> Children)
+    {
+      throw new NotImplementedException();
     }
   }
 
