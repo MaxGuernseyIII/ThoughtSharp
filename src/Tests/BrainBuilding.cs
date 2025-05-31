@@ -72,6 +72,14 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void AddDefaultLogicLayers()
+  {
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLogicLayers()).Build();
+
+    Actual.Should().Be(BrainBuilder.UsingSequence(S => S.AddLogicLayers(4, 2)).Build());
+  }
+
+  [TestMethod]
   public void AddLogicPath()
   {
     var LayerCounts = AnyLayerFeatureCounts(AtLeast: 1);

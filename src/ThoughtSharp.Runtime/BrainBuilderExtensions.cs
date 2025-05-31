@@ -42,6 +42,9 @@ public static class BrainBuilderExtensions
   public static BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor AddLogicLayers<BuiltBrain, BuiltModel>(
     this BrainBuilder<BuiltBrain, BuiltModel>.SequenceConstructor S, params IEnumerable<int> LayerCounts)
   {
+    if (!LayerCounts.Any())
+      LayerCounts = [4, 2];
+
     return LayerCounts.Aggregate(S, (Previous, Features) => Previous.AddLinear(S.Host.InputFeatures * Features).AddReLU()) ;
   }
 
