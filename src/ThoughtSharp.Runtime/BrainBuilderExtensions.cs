@@ -35,6 +35,12 @@ public static class BrainBuilderExtensions
       .AddTanh());
   }
 
+  public static BrainBuilder<BuiltBrain, BuiltModel> ForLogic<BuiltBrain, BuiltModel>(
+    this BrainBuilder<BuiltBrain, BuiltModel> Builder, params IEnumerable<int> LogicLayerCounts)
+  {
+    return Builder.UsingSequence(S => S.AddLogicLayers(Builder, LogicLayerCounts));
+  }
+
   public static BrainBuilder<BuiltBrain, BuiltModel>.SequenceBuilder AddLogicLayers<BuiltBrain, BuiltModel>(
     this BrainBuilder<BuiltBrain, BuiltModel>.SequenceBuilder S, BrainBuilder<BuiltBrain, BuiltModel> Host, params IEnumerable<int> LayerCounts)
   {
