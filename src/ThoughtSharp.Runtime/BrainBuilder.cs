@@ -115,6 +115,18 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
         ]
       };
     }
+
+    public SequenceBuilder AddParallel(Func<ParallelBuilder, ParallelBuilder> Transform)
+    {
+      return this with
+      {
+        Constructors =
+        [
+          ..Constructors,
+          Transform(new(BrainFactory, Predecessor))
+        ]
+      };
+    }
   }
 
   sealed record LinearConstructor(BrainFactory<BuiltBrain, BuiltModel> BrainFactory, ModelConstructor Predecessor, int OutputFeatures) : ModelConstructor

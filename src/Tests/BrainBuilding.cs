@@ -23,6 +23,7 @@
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
+
 // ReSharper disable NotAccessedPositionalProperty.Local
 
 namespace Tests;
@@ -30,10 +31,10 @@ namespace Tests;
 [TestClass]
 public class BrainBuilding
 {
+  BrainBuilder<MockBuiltBrain, MockBuiltModel> BrainBuilder = null!;
   BrainFactory<MockBuiltBrain, MockBuiltModel> Factory = null!;
   int InputFeatures;
   int OutputFeatures;
-  BrainBuilder<MockBuiltBrain, MockBuiltModel> BrainBuilder = null!;
 
   [TestInitialize]
   public void Setup()
@@ -78,7 +79,8 @@ public class BrainBuilding
   public void UsingSequence()
   {
     var (FeatureLayerCounts, ExpectedLayers, ExpectedFinalLayer) = GivenExpectedSequenceAndFinalLayer();
-    var Builder = BrainBuilder.UsingSequence(Sequence => ApplyFeatureLayerCountsToSequenceBuilder(FeatureLayerCounts, Sequence));
+    var Builder =
+      BrainBuilder.UsingSequence(Sequence => ApplyFeatureLayerCountsToSequenceBuilder(FeatureLayerCounts, Sequence));
 
     var Actual = Builder.Build();
 
@@ -87,7 +89,7 @@ public class BrainBuilding
         Factory.CreateSequence(
           Factory.CreateSequence(ExpectedLayers),
           ExpectedFinalLayer)
-        ));
+      ));
   }
 
   [TestMethod]
@@ -111,17 +113,58 @@ public class BrainBuilding
               Factory.CreateLinear(10, 4)
             )),
           Factory.CreateLinear(9, OutputFeatures)
-          )
+        )
       ));
   }
 
-  static BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder ApplyFeatureLayerCountsToSequenceBuilder(List<int> FeatureLayerCounts, BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder Sequence)
+  [TestMethod]
+  public void AddChildParallel()
+  {
+    var Layer1Features = 12;
+    var Layer2A1Features = 5;
+    var Layer2B1Features = 10;
+    var Layer2B2Features = 4;
+    var Layer3Features = 19;
+
+    var Builder = BrainBuilder.UsingSequence(Sequence =>
+      Sequence
+        .AddLinear(Layer1Features)
+        .AddParallel(Parallel => Parallel
+          .AddPath(S => S.AddLinear(Layer2A1Features))
+          .AddPath(S => S.AddLinear(Layer2B1Features).AddLinear(Layer2B2Features))
+        )
+        .AddLinear(Layer3Features)
+    );
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(
+      Factory.CreateBrain(
+        Factory.CreateSequence(
+          Factory.CreateSequence(
+            Factory.CreateLinear(InputFeatures, Layer1Features),
+            Factory.CreateParallel(
+              Factory.CreateSequence(
+                Factory.CreateLinear(Layer1Features, Layer2A1Features)),
+              Factory.CreateSequence(
+                Factory.CreateLinear(Layer1Features, Layer2B1Features),
+                Factory.CreateLinear(Layer2B1Features, Layer2B2Features)
+              )),
+            Factory.CreateLinear(Layer2A1Features + Layer2B2Features, Layer3Features)
+          ),
+          Factory.CreateLinear(Layer3Features, OutputFeatures))
+      ));
+  }
+
+  static BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder ApplyFeatureLayerCountsToSequenceBuilder(
+    List<int> FeatureLayerCounts, BrainBuilder<MockBuiltBrain, MockBuiltModel>.SequenceBuilder Sequence)
   {
     return FeatureLayerCounts.Aggregate(Sequence,
       (Previous, Features) => Previous.AddLinear(Features));
   }
 
-  (List<int> FeatureLayerCounts, List<MockBuiltModel> ExpectedLayers, MockBuiltModel ExpectedFinalLayer) GivenExpectedSequenceAndFinalLayer()
+  (List<int> FeatureLayerCounts, List<MockBuiltModel> ExpectedLayers, MockBuiltModel ExpectedFinalLayer)
+    GivenExpectedSequenceAndFinalLayer()
   {
     var (FeatureLayerCounts, ExpectedLayers) = GetExpectedLayers();
 
@@ -158,20 +201,30 @@ public class BrainBuilding
       return new MockLinear(InputFeatures, OutputFeatures);
     }
 
-    record MockLinear(int InputFeatures, int OutputFeatures) : MockBuiltModel;
-
     public MockBuiltModel CreateTanh()
     {
       return new MockTanh();
     }
 
-    record MockTanh : MockBuiltModel
-    {
-    }
-
     public MockBuiltModel CreateSequence(params IEnumerable<MockBuiltModel> Children)
     {
       return new MockSequence([..Children]);
+    }
+
+    public MockBuiltBrain CreateBrain(MockBuiltModel Model)
+    {
+      return new(Model);
+    }
+
+    public MockBuiltModel CreateParallel(params IEnumerable<MockBuiltModel> Children)
+    {
+      return new MockParallel(Children);
+    }
+
+    record MockLinear(int InputFeatures, int OutputFeatures) : MockBuiltModel;
+
+    record MockTanh : MockBuiltModel
+    {
     }
 
     record MockSequence(IReadOnlyList<MockBuiltModel> MockBuiltModels) : MockBuiltModel
@@ -187,16 +240,6 @@ public class BrainBuilding
       {
         return HashCode.Combine(base.GetHashCode(), MockBuiltModels);
       }
-    }
-
-    public MockBuiltBrain CreateBrain(MockBuiltModel Model)
-    {
-      return new(Model);
-    }
-
-    public MockBuiltModel CreateParallel(params IEnumerable<MockBuiltModel> Children)
-    {
-      return new MockParallel(Children);
     }
 
     record MockParallel(IEnumerable<MockBuiltModel> Children) : MockBuiltModel
