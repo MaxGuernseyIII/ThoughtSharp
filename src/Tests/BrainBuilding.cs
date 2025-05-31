@@ -259,11 +259,27 @@ public class BrainBuilding
   public void AddGRU()
   {
     var Features = Any.Int(1, 1000);
+    var Device = UpdateBrainBuilderToAnyDevice();
 
     var Actual = BrainBuilder.UsingSequence(S => S.AddGRU(Features)).Build();
 
-    MockBuiltModel Expected = Factory.CreateGRU(InputFeatures, Features);
-    ShouldBeAdaptedContainerFor(Actual, Features, Expected);
+    var Expected = Factory.CreateGRU(InputFeatures, Features, Device);
+    ShouldBeAdaptedContainerFor(Actual, Features, Device, Expected);
+  }
+
+  MockDevice UpdateBrainBuilderToAnyDevice()
+  {
+    switch (Any.Int(0, 2))
+    {
+      case 1:
+        BrainBuilder = BrainBuilder.UsingCPU();
+        return Factory.GetCPUDevice();
+      case 2:
+        BrainBuilder = BrainBuilder.UsingCUDA();
+        return Factory.GetCUDADevice();
+      default:
+        return Factory.GetDefaultOptimumDevice();
+    }
   }
 
   [TestMethod]
@@ -382,9 +398,9 @@ public class BrainBuilding
       return new MockParallel(Children);
     }
 
-    public MockBuiltModel CreateGRU(int InputFeatures, int OutputFeatures)
+    public MockBuiltModel CreateGRU(int InputFeatures, int OutputFeatures, MockDevice Device)
     {
-      return new MockGRU(InputFeatures, OutputFeatures);
+      return new MockGRU(InputFeatures, OutputFeatures, Device);
     }
 
     public MockBuiltModel CreateReLU()
@@ -409,7 +425,7 @@ public class BrainBuilding
 
     record MockReLU : MockBuiltModel;
 
-    record MockGRU(int InputFeatures, int OutputFeatures) : MockBuiltModel;
+    record MockGRU(int InputFeatures, int OutputFeatures, MockDevice Device) : MockBuiltModel;
 
     record MockLinear(int InputFeatures, int OutputFeatures) : MockBuiltModel;
 

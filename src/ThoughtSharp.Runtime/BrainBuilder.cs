@@ -144,7 +144,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
         Constructors =
         [
           ..Constructors,
-          new GRUConstructor(Host.Factory, Tail, Features)
+          new GRUConstructor(Host, Tail, Features)
         ]
       };
     }
@@ -227,13 +227,13 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   }
 
   sealed record GRUConstructor(
-    BrainFactory<TBrain, TModel, TDevice> BrainFactory,
+    BrainBuilder<TBrain, TModel, TDevice> Host,
     ModelConstructor Predecessor,
     int OutputFeatures) : ModelConstructor
   {
     public TModel Build()
     {
-      return BrainFactory.CreateGRU(Predecessor.OutputFeatures, OutputFeatures);
+      return Host.Factory.CreateGRU(Predecessor.OutputFeatures, OutputFeatures, Host.Device);
     }
   }
 
