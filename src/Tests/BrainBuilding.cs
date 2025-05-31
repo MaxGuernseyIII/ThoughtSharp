@@ -46,6 +46,13 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void GetProperties()
+  {
+    BrainBuilder.InputFeatures.Should().Be(InputFeatures);
+    BrainBuilder.OutputFeatures.Should().Be(OutputFeatures);
+  }
+
+  [TestMethod]
   public void Default()
   {
     var Actual = BrainBuilder.Build();
