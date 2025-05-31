@@ -32,16 +32,11 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
   readonly BrainFactory<BuiltBrain, BuiltModel> Factory = Factory;
   readonly ModelConstructor Input = new VirtualConstructor(InputFeatures);
 
-  ModelConstructor Constructor { get; init; } = new DefaultConstructor(Factory, InputFeatures, OutputFeatures);
+  ModelConstructor Constructor { get; init; } = new AdaptOutputConstructor(Factory, new SequenceBuilder(Factory, new VirtualConstructor(InputFeatures)), OutputFeatures);
 
   public BuiltBrain Build()
   {
     return Factory.CreateBrain(Constructor.Build());
-  }
-
-  public BrainBuilder<BuiltBrain, BuiltModel> UsingStandard()
-  {
-    return this with {Constructor = new StandardConstructor(Factory, InputFeatures, OutputFeatures)};
   }
 
   public BrainBuilder<BuiltBrain, BuiltModel> UsingSequence(
@@ -228,5 +223,17 @@ public sealed record BrainBuilder<BuiltBrain, BuiltModel>(
     {
       return BrainFactory.CreateTanh();
     }
+  }
+}
+
+public static class BrainBuilderExtensions
+{
+  public static BrainBuilder<BuiltBrain, BuiltModel> UsingStandard<BuiltBrain, BuiltModel>(this BrainBuilder<BuiltBrain, BuiltModel> Builder)
+  {
+    return Builder.UsingSequence(S => S
+      .AddLinear(Builder.InputFeatures * 20)
+      .AddTanh()
+      .AddLinear((Builder.InputFeatures * 20 + Builder.OutputFeatures) / 2)
+      .AddTanh());
   }
 }

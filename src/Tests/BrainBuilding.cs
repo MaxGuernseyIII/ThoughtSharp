@@ -58,11 +58,7 @@ public class BrainBuilding
   {
     var Actual = BrainBuilder.Build();
 
-    var Expected =
-      Factory.CreateBrain(
-        Factory.CreateLinear(InputFeatures, OutputFeatures)
-      );
-    Actual.Should().Be(Expected);
+    Actual.Should().Be(BrainBuilder.UsingSequence(S => S).Build());
   }
 
   [TestMethod]
@@ -70,17 +66,13 @@ public class BrainBuilding
   {
     var Actual = BrainBuilder.UsingStandard().Build();
 
-    var Expected =
-      Factory.CreateBrain(
-        Factory.CreateSequence(
-          Factory.CreateLinear(InputFeatures, InputFeatures * 20),
-          Factory.CreateTanh(),
-          Factory.CreateLinear(InputFeatures * 20, (InputFeatures * 20 + OutputFeatures) / 2),
-          Factory.CreateTanh(),
-          Factory.CreateLinear((InputFeatures * 20 + OutputFeatures) / 2, OutputFeatures)
-        )
-      );
-    Actual.Should().Be(Expected);
+    Actual.Should().Be(BrainBuilder.UsingSequence(
+      S => S
+        .AddLinear(InputFeatures * 20)
+        .AddTanh()
+        .AddLinear((InputFeatures * 20 + OutputFeatures) / 2)
+        .AddTanh())
+      .Build());
   }
 
   [TestMethod]
