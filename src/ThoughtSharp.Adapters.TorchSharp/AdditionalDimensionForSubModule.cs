@@ -20,25 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
 using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchInferenceForProductionMode(
-  TorchBrainForProductionMode Brain, 
-  TorchInferenceStateNode StateOutput, 
-  torch.Tensor ProductOutputTensor) 
-  : TorchInference(StateOutput, ProductOutputTensor), Inference
-
+public sealed class AdditionalDimensionForSubModule : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  public Inference MakeInference(float[] Parameters)
+  readonly torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Underlying;
+
+  public AdditionalDimensionForSubModule(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Underlying,
+    string Name = "_unnamed") : base(Name)
   {
-    return Brain.ExecuteInference(StateOutput, Parameters);
+    this.Underlying = Underlying;
+
+    RegisterComponents();
   }
 
-  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    throw new NotSupportedException("You cannot train a neural network in production mode.");
+    var NewInput = Input.UnSqueeze();
+    var Next = Underlying.forward(NewInput);
+
+    return Next.Squeeze();
   }
 }

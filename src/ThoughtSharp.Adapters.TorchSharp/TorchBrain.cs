@@ -26,9 +26,8 @@ using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public abstract class TorchBrain(
-  Module<TorchInferenceParts, TorchInferenceParts> Model, Device Device,
-  Func<TorchInferenceStateNode> MakeEmptyState) : Brain
+public class TorchBrain(
+  Module<TorchInferenceParts, TorchInferenceParts> Model, Device Device) : Brain
 {
   protected Module<TorchInferenceParts, TorchInferenceParts> Model { get; } = Model;
   Device Device { get; } = Device;
@@ -43,11 +42,13 @@ public abstract class TorchBrain(
     Model.load(Path);
   }
 
-  public TorchInferenceStateNode EmptyState => new(null);
+  internal TorchInferenceStateNode EmptyState => new();
+  protected optim.Optimizer Optimizer { get; } = optim.Adam(Model.parameters());
 
-  public virtual void Dispose()
+  public void Dispose()
   {
     Model.Dispose();
+    Optimizer.Dispose();
   }
 
   internal Tensor ConvertFloatsToTensor(float[] Parameters)
@@ -64,5 +65,25 @@ public abstract class TorchBrain(
     });
   }
 
-  public abstract Inference MakeInference(float[] Parameters);
+  public virtual Inference MakeInference(float[] Parameters)
+  {
+    return ExecuteInference(null, EmptyState, Parameters);
+  }
+
+  internal Inference ExecuteInference(
+    TorchInference? Predecessor,
+    TorchInferenceStateNode StateInputTensor,
+    float[] Parameters)
+  {
+    var Tensors = Forward(Parameters, StateInputTensor);
+
+    return new TorchInference(this, Predecessor, Parameters, Tensors.State, Tensors.Payload);
+  }
+
+  public void ApplyLoss(Tensor Loss)
+  {
+    Model.zero_grad();
+    Loss.backward();
+    Optimizer.step();
+  }
 }

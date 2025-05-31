@@ -20,14 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using ThoughtSharp.Runtime;
 using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
 public class TorchInference(
+  TorchBrain Brain,
+  TorchInference? Predecessor,
+  float[] OriginalParameters,
   TorchInferenceStateNode StateOutput,
-  torch.Tensor ProductOutputTensor
-) : IDisposable
+  torch.Tensor ProductOutputTensor) : Inference
 {
   internal TorchInferenceStateNode StateOutput { get; } = StateOutput;
   internal torch.Tensor ProductOutputTensor { get; } = ProductOutputTensor;
@@ -45,6 +48,8 @@ public class TorchInference(
     }
   }
 
+  protected TorchBrain Brain { get; } = Brain;
+
   static float Sigmoid(float X) =>
     1f / (1f + MathF.Exp(-X));
 
@@ -52,5 +57,33 @@ public class TorchInference(
   {
     StateOutput.Dispose();
     ProductOutputTensor.Dispose();
+  }
+
+  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  {
+    var Visitor = new TorchLossRuleVisitor(Brain);
+    var TensorForBackPropagation = Replay().Payload;
+
+    var CumulativeLoss = torch.tensor(0.0f, requires_grad: true);
+
+    foreach (var (At, Rule) in LossRules)
+    {
+      var AffectedSlice = TensorForBackPropagation.slice(1, At, At + Rule.Length, 1);
+      CumulativeLoss += Rule.Accept(AffectedSlice, Visitor);
+    }
+
+    Brain.ApplyLoss(CumulativeLoss);
+  }
+
+  TorchInferenceParts Replay()
+  {
+    var StateTensor = Predecessor?.Replay().State ?? Brain.EmptyState;
+
+    return Brain.Forward(OriginalParameters, StateTensor);
+  }
+
+  public Inference MakeInference(float[] Parameters)
+  {
+    return Brain.ExecuteInference(this, StateOutput, Parameters);
   }
 }

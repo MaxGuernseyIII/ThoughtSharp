@@ -20,48 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
 using TorchSharp;
-using static TorchSharp.torch;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-// ReSharper disable once UnusedMember.Global
-public class TorchInferenceForTrainingMode(
-  TorchBrainForTrainingMode Brain,
-  TorchInferenceForTrainingMode? Predecessor,
-  float[] OriginalParameters,
-  TorchInferenceStateNode StateOutput,
-  Tensor ProductOutputTensor) 
-  : TorchInference(StateOutput, ProductOutputTensor), Inference
+public sealed class ParallelModule : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  protected TorchBrainForTrainingMode Brain { get; } = Brain;
+  readonly torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Left;
+  readonly torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Right;
 
-  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  public ParallelModule(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Left, torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Right,
+    string Name = "_unnamed") : base(Name)
   {
-    var Visitor = new TorchLossRuleVisitor(Brain);
-    var TensorForBackPropagation = Replay().Payload;
+    this.Left = Left;
+    this.Right = Right;
 
-    var CumulativeLoss = tensor(0.0f, requires_grad: true);
+    RegisterComponents();
+  }
 
-    foreach (var (At, Rule) in LossRules)
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    var LeftOutput = Left.forward(Input with { State = Input.State.Left! });
+    var RightOutput = Right.forward(Input with{ State = Input.State.Right! });
+
+    return new()
     {
-      var AffectedSlice = TensorForBackPropagation.slice(1, At, At + Rule.Length, 1);
-      CumulativeLoss += Rule.Accept(AffectedSlice, Visitor);
-    }
-
-    Brain.ApplyLoss(CumulativeLoss);
-  }
-
-  TorchInferenceParts Replay()
-  {
-    var StateTensor = Predecessor?.Replay().State ?? Brain.EmptyState;
-
-    return Brain.Forward(OriginalParameters, StateTensor);
-  }
-
-  public Inference MakeInference(float[] Parameters)
-  {
-    return Brain.ExecuteInference(this, StateOutput, Parameters);
+      Payload = torch.cat([LeftOutput.Payload, RightOutput.Payload], 1),
+      State = new(null)
+      {
+        Left = LeftOutput.State,
+        Right = RightOutput.State
+      }
+    };
   }
 }

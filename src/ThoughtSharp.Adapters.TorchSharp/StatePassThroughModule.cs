@@ -20,25 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-using static TorchSharp.torch;
+using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-// ReSharper disable once UnusedMember.Global
-public class TorchBrainBuilder
+public sealed class StatePassThroughModule : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device>
-    ForTraining<TMind>()
-    where TMind : Mind
+  readonly torch.nn.Module<torch.Tensor, torch.Tensor> Transformer;
+
+  public StatePassThroughModule(torch.nn.Module<torch.Tensor, torch.Tensor> Transformer, string Name = "_unnamed") : base(Name)
   {
-    return new(TorchBrainFactory.Instance, TMind.InputLength, TMind.OutputLength);
+    this.Transformer = Transformer;
+
+    RegisterComponents();
   }
 
-  public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device>
-    ForProduction<TMind>()
-    where TMind : Mind
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    return new(TorchBrainFactory.Instance, TMind.InputLength, TMind.OutputLength);
+    return Input with {Payload = Transformer.forward(Input.Payload)};
   }
 }

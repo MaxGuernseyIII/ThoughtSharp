@@ -36,166 +36,166 @@ const int ReportEvery = 1000;
 
 DoChooseShape();
 
-void DoForcedTraining()
-{
-  var Builder = new TorchBrainBuilder(1, 1);
+//void DoForcedTraining()
+//{
+//  var Builder = new TorchBrainBuilder(1, 1);
 
-  var Brain = Builder.Build();
+//  var Brain = Builder.Build();
 
-  var Random = new Random();
-  var Successes = 0;
-  var Failures = 0;
-  var Exceptions = 0;
+//  var Random = new Random();
+//  var Successes = 0;
+//  var Failures = 0;
+//  var Exceptions = 0;
 
-  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
-  {
-    if (Iteration % ReportEvery == 0)
-      Report(Iteration);
+//  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
+//  {
+//    if (Iteration % ReportEvery == 0)
+//      Report(Iteration);
 
-    var Input = Random.NextSingle();
-    var Inference = Brain.MakeInference([Input]);
-    var Expected = Input > .9 ? 0f : 1f;
-    if (Inference.Result[0] - Expected > 0.01)
-    {
-      Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected])));
-      Failures++;
-    }
-    else
-    {
-      Successes++;
-    }
-  }
+//    var Input = Random.NextSingle();
+//    var Inference = Brain.MakeInference([Input]);
+//    var Expected = Input > .9 ? 0f : 1f;
+//    if (Inference.Result[0] - Expected > 0.01)
+//    {
+//      Inference.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected])));
+//      Failures++;
+//    }
+//    else
+//    {
+//      Successes++;
+//    }
+//  }
 
-  Report(TotalTrainingPasses);
+//  Report(TotalTrainingPasses);
 
-  Console.WriteLine("Done.");
-
-
-  void Report(int I)
-  {
-    Console.WriteLine(
-      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
-  }
-}
-
-void DoArea()
-{
-  var BrainBuilder = TorchBrainBuilder.For<ShapesMind.Input, ShapesMind.Output>();
-
-  var Random = new Random();
-  var Successes = 0;
-  var Failures = 0;
-  var Exceptions = 0;
-
-  var ShapesMind = new ShapesMind(BrainBuilder.Build());
-
-  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
-  {
-    var Failure = false;
-    if (Iteration % ReportEvery == 0)
-      Report(Iteration);
-
-    var Input = Random.NextSingle() * 200 - 100;
-    var T = ShapesMind.MakeSquare(Input);
+//  Console.WriteLine("Done.");
 
 
-    var Expected = Input * Input;
-    try
-    {
-      var Actual = T.ConsumeDetached();
+//  void Report(int I)
+//  {
+//    Console.WriteLine(
+//      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+//  }
+//}
+
+//void DoArea()
+//{
+//  var BrainBuilder = TorchBrainBuilder.For<ShapesMind.Input, ShapesMind.Output>();
+
+//  var Random = new Random();
+//  var Successes = 0;
+//  var Failures = 0;
+//  var Exceptions = 0;
+
+//  var ShapesMind = new ShapesMind(BrainBuilder.Build());
+
+//  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
+//  {
+//    var Failure = false;
+//    if (Iteration % ReportEvery == 0)
+//      Report(Iteration);
+
+//    var Input = Random.NextSingle() * 200 - 100;
+//    var T = ShapesMind.MakeSquare(Input);
 
 
-      if (Math.Abs(Actual.Area - Expected) > Math.Abs(Expected * .001f))
-      {
-        Failure = true;
-        Failures++;
-      }
-      else
-      {
-        Successes++;
-      }
-    }
-    catch (Exception)
-    {
-      Failure = true;
-      Failures++;
-      Exceptions++;
-    }
-
-    if (Failure)
-      T.Feedback.ResultShouldHaveBeen(new() {Area = Expected});
-  }
-
-  Report(TotalTrainingPasses);
-
-  Console.WriteLine("Done.");
-
-  void Report(int I)
-  {
-    Console.WriteLine(
-      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
-  }
-}
-
-void DoAreaRaw()
-{
-  var BrainBuilder = new TorchBrainBuilder(1, 1);
-
-  var Brain = BrainBuilder.Build();
-
-  var Random = new Random();
-  var Successes = 0;
-  var Failures = 0;
-  var Exceptions = 0;
-
-  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
-  {
-    var Failure = false;
-    if (Iteration % ReportEvery == 0)
-      Report(Iteration);
-
-    var Input = Random.NextSingle();
-
-    var Output = Brain.MakeInference([Input]);
+//    var Expected = Input * Input;
+//    try
+//    {
+//      var Actual = T.ConsumeDetached();
 
 
-    var Expected = Input * Input;
-    try
-    {
-      var Actual = Output.Result[0];
+//      if (Math.Abs(Actual.Area - Expected) > Math.Abs(Expected * .001f))
+//      {
+//        Failure = true;
+//        Failures++;
+//      }
+//      else
+//      {
+//        Successes++;
+//      }
+//    }
+//    catch (Exception)
+//    {
+//      Failure = true;
+//      Failures++;
+//      Exceptions++;
+//    }
+
+//    if (Failure)
+//      T.Feedback.ResultShouldHaveBeen(new() {Area = Expected});
+//  }
+
+//  Report(TotalTrainingPasses);
+
+//  Console.WriteLine("Done.");
+
+//  void Report(int I)
+//  {
+//    Console.WriteLine(
+//      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+//  }
+//}
+
+//void DoAreaRaw()
+//{
+//  var BrainBuilder = new TorchBrainBuilder(1, 1);
+
+//  var Brain = BrainBuilder.Build();
+
+//  var Random = new Random();
+//  var Successes = 0;
+//  var Failures = 0;
+//  var Exceptions = 0;
+
+//  foreach (var Iteration in Enumerable.Range(0, TotalTrainingPasses))
+//  {
+//    var Failure = false;
+//    if (Iteration % ReportEvery == 0)
+//      Report(Iteration);
+
+//    var Input = Random.NextSingle();
+
+//    var Output = Brain.MakeInference([Input]);
 
 
-      if (Math.Abs(Actual - Expected) > Math.Abs(Expected * .01f))
-      {
-        Failure = true;
-        Failures++;
-      }
-      else
-      {
-        Successes++;
-      }
-    }
-    catch (Exception)
-    {
-      Failure = true;
-      Failures++;
-      Exceptions++;
-    }
+//    var Expected = Input * Input;
+//    try
+//    {
+//      var Actual = Output.Result[0];
 
-    if (Failure)
-      Output.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected])));
-  }
 
-  Report(TotalTrainingPasses);
+//      if (Math.Abs(Actual - Expected) > Math.Abs(Expected * .01f))
+//      {
+//        Failure = true;
+//        Failures++;
+//      }
+//      else
+//      {
+//        Successes++;
+//      }
+//    }
+//    catch (Exception)
+//    {
+//      Failure = true;
+//      Failures++;
+//      Exceptions++;
+//    }
 
-  Console.WriteLine("Done.");
+//    if (Failure)
+//      Output.Train((0, new BinaryCrossEntropyWithLogitsLossRule([Expected])));
+//  }
 
-  void Report(int I)
-  {
-    Console.WriteLine(
-      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
-  }
-}
+//  Report(TotalTrainingPasses);
+
+//  Console.WriteLine("Done.");
+
+//  void Report(int I)
+//  {
+//    Console.WriteLine(
+//      $"{I * 100 / TotalTrainingPasses}% complete: {Successes} successes, {Failures} failures, {Exceptions} exceptions");
+//  }
+//}
 
 void DoFizzBuzz()
 {

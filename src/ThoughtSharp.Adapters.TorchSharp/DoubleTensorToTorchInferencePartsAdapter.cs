@@ -20,28 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
 using TorchSharp;
-using TorchSharp.Modules;
-using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class TorchBrainForProductionMode(
-  Module<TorchInferenceParts, TorchInferenceParts> Model,
-  torch.Device Device,
-  Func<TorchInferenceStateNode> MakeEmptyStates)
-  : TorchBrain(Model, Device, MakeEmptyStates), Brain
+public class DoubleTensorToTorchInferencePartsAdapter : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  public override Inference MakeInference(float[] Parameters)
+  readonly torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor Payload, torch.Tensor State)> Underlying;
+  readonly int OutputFeatures;
+  readonly torch.Device Device;
+
+  public DoubleTensorToTorchInferencePartsAdapter(torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor Payload, torch.Tensor State)> Underlying,
+    int OutputFeatures,
+    torch.Device Device,
+    string Name = "_unnamed") : base(Name)
   {
-    return ExecuteInference(EmptyState, Parameters);
+    this.Underlying = Underlying;
+    this.OutputFeatures = OutputFeatures;
+    this.Device = Device;
+    // ReSharper disable once VirtualMemberCallInConstructor
+    RegisterComponents();
   }
 
-  internal Inference ExecuteInference(TorchInferenceStateNode StateInput, float[] Parameters)
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var Tensors = Forward(Parameters, StateInput);
+    //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.State!.shape)}");
 
-    return new TorchInferenceForProductionMode(this, Tensors.State, Tensors.Payload);
+    var Output = Underlying.forward(Input.Payload, Input.State.State.FirstOrDefault() ?? torch.zeros(new long[] { 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
+
+    return new()
+    {
+      Payload = Output.Payload,
+      State = new(Output.State)
+    };
   }
 }

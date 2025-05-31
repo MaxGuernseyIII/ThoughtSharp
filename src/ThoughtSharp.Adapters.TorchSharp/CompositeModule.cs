@@ -20,25 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-using static TorchSharp.torch;
+using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-// ReSharper disable once UnusedMember.Global
-public class TorchBrainBuilder
+public class CompositeModule : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device>
-    ForTraining<TMind>()
-    where TMind : Mind
+  readonly torch.nn.Module<TorchInferenceParts, TorchInferenceParts> First;
+  readonly torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Second;
+
+  public CompositeModule(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> First, torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Second, string Name = "_unnamed") : base(Name)
   {
-    return new(TorchBrainFactory.Instance, TMind.InputLength, TMind.OutputLength);
+    this.First = First;
+    this.Second = Second;
+
+    // ReSharper disable once VirtualMemberCallInConstructor
+    RegisterComponents();
   }
 
-  public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device>
-    ForProduction<TMind>()
-    where TMind : Mind
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    return new(TorchBrainFactory.Instance, TMind.InputLength, TMind.OutputLength);
+    var Intermediate = First.forward(Input);
+    return Second.forward(Intermediate);
   }
 }

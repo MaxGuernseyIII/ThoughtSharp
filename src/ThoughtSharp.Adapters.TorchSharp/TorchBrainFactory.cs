@@ -27,8 +27,7 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 
 static class TorchBrainFactory
 {
-  public static TorchBrainFactory<TorchBrainForProductionMode> ForProduction => new((M,D) => new(M, D, null));
-  public static TorchBrainFactory<TorchBrainForTrainingMode> ForTraining => new((M,D) => new(M, D, null));
+  public static TorchBrainFactory<TorchBrain> Instance => new((M,D) => new(M, D));
 }
 
 class TorchBrainFactory<TTorchBrain> : BrainFactory<TTorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device>
