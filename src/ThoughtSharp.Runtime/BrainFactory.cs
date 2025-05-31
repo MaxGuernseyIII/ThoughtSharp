@@ -15,5 +15,7 @@ public interface BrainFactory<
 
   TModel CreateTanh();
   TModel CreateReLU();
+
   TDevice GetDefaultOptimumDevice();
+  TDevice GetCPUDevice();
 }

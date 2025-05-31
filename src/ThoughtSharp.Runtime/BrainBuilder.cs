@@ -28,6 +28,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 {
   readonly BrainFactory<TBrain, TModel, TDevice> Factory;
   readonly ModelConstructor Input;
+  TDevice Device { get; init; }
 
   public BrainBuilder(BrainFactory<TBrain, TModel, TDevice> Factory,
     int InputFeatures,
@@ -38,6 +39,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     this.Factory = Factory;
     Input = new VirtualConstructor(InputFeatures);
     Constructor = new AdaptOutputConstructor(Factory, new SequenceConstructor(this, new VirtualConstructor(InputFeatures)), OutputFeatures);
+    Device = this.Factory.GetDefaultOptimumDevice();
   }
 
   ModelConstructor Constructor { get; init; }
@@ -46,7 +48,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
   public TBrain Build()
   {
-    return Factory.CreateBrain(Constructor.Build(), Factory.GetDefaultOptimumDevice());
+    return Factory.CreateBrain(Constructor.Build(), Device);
   }
 
   public BrainBuilder<TBrain, TModel, TDevice> UsingSequence(
@@ -240,5 +242,10 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     Factory = this.Factory;
     InputFeatures = this.InputFeatures;
     OutputFeatures = this.OutputFeatures;
+  }
+
+  public BrainBuilder<TBrain, TModel, TDevice> UsingCPU()
+  {
+    return this with {Device = Factory.GetCPUDevice()};
   }
 }

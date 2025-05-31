@@ -61,6 +61,14 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void UsingCPU()
+  {
+    var Actual = BrainBuilder.UsingCPU().Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures, Factory.GetCPUDevice());
+  }
+
+  [TestMethod]
   public void AddLogicLayers()
   {
     var LayerCounts = AnyLayerFeatureCounts(AtLeast: 1);
@@ -246,7 +254,8 @@ public class BrainBuilding
 
     var Actual = BrainBuilder.UsingSequence(S => S.AddGRU(Features)).Build();
 
-    ShouldBeAdaptedContainerFor(Actual, Factory.CreateGRU(InputFeatures, Features), Features);
+    MockBuiltModel Expected = Factory.CreateGRU(InputFeatures, Features);
+    ShouldBeAdaptedContainerFor(Actual, Features, Expected);
   }
 
   [TestMethod]
@@ -254,7 +263,8 @@ public class BrainBuilding
   {
     var Actual = BrainBuilder.UsingSequence(S => S.AddTanh()).Build();
 
-    ShouldBeAdaptedContainerFor(Actual, Factory.CreateTanh(), InputFeatures);
+    MockBuiltModel Expected = Factory.CreateTanh();
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures, [Expected]);
   }
 
   [TestMethod]
@@ -262,19 +272,26 @@ public class BrainBuilding
   {
     var Actual = BrainBuilder.UsingSequence(S => S.AddReLU()).Build();
 
-    ShouldBeAdaptedContainerFor(Actual, Factory.CreateReLU(), InputFeatures);
+    MockBuiltModel Expected = Factory.CreateReLU();
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures, Expected);
   }
 
-  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, MockBuiltModel Expected, int Features)
+  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, params IEnumerable<MockBuiltModel> ExpectedModels)
+  {
+    ShouldBeAdaptedContainerFor(Actual, Features, Factory.GetDefaultOptimumDevice(), ExpectedModels);
+  }
+
+  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device,
+    params IEnumerable<MockBuiltModel> ExpectedModels)
   {
     Actual.Should().Be(
       Factory.CreateBrain(
         Factory.CreateSequence(
           Factory.CreateSequence(
-            Expected
+            ExpectedModels
           ),
           Factory.CreateLinear(Features, OutputFeatures)),
-        Factory.GetDefaultOptimumDevice()));
+        Device));
   }
 
   static BrainBuilder<MockBuiltBrain, MockBuiltModel, MockDevice>.SequenceConstructor
@@ -326,7 +343,7 @@ public class BrainBuilding
 
   sealed record MockCPUDevice : MockDevice;
 
-  sealed record MockGPUDevice : MockDevice;
+  sealed record MockCUDADevice : MockDevice;
 
   sealed record MockDefaultOptimalDevice : MockDevice;
 
@@ -370,6 +387,11 @@ public class BrainBuilding
     public MockDevice GetDefaultOptimumDevice()
     {
       return new MockDefaultOptimalDevice();
+    }
+
+    public MockDevice GetCPUDevice()
+    {
+      return new MockCPUDevice();
     }
 
     record MockReLU : MockBuiltModel;
@@ -424,15 +446,5 @@ public class BrainBuilding
       Assert.Fail();
       return null!;
     }
-  }
-}
-
-[TestClass]
-public static class AssemblySetup
-{
-  [AssemblyInitialize]
-  public static void Initialize(TestContext _)
-  {
-    AssertionScope.Current.FormattingOptions.MaxDepth = 100;
   }
 }
