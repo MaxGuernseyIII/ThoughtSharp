@@ -106,6 +106,38 @@ public class AccumulatedUseFeedbackTraining
     ThenStepDoesNotRequireMoreCalls(Step2);
   }
 
+  [TestMethod]
+  public void HandlesMoreStepsThanExpectedActions()
+  {
+    var Step1 = GivenStep();
+    var Step2 = GivenStep();
+    GivenStep();
+    var Parameter = Any.Int(-1000, 1000);
+
+    WhenApplyFeedbackSteps(
+      M => M.Operation1(),
+      M => M.Operation2(Parameter));
+
+    ThenStepWasOperation1Call(Step1);
+    ThenStepDoesRequireMoreCalls(Step1);
+    ThenStepWasOperation2Call(Step2, Parameter);
+    ThenStepDoesNotRequireMoreCalls(Step2);
+  }
+
+  [TestMethod]
+  public void HandlesFewerStepsThanExpectedActions()
+  {
+    var Step1 = GivenStep();
+    var Parameter = Any.Int(-1000, 1000);
+
+    WhenApplyFeedbackSteps(
+      M => M.Operation1(),
+      M => M.Operation2(Parameter));
+
+    ThenStepWasOperation1Call(Step1);
+    ThenStepDoesRequireMoreCalls(Step1);
+  }
+
   (BoxedBool RequiresMore, MockToUse ActionSurfaceMock) GivenStep()
   {
     var RequiresMore = new BoxedBool { Value = Any.Bool };
@@ -115,9 +147,9 @@ public class AccumulatedUseFeedbackTraining
     return (RequiresMore, ActionSurfaceMock);
   }
 
-  void WhenApplyFeedbackSteps(params IEnumerable<Action<MockToUse>> IEnumerable)
+  void WhenApplyFeedbackSteps(params IEnumerable<Action<MockToUse>> Actions)
   {
-    Source.CreateFeedback().UseShouldHaveBeen(IEnumerable);
+    Source.CreateFeedback().UseShouldHaveBeen(Actions);
   }
 
   static void ThenFeedbackWasNoCalls((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)

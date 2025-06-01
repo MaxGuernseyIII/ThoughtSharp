@@ -48,35 +48,37 @@ public class AccumulatedUseFeedbackConfigurator<T>
   }
 }
 
-public class AccumulatedUseFeedback<T>(ImmutableArray<UseFeedback<T>> Steps)
+public sealed record AccumulatedUseFeedback<T>(ImmutableArray<UseFeedback<T>> Steps)
 {
   public void UseShouldHaveBeen(params IEnumerable<Action<T>> Actions)
   {
     if (!Actions.Any())
-    {
-      Steps.First().ExpectationsWere((_, More) => More.Value = false);
-      return;
-    }
+      Actions = [delegate { }];
 
-    Action<T>[] ActionsArray = [..Actions];
+    var ActionsArray = Actions.ToImmutableArray();
 
-    var PrecedingSteps = Steps[..^1];
-    var Index = 0;
-    foreach (var PrecedingStep in PrecedingSteps)
+    (Action<T> Action, bool RequiresMore)[] Expectations = [.. ActionsArray[..^1].Select(A => (A, true)), (ActionsArray[^1], false)];
+    ImmutableArray<(UseFeedback<T> Feedback, (Action<T> Action, bool IstLast))> Assertions = [..Steps.Zip(Expectations)];
+
+    foreach (var (Feedback, (Action, RequiresMore)) in Assertions)
     {
-      var ThisIndex = Index;
-      PrecedingStep.ExpectationsWere((M, More) =>
+      Feedback.ExpectationsWere((Surface, More) =>
       {
-        ActionsArray[ThisIndex](M);
-        More.Value = true;
+        Action(Surface);
+        More.Value = RequiresMore;
       });
-      Index++;
     }
-    var FinalStep = Steps[^1];
-    FinalStep.ExpectationsWere((M, More) =>
-    {
-      ActionsArray[Index](M);
-      More.Value = false;
-    });
+  }
+
+  public bool Equals(AccumulatedUseFeedback<T>? Other)
+  {
+    if (Other is null) return false;
+    if (ReferenceEquals(this, Other)) return true;
+    return Steps.SequenceEqual(Other.Steps);
+  }
+
+  public override int GetHashCode()
+  {
+    return Steps.GetHashCode();
   }
 }
