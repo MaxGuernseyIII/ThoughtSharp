@@ -32,14 +32,20 @@ public class AccumulatedUseFeedbackGeneration
 {
   Queue<UseFeedback<MockSurface>> Steps = null!;
   MockMind Mind = null!;
+  MockMind ChainedMind = null!;
   List<MockMind> UsedMinds = null!;
 
   [TestInitialize]
   public void SetUp()
   {
+    ChainedMind = new();
     Mind = new()
     {
-      Chained = new()
+      GetNextChainedReasoningMind = () =>
+      {
+        Mind.GetNextChainedReasoningMind = () => new();
+        return ChainedMind;
+      }
     };
     Steps = new();
     UsedMinds = [];
@@ -52,7 +58,7 @@ public class AccumulatedUseFeedbackGeneration
 
     WhenUse();
 
-    UsedMinds.Should().AllSatisfy(M => M.Should().BeSameAs(Mind.Chained));
+    UsedMinds.Should().AllSatisfy(M => M.Should().BeSameAs(ChainedMind));
   }
 
   [TestMethod]

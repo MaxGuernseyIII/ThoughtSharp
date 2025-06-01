@@ -26,11 +26,11 @@ namespace Tests.Mocks;
 
 class MockMind : MockDisposable, Mind<MockMind>
 {
-  public MockMind? Chained;
+  public Func<MockMind> GetNextChainedReasoningMind = () => new();
 
   public MockMind WithChainedReasoning()
   {
-    return Chained!;
+    return GetNextChainedReasoningMind();
   }
 
   public static int InputLength => throw new NotImplementedException();
