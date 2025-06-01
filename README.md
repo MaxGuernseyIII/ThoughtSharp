@@ -153,7 +153,13 @@ T.Feedback.ResultShouldHaveBeen(new() {Area = Expected});
 # Current State
 
 This framework is in development. I haven't even published it on NuGet, yet. The interface might change radically
-between now and when I do. I am currently mostly working on building the hybrid testing-training infrastructure.
+between now and when I do.
+
+The following major changes are **definitely** going to happen:
+ * A major overhaul of the thought/reasoning/feedback structure, which is currently not as connected and automatic
+   as I'd like.
+ * A restructuring of how continous lines of reasoning (inferences based on other inferences) are managed.
+ * Creation of of the training apparatus, and probably major revision thereof at least once.
 
 # Licensing
 
