@@ -81,12 +81,16 @@ partial class FizzBuzzMind
 Building the network is also something that has been abstracted to the point of being a little easier:
 
 ```CSharp
-  var BrainBuilder = TorchBrainBuilder.ForTraining<FizzBuzzMind>()
-    .UsingParallel(P => P
-      .AddLogicPath(16, 4, 8)
-      .AddPath(S => S));
+var BrainBuilder = TorchBrainBuilder.ForTraining<FizzBuzzMind>()
+  .UsingSequence(Outer =>
+    Outer
+      .AddGRU(128)
+      .AddParallel(P => P
+        .AddLogicPath(16, 4, 8)
+        .AddPath(S => S))
+  );
 
-  var Mind = new FizzBuzzMind(BrainBuilder.Build());
+var Mind = new FizzBuzzMind(BrainBuilder.Build());
 ```
 
 Once you have an instance of the appropriate `Mind`, and you've wrapped it in whatever hybrid logic class(es)
@@ -94,7 +98,7 @@ you need, you can invoke it to get both the product (which I suppose ML experts 
 object that can be used to train the network.
 
 ```CSharp
-    var T = HybridReasoning.WriteForOneNumber(Terminal, (byte) Input);
+var T = HybridReasoning.WriteForOneNumber(Terminal, (byte) Input);
 ```
 
 In the above example, `T` is an instance of type `Thought<List<UseFeedback<FizzBuzzTerminal>>>`. That is "a
@@ -106,16 +110,10 @@ how to use the `FizzBuzzTerminal` it was given. Those feedback objects can be us
 network. For instance, for the number `15`, you would tell the network this:
 
 ```
-T.Feedback.First().ExpectationsWere((Mock, More) =>
-{
-  Mock.Fizz();
-  More.Value = true;
-});
-T.Feedback.ElementAtOrDefault(1)?.ExpectationsWere((Mock, More) =>
-{
-  Mock.Buzz();
-  More.Value = false;
-});
+// Tell it what calls should have been made, and in what order
+T.Feedback.UseShouldHaveBeen(
+  M => M.Fizz(),
+  M => M.Buzz());
 ```
 
 In other words, the first call to the `use` operation should have called `Fizz()` and requested another call. The
