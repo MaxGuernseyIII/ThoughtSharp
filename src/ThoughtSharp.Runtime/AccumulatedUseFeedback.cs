@@ -53,12 +53,30 @@ public class AccumulatedUseFeedback<T>(ImmutableArray<UseFeedback<T>> Steps)
   public void UseShouldHaveBeen(params IEnumerable<Action<T>> Actions)
   {
     if (!Actions.Any())
+    {
       Steps.First().ExpectationsWere((_, More) => More.Value = false);
-    else
-      Steps.First().ExpectationsWere((M, More) =>
+      return;
+    }
+
+    Action<T>[] ActionsArray = [..Actions];
+
+    var PrecedingSteps = Steps[..^1];
+    var Index = 0;
+    foreach (var PrecedingStep in PrecedingSteps)
+    {
+      var ThisIndex = Index;
+      PrecedingStep.ExpectationsWere((M, More) =>
       {
-        Actions.First()(M);
-        More.Value = false;
+        ActionsArray[ThisIndex](M);
+        More.Value = true;
       });
+      Index++;
+    }
+    var FinalStep = Steps[^1];
+    FinalStep.ExpectationsWere((M, More) =>
+    {
+      ActionsArray[Index](M);
+      More.Value = false;
+    });
   }
 }

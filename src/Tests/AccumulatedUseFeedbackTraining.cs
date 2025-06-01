@@ -77,6 +77,35 @@ public class AccumulatedUseFeedbackTraining
     ThenStepDoesNotRequireMoreCalls(Step);
   }
 
+  [TestMethod]
+  public void HandlesOneCallWithParameters()
+  {
+    var Step = GivenStep();
+    var Parameter = Any.Int(-1000, 1000);
+
+    WhenApplyFeedbackSteps(M => M.Operation2(Parameter));
+
+    ThenStepWasOperation2Call(Step, Parameter);
+    ThenStepDoesNotRequireMoreCalls(Step);
+  }
+
+  [TestMethod]
+  public void HandlesMultipleCalls()
+  {
+    var Step1 = GivenStep();
+    var Step2 = GivenStep();
+    var Parameter = Any.Int(-1000, 1000);
+
+    WhenApplyFeedbackSteps(
+      M => M.Operation1(),
+      M => M.Operation2(Parameter));
+
+    ThenStepWasOperation1Call(Step1);
+    ThenStepDoesRequireMoreCalls(Step1);
+    ThenStepWasOperation2Call(Step2, Parameter);
+    ThenStepDoesNotRequireMoreCalls(Step2);
+  }
+
   (BoxedBool RequiresMore, MockToUse ActionSurfaceMock) GivenStep()
   {
     var RequiresMore = new BoxedBool { Value = Any.Bool };
@@ -98,14 +127,26 @@ public class AccumulatedUseFeedbackTraining
     Step.RequiresMore.Value.Should().Be(false);
   }
 
+  static void ThenStepWasOperation1Call((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)
+  {
+    Step.ActionSurfaceMock.Operation1CallCount.Should().Be(1);
+    Step.ActionSurfaceMock.Operation2CallCount.Should().Be(0);
+  }
+
+  static void ThenStepWasOperation2Call((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step, int Parameter)
+  {
+    Step.ActionSurfaceMock.Operation1CallCount.Should().Be(0);
+    Step.ActionSurfaceMock.Operation2CallCount.Should().Be(1);
+    Step.ActionSurfaceMock.Operation2SomeArgument.Should().Be(Parameter);
+  }
+
   static void ThenStepDoesNotRequireMoreCalls((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)
   {
     Step.RequiresMore.Value.Should().Be(false);
   }
 
-  static void ThenStepWasOperation1Call((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)
+  static void ThenStepDoesRequireMoreCalls((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)
   {
-    Step.ActionSurfaceMock.Operation1CallCount.Should().Be(1);
-    Step.ActionSurfaceMock.Operation2CallCount.Should().Be(0);
+    Step.RequiresMore.Value.Should().Be(true);
   }
 }
