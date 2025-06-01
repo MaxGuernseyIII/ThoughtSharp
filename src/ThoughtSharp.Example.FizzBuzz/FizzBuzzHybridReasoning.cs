@@ -41,23 +41,10 @@ class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
     });
   }
 
-  public Thought<List<UseFeedback<FizzBuzzTerminal>>> WriteForOneNumber(FizzBuzzTerminal Terminal, byte Input)
+  public Thought<AccumulatedUseFeedback<FizzBuzzTerminal>> WriteForOneNumber(FizzBuzzTerminal Terminal, byte Input)
   {
-    return Thought.Do(R =>
-    {
-      var Feedback = new List<UseFeedback<FizzBuzzTerminal>>();
-      using var Chaining = Mind.EnterChainedReasoning();
+    using var Chaining = Mind.EnterChainedReasoning();
 
-      foreach (var _ in Enumerable.Range(0, 5))
-      {
-        var Thought = Mind.WriteForNumber(Terminal, new() { Value = Input});
-        Feedback.Add(Thought.Feedback);
-        
-        if (!R.Consume(Thought))
-          break;
-      }
-
-      return Feedback;
-    });
+    return Thought.Use(() => Mind.WriteForNumber(Terminal, new() {Value = Input}));
   }
 }

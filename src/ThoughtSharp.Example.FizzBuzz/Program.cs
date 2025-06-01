@@ -27,7 +27,6 @@ using System.Numerics;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Example.FizzBuzz;
 using ThoughtSharp.Runtime;
-using System.Drawing;
 using System.Drawing.Imaging;
 using static Disposition;
 
@@ -38,6 +37,7 @@ const int TotalTrainingPasses = 1000000;
 const int ReportEvery = 1000;
 
 DoFizzBuzz();
+//DoChooseShape();
 
 //void DoForcedTraining()
 //{
@@ -306,37 +306,21 @@ void DoFizzBuzz()
     switch (Expected)
     {
       case Fizz:
-        T.Feedback.First().ExpectationsWere((Mock, More) =>
-        {
-          Mock.Fizz();
-          More.Value = false;
-        });
+        T.Feedback.UseShouldHaveBeen(
+          M => M.Fizz());
         break;
       case Buzz:
-        T.Feedback.First().ExpectationsWere((Mock, More) =>
-        {
-          Mock.Buzz();
-          More.Value = false;
-        });
+        T.Feedback.UseShouldHaveBeen(
+          M => M.Buzz());
         break;
       case FizzBuzz:
-        T.Feedback.First().ExpectationsWere((Mock, More) =>
-        {
-          Mock.Fizz();
-          More.Value = true;
-        });
-        T.Feedback.ElementAtOrDefault(1)?.ExpectationsWere((Mock, More) =>
-        {
-          Mock.Buzz();
-          More.Value = false;
-        });
+        T.Feedback.UseShouldHaveBeen(
+          M => M.Fizz(),
+          M => M.Buzz());
         break;
       default:
-        T.Feedback.First().ExpectationsWere((Mock, More) =>
-        {
-          Mock.WriteNumber((byte) Input);
-          More.Value = false;
-        });
+        T.Feedback.UseShouldHaveBeen(
+          M => M.WriteNumber((byte)Input));
         break;
     }
   }
