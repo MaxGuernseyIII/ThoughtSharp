@@ -52,7 +52,8 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateSequence(params IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children)
   {
-    return Children.Skip(1).Aggregate(Children.First(), (Current1, Module) => new CompositeModule(Current1, Module));
+    torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Initial = new FullPassThroughModule();
+    return Children.Aggregate(Initial, (Current1, Module) => new CompositeModule(Current1, Module));
   }
 
   public TorchBrain CreateBrain(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Model, torch.Device Device)

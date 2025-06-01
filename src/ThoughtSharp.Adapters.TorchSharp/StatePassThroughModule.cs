@@ -40,3 +40,12 @@ public sealed class StatePassThroughModule : torch.nn.Module<TorchInferenceParts
     return Input with {Payload = Transformer.forward(Input.Payload)};
   }
 }
+
+public sealed class FullPassThroughModule(string Name = "_unnamed")
+  : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
+{
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    return Input;
+  }
+}
