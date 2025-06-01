@@ -64,4 +64,21 @@ public class AccumulatedUseFeedbackTraining
     ActionSurfaceMock.Operation2CallCount.Should().Be(0);
     RequiresMore.Value.Should().Be(false);
   }
+
+  [TestMethod]
+  public void HandlesOneCallWithoutParameters()
+  {
+    var RequiresMore = new BoxedBool() { Value = true };
+    var Source = GetSource<MockToUse>();
+    var ActionSurfaceMock = new MockToUse();
+    var OperationFeedback = new UseFeedback<MockToUse>(ActionSurfaceMock, B => RequiresMore.Value = B);
+    Source.Configurator.AddStep(OperationFeedback);
+    var Feedback = Source.CreateFeedback();
+
+    Feedback.UseShouldHaveBeen(M => M.Operation1());
+
+    ActionSurfaceMock.Operation1CallCount.Should().Be(1);
+    ActionSurfaceMock.Operation2CallCount.Should().Be(0);
+    RequiresMore.Value.Should().Be(false);
+  }
 }
