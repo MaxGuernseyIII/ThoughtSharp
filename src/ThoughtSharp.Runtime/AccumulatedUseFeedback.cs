@@ -33,22 +33,7 @@ public static class AccumulatedUseFeedback
   }
 }
 
-public class AccumulatedUseFeedbackConfigurator<T>
-{
-  readonly List<UseFeedback<T>> Steps = [];
-
-  public AccumulatedUseFeedback<T> CreateFeedback()
-  {
-    return new([..Steps]);
-  }
-
-  public void AddStep(UseFeedback<T> Step)
-  {
-    Steps.Add(Step);
-  }
-}
-
-public sealed record AccumulatedUseFeedback<T>(ImmutableArray<UseFeedback<T>> Steps)
+public sealed record AccumulatedUseFeedback<T>(params ImmutableArray<UseFeedback<T>> Steps)
 {
   public void UseShouldHaveBeen(params IEnumerable<Action<T>> Actions)
   {
