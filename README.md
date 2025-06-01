@@ -155,6 +155,10 @@ T.Feedback.ResultShouldHaveBeen(new() {Area = Expected});
 This framework is in development. I haven't even published it on NuGet, yet. The interface might change radically
 between now and when I do. I am currently mostly working on building the hybrid testing-training infrastructure.
 
+# Licensing
+
+ThoughtSharp is offered under the [MIT License](LICENSE.txt).
+
 # Where it Came From
 
 ThoughtSharp was born from, literally, a dream. As I was drifting off to sleep, one night,
