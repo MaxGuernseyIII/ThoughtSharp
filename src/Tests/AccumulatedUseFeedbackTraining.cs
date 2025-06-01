@@ -54,7 +54,6 @@ public class AccumulatedUseFeedbackTraining
   public void SetUp()
   {
     Source = GetSource<MockToUse>();
-
   }
 
   [TestMethod]
