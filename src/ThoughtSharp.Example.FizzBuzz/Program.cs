@@ -22,10 +22,13 @@
 
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Drawing;
 using System.Numerics;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Example.FizzBuzz;
 using ThoughtSharp.Runtime;
+using System.Drawing;
+using System.Drawing.Imaging;
 using static Disposition;
 
 Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal;
@@ -206,7 +209,6 @@ void DoFizzBuzz()
 
   var Mind = new FizzBuzzMind(BrainBuilder.Build());
   var HybridReasoning = new FizzBuzzHybridReasoning(Mind);
-  var Random = new Random();
   var Successes = 0;
   var Failures = 0;
   var Exceptions = 0;
@@ -448,6 +450,12 @@ void MindfulComparisonCheck()
 
 void DoChooseShape()
 {
+  //foreach (var I in Enumerable.Range(0, 10))
+  //{
+  //  ShapeRenderer.RenderShapeToImage(new Shape() { Points = [..Geometry.PrepareForUseInTraining(Geometry.MakeCircle())] }.Normalize(), $"shape{I}.png", closeShape: false);
+  //}
+  //throw new ApplicationException("Generated.");
+
   var BrainBuilder = TorchBrainBuilder.ForTraining<ShapeClassifyingMind>().UsingParallel(P => P.AddLogicPath(4, 2).AddMathPath(4, 2));
   var Brain = BrainBuilder.Build();
 
@@ -633,6 +641,8 @@ void DoChooseShape()
     [ShapeType.Rectangle, ShapeType.Circle],
     [ShapeType.Star, ShapeType.Plus],
     [ShapeType.Arc, ShapeType.Circle],
+    [ShapeType.Irregular, ShapeType.Circle],
+    [ShapeType.Irregular, ShapeType.Plus],
     [..OptionsMap.Keys.Except([ShapeType.Irregular])],
     [..OptionsMap.Keys]
   ];
@@ -669,16 +679,17 @@ void DoChooseShape()
   var Failures = 0;
   var Exceptions = 0;
 
-  var FailureDictionary = new Dictionary<ShapeType, int>();
+  var FailureDictionary = new Dictionary<(ShapeType, Type), int>();
 
-  void RecordFailure(ShapeType ForType)
+  void RecordFailure(ShapeType ForType, Type Found)
   {
-    if (!FailureDictionary.TryGetValue(ForType, out var Value))
-      FailureDictionary[ForType] = Value = 0;
+    var Key = (ForType, Found);
+    if (!FailureDictionary.TryGetValue(Key, out var Value))
+      FailureDictionary[Key] = Value = 0;
 
     Value += 1;
 
-    FailureDictionary[ForType] = Value;
+    FailureDictionary[Key] = Value;
   }
 
 
@@ -719,7 +730,7 @@ void DoChooseShape()
         Points = Geometry.PrepareForUseInTraining(OptionsMap[ThisTrialShapeType].MakeShapePoints()).ToArray()
         //Points = Geometry.GetSimplified(OptionsMap[ThisTrialShapeType].MakeShapePoints()).ToArray()
       };
-
+      
       var T = Mind.ChooseHandlerFor(Shape.Normalize(), Category);
 
       var Expected = OptionsMap[ThisTrialShapeType].Option.Payload;
@@ -732,6 +743,8 @@ void DoChooseShape()
           Failure = true;
           Failures++;
         }
+        if (Failure)
+          RecordFailure(ThisTrialShapeType, Actual.GetType());
       }
       catch (Exception Ex)
       {
@@ -745,8 +758,6 @@ void DoChooseShape()
       T.Feedback.SelectionShouldHaveBeen(Expected);
 
       RecordSuccess(!Failure);
-      if (Failure)
-        RecordFailure(ThisTrialShapeType);
 
       if (RecentSample.Count >= CourseConfidenceSampleCount && RecentSampleSuccessRate() >= CourseConfidenceThreshold)
       {
@@ -765,8 +776,8 @@ void DoChooseShape()
         Console.WriteLine($"    Exceptions:       {Exceptions}");
         Console.WriteLine($"    Recent Successes: {RecentSampleSuccessRate()} out of {CourseConfidenceSampleCount}");
         Console.WriteLine("    Batch Failures:");
-        foreach (var (Type, FailureCount) in FailureDictionary)
-          Console.WriteLine($"        {$"{Type}:",-12}{FailureCount}");
+        foreach (var ((Type, Actual), FailureCount) in FailureDictionary.OrderByDescending(Pair => Pair.Value))
+          Console.WriteLine($"        {$"{Type}->{Actual.Name}:",-12}{FailureCount}");
         FailureDictionary.Clear();
         Save();
         Console.WriteLine();
@@ -1027,7 +1038,7 @@ static class Geometry
 
   public static IEnumerable<Point> PrepareForUseInTraining(IEnumerable<Point> Points)
   {
-    return NormalizePointsArraySize(Transform(AddNoise(Points, 0.05f), RandomTransform));
+    return NormalizePointsArraySize(Transform(AddNoise(Points, 0.01f), RandomTransform));
   }
 
   static IEnumerable<Point> NormalizePointsArraySize(IEnumerable<Point> Noisy2)
@@ -1061,8 +1072,9 @@ static class Geometry
   public static List<Point> MakeIrregular()
   {
     const int MinPoints = 3;
-    const int MaxPoints = 8;
-    const float NoiseStrength = 0.3f;
+    const int MaxPoints = 9;
+    const float NoiseStrength = 0.5f;
+    const float MinimumNoise = 0.1f;
     var VerticesCount = Random.Next(MinPoints, MaxPoints + 1);
 
     var BaseRadius = 0.5f;
@@ -1074,9 +1086,10 @@ static class Geometry
 
     Vector2 GetVertex(int Index)
     {
-      var Angle = Index * VertexBaseStep * (.9f + Random.NextSingle() * .2f);
+      var Angle = Index * VertexBaseStep + VertexBaseStep * (.9f + Random.NextSingle() * .2f);
       var Direction = new Vector2(MathF.Cos(Angle), MathF.Sin(Angle));
-      var Noise = (Random.NextSingle() - 0.5f) * NoiseStrength;
+      var RawNoise = Random.NextSingle() - 0.5f;
+      var Noise = RawNoise * NoiseStrength + MathF.Sign(RawNoise) * MinimumNoise;
       var Radius = BaseRadius + Noise;
       return Center + Direction * Radius;
     }
@@ -1088,11 +1101,11 @@ static class Geometry
     {
       var ThisVertex = GetVertex(I);
 
-      Points.AddRange(MakeLine(LastVertex, ThisVertex, Random.Next(4,5)+ 1, true));
+      Points.AddRange(MakeLine(LastVertex, ThisVertex, Random.Next(3,7), true));
       LastVertex = ThisVertex;
     }
 
-    Points.AddRange(MakeLine(LastVertex, FirstVertex, Random.Next(4,5) + 1, true));
+    Points.AddRange(MakeLine(LastVertex, FirstVertex, Random.Next(3,7), true));
 
     return Points;
   }
@@ -1105,7 +1118,7 @@ static class Geometry
     Result.AddRange(MakeLine(new(0, 0), new(AspectRatio, 0), LinePartCount, true));
     Result.AddRange(MakeLine(new(AspectRatio, 0), new(AspectRatio, 1), LinePartCount, true));
     Result.AddRange(MakeLine(new(AspectRatio, 1), new(0, 1), LinePartCount, true));
-    Result.AddRange(MakeLine(new(0, 1), new(0, 1), LinePartCount, true));
+    Result.AddRange(MakeLine(new(0, 1), new(0, 0), LinePartCount, true));
 
     return Result;
   }
@@ -1164,14 +1177,14 @@ static class Geometry
 
   public static List<Point> MakeArc()
   {
-    var Length = RandomRadians * .75f;
-    var StartAngleRadians = RandomRadians;
-    return MakeArc(StartAngleRadians, StartAngleRadians + Length, 5 + Random.Next(10), false);
+    var MinLength = .25f;
+    var Length = MinLength + RandomRadians * (.5f - MinLength);
+    return MakeArc(0, Length, Random.Next(20, 50), false);
   }
 
   public static List<Point> MakeCircle()
   {
-    return MakeArc(0f, MathF.PI * 2, 10 + Random.Next(10), true);
+    return MakeArc(0f, MathF.PI * 2, Random.Next(Shape.PointCount / 2, Shape.PointCount), true);
   }
 
   static List<Point> MakeArc(float StartAngleRadians, float EndAngleRadians, int SampleCount, bool SkipFirst)
@@ -1195,5 +1208,55 @@ static class Geometry
   public static IEnumerable<Point> GetSimplified(IEnumerable<Point> MakeShapePoints)
   {
     return NormalizePointsArraySize(MakeShapePoints);
+  }
+}
+
+static class ShapeRenderer
+{
+  public static void RenderShapeToImage(Shape shape, string outputPath, int imageSize = 256, bool closeShape = true)
+  {
+    using var bmp = new Bitmap(imageSize, imageSize);
+    using var gfx = Graphics.FromImage(bmp);
+    gfx.Clear(Color.White);
+
+    using var hotPen = new Pen(Color.Black, 2);
+    using var hotPen2 = new Pen(Color.DarkGray, 4);
+    using var coldPen = new Pen(Color.LightGray, 1);
+
+    var hotPoints = shape.Points.Where(p => p.IsHot).ToArray();
+    var coldPoints = shape.Points.Where(p => !p.IsHot).ToArray();
+
+    // Draw hot-point lines
+    for (int i = 0; i < hotPoints.Length - 1; i++)
+    {
+      var p1 = ToPixel(hotPoints[i], imageSize);
+      var p2 = ToPixel(hotPoints[i + 1], imageSize);
+      gfx.DrawLine(i %2 == 0 ? hotPen : hotPen2, p1, p2);
+    }
+
+    // Optionally close the shape
+    if (closeShape && hotPoints.Length > 2)
+    {
+      var first = ToPixel(hotPoints[0], imageSize);
+      var last = ToPixel(hotPoints[^1], imageSize);
+      gfx.DrawLine(hotPen, last, first);
+    }
+
+    // Optionally draw cold points
+    foreach (var point in coldPoints)
+    {
+      var pixel = ToPixel(point, imageSize);
+      gfx.DrawEllipse(coldPen, pixel.X - 1, pixel.Y - 1, 2, 2);
+    }
+
+    bmp.Save(outputPath, ImageFormat.Png);
+  }
+
+  static PointF ToPixel(Point p, int imageSize)
+  {
+    return new PointF(
+      p.X * imageSize *.9f + imageSize * .05f,
+      (1f - p.Y) * imageSize * .9f + imageSize * .05f // invert Y-axis for top-down image
+    );
   }
 }

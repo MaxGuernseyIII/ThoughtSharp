@@ -120,7 +120,6 @@ public static partial class FizzBuzzScenarios
           byte.MinValue, byte.MaxValue, new RoundingCodec<float>(new CopyFloatCodec())));
   }
 
-
   [Mind]
   public partial class FizzBuzzMind
   {
