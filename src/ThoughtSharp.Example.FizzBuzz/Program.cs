@@ -37,7 +37,7 @@ Console.WriteLine("Training...");
 const int TotalTrainingPasses = 1000000;
 const int ReportEvery = 1000;
 
-DoChooseShape();
+DoFizzBuzz();
 
 //void DoForcedTraining()
 //{
@@ -203,9 +203,13 @@ DoChooseShape();
 void DoFizzBuzz()
 {
   var BrainBuilder = TorchBrainBuilder.ForTraining<FizzBuzzMind>()
-    .UsingParallel(P => P
-      .AddLogicPath(16, 4, 8)
-      .AddPath(S => S));
+    .UsingSequence(Outer =>
+      Outer
+        .AddGRU(128)
+        .AddParallel(P => P
+          .AddLogicPath(16, 4, 8)
+          .AddPath(S => S))
+    );
 
   var Mind = new FizzBuzzMind(BrainBuilder.Build());
   var HybridReasoning = new FizzBuzzHybridReasoning(Mind);

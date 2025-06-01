@@ -43,14 +43,16 @@ public sealed class ParallelModule : torch.nn.Module<TorchInferenceParts, TorchI
     var LeftOutput = Left.forward(Input with { State = Input.State.Left! });
     var RightOutput = Right.forward(Input with{ State = Input.State.Right! });
 
-    return new()
+    var Result = new TorchInferenceParts()
     {
       Payload = torch.cat([LeftOutput.Payload, RightOutput.Payload], 1),
-      State = new(null)
+      State = Input.State with
       {
         Left = LeftOutput.State,
         Right = RightOutput.State
       }
     };
+
+    return Result;
   }
 }

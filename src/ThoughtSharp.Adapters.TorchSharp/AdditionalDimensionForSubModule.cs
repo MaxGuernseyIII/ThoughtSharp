@@ -41,6 +41,8 @@ public sealed class AdditionalDimensionForSubModule : torch.nn.Module<TorchInfer
     var NewInput = Input.UnSqueeze();
     var Next = Underlying.forward(NewInput);
 
-    return Next.Squeeze();
+    var Result = Next.Squeeze();
+
+    return Result;
   }
 }

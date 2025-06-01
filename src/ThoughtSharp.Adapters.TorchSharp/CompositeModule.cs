@@ -41,6 +41,7 @@ public class CompositeModule : torch.nn.Module<TorchInferenceParts, TorchInferen
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
     var Intermediate = First.forward(Input);
-    return Second.forward(Intermediate);
+    var Result = Second.forward(Intermediate);
+    return Result;
   }
 }

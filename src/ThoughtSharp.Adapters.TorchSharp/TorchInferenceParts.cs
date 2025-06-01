@@ -40,10 +40,12 @@ public record TorchInferenceParts
 
   public TorchInferenceParts Squeeze()
   {
-    return new()
+    var Result = new TorchInferenceParts()
     {
       Payload = Payload.squeeze(0),
       State = State.Squeeze()
     };
+
+    return Result;
   }
 }

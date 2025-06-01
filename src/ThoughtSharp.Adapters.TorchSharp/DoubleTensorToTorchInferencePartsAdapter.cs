@@ -46,7 +46,7 @@ public class DoubleTensorToTorchInferencePartsAdapter : torch.nn.Module<TorchInf
   {
     //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.State!.shape)}");
 
-    var Output = Underlying.forward(Input.Payload, Input.State.State.FirstOrDefault() ?? torch.zeros(new long[] { 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
+    var Output = Underlying.forward(Input.Payload, Input.State.State.FirstOrDefault() ?? torch.zeros(new long[] { 1, 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
 
     return new()
     {
