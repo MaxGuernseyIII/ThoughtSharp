@@ -20,29 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Example.FizzBuzz;
-
-class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
+public static class MindExtensions
 {
-  public Thought<string, NullFeedback> DoFizzBuzz(
-    byte Start,
-    byte End)
+  public static Thought<AccumulatedUseFeedback<TSurface>> Use<TMind, TSurface>(
+    this TMind Mind,
+    Func<TMind, Thought<bool, UseFeedback<TSurface>>> Action, Thought.UseConfiguration? Configuration = null)
+    where TMind : Mind<TMind>
   {
-    return Thought.WithoutFeedback.Think(R =>
-    {
-      var Terminal = new StringBuilderFizzBuzzTerminal();
+    var ChainedMind = Mind.WithChainedReasoning();
+    var EffectiveConfiguration = Configuration ?? new();
 
-      foreach (var I in Enumerable.Range(Start, End - Start + 1))
-        R.Incorporate(WriteForOneNumber(Terminal, (byte) I));
+    return Thought.Think(R =>
+      ThoughtResult.WithFeedbackSource(AccumulatedUseFeedback.GetSource<TSurface>()).FromLogic(A =>
+      {
+        foreach (var _ in Enumerable.Range(0, EffectiveConfiguration.MaxTrials))
+        {
+          var T = Action(ChainedMind);
+          A.AddStep(T.Feedback);
+          var MoreRequested = R.Consume(T);
+          if (!MoreRequested)
+            break;
+        }
 
-      return Terminal.Content.ToString();
-    });
-  }
-
-  public Thought<AccumulatedUseFeedback<FizzBuzzTerminal>> WriteForOneNumber(FizzBuzzTerminal Terminal, byte Input)
-  {
-    return Mind.Use(_ => Mind.WriteForNumber(Terminal, new() {Value = Input}));
+        return (object?) null;
+      }));
   }
 }

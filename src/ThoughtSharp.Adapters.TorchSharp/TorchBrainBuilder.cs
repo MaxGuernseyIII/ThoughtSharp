@@ -30,14 +30,14 @@ public class TorchBrainBuilder
 {
   public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device>
     ForTraining<TMind>()
-    where TMind : Mind
+    where TMind : Mind<TMind>
   {
     return new(TorchBrainFactory.Instance, TMind.InputLength, TMind.OutputLength);
   }
 
   public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device>
     ForProduction<TMind>()
-    where TMind : Mind
+    where TMind : Mind<TMind>
   {
     return new(TorchBrainFactory.Instance, TMind.InputLength, TMind.OutputLength);
   }

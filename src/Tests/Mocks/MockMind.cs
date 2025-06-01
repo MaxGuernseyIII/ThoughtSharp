@@ -24,8 +24,15 @@ using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-class MockMind : MockDisposable, Mind
+class MockMind : MockDisposable, Mind<MockMind>
 {
+  public MockMind? Chained;
+
+  public MockMind WithChainedReasoning()
+  {
+    return Chained!;
+  }
+
   public static int InputLength => throw new NotImplementedException();
 
   public static int OutputLength => throw new NotImplementedException();

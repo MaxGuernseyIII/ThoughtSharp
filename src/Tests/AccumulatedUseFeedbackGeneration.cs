@@ -22,6 +22,7 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
+using Tests.Mocks;
 using ThoughtSharp.Runtime;
 
 namespace Tests;
@@ -30,14 +31,30 @@ namespace Tests;
 public class AccumulatedUseFeedbackGeneration
 {
   Queue<UseFeedback<MockSurface>> Steps = null!;
+  MockMind Mind = null!;
+  List<MockMind> UsedMinds = null!;
 
   [TestInitialize]
   public void SetUp()
   {
+    Mind = new()
+    {
+      Chained = new()
+    };
     Steps = new();
+    UsedMinds = [];
   }
 
-  [Timeout(100)]
+  [TestMethod]
+  public void UsesChainedMind()
+  {
+    GivenStep();
+
+    WhenUse();
+
+    UsedMinds.Should().AllSatisfy(M => M.Should().BeSameAs(Mind.Chained));
+  }
+
   [TestMethod]
   public void SingleOperation()
   {
@@ -89,8 +106,9 @@ public class AccumulatedUseFeedbackGeneration
 
   Thought<AccumulatedUseFeedback<MockSurface>> WhenUse(Thought.UseConfiguration? UseConfiguration = null)
   {
-    return Thought.Use(() =>
+    return Mind.Use(M =>
     {
+      UsedMinds.Add(M);
       var ThisStep = Steps.Dequeue();
       return Thought.Capture(Steps.Any(), ThisStep);
     }, UseConfiguration);

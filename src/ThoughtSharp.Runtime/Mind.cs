@@ -22,8 +22,11 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface Mind : IDisposable
+public interface Mind<out T>
+  where T : Mind<T>
 {
+  T WithChainedReasoning();
+
   public static abstract int InputLength { get; }
   public static abstract int OutputLength { get; } 
 }

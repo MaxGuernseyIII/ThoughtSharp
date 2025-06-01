@@ -35,52 +35,42 @@ static class MindRenderer
         W.WriteLine("using ThoughtSharp.Runtime;");
         W.WriteLine();
       },
-      WriteAfterTypeName = W => { W.Write("(Brain Brain) : Mind"); },
+      WriteAfterTypeName = W => { W.Write($" : Mind<{M.TypeName.FullName}>"); },
       WriteBody = W =>
       {
         ushort OperationCode = 1;
 
+        WriteConstructionMembers(W, M);
         WriteInterfaceMembers(W, M);
-        WriteCognitionModeMembers(W, M);
-        RenderDisposeMembers(W);
 
         RenderModelMembers(W, M, OperationCode);
       }
     });
   }
 
-  static void WriteInterfaceMembers(IndentedTextWriter W, MindModel M)
+  static void WriteConstructionMembers(IndentedTextWriter W, MindModel M)
   {
-    W.WriteLine($"public static int InputLength {{ get; }} = {M.TypeName.FullName}.Input.Length;");
-    W.WriteLine($"public static int OutputLength {{ get; }} = {M.TypeName.FullName}.Output.Length;");
+    W.WriteLine("Brain Brain;");
+    W.WriteLine("CognitionMode CognitionMode;");
+    W.WriteLine();
+    W.WriteLine();
+    W.WriteLine($"public {M.TypeName.TypeName.Name}(Brain Brain) : this(Brain, new IsolatedCognitionMode(Brain)) {{ }}");
+    W.WriteLine();
+    using (W.DeclareWithBlock($"{M.TypeName.TypeName.Name}(Brain Brain, CognitionMode CognitionMode)"))
+    {
+      W.WriteLine("this.Brain = Brain;");
+      W.WriteLine("this.CognitionMode = CognitionMode;");
+    }
     W.WriteLine();
   }
 
-  static void WriteCognitionModeMembers(IndentedTextWriter W, MindModel M)
+  static void WriteInterfaceMembers(IndentedTextWriter W, MindModel M)
   {
-    W.WriteLine($"public struct ChainedReasoningSession({M.TypeName.FullName} Host) : IDisposable");
-    W.WriteLine("{");
-    W.Indent++;
-    W.WriteLine("public void Dispose()");
-    W.WriteLine("{");
-    W.Indent++;
+    W.WriteLine($"public {M.TypeName.FullName} WithChainedReasoning() => new {M.TypeName.FullName}(Brain, CognitionMode.EnterChainedLineOfReasoning());");
 
-    W.WriteLine("Host.CognitionMode = Host.CognitionMode.ExitChainedLineOfReasoning();");
-    W.Indent--;
-    W.WriteLine("}");
-    W.Indent--;
-    W.WriteLine("}");
+    W.WriteLine($"public static int InputLength {{ get; }} = {M.TypeName.FullName}.Input.Length;");
+    W.WriteLine($"public static int OutputLength {{ get; }} = {M.TypeName.FullName}.Output.Length;");
     W.WriteLine();
-
-    W.WriteLine("CognitionMode CognitionMode = new IsolatedCognitionMode(Brain);");
-    W.WriteLine();
-    W.WriteLine("public ChainedReasoningSession EnterChainedReasoning()");
-    W.WriteLine("{");
-    W.Indent++;
-    W.WriteLine("CognitionMode = CognitionMode.EnterChainedLineOfReasoning();");
-    W.WriteLine("return new ChainedReasoningSession(this);");
-    W.Indent--;
-    W.WriteLine("}");
   }
 
   static void RenderModelMembers(IndentedTextWriter W, MindModel M, ushort OperationCode)
@@ -95,15 +85,15 @@ static class MindRenderer
       RenderChooseMethod(W, M, ChooseOperation, OperationCode++);
   }
 
-  static void RenderDisposeMembers(IndentedTextWriter W)
-  {
-    W.WriteLine("public void Dispose()");
-    W.WriteLine("{");
-    W.Indent++;
-    W.WriteLine("Brain.Dispose();");
-    W.Indent--;
-    W.WriteLine("}");
-  }
+  //static void RenderDisposeMembers(IndentedTextWriter W)
+  //{
+  //  W.WriteLine("public void Dispose()");
+  //  W.WriteLine("{");
+  //  W.Indent++;
+  //  W.WriteLine("Brain.Dispose();");
+  //  W.Indent--;
+  //  W.WriteLine("}");
+  //}
 
   static void RenderMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation,
     ushort OperationCode)

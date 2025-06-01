@@ -53,28 +53,7 @@ public abstract partial class Thought : IDisposable
 
   public class UseConfiguration
   {
-    public int MaxTrials { get; init; }= 5;
-  }
-
-  public static Thought<AccumulatedUseFeedback<TSurface>> Use<TSurface>(
-    Func<Thought<bool, UseFeedback<TSurface>>> Action, UseConfiguration? Configuration = null)
-  {
-    var EffectiveConfiguration = Configuration ?? new();
-
-    return Think(R =>
-      ThoughtResult.WithFeedbackSource(AccumulatedUseFeedback.GetSource<TSurface>()).FromLogic(A =>
-      {
-        foreach (var _ in Enumerable.Range(0, EffectiveConfiguration.MaxTrials))
-        {
-          var T = Action();
-          A.AddStep(T.Feedback);
-          var MoreRequested = R.Consume(T);
-          if (!MoreRequested)
-            break;
-        }
-
-        return (object?) null;
-      }));
+    public int MaxTrials { get; init; } = 5;
   }
 
   public static Thought<TProduct, TFeedback> Capture<TProduct, TFeedback>(TProduct Product, TFeedback Feedback)
