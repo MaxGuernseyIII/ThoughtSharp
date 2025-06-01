@@ -329,7 +329,7 @@ void DoFizzBuzz()
 
   Console.WriteLine("Done.");
 
-  Console.WriteLine(HybridReasoning.DoFizzBuzz(1, 100).ConsumeDetached());
+  Console.WriteLine(HybridReasoning.DoFizzBuzz(1, 100));
 
   void Report(int I)
   {
