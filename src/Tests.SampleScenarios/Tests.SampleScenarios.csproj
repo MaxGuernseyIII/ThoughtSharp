@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ThoughtSharp.Adapters.TorchSharp\ThoughtSharp.Adapters.TorchSharp.csproj" />
+    <ProjectReference Include="..\ThoughtSharp.Generator\ThoughtSharp.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\ThoughtSharp.Scenarios\ThoughtSharp.Scenarios.csproj" />
+  </ItemGroup>
+
+</Project>
