@@ -34,39 +34,20 @@ Then, to use that, you can create a hybrid reasoning class:
 ```CSharp
 class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
 {
-  public Thought<string, NullFeedback> DoFizzBuzz(
-    byte Start,
-    byte End)
+  public string DoFizzBuzz(byte Start, byte End)
   {
-    return Thought.WithoutFeedback.Think(R =>
-    {
-      var Terminal = new StringBuilderFizzBuzzTerminal();
+    var Terminal = new StringBuilderFizzBuzzTerminal();
 
-      foreach (var I in Enumerable.Range(Start, End - Start + 1))
-        R.Incorporate(WriteForOneNumber(Terminal, (byte) I));
+    foreach (var I in Enumerable.Range(Start, End - Start + 1))
+      WriteForOneNumber(Terminal, (byte) I);
 
-      return Terminal.Content.ToString();
-    });
+    return Terminal.Content.ToString();
   }
 
-  public Thought<List<UseFeedback<FizzBuzzTerminal>>> WriteForOneNumber(FizzBuzzTerminal Terminal, byte Input)
+  public Thought<AccumulatedUseFeedback<FizzBuzzTerminal>> WriteForOneNumber(
+    FizzBuzzTerminal Terminal, byte Input)
   {
-    return Thought.Do(R =>
-    {
-      var Feedback = new List<UseFeedback<FizzBuzzTerminal>>();
-      using var Chaining = Mind.EnterChainedReasoning();
-
-      foreach (var _ in Enumerable.Range(0, 5))
-      {
-        var Thought = Mind.WriteForNumber(Terminal, new() { Value = Input});
-        Feedback.Add(Thought.Feedback);
-        
-        if (!R.Consume(Thought))
-          break;
-      }
-
-      return Feedback;
-    });
+    return Mind.Use(M => M.WriteForNumber(Terminal, new() {Value = Input}));
   }
 }
 ```
