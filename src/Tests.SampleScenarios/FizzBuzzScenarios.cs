@@ -93,7 +93,11 @@ public static partial class FizzBuzzScenarios
   [TrainingDependency(ScenarioSet = typeof(SimpleScenarios), RequiredConfidenceThreshold = .98)]
   public class CompleteScenario(FizzBuzzMind Mind)
   {
+    [Scenario(ConvergenceThreshold = 100)]
+    public void From1To100()
+    {
 
+    }
   }
 
   [CognitiveActions]
