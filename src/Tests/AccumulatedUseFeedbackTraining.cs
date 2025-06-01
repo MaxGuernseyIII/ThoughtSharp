@@ -29,6 +29,8 @@ namespace Tests;
 [TestClass]
 public class AccumulatedUseFeedbackTraining
 {
+  FeedbackSource<AccumulatedUseFeedbackConfigurator<MockToUse>, AccumulatedUseFeedback<MockToUse>> Source;
+
   public class MockToUse
   {
     public int Operation1CallCount;
@@ -48,37 +50,63 @@ public class AccumulatedUseFeedbackTraining
     }
   }
 
+  [TestInitialize]
+  public void SetUp()
+  {
+    Source = GetSource<MockToUse>();
+
+  }
+
   [TestMethod]
   public void HandlesTheDoNothingCase()
   {
-    var RequiresMore = new BoxedBool() { Value = true };
-    var Source = GetSource<MockToUse>();
-    var ActionSurfaceMock = new MockToUse();
-    var OperationFeedback = new UseFeedback<MockToUse>(ActionSurfaceMock, B => RequiresMore.Value = B);
-    Source.Configurator.AddStep(OperationFeedback);
-    var Feedback = Source.CreateFeedback();
+    var Step = GivenStep();
 
-    Feedback.UseShouldHaveBeen();
+    WhenApplyFeedbackSteps();
 
-    ActionSurfaceMock.Operation1CallCount.Should().Be(0);
-    ActionSurfaceMock.Operation2CallCount.Should().Be(0);
-    RequiresMore.Value.Should().Be(false);
+    ThenFeedbackWasNoCalls(Step);
   }
 
   [TestMethod]
   public void HandlesOneCallWithoutParameters()
   {
-    var RequiresMore = new BoxedBool() { Value = true };
-    var Source = GetSource<MockToUse>();
+    var Step = GivenStep();
+
+    WhenApplyFeedbackSteps(M => M.Operation1());
+
+    ThenStepWasOperation1Call(Step);
+    ThenStepDoesNotRequireMoreCalls(Step);
+  }
+
+  (BoxedBool RequiresMore, MockToUse ActionSurfaceMock) GivenStep()
+  {
+    var RequiresMore = new BoxedBool { Value = Any.Bool };
     var ActionSurfaceMock = new MockToUse();
     var OperationFeedback = new UseFeedback<MockToUse>(ActionSurfaceMock, B => RequiresMore.Value = B);
     Source.Configurator.AddStep(OperationFeedback);
-    var Feedback = Source.CreateFeedback();
+    return (RequiresMore, ActionSurfaceMock);
+  }
 
-    Feedback.UseShouldHaveBeen(M => M.Operation1());
+  void WhenApplyFeedbackSteps(params IEnumerable<Action<MockToUse>> IEnumerable)
+  {
+    Source.CreateFeedback().UseShouldHaveBeen(IEnumerable);
+  }
 
-    ActionSurfaceMock.Operation1CallCount.Should().Be(1);
-    ActionSurfaceMock.Operation2CallCount.Should().Be(0);
-    RequiresMore.Value.Should().Be(false);
+  static void ThenFeedbackWasNoCalls((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)
+  {
+    Step.ActionSurfaceMock.Operation1CallCount.Should().Be(0);
+    Step.ActionSurfaceMock.Operation2CallCount.Should().Be(0);
+    Step.RequiresMore.Value.Should().Be(false);
+  }
+
+  static void ThenStepDoesNotRequireMoreCalls((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)
+  {
+    Step.RequiresMore.Value.Should().Be(false);
+  }
+
+  static void ThenStepWasOperation1Call((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)
+  {
+    Step.ActionSurfaceMock.Operation1CallCount.Should().Be(1);
+    Step.ActionSurfaceMock.Operation2CallCount.Should().Be(0);
   }
 }
