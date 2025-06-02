@@ -32,6 +32,9 @@ public class AssemblyParser
 
     foreach (var Type in LoadedAssembly.GetExportedTypes())
     {
+      if (!IsThoughtSharpTrainingType(Type))
+        continue;
+
       var NamespaceDirectoryName = Type.Namespace!;
       if (!RootDirectories.TryGetValue(NamespaceDirectoryName, out var List))
         RootDirectories[NamespaceDirectoryName] = List = new();
@@ -44,6 +47,11 @@ public class AssemblyParser
     ]);
   }
 
+  bool IsThoughtSharpTrainingType(Type Type)
+  {
+    return IsCurriculumType(Type) || IsCapabilityType(Type) || Type.GetNestedTypes().Any(IsThoughtSharpTrainingType);
+  }
+
   static IEnumerable<ScenariosModelNode> ParseMembers(Type Type)
   {
     return Type.GetNestedTypes().Select(ParseMemberType);
@@ -51,14 +59,22 @@ public class AssemblyParser
 
   static ScenariosModelNode ParseMemberType(Type Type)
   {
-    var Attributes = Type.GetCustomAttributes();
-
-    if (Attributes.Any(A => A is CurriculumAttribute))
+    if (IsCurriculumType(Type))
       return new CurriculumNode(Type, []);
 
-    if (Attributes.Any(A => A is CapabilityAttribute))
+    if (IsCapabilityType(Type))
       return new CapabilityNode(Type, ParseMembers(Type));
 
     return new DirectoryNode(Type.Name, ParseMembers(Type));
+  }
+
+  static bool IsCapabilityType(Type Type)
+  {
+    return Type.GetCustomAttributes().Any(A => A is CapabilityAttribute);
+  }
+
+  static bool IsCurriculumType(Type Type)
+  {
+    return Type.GetCustomAttributes().Any(A => A is CurriculumAttribute);
   }
 }

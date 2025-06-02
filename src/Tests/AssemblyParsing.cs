@@ -130,6 +130,27 @@ public class AssemblyParsing
       nameof(ArbitraryRootCurriculum));
   }
 
+  [TestMethod]
+  public void DoesNotFindClassesWithoutMeaningfulContent()
+  {
+    WhenParseAssembly();
+
+    ThenStructureDoesNotContainNode(
+      typeof(Anchor).Namespace,
+      nameof(Anchor));
+  }
+
+  void WhenParseAssembly()
+  {
+    Model =  new AssemblyParser().Parse(LoadedAssembly);
+  }
+
+  void ThenStructureDoesNotContainNode(params ImmutableArray<string?> Path)
+  {
+    var (Parent, FinalName) = GetParentNodeAndFinalNodeName(Path);
+    Parent.ChildNodes.Should().NotContain(I => I.Name == FinalName);
+  }
+
   void ThenStructureContainsCapability(params ImmutableArray<string?> Path)
   {
     ThenStructureHasNodeOfTypeAtPath(Path, NodeType.Capability);
@@ -142,16 +163,8 @@ public class AssemblyParsing
 
   void ThenStructureHasNodeOfTypeAtPath(ImmutableArray<string?> Path, NodeType NodeType)
   {
-    var ContainerNodes = Path[..^1];
-    var Parent =
-      ContainerNodes.Aggregate((ScenariosModelNode)Model, (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
-
-    Parent.ChildNodes.Should().ContainSingle(HasNameAndType(Path[^1], NodeType));
-  }
-
-  void WhenParseAssembly()
-  {
-    Model =  new AssemblyParser().Parse(LoadedAssembly);
+    var (Parent, Name) = GetParentNodeAndFinalNodeName(Path);
+    Parent.ChildNodes.Should().ContainSingle(HasNameAndType(Name, NodeType));
   }
 
   void ThenStructureContainsDirectory(params ImmutableArray<string?> Path)
@@ -169,8 +182,17 @@ public class AssemblyParsing
     Model.Type.Should().Be(Expected);
   }
 
-  static Expression<Func<ScenariosModelNode, bool>> HasNameAndType(string? FullName, NodeType NodeType)
+  static Expression<Func<ScenariosModelNode, bool>> HasNameAndType(string? Name, NodeType NodeType)
   {
-    return I => I.Name == FullName && I.Type == NodeType;
+    return I => I.Name == Name && I.Type == NodeType;
+  }
+
+  (ScenariosModelNode Parent, string? FinalName) GetParentNodeAndFinalNodeName(ImmutableArray<string?> Path)
+  {
+    var ContainerNodes = Path[..^1];
+    var FinalName = Path[^1];
+    var Parent =
+      ContainerNodes.Aggregate((ScenariosModelNode)Model, (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
+    return (Parent, FinalName);
   }
 }
