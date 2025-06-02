@@ -76,7 +76,7 @@ static class CognitiveCategoryRenderer
     {
       var PayloadType = Model.PayloadType.FullName;
       var FeedbackType = $"SingleChoiceFeedbackSink<{PayloadType}, Output>";
-      var FeedbackReturnType = $"SingleChoiceFeedbackSink<{PayloadType}>";
+      var FeedbackReturnType = $"FeedbackSink<{PayloadType}>";
       using (W.DeclareWithBlock(
                $"public Thought<{OptionType}, {FeedbackReturnType}> Interpret({OptionType} Left, {OptionType} Right, Output O, Inference I, int Offset)"))
       {

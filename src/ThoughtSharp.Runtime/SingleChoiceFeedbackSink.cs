@@ -22,21 +22,30 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedback<TSelectable>(List<FeedbackSink<TSelectable>> SingleChoices)
-   : FeedbackSink<TSelectable>
+public interface SingleChoiceFeedbackSink<in TSelectable>
 {
-  public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseFeedback<TSelectable>> GetSource<TOutput>()
-    where TOutput : CognitiveData<TOutput>
-  {
-    var Configurator = new ChooseFeedbackConfigurator<TSelectable>();
-    return new(Configurator, Configurator.Create);
-  }
+  void TrainWith(TSelectable ExpectedWinner);
+}
 
-  public void TrainWith(TSelectable Payload)
+public class SingleChoiceFeedbackSink<TSelectable, TOutput>(
+  Inference Inference,
+  TSelectable Left,
+  TSelectable Right,
+  Func<bool, TOutput> MakeOutput,
+  int Offset) : FeedbackSink<TSelectable>
+  where TOutput : CognitiveData<TOutput>
+{
+  public void TrainWith(TSelectable ExpectedWinner)
   {
-    foreach (var SingleChoice in SingleChoices)
-    {
-      SingleChoice.TrainWith(Payload);
-    }
+    var WinnerIsLeft = Equals(ExpectedWinner, Left);
+    var WinnerIsRight = Equals(ExpectedWinner, Right);
+
+    if (!(WinnerIsLeft || WinnerIsRight))
+      return;
+
+    var Output = MakeOutput(WinnerIsRight);
+    var Writer = new LossRuleWriter(new(), Offset);
+    Output.WriteAsLossRules(Writer);
+    Inference.Train(Writer.Stream.PositionRulePairs);
   }
 }
