@@ -87,7 +87,9 @@ public class AssemblyParser
 
   static bool IsValidBehaviorMethod(MethodInfo M)
   {
-    return M is {IsStatic: false, IsPublic: true } && (M.ReturnType == typeof(void) || M.ReturnType == typeof(Task));
+    return M is {IsStatic: false, IsPublic: true } && 
+           (M.ReturnType == typeof(void) || M.ReturnType == typeof(Task)) && 
+           HasAttribute<BehaviorAttribute>(M);
   }
 
   static bool IsMindPlaceType(Type Type)
@@ -105,7 +107,7 @@ public class AssemblyParser
     return HasAttribute<CurriculumAttribute>(Type);
   }
 
-  static bool HasAttribute<T>(Type Type)
+  static bool HasAttribute<T>(MemberInfo Type)
   {
     return Type.GetCustomAttributes().Any(A => A is T);
   }

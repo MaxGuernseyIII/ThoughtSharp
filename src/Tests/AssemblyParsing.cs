@@ -160,6 +160,17 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void DoesNotFindMethodsWithoutBehaviorAttribute()
+  {
+    WhenParseAssembly();
+
+    ThenStructureDoesNotContainNode(
+      RootNamespace,
+      nameof(ArbitraryRootCapability),
+      nameof(ArbitraryRootCapability.NonBehaviorMethod));
+  }
+
+  [TestMethod]
   public void FindsAsyncTaskBehaviors()
   {
     WhenParseAssembly();

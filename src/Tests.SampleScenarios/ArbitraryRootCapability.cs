@@ -38,4 +38,9 @@ public class ArbitraryRootCapability
 
   [Behavior]
   public int IntBehavior() => 0;
+
+  public void NonBehaviorMethod() {}
+
+  [Behavior]
+  public void BehaviorWithParameters() { }
 }
