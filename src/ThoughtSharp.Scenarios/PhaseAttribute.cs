@@ -21,26 +21,12 @@
 // SOFTWARE.
 
 using JetBrains.Annotations;
-using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
 
-public abstract class MindPlaceAttribute : Attribute
+[MeansImplicitUse(ImplicitUseTargetFlags.Itself)]
+[AttributeUsage(AttributeTargets.Class)]
+public class PhaseAttribute(double Order) : Attribute
 {
-  public abstract MindPlace Create();
-}
-
-[AttributeUsage(AttributeTargets.Assembly)]
-public class MindPlaceAttribute<
-  [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
-  TMindPlace, 
-  TMind, 
-  TBrain> : MindPlaceAttribute
-  where TMindPlace : MindPlace<TMind, TBrain>
-  where TBrain : Brain
-{
-  public override MindPlace Create()
-  {
-    throw new NotImplementedException();
-  }
+  public double Order { get; } = Order;
 }

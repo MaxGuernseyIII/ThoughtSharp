@@ -20,7 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using JetBrains.Annotations;
+
 namespace ThoughtSharp.Scenarios;
 
+[MeansImplicitUse(ImplicitUseTargetFlags.Itself)]
 [AttributeUsage(AttributeTargets.Method)]
 public class BehaviorAttribute : Attribute;

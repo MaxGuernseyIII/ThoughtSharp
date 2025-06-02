@@ -26,6 +26,7 @@ using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Runtime.Codecs;
 using ThoughtSharp.Scenarios;
+using static Tests.SampleScenarios.FizzBuzzTraining.FizzbuzzScenarios;
 
 [assembly: MindPlace<FizzBuzzTraining.FizzBuzzMindPlace, FizzBuzzTraining.FizzBuzzMind, TorchBrain>]
 
@@ -87,19 +88,13 @@ public static partial class FizzBuzzTraining
     }
 
     [Capability]
-    public class Calculations
+    public class Calculations(FizzBuzzMind Mind)
     {
       const int FizzFactor = 3;
       const int BuzzFactor = 5;
       static readonly Random Random = new();
-      readonly FizzBuzzHybridReasoning Reasoning;
-      readonly MockActionSurface Surface;
-
-      public Calculations(FizzBuzzMind Mind)
-      {
-        Surface = new();
-        Reasoning = new(Mind, Surface);
-      }
+      readonly FizzBuzzHybridReasoning Reasoning = new(Mind);
+      readonly MockActionSurface Surface = new();
 
       byte AnyByteDivisibleBy(int Factor)
       {
@@ -119,7 +114,7 @@ public static partial class FizzBuzzTraining
       {
         var Input = AnyByteDivisibleBy(FizzFactor);
 
-        var Result = Reasoning.CalculateStepValue(Input);
+        var Result = Reasoning.CalculateStepValue(Input, Surface);
 
         Assert.That(Result).ProducedCallsOn(Surface,
           S => S.Fizz()
@@ -131,7 +126,7 @@ public static partial class FizzBuzzTraining
       {
         var Input = AnyByteDivisibleBy(BuzzFactor);
 
-        var Result = Reasoning.CalculateStepValue(Input);
+        var Result = Reasoning.CalculateStepValue(Input, Surface);
 
         Assert.That(Result).ProducedCallsOn(Surface,
           S => S.Buzz()
@@ -143,7 +138,7 @@ public static partial class FizzBuzzTraining
       {
         var Input = AnyByteDivisibleBy(FizzFactor * BuzzFactor);
 
-        var Result = Reasoning.CalculateStepValue(Input);
+        var Result = Reasoning.CalculateStepValue(Input, Surface);
 
         Assert.That(Result).ProducedCallsOn(Surface,
           S => S.Fizz(),
@@ -156,13 +151,72 @@ public static partial class FizzBuzzTraining
       {
         var Input = AnyByteNotDivisibleBy(FizzFactor, BuzzFactor);
 
-        var Result = Reasoning.CalculateStepValue(Input);
+        var Result = Reasoning.CalculateStepValue(Input, Surface);
 
         Assert.That(Result).ProducedCallsOn(Surface,
           S => S.WriteNumber(Input)
         );
       }
     }
+
+    [Dependency(typeof(Calculations))]
+    [Capability]
+    public class Solution(FizzBuzzMind Mind)
+    {
+      const string ExpectedFinalOutput =
+        "1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz 16 17 fizz 19 buzz fizz 22 23 fizz buzz 26 fizz 28 29 fizzbuzz 31 32 fizz 34 buzz fizz 37 38 fizz buzz 41 fizz 43 44 fizzbuzz 46 47 fizz 49 buzz fizz 52 53 fizz buzz 56 fizz 58 59 fizzbuzz 61 62 fizz 64 buzz fizz 67 68 fizz buzz 71 fizz 73 74 fizzbuzz 76 77 fizz 79 buzz fizz 82 83 fizz buzz 86 fizz 88 89 fizzbuzz 91 92 fizz 94 buzz fizz 97 98 fizz buzz";
+
+      readonly FizzBuzzHybridReasoning Reasoning = new(Mind);
+
+      [Behavior]
+      public void RequireFullFizzBuzzSolution()
+      {
+        var Result = Reasoning.DoFullFizzBuzz();
+
+        Assert.That(Result).Is(ExpectedFinalOutput);
+      }
+    }
+  }
+
+  // this is a curriculum
+  [Curriculum]
+  public static class FizzBuzzTrainingPlan
+  {
+    // this is the first phase
+    [Phase(1)]
+    // continue until each included lesson has had 160 of the last 200 trials succeed
+    [ConvergenceStandard(Fraction = .8, Of = 200)]
+    // include all lessons from the Calculations class
+    [Include(typeof(Calculations))]
+    public class InitialSteps;
+
+    // this is the second phase
+    [Phase(2)]
+    // continue until each included lesson has had 490 of the last 500 trials succeed
+    [ConvergenceStandard(Fraction = .98, Of = 500)]
+    public class FocusedTraining
+    {
+      [Phase(2.1)]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)])]
+      public class FocusOnFizz;
+
+      [Phase(2.2)]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)])]
+      public class FocusOnBuzz;
+
+      [Phase(2.3)]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.FizzBuzz)])]
+      public class FocusOnFizzBuzz;
+
+      [Phase(2.4)]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.WriteValueScenario)])]
+      public class FocusOnWriting;
+    }
+
+    [Phase(3)]
+    [ConvergenceStandard(Fraction = 1, Of = 50)]
+    [Include(typeof(Solution))]
+    public class TrainFullSolution;
   }
 
   [CognitiveActions]
@@ -193,11 +247,81 @@ public static partial class FizzBuzzTraining
       FizzBuzzInput InputData);
   }
 
-  public class FizzBuzzHybridReasoning(FizzBuzzMind Mind, FizzBuzzTerminal Terminal)
+  public class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
   {
-    public AccumulatedUseFeedback<FizzBuzzTerminal> CalculateStepValue(byte Input)
+    public CognitiveResult<string, string> DoFullFizzBuzz()
+    {
+      var Terminal = new ProductionTerminal();
+
+      for (byte I = 1; I <= 100; ++I)
+      {
+        var Sink = CalculateStepValue(I, Terminal);
+        Terminal.Flush(Sink);
+      }
+
+      return Terminal.Result;
+    }
+
+    public AccumulatedUseFeedback<FizzBuzzTerminal> CalculateStepValue(byte Input, FizzBuzzTerminal Terminal)
     {
       return Mind.Use(M => M.WriteForNumber(Terminal, new() {Value = Input}));
+    }
+
+    class ProductionTerminal : FizzBuzzTerminal
+    {
+      StringBuilder CurrentContentBuilder = new();
+
+      public IncrementalCognitiveResult<string, string, string, IEnumerable<Action<FizzBuzzTerminal>>> Result
+      {
+        get;
+        private set;
+      } =
+        new(
+          Parts => string.Join(" ", Parts),
+          Whole => Whole.Split(" ").Select(TransformToken)
+        );
+
+      public void WriteNumber(byte ToWrite)
+      {
+        CurrentContentBuilder.Append(ToWrite);
+      }
+
+      public void Fizz()
+      {
+        CurrentContentBuilder.Append("fizz");
+      }
+
+      public void Buzz()
+      {
+        CurrentContentBuilder.Append("buzz");
+      }
+
+      static IEnumerable<Action<FizzBuzzTerminal>> TransformToken(string Arg)
+      {
+        switch (Arg.ToLower())
+        {
+          case "fizz":
+            yield return T => T.Fizz();
+            break;
+          case "buzz":
+            yield return T => T.Buzz();
+            break;
+          case "fizzbuzz":
+            yield return T => T.Fizz();
+            yield return T => T.Buzz();
+            break;
+          default:
+            var Input = byte.Parse(Arg);
+            yield return T => T.WriteNumber(Input);
+            break;
+        }
+      }
+
+      public void Flush(FeedbackSink<IEnumerable<Action<FizzBuzzTerminal>>> FeedbackSink)
+      {
+        Result = Result.Add(CognitiveResult.From(CurrentContentBuilder.ToString(), FeedbackSink));
+        CurrentContentBuilder = new();
+      }
     }
   }
 }

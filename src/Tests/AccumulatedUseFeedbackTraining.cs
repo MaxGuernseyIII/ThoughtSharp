@@ -192,8 +192,8 @@ public class IncrementalCognitiveResultTraining
     var R = new IncrementalCognitiveResult<string, string, string, string>(
         Parts => string.Join(" ", Parts),
         Whole => Whole.Split(" "))
-      .Including(CognitiveResult.From("a", (string _) => { }))
-      .Including(CognitiveResult.From("B", (string _) => { }));
+      .Add(CognitiveResult.From("a", (string _) => { }))
+      .Add(CognitiveResult.From("B", (string _) => { }));
 
     var Payload = R.Payload;
 
@@ -208,8 +208,8 @@ public class IncrementalCognitiveResultTraining
     var R = new IncrementalCognitiveResult<string, string, string, string>(
         Parts => string.Join(" ", Parts),
         Whole => Whole.Split(" "))
-      .Including(CognitiveResult.From("a", (string A) => { ATraining = A; }))
-      .Including(CognitiveResult.From("B", (string B) => { BTraining = B; }));
+      .Add(CognitiveResult.From("a", (string A) => { ATraining = A; }))
+      .Add(CognitiveResult.From("B", (string B) => { BTraining = B; }));
 
     R.FeedbackSink.TrainWith("X y");
 

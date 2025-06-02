@@ -20,27 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using JetBrains.Annotations;
-using ThoughtSharp.Runtime;
-
 namespace ThoughtSharp.Scenarios;
 
-public abstract class MindPlaceAttribute : Attribute
+public abstract class BehaviorSelectorAttribute(Type Capability) : Attribute
 {
-  public abstract MindPlace Create();
-}
-
-[AttributeUsage(AttributeTargets.Assembly)]
-public class MindPlaceAttribute<
-  [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
-  TMindPlace, 
-  TMind, 
-  TBrain> : MindPlaceAttribute
-  where TMindPlace : MindPlace<TMind, TBrain>
-  where TBrain : Brain
-{
-  public override MindPlace Create()
-  {
-    throw new NotImplementedException();
-  }
+  public Type Capability { get; } = Capability;
+  public string[]? Behaviors { get; init; }
 }

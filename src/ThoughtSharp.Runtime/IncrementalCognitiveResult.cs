@@ -56,7 +56,7 @@ public readonly record struct IncrementalCognitiveResult<TPayload, TFeedback, TD
 
   public FeedbackSink<TFeedback> FeedbackSink => new InnerFeedbackSink(DeltaResults, SeparateIntoFeedbackDeltas);
 
-  public IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback> Including(
+  public IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback> Add(
     CognitiveResult<TDelta, TDeltaFeedback> Increment)
   {
     return this with {DeltaResults = [..DeltaResults, Increment]};

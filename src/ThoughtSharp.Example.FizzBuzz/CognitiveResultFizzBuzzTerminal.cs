@@ -69,7 +69,7 @@ class CognitiveResultFizzBuzzTerminal : FizzBuzzTerminal
 
   public void Flush(FeedbackSink<IEnumerable<Action<FizzBuzzTerminal>>> FeedbackSink)
   {
-    Result = Result.Including(CognitiveResult.From(CurrentContent.ToString(), FeedbackSink));
+    Result = Result.Add(CognitiveResult.From(CurrentContent.ToString(), FeedbackSink));
     CurrentContent = new();
   }
 }

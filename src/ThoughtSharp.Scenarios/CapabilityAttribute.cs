@@ -20,52 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
+using JetBrains.Annotations;
 
 namespace ThoughtSharp.Scenarios;
 
+[MeansImplicitUse(ImplicitUseTargetFlags.Itself)]
 [AttributeUsage(AttributeTargets.Class)]
 public class CapabilityAttribute : Attribute;
-
-public static class AssertionExtensions
-{
-  public static void AssertCallsOn<TObject, TSurface>(
-    this AccumulatedUseFeedback<TSurface> Sink, 
-    TObject Surface,
-    params IEnumerable<Action<TSurface>> Expectations)
-    where TObject : TSurface, new()
-  {
-    Sink.TrainWith(Expectations);
-
-    var Configured = new TObject();
-    foreach (var Expectation in Expectations)
-      Expectation(Configured);
-
-    //Surface.ShouldBe(Configured);
-  }
-}
-
-public static class Assert
-{
-  public static AccumulatedUseAssertionContext<TSurface> That<TSurface>(AccumulatedUseFeedback<TSurface> Subject)
-  {
-    return new(Subject);
-  }
-}
-
-public class AccumulatedUseAssertionContext<TSurface>(AccumulatedUseFeedback<TSurface> Sink)
-{
-  public void ProducedCallsOn<TObject>(
-    TObject Surface,
-    params IEnumerable<Action<TSurface>> Expectations)
-    where TObject : TSurface, new()
-  {
-    Sink.TrainWith(Expectations);
-
-    var Configured = new TObject();
-    foreach (var Expectation in Expectations)
-      Expectation(Configured);
-
-    //Surface.ShouldBe(Configured);
-  }
-}

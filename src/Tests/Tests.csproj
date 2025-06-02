@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Tests.SampleScenarios\Tests.SampleScenarios.csproj" />
     <ProjectReference Include="..\ThoughtSharp.Generator\ThoughtSharp.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ThoughtSharp.Runtime\ThoughtSharp.Runtime.csproj" />
     <ProjectReference Include="..\ThoughtSharp.Scenarios.Model\ThoughtSharp.Scenarios.Model.csproj" />

@@ -20,27 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using JetBrains.Annotations;
 using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
 
-public abstract class MindPlaceAttribute : Attribute
+public class AccumulatedUseAssertionContext<TSurface>(AccumulatedUseFeedback<TSurface> Sink)
 {
-  public abstract MindPlace Create();
-}
-
-[AttributeUsage(AttributeTargets.Assembly)]
-public class MindPlaceAttribute<
-  [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
-  TMindPlace, 
-  TMind, 
-  TBrain> : MindPlaceAttribute
-  where TMindPlace : MindPlace<TMind, TBrain>
-  where TBrain : Brain
-{
-  public override MindPlace Create()
+  public void ProducedCallsOn<TObject>(
+    TObject Surface,
+    params IEnumerable<Action<TSurface>> Expectations)
+    where TObject : TSurface, new()
   {
-    throw new NotImplementedException();
+    Sink.TrainWith(Expectations);
+
+    var Configured = new TObject();
+    foreach (var Expectation in Expectations)
+      Expectation(Configured);
+
+    //Surface.ShouldBe(Configured);
   }
 }
