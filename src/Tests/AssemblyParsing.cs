@@ -300,11 +300,12 @@ public class AssemblyParsing
 
   (ScenariosModelNode Parent, string? FinalName) GetParentNodeAndFinalNodeName(ImmutableArray<string?> Path)
   {
-    var ContainerNodes = Path[..^1];
-    var FinalName = Path[^1];
-    var Parent =
-      ContainerNodes.Aggregate((ScenariosModelNode)Model, (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
-    return (Parent, FinalName);
+    return (Parent: GetNodeAtPath(Path[..^1]), FinalName: Path[^1]);
+  }
+
+  ScenariosModelNode GetNodeAtPath(ImmutableArray<string?> Path)
+  {
+    return Path.Aggregate((ScenariosModelNode)Model, (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
   }
 
   void ThenStructureDoesNotContainNode(params ImmutableArray<string?> Path)
