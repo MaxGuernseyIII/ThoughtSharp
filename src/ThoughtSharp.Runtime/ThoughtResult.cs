@@ -62,11 +62,6 @@ public abstract class ThoughtResult(ExceptionDispatchInfo? Exception)
     Exception?.Throw();
   }
 
-  public static WithFeedbackFactory<TFeedback, TFeedback> WithFeedback<TFeedback>(TFeedback Feedback)
-  {
-    return new(FeedbackSource.FromInstance(Feedback));
-  }
-
   public static ThoughtResult<TProduct, TFeedback> FromOutput<TProduct, TFeedback>(TProduct Product, TFeedback Feedback)
   {
     return new(Product, Feedback, null);
