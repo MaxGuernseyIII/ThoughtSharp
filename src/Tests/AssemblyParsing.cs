@@ -179,6 +179,28 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void IncludesCapabilities()
+  {
+    WhenParseAssembly();
+
+    ThenIncludedNodesForPhaseIs(
+      [RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnFizz)],
+      [
+        [
+          RootNamespace,
+          nameof(FizzBuzzTraining),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations)
+        ]
+      ]);
+  }
+
+
+  [TestMethod]
   public void DoesNotFindStaticBehaviors()
   {
     WhenParseAssembly();
@@ -340,6 +362,44 @@ public class AssemblyParsing
     ThenStructureHasNodeOfTypeAtPath(NodeType.MindPlace, Path);
   }
 
+  class FetchIncludedTrainingScenarios(ScenariosModel Model) : ScenariosModelNodeVisitor<ImmutableArray<ScenariosModelNode>>
+  {
+    public ImmutableArray<ScenariosModelNode> Visit(ScenariosModel Model)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public ImmutableArray<ScenariosModelNode> Visit(DirectoryNode Directory)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public ImmutableArray<ScenariosModelNode> Visit(CurriculumNode Curriculum)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public ImmutableArray<ScenariosModelNode> Visit(CapabilityNode Capability)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public ImmutableArray<ScenariosModelNode> Visit(MindPlaceNode MindPlace)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public ImmutableArray<ScenariosModelNode> Visit(BehaviorNode Behavior)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public ImmutableArray<ScenariosModelNode> Visit(CurriculumPhaseNode CurriculumPhase)
+    {
+      return [..CurriculumPhase.IncludedTrainingScenarioNodeFinders.Select(Model.Query)];
+    }
+  }
+
   void ThenModelTypeIs(NodeType Expected)
   {
     GetNodeType(Model).Should().Be(Expected);
@@ -369,6 +429,15 @@ public class AssemblyParsing
   {
     var (Parent, FinalName) = GetParentNodeAndFinalNodeName(Path);
     Parent.ChildNodes.Should().NotContain(I => I.Name == FinalName);
+  }
+
+  void ThenIncludedNodesForPhaseIs(ImmutableArray<string?> Path, ImmutableArray<ImmutableArray<string?>> ExpectedPaths)
+  {
+    var Node = GetNodeAtPath(Path);
+    var ExpectedNodes = ExpectedPaths.Select(GetNodeAtPath).ToImmutableArray();
+
+    var ActualNodes = Node.Query(new FetchIncludedTrainingScenarios(Model));
+    ActualNodes.Should().BeEquivalentTo(ExpectedNodes);
   }
 
   public enum NodeType
@@ -409,7 +478,7 @@ public class AssemblyParsing
       return NodeType.MindPlace;
     }
 
-    public NodeType Visit(BehaviorNode MindPlace)
+    public NodeType Visit(BehaviorNode Behavior)
     {
       return NodeType.Behavior;
     }

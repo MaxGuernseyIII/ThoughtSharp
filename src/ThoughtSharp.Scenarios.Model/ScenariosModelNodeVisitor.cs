@@ -29,6 +29,6 @@ public interface ScenariosModelNodeVisitor<out TResult>
   TResult Visit(CurriculumNode Curriculum);
   TResult Visit(CapabilityNode Capability);
   TResult Visit(MindPlaceNode MindPlace);
-  TResult Visit(BehaviorNode MindPlace);
+  TResult Visit(BehaviorNode Behavior);
   TResult Visit(CurriculumPhaseNode CurriculumPhase);
 }

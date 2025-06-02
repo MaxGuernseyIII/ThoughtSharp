@@ -22,11 +22,15 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class CurriculumPhaseNode(Type Wrapped, IEnumerable<ScenariosModelNode> ChildNodes) : ScenariosModelNode
+public class CurriculumPhaseNode(Type Wrapped, IEnumerable<ScenariosModelNode> ChildNodes, IEnumerable<ScenariosModelNodeVisitor<ScenariosModelNode?>> IncludedTrainingScenarioNodeFinders) 
+  : ScenariosModelNode
 {
   public string Name => Wrapped.Name;
 
   public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
+
+  public IEnumerable<ScenariosModelNodeVisitor<ScenariosModelNode?>> IncludedTrainingScenarioNodeFinders { get; } =
+    IncludedTrainingScenarioNodeFinders;
 
   public TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor)
   {

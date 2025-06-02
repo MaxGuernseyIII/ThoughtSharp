@@ -69,9 +69,71 @@ public class AssemblyParser
       return new MindPlaceNode(Type);
 
     if (IsCurriculumPhaseType(Type))
-      return new CurriculumPhaseNode(Type, ParseTypes(Type));
+      return ParsePhaseType(Type);
 
     return new DirectoryNode(Type.Name, ParseTypes(Type));
+  }
+
+  static CurriculumPhaseNode ParsePhaseType(Type Type)
+  {
+    List<ScenariosModelNodeVisitor<ScenariosModelNode?>> Finders = [];
+
+    foreach (var IncludeAttribute in Type.GetCustomAttributes().OfType<IncludeAttribute>()) 
+      Finders.Add(new CapabilityFinder(IncludeAttribute.Capability));
+
+    return new(Type, ParseTypes(Type), Finders);
+  }
+
+  abstract class CrawlerFinder : ScenariosModelNodeVisitor<ScenariosModelNode?>
+  {
+    public virtual ScenariosModelNode? Visit(ScenariosModel Model)
+    {
+      return CrawlChildren(Model);
+    }
+
+    public virtual ScenariosModelNode? Visit(DirectoryNode Directory)
+    {
+      return CrawlChildren(Directory);
+    }
+
+    public virtual ScenariosModelNode? Visit(CurriculumNode Curriculum)
+    {
+      return CrawlChildren(Curriculum);
+    }
+
+    public virtual ScenariosModelNode? Visit(CapabilityNode Capability)
+    {
+      return CrawlChildren(Capability);
+    }
+
+    public virtual ScenariosModelNode? Visit(MindPlaceNode MindPlace)
+    {
+      return CrawlChildren(MindPlace);
+    }
+
+    public virtual ScenariosModelNode? Visit(BehaviorNode Behavior)
+    {
+      return CrawlChildren(Behavior);
+    }
+
+    public virtual ScenariosModelNode? Visit(CurriculumPhaseNode CurriculumPhase)
+    {
+      return CrawlChildren(CurriculumPhase);
+    }
+
+    ScenariosModelNode? CrawlChildren(ScenariosModelNode Node)
+    {
+      return Node.ChildNodes.Aggregate((ScenariosModelNode?)null,
+        (Previous, Current) => Previous ?? Current.Query(this));
+    }
+  }
+
+  class CapabilityFinder(Type Type) : CrawlerFinder
+  {
+    public override ScenariosModelNode? Visit(CapabilityNode Capability)
+    {
+      return Capability.Type == Type ? Capability : base.Visit(Capability);
+    }
   }
 
   static bool IsCurriculumPhaseType(Type Type)
