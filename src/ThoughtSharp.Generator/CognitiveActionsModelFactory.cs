@@ -38,7 +38,7 @@ static class CognitiveActionsModelFactory
       INamedTypeSymbol NamedType)
   {
     var TargetType = TypeAddress.ForSymbol(NamedType);
-    var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(CognitiveActionRules.IsValidThoughtAction);
+    var Methods = NamedType.GetMembers().OfType<IMethodSymbol>().Where(CognitiveActionRules.IsValidCognitiveAction);
     var CognitiveDataClasses = new List<CognitiveDataClass>();
 
     var CompleteDataTypeAddress = TargetType.GetNested(TypeIdentifier.Explicit("struct", "Output"));
@@ -78,39 +78,5 @@ static class CognitiveActionsModelFactory
   static void UpdateActionCode(CognitiveDataClassBuilder CompleteDataBuilder, IEnumerable<IMethodSymbol> Methods)
   {
     CompleteDataBuilder.SetCompilerDefinedBoundedOpcodeParameter("ActionCode", (ushort)Methods.Count());
-  }
-}
-
-static class CognitiveActionRules
-{
-  public static bool IsValidThoughtAction(IMethodSymbol M)
-  {
-    if (M.ReturnsVoid)
-      return true;
-
-    if (M.ReturnType.IsThoughtType())
-      return true;
-
-    if (M.ReturnType.IsTaskType())
-      return true;
-
-    if (M.ReturnType.IsTaskOfThoughtType())
-      return true;
-
-    return false;
-  }
-
-  public static bool IsValidThoughtResult(IMethodSymbol M)
-  {
-    if (M.ReturnsVoid)
-      return false;
-
-    if (M.ReturnType.IsThoughtOfUseReturnType(M))
-      return true;
-
-    if (M.ReturnType.IsTaskOf(T => T.IsThoughtOfUseReturnType(M)))
-      return true;
-
-    return false;
   }
 }

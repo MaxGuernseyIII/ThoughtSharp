@@ -38,6 +38,9 @@ static class MindModelFactory
 
     var MindModelBuilder = Generator.MindModelBuilder.Create(TypeName);
 
+    //if (!Debugger.IsAttached)
+    //  Debugger.Launch();
+
     foreach (var Member in PossibleGenerationTargets)
       if (TryGetMakeMethod(Member, out var MakeMethod))
         MindModelBuilder.AddMakeMethodFor(MakeMethod);
@@ -55,7 +58,7 @@ static class MindModelFactory
     if (
       S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M &&
       M.HasAttribute(CognitiveAttributeNames.UseAttributeName) &&
-      CognitiveActionRules.IsValidThoughtResult(M))
+      CognitiveActionRules.IsValidCognitiveResult(M))
     {
       Result = M;
       return true;

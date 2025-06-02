@@ -54,21 +54,9 @@ public static class TypeSymbolExtensions
       genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters)).Trim();
   }
 
-  public static string GetFullPathWithoutTypeParameters(this ITypeSymbol T)
+  public static bool IsCognitiveResultType(this ITypeSymbol Type)
   {
-    return T.ToDisplayString(new SymbolDisplayFormat(
-      typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-      genericsOptions: SymbolDisplayGenericsOptions.None)).Trim();
-  }
-
-  public static bool IsThoughtTypeWithPayload(this ITypeSymbol Type)
-  {
-    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", _ => true, _ => true);
-  }
-
-  public static bool IsThoughtType(this ITypeSymbol Type)
-  {
-    return IsType(Type, "ThoughtSharp.Runtime.Thought");
+    return IsType(Type, "ThoughtSharp.Runtime.CognitiveResult");
   }
 
   public static bool IsCognitiveResultOf(this ITypeSymbol Type, params Func<ITypeSymbol, bool>[] Arguments)
@@ -81,9 +69,9 @@ public static class TypeSymbolExtensions
     return IsType(Type, "System.Threading.Tasks.Task");
   }
 
-  public static bool IsTaskOfThoughtType(this ITypeSymbol Type)
+  public static bool IsTaskOfCognitiveResultType(this ITypeSymbol Type)
   {
-    return Type.IsTaskOf(IsThoughtType);
+    return Type.IsTaskOf(IsCognitiveResultType);
   }
 
   public static bool IsBooleanType(this ITypeSymbol Type)
@@ -91,14 +79,12 @@ public static class TypeSymbolExtensions
     return Type.SpecialType == SpecialType.System_Boolean;
   }
 
-  public static bool IsThoughtOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> ArgumentConstraint, Func<ITypeSymbol, bool> FeedbackConstraint)
-  {
-    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", ArgumentConstraint, FeedbackConstraint);
-  }
-
   public static bool IsGenericOf(this ITypeSymbol Type, string Name, params Func<ITypeSymbol, bool>[] ArgumentConstraints)
   {
     if (Type is not INamedTypeSymbol Named)
+      return false;
+
+    if (!Named.HasTypeNameWithoutGenericArguments(Name) && Named.Name != Name)
       return false;
 
     var ExpectedLength = ArgumentConstraints.Length;
@@ -112,7 +98,17 @@ public static class TypeSymbolExtensions
     return true;
   }
 
-  public static bool IsThoughtOfUseReturnType(this ITypeSymbol Type, IMethodSymbol Method)
+  public static bool HasTypeNameWithoutGenericArguments(this ITypeSymbol Type, string Expected)
+  {
+    var Name = Type.ToDisplayString(new SymbolDisplayFormat(
+      typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+      genericsOptions: SymbolDisplayGenericsOptions.None
+    ));
+
+    return Name == Expected;
+  }
+
+  public static bool IsCognitiveResultOfUseReturnType(this ITypeSymbol Type, IMethodSymbol Method)
   {
     var ActionSurfaceTypes = Method.Parameters.Select(P => P.Type)
       .Where(T => T.HasAttribute(CognitiveAttributeNames.ActionsAttributeName));
@@ -122,7 +118,9 @@ public static class TypeSymbolExtensions
 
     var ActionSurfaceType = ActionSurfaceTypes.Single();
 
-    return Type.IsGenericOf("ThoughtSharp.Runtime.Thought", IsBooleanType, T => T.IsGenericOf("UseFeedback", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())));
+    return Type.IsGenericOf("ThoughtSharp.Runtime.CognitiveResult", IsBooleanType, T => 
+      T.IsGenericOf("ThoughtSharp.Runtime.UseFeedbackMethod", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())) ||
+      T.IsGenericOf("ThoughtSharp.Runtime.AsyncUseFeedbackMethod", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())));
   }
 
   public static bool IsTaskOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> PayloadRequirement)
@@ -132,12 +130,7 @@ public static class TypeSymbolExtensions
 
   public static bool RequiresAwait(this ITypeSymbol Type)
   {
-    return Type.IsTaskType() || Type.IsTaskOfThoughtType();
-  }
-
-  public static bool IsThoughtful(this ITypeSymbol Type)
-  {
-    return Type.IsThoughtType() || Type.IsTaskOfThoughtType();
+    return Type.IsTaskType() || Type.IsTaskOfCognitiveResultType();
   }
 
   static bool IsType(ITypeSymbol Type, string Name)

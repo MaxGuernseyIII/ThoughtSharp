@@ -112,11 +112,6 @@ public abstract partial class Thought : IDisposable
     Result.RaiseAnyExceptions();
   }
 
-  public class UseConfiguration
-  {
-    public int MaxTrials { get; init; } = 5;
-  }
-
   public static class WithoutFeedback
   {
     public static Task<Thought<TProduct, NullFeedback>> ThinkAsync<TProduct>(Func<Reasoning, Task<TProduct>> Produce)

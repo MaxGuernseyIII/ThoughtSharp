@@ -105,32 +105,10 @@ public partial class GeneratedCognitiveActions
   }
 
   [TestMethod]
-  public async Task InvokeAsyncThoughtfulAction()
-  {
-    var Invoked = false;
-    MockAsyncThoughtfulAction Action = new()
-    {
-      ActionHandler = delegate
-      {
-        Invoked = true;
-        return Task.FromResult(Thought.WithoutFeedback.Do(_ => { }));
-      }
-    };
-    var P = new AsyncThoughtfulAction.Output
-    {
-      ActionCode = 1
-    };
-
-    await P.InterpretFor(Action);
-
-    Invoked.Should().Be(true);
-  }
-
-  [TestMethod]
   public async Task InvokeAsyncThoughtlessAction()
   {
     var Invoked = false;
-    MockAsynchronousThoughtlessAction Action = new()
+    MockAsyncActionSurface ActionSurface = new()
     {
       ActionHandler = delegate
       {
@@ -138,12 +116,12 @@ public partial class GeneratedCognitiveActions
         return Task.CompletedTask;
       }
     };
-    var P = new AsyncThoughtlessAction.Output
+    var P = new AsyncActionSurface.Output
     {
       ActionCode = 1
     };
 
-    await P.InterpretFor(Action);
+    await P.InterpretFor(ActionSurface);
 
     Invoked.Should().Be(true);
   }
@@ -167,9 +145,11 @@ public partial class GeneratedCognitiveActions
   [TestMethod]
   public async Task AsyncReturnsMoreActions(bool Expected)
   {
-    var Actions = new MockAsyncThoughtfulAction();
-    var Parameters = new AsyncThoughtfulAction.Output();
-    Parameters.MoreActions = Expected;
+    var Actions = new MockAsyncActionSurface();
+    var Parameters = new AsyncActionSurface.Output
+    {
+      MoreActions = Expected
+    };
 
     var Actual = await Parameters.InterpretFor(Actions);
 
@@ -220,50 +200,12 @@ public partial class GeneratedCognitiveActions
   }
 
   [CognitiveActions]
-  partial interface AsyncThoughtfulAction
-  {
-    Task<Thought> Action();
-  }
-
-  [CognitiveActions]
-  partial interface AsyncThoughtlessAction
+  partial interface AsyncActionSurface
   {
     Task Action();
   }
 
-  [CognitiveActions]
-  partial interface SynchronousThoughtfulAction
-  {
-    Thought Action();
-  }
-
-  class MockAsyncThoughtfulAction : AsyncThoughtfulAction
-  {
-    public Func<Task<Thought>> ActionHandler { get; set; } = delegate
-    {
-      return Task.FromResult(Thought.WithoutFeedback.Do(_ => Assert.Fail("Action should not be invoked")));
-    };
-
-    public Task<Thought> Action()
-    {
-      return ActionHandler();
-    }
-  }
-
-  class MockSynchronousThoughtfulAction : SynchronousThoughtfulAction
-  {
-    public Func<Thought> ActionHandler { get; init; } = delegate
-    {
-      return Thought.WithoutFeedback.Do(_ => Assert.Fail("Action should not be invoked"));
-    };
-
-    public Thought Action()
-    {
-      return ActionHandler();
-    }
-  }
-
-  class MockAsynchronousThoughtlessAction : AsyncThoughtlessAction
+  class MockAsyncActionSurface : AsyncActionSurface
   {
     public Func<Task> ActionHandler { get; set; } = () =>
       Task.FromException(new InvalidOperationException("Action should not be invoked"));

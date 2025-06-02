@@ -110,7 +110,7 @@ public class AccumulatedUseFeedbackGeneration
     return Enumerable.Range(0, Count).Select(_ => GivenStep()).ToList();
   }
 
-  FeedbackSink<IEnumerable<Action<MockSurface>>> WhenUse(Thought.UseConfiguration? UseConfiguration = null)
+  FeedbackSink<IEnumerable<Action<MockSurface>>> WhenUse(MindExtensions.UseConfiguration? UseConfiguration = null)
   {
     return Mind.Use(M =>
     {

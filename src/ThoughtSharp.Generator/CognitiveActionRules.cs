@@ -20,33 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+using Microsoft.CodeAnalysis;
 
-public static class MindExtensions
+namespace ThoughtSharp.Generator;
+
+static class CognitiveActionRules
 {
-  public static AccumulatedUseFeedback<TSurface> Use<TMind, TSurface>(
-    this TMind Mind,
-    Func<TMind, CognitiveResult<bool, UseFeedbackMethod<TSurface>>> Action,
-    MindExtensions.UseConfiguration? Configuration = null)
-    where TMind : Mind<TMind>
+  public static bool IsValidCognitiveAction(IMethodSymbol M)
   {
-    var ChainedMind = Mind.WithChainedReasoning();
-    var EffectiveConfiguration = Configuration ?? new();
-    var Source = AccumulatedUseFeedback.GetSource<TSurface>();
-    foreach (var _ in Enumerable.Range(0, EffectiveConfiguration.MaxTrials))
-    {
-      var T = Action(ChainedMind);
-      Source.Configurator.AddStep(T.FeedbackSink);
-      var MoreRequested = T.Payload;
-      if (!MoreRequested)
-        break;
-    }
+    if (M.ReturnsVoid)
+      return true;
 
-    return Source.CreateFeedback();
+    if (M.ReturnType.IsTaskType())
+      return true;
+
+    return false;
   }
 
-  public class UseConfiguration
+  public static bool IsValidCognitiveResult(IMethodSymbol M)
   {
-    public int MaxTrials { get; init; } = 5;
+    if (M.ReturnsVoid)
+      return false;
+
+    if (M.ReturnType.IsCognitiveResultOfUseReturnType(M))
+      return true;
+
+    if (M.ReturnType.IsTaskOf(T => T.IsCognitiveResultOfUseReturnType(M)))
+      return true;
+
+    return false;
   }
 }
