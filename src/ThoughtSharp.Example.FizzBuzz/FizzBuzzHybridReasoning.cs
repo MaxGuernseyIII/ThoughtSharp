@@ -26,14 +26,16 @@ namespace ThoughtSharp.Example.FizzBuzz;
 
 class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
 {
-  public string DoFizzBuzz(byte Start, byte End)
+  public CognitiveResult<string, string> DoFizzBuzz(byte Start, byte End)
   {
-    var Terminal = new StringBuilderFizzBuzzTerminal();
-
+    var Terminal = new CognitiveResultFizzBuzzTerminal();
     foreach (var I in Enumerable.Range(Start, End - Start + 1))
-      WriteForOneNumber(Terminal, (byte) I);
+    {
+      var FeedbackSink = WriteForOneNumber(Terminal, (byte) I);
+      Terminal.Flush(FeedbackSink);
+    }
 
-    return Terminal.Content.ToString();
+    return Terminal.Result;
   }
 
   public AccumulatedUseFeedback<FizzBuzzTerminal> WriteForOneNumber(FizzBuzzTerminal Terminal, byte Input)

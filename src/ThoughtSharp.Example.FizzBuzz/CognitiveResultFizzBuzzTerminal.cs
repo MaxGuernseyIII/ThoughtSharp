@@ -21,27 +21,55 @@
 // SOFTWARE.
 
 using System.Text;
+using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Example.FizzBuzz;
 
-class StringBuilderFizzBuzzTerminal : FizzBuzzTerminal
+class CognitiveResultFizzBuzzTerminal : FizzBuzzTerminal
 {
-  public List<byte> WrittenBytes = [];
-  public readonly StringBuilder Content = new();
+  static IEnumerable<Action<FizzBuzzTerminal>> TransformStringToFeedback(string Arg)
+  {
+    var I = int.Parse(Arg);
+    var Fizz = I % 3 == 0;
+    var Buzz = I % 5 == 0;
+
+    if (Fizz)
+      yield return T => T.Fizz();
+
+    if (Buzz)
+      yield return T => T.Buzz();
+
+    if (!Fizz && !Buzz)
+      yield return T => T.WriteNumber((byte)I);
+  }
+
+  public readonly List<byte> WrittenBytes = [];
+
+  public IncrementalCognitiveResult<string, string, string, IEnumerable<Action<FizzBuzzTerminal>>> Result = new(
+    Parts => string.Join(" ", Parts),
+    Whole => Whole.Split().Select(TransformStringToFeedback));
+
+  StringBuilder CurrentContent = new();
 
   public void WriteNumber(byte ToWrite)
   {
     WrittenBytes.Add(ToWrite);
-    Content.Append(ToWrite);
+    CurrentContent.Append(ToWrite);
   }
 
   public void Fizz()
   {
-    Content.Append("fizz");
+    CurrentContent.Append("fizz");
   }
 
   public void Buzz()
   {
-    Content.Append("buzz");
+    CurrentContent.Append("buzz");
+  }
+
+  public void Flush(FeedbackSink<IEnumerable<Action<FizzBuzzTerminal>>> FeedbackSink)
+  {
+    Result = Result.Including(CognitiveResult.From(CurrentContent.ToString(), FeedbackSink));
+    CurrentContent = new();
   }
 }

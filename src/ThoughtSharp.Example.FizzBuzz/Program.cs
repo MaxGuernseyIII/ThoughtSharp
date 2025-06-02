@@ -236,8 +236,9 @@ void DoFizzBuzz()
       break;
 
     var Input = Iteration % byte.MaxValue;
-    var Terminal = new StringBuilderFizzBuzzTerminal();
+    var Terminal = new CognitiveResultFizzBuzzTerminal();
     var T = HybridReasoning.WriteForOneNumber(Terminal, (byte) Input);
+    Terminal.Flush(T);
     var Failure = false;
     string Expected;
     const string Fizz = "fizz";
@@ -255,7 +256,7 @@ void DoFizzBuzz()
     var Actual = string.Empty;
     try
     {
-      Actual = Terminal.Content.ToString();
+      Actual = Terminal.Result.Payload;
       if (Expected is not (Fizz or Buzz or FizzBuzz))
         foreach (var WrittenByte in Terminal.WrittenBytes)
           ByteDeviationPerBatch.Add(Math.Abs(WrittenByte - Input));
@@ -327,7 +328,21 @@ void DoFizzBuzz()
 
   Console.WriteLine("Done.");
 
-  Console.WriteLine(HybridReasoning.DoFizzBuzz(1, 100));
+  for (var I = 0; I < 100; I++)
+  {
+    var Result = HybridReasoning.DoFizzBuzz(1, 100);
+    Console.WriteLine(Result.Payload);
+
+    const string ExpectedFinalOutput = "1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz 16 17 fizz 19 buzz fizz 22 23 fizz buzz 26 fizz 28 29 fizzbuzz 31 32 fizz 34 buzz fizz 37 38 fizz buzz 41 fizz 43 44 fizzbuzz 46 47 fizz 49 buzz fizz 52 53 fizz buzz 56 fizz 58 59 fizzbuzz 61 62 fizz 64 buzz fizz 67 68 fizz buzz 71 fizz 73 74 fizzbuzz 76 77 fizz 79 buzz fizz 82 83 fizz buzz 86 fizz 88 89 fizzbuzz 91 92 fizz 94 buzz fizz 97 98 fizz buzz";
+    if (Result.Payload ==
+        ExpectedFinalOutput)
+      break;
+
+    Console.WriteLine("Failed, retrying.");
+    Result.FeedbackSink.TrainWith(ExpectedFinalOutput);
+  }
+
+  Console.WriteLine("Done");
 
   void Report(int I)
   {
