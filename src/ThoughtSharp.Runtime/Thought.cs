@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime;
 
 public abstract partial class Thought : IDisposable
@@ -49,11 +51,6 @@ public abstract partial class Thought : IDisposable
 
     foreach (var Disposable in Disposables)
       Disposable.Dispose();
-  }
-
-  public class UseConfiguration
-  {
-    public int MaxTrials { get; init; } = 5;
   }
 
   public static Thought<TProduct, TFeedback> Capture<TProduct, TFeedback>(TProduct Product, TFeedback Feedback)
@@ -105,7 +102,6 @@ public abstract partial class Thought : IDisposable
   public static async Task<Thought<TProduct, TFeedback>> ThinkAsync<TProduct, TFeedback>(
     Func<Reasoning, Task<ThoughtResult<TProduct, TFeedback>>> Produce)
   {
-
     var Reasoning = new Reasoning();
     var ThoughtResult = await Produce(Reasoning);
     var Result = new Thought<TProduct, TFeedback>(ThoughtResult, Reasoning);
@@ -113,22 +109,30 @@ public abstract partial class Thought : IDisposable
     return Result;
   }
 
+  public void RaiseAnyExceptions()
+  {
+    Result.RaiseAnyExceptions();
+  }
+
+  public class UseConfiguration
+  {
+    public int MaxTrials { get; init; } = 5;
+  }
+
   public static class WithoutFeedback
   {
     public static Task<Thought<TProduct, NullFeedback>> ThinkAsync<TProduct>(Func<Reasoning, Task<TProduct>> Produce)
     {
-      return Thought.ThinkAsync(
-        R => ThoughtResult
-          .WithFeedbackSource(FeedbackSource.Null)
-          .FromLogicAsync(_ => Produce(R)));
+      return Thought.ThinkAsync(R => ThoughtResult
+        .WithFeedbackSource(FeedbackSource.Null)
+        .FromLogicAsync(_ => Produce(R)));
     }
 
     public static Thought<TProduct, NullFeedback> Think<TProduct>(Func<Reasoning, TProduct> Produce)
     {
-      return Thought.Think(
-        R => ThoughtResult
-          .WithFeedbackSource(FeedbackSource.Null)
-          .FromLogic(_ => Produce(R)));
+      return Thought.Think(R => ThoughtResult
+        .WithFeedbackSource(FeedbackSource.Null)
+        .FromLogic(_ => Produce(R)));
     }
 
     public static async Task<Thought> DoAsync(Func<Reasoning, Task> ToDo)
@@ -150,11 +154,6 @@ public abstract partial class Thought : IDisposable
         return NullFeedback.Instance;
       });
     }
-  }
-
-  public void RaiseAnyExceptions()
-  {
-    Result.RaiseAnyExceptions();
   }
 }
 
@@ -196,6 +195,9 @@ public class DeferredFeedback<TFeedback>
 
 public static class FeedbackSource
 {
+  public static FeedbackSource<NullFeedbackConfigurator, NullFeedback> Null { get; } =
+    new(NullFeedbackConfigurator.Instance, () => NullFeedback.Instance);
+
   public static FeedbackSource<TFeedback, TFeedback> FromInstance<TFeedback>(TFeedback Instance)
   {
     return new(Instance, () => Instance);
@@ -212,15 +214,57 @@ public static class FeedbackSource
   {
     return new(NullFeedbackConfigurator.Instance, CreateMethod);
   }
-
-  public static FeedbackSource<NullFeedbackConfigurator, NullFeedback> Null { get; } = new(NullFeedbackConfigurator.Instance, () => NullFeedback.Instance);
 }
 
 public class NullFeedbackConfigurator
 {
-  NullFeedbackConfigurator() {}
+  NullFeedbackConfigurator()
+  {
+  }
 
   public static NullFeedbackConfigurator Instance { get; } = new();
 }
 
 public record FeedbackSource<TConfigurator, TFeedback>(TConfigurator Configurator, Func<TFeedback> CreateFeedback);
+
+public interface CognitiveResult<out TPayload, in TFeedback> : FeedbackSink<TFeedback>
+{
+  TPayload Payload { get; }
+}
+
+public interface FeedbackSink<in TFeedback>
+{
+  void TrainWith(TFeedback Feedback);
+}
+
+public readonly record struct IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback>
+  : CognitiveResult<TPayload, TFeedback>
+{
+
+  readonly Func<IEnumerable<TDelta>, TPayload> CombineIntoPayload;
+  readonly Func<TFeedback, IEnumerable<TDeltaFeedback>> SeparateIntoFeedbackDeltas;
+
+  public IncrementalCognitiveResult(Func<IEnumerable<TDelta>, TPayload> CombineIntoPayload,
+    Func<TFeedback, IEnumerable<TDeltaFeedback>> SeparateIntoFeedbackDeltas)
+  {
+    this.CombineIntoPayload = CombineIntoPayload;
+    this.SeparateIntoFeedbackDeltas = SeparateIntoFeedbackDeltas;
+  }
+
+  ImmutableArray<CognitiveResult<TDelta, TDeltaFeedback>> DeltaResults { get; init; } = [];
+
+  public TPayload Payload => CombineIntoPayload(DeltaResults.Select(Result => Result.Payload));
+
+  public IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback> Add(
+    CognitiveResult<TDelta, TDeltaFeedback> Increment)
+  {
+    return this with {DeltaResults = [..DeltaResults, Increment]};
+  }
+
+  public void TrainWith(TFeedback Feedback)
+  {
+    var DeltaFeedbackItems = SeparateIntoFeedbackDeltas(Feedback);
+    foreach (var (Result, DeltaFeedback) in DeltaResults.Zip(DeltaFeedbackItems)) 
+      Result.TrainWith(DeltaFeedback);
+  }
+}

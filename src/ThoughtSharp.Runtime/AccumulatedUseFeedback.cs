@@ -33,17 +33,17 @@ public static class AccumulatedUseFeedback
   }
 }
 
-public sealed record AccumulatedUseFeedback<T>(params ImmutableArray<UseFeedback<T>> Steps)
+public sealed record AccumulatedUseFeedback<TSurface>(params ImmutableArray<UseFeedback<TSurface>> Steps) : FeedbackSink<IEnumerable<Action<TSurface>>>
 {
-  public void UseShouldHaveBeen(params IEnumerable<Action<T>> Actions)
+  public void TrainWith(params IEnumerable<Action<TSurface>> Actions)
   {
     if (!Actions.Any())
       Actions = [delegate { }];
 
     var ActionsArray = Actions.ToImmutableArray();
 
-    (Action<T> Action, bool RequiresMore)[] Expectations = [.. ActionsArray[..^1].Select(A => (A, true)), (ActionsArray[^1], false)];
-    ImmutableArray<(UseFeedback<T> Feedback, (Action<T> Action, bool IstLast))> Assertions = [..Steps.Zip(Expectations)];
+    (Action<TSurface> Action, bool RequiresMore)[] Expectations = [.. ActionsArray[..^1].Select(A => (A, true)), (ActionsArray[^1], false)];
+    ImmutableArray<(UseFeedback<TSurface> Feedback, (Action<TSurface> Action, bool IstLast))> Assertions = [..Steps.Zip(Expectations)];
 
     foreach (var (Feedback, (Action, RequiresMore)) in Assertions)
     {
@@ -55,7 +55,7 @@ public sealed record AccumulatedUseFeedback<T>(params ImmutableArray<UseFeedback
     }
   }
 
-  public bool Equals(AccumulatedUseFeedback<T>? Other)
+  public bool Equals(AccumulatedUseFeedback<TSurface>? Other)
   {
     if (Other is null) return false;
     if (ReferenceEquals(this, Other)) return true;

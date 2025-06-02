@@ -29,7 +29,7 @@ namespace Tests;
 [TestClass]
 public class AccumulatedUseFeedbackTraining
 {
-  FeedbackSource<AccumulatedUseFeedbackConfigurator<MockToUse>, AccumulatedUseFeedback<MockToUse>> Source;
+  FeedbackSource<AccumulatedUseFeedbackConfigurator<MockToUse>, AccumulatedUseFeedback<MockToUse>> Source = null!;
 
   public class MockToUse
   {
@@ -149,7 +149,7 @@ public class AccumulatedUseFeedbackTraining
 
   void WhenApplyFeedbackSteps(params IEnumerable<Action<MockToUse>> Actions)
   {
-    Source.CreateFeedback().UseShouldHaveBeen(Actions);
+    Source.CreateFeedback().TrainWith(Actions);
   }
 
   static void ThenFeedbackWasNoCalls((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)

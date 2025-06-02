@@ -22,16 +22,16 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class AccumulatedUseFeedbackConfigurator<T>
+public class AccumulatedUseFeedbackConfigurator<TSurface>
 {
-  readonly List<UseFeedback<T>> Steps = [];
+  readonly List<UseFeedback<TSurface>> Steps = [];
 
-  public AccumulatedUseFeedback<T> CreateFeedback()
+  public AccumulatedUseFeedback<TSurface> CreateFeedback()
   {
     return new([..Steps]);
   }
 
-  public void AddStep(UseFeedback<T> Step)
+  public void AddStep(UseFeedback<TSurface> Step)
   {
     Steps.Add(Step);
   }

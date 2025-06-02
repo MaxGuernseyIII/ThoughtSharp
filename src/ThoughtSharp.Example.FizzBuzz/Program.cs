@@ -23,11 +23,11 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Numerics;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Example.FizzBuzz;
 using ThoughtSharp.Runtime;
-using System.Drawing.Imaging;
 using static Disposition;
 
 Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal;
@@ -306,21 +306,21 @@ void DoFizzBuzz()
     switch (Expected)
     {
       case Fizz:
-        T.Feedback.UseShouldHaveBeen(
+        T.Feedback.TrainWith(
           M => M.Fizz());
         break;
       case Buzz:
-        T.Feedback.UseShouldHaveBeen(
+        T.Feedback.TrainWith(
           M => M.Buzz());
         break;
       case FizzBuzz:
-        T.Feedback.UseShouldHaveBeen(
-          M => M.Fizz(),
+        T.Feedback.TrainWith(
+          M => M.Fizz(), 
           M => M.Buzz());
         break;
       default:
-        T.Feedback.UseShouldHaveBeen(
-          M => M.WriteNumber((byte)Input));
+        T.Feedback.TrainWith(
+          M => M.WriteNumber((byte) Input));
         break;
     }
   }
@@ -444,7 +444,8 @@ void DoChooseShape()
   //}
   //throw new ApplicationException("Generated.");
 
-  var BrainBuilder = TorchBrainBuilder.ForTraining<ShapeClassifyingMind>().UsingParallel(P => P.AddLogicPath(4, 2).AddMathPath(4, 2));
+  var BrainBuilder = TorchBrainBuilder.ForTraining<ShapeClassifyingMind>()
+    .UsingParallel(P => P.AddLogicPath(4, 2).AddMathPath(4, 2));
   var Brain = BrainBuilder.Build();
 
   var FileName = $"choose-shape_{BrainBuilder.CompactDescriptiveText}.pt";
@@ -514,8 +515,8 @@ void DoChooseShape()
         MaximumVertices = 4,
         MinimumVertices = 4,
         MinimumSymmetricalAxes = 2,
-        MinimumVertexAngle = (MathF.PI / 2) *.95f,
-        MaximumVertexAngle = (MathF.PI / 2) *1.05f,
+        MinimumVertexAngle = MathF.PI / 2 * .95f,
+        MaximumVertexAngle = MathF.PI / 2 * 1.05f
       }
     }), Geometry.MakeBox),
     [ShapeType.Irregular] = (new(new IrregularHandler(),
@@ -534,7 +535,7 @@ void DoChooseShape()
           StraightSegments = Supported
         }
       }
-      ), Geometry.MakeIrregular),
+    ), Geometry.MakeIrregular),
     [ShapeType.Circle] = (new(new CircleHandler(),
       new()
       {
@@ -553,7 +554,7 @@ void DoChooseShape()
         Constraints =
         {
           MaximumVertices = 0,
-          MinimumSymmetricalAxes = 8,
+          MinimumSymmetricalAxes = 8
         }
       }), Geometry.MakeCircle),
     [ShapeType.Star] = (new(new StarHandler(),
@@ -573,7 +574,7 @@ void DoChooseShape()
         },
         Constraints =
         {
-          MinimumSymmetricalAxes = 3,
+          MinimumSymmetricalAxes = 3
         }
       }), Geometry.MakeStar),
     [ShapeType.Arc] = (new(new ArcHandler(),
@@ -616,8 +617,8 @@ void DoChooseShape()
         Constraints =
         {
           MinimumSymmetricalAxes = 2,
-          MinimumVertexAngle = (MathF.PI / 2) *.95f,
-          MaximumVertexAngle = (MathF.PI / 2) *1.05f,
+          MinimumVertexAngle = MathF.PI / 2 * .95f,
+          MaximumVertexAngle = MathF.PI / 2 * 1.05f
         }
       }), Geometry.MakePlus)
   };
@@ -718,7 +719,7 @@ void DoChooseShape()
         Points = Geometry.PrepareForUseInTraining(OptionsMap[ThisTrialShapeType].MakeShapePoints()).ToArray()
         //Points = Geometry.GetSimplified(OptionsMap[ThisTrialShapeType].MakeShapePoints()).ToArray()
       };
-      
+
       var T = Mind.ChooseHandlerFor(Shape.Normalize(), Category);
 
       var Expected = OptionsMap[ThisTrialShapeType].Option.Payload;
@@ -731,6 +732,7 @@ void DoChooseShape()
           Failure = true;
           Failures++;
         }
+
         if (Failure)
           RecordFailure(ThisTrialShapeType, Actual.GetType());
       }
@@ -951,16 +953,15 @@ partial class ShapeFeatures
 partial class ShapeLimitations
 {
   [CognitiveDataBounds<byte>(0, Shape.PointCount)]
-  public byte MinimumVertices { get; set; } = 0;
+  public byte MinimumVertices { get; set; }
 
   [CognitiveDataBounds<byte>(0, Shape.PointCount)]
   public byte MaximumVertices { get; set; } = Shape.PointCount;
 
-  [CognitiveDataBounds<byte>(0, 8)]
-  public byte MinimumSymmetricalAxes { get; set; } = 0;
+  [CognitiveDataBounds<byte>(0, 8)] public byte MinimumSymmetricalAxes { get; set; }
 
   [CognitiveDataBounds<float>(0, MathF.PI * 2)]
-  public float MinimumVertexAngle { get; set; } = 0;
+  public float MinimumVertexAngle { get; set; }
 
   [CognitiveDataBounds<float>(0, MathF.PI * 2)]
   public float MaximumVertexAngle { get; set; } = MathF.PI;
@@ -1089,11 +1090,11 @@ static class Geometry
     {
       var ThisVertex = GetVertex(I);
 
-      Points.AddRange(MakeLine(LastVertex, ThisVertex, Random.Next(3,7), true));
+      Points.AddRange(MakeLine(LastVertex, ThisVertex, Random.Next(3, 7), true));
       LastVertex = ThisVertex;
     }
 
-    Points.AddRange(MakeLine(LastVertex, FirstVertex, Random.Next(3,7), true));
+    Points.AddRange(MakeLine(LastVertex, FirstVertex, Random.Next(3, 7), true));
 
     return Points;
   }
@@ -1215,11 +1216,11 @@ static class ShapeRenderer
     var coldPoints = shape.Points.Where(p => !p.IsHot).ToArray();
 
     // Draw hot-point lines
-    for (int i = 0; i < hotPoints.Length - 1; i++)
+    for (var i = 0; i < hotPoints.Length - 1; i++)
     {
       var p1 = ToPixel(hotPoints[i], imageSize);
       var p2 = ToPixel(hotPoints[i + 1], imageSize);
-      gfx.DrawLine(i %2 == 0 ? hotPen : hotPen2, p1, p2);
+      gfx.DrawLine(i % 2 == 0 ? hotPen : hotPen2, p1, p2);
     }
 
     // Optionally close the shape
@@ -1242,8 +1243,8 @@ static class ShapeRenderer
 
   static PointF ToPixel(Point p, int imageSize)
   {
-    return new PointF(
-      p.X * imageSize *.9f + imageSize * .05f,
+    return new(
+      p.X * imageSize * .9f + imageSize * .05f,
       (1f - p.Y) * imageSize * .9f + imageSize * .05f // invert Y-axis for top-down image
     );
   }
