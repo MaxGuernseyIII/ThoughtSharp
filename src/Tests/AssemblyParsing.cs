@@ -56,7 +56,9 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenStructureContainsDirectory(typeof(FizzBuzzTraining).FullName);
+    ThenStructureContainsDirectory(
+      typeof(FizzBuzzTraining).Namespace,
+      nameof(FizzBuzzTraining));
   }
 
   [TestMethod]
@@ -65,7 +67,8 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureContainsCurriculum(
-      typeof(FizzBuzzTraining).FullName,
+      typeof(FizzBuzzTraining).Namespace,
+      nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzBuzzTrainingPlan));
   }
 
@@ -75,12 +78,14 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureContainsCapability(
-      typeof(FizzBuzzTraining).FullName,
+      typeof(FizzBuzzTraining).Namespace,
+      nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzbuzzScenarios),
       nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations));
 
     ThenStructureContainsCapability(
-      typeof(FizzBuzzTraining).FullName,
+      typeof(FizzBuzzTraining).Namespace,
+      nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzbuzzScenarios),
       nameof(FizzBuzzTraining.FizzbuzzScenarios.Solution));
   }
@@ -91,31 +96,51 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureContainsCapability(
-      typeof(ArbitraryDirectory).FullName,
+      typeof(ArbitraryDirectory).Namespace,
+      nameof(ArbitraryDirectory),
       nameof(ArbitraryDirectory.ArbitraryCapability));
 
     ThenStructureContainsCapability(
-      typeof(ArbitraryDirectory).FullName,
+      typeof(ArbitraryDirectory).Namespace,
+      nameof(ArbitraryDirectory),
       nameof(ArbitraryDirectory.ArbitraryCapability),
       nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability1));
 
     ThenStructureContainsCapability(
-      typeof(ArbitraryDirectory).FullName,
+      typeof(ArbitraryDirectory).Namespace,
+      nameof(ArbitraryDirectory),
       nameof(ArbitraryDirectory.ArbitraryCapability),
       nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
   }
 
+  [TestMethod]
+  public void FindsRootCapabilitiesAndCurricula()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsDirectory(
+      typeof(ArbitraryRootCapability).Namespace);
+
+    ThenStructureContainsCapability(
+      typeof(ArbitraryRootCapability).Namespace,
+      nameof(ArbitraryRootCapability));
+
+    ThenStructureContainsCurriculum(
+      typeof(ArbitraryRootCurriculum).Namespace,
+      nameof(ArbitraryRootCurriculum));
+  }
+
   void ThenStructureContainsCapability(params ImmutableArray<string?> Path)
   {
-    ThenHasNodeOfTypeAtPath(Path, NodeType.Capability);
+    ThenStructureHasNodeOfTypeAtPath(Path, NodeType.Capability);
   }
 
   void ThenStructureContainsCurriculum(params ImmutableArray<string?> Path)
   {
-    ThenHasNodeOfTypeAtPath(Path, NodeType.Curriculum);
+    ThenStructureHasNodeOfTypeAtPath(Path, NodeType.Curriculum);
   }
 
-  void ThenHasNodeOfTypeAtPath(ImmutableArray<string?> Path, NodeType NodeType)
+  void ThenStructureHasNodeOfTypeAtPath(ImmutableArray<string?> Path, NodeType NodeType)
   {
     var ContainerNodes = Path[..^1];
     var Parent =
@@ -129,11 +154,9 @@ public class AssemblyParsing
     Model =  new AssemblyParser().Parse(LoadedAssembly);
   }
 
-  void ThenStructureContainsDirectory(string? FullName)
+  void ThenStructureContainsDirectory(params ImmutableArray<string?> Path)
   {
-    Model.ChildNodes.Should().ContainSingle(
-      HasNameAndType(FullName, NodeType.Directory)
-    );
+    ThenStructureHasNodeOfTypeAtPath(Path, NodeType.Directory);
   }
 
   void ThenModelNameIs(string Expected)

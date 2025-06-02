@@ -28,27 +28,28 @@ public class AssemblyParser
 {
   public ScenariosModel Parse(Assembly LoadedAssembly)
   {
+    Dictionary<string, List<ScenariosModelNode>> RootDirectories = [];
+
+    foreach (var Type in LoadedAssembly.GetExportedTypes())
+    {
+      var NamespaceDirectoryName = Type.Namespace!;
+      if (!RootDirectories.TryGetValue(NamespaceDirectoryName, out var List))
+        RootDirectories[NamespaceDirectoryName] = List = new();
+
+      List.Add(ParseMemberType(Type));
+    }
+
     return new([
-      ..LoadedAssembly.GetExportedTypes().Select(ParseType)
+      ..RootDirectories.Select(Pair => new DirectoryNode(Pair.Key, Pair.Value))
     ]);
-  }
-
-  static ScenariosModelNode ParseType(Type Type)
-  {
-    return ParseDirectory(Type);
-  }
-
-  static DirectoryNode ParseDirectory(Type Type)
-  {
-    return new(Type.FullName!, ParseMembers(Type));
   }
 
   static IEnumerable<ScenariosModelNode> ParseMembers(Type Type)
   {
-    return Type.GetNestedTypes().Select(ParseDirectoryMemberType);
+    return Type.GetNestedTypes().Select(ParseMemberType);
   }
 
-  static ScenariosModelNode ParseDirectoryMemberType(Type Type)
+  static ScenariosModelNode ParseMemberType(Type Type)
   {
     var Attributes = Type.GetCustomAttributes();
 
