@@ -22,9 +22,11 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class CapabilityNode(Type Wrapped, IEnumerable<ScenariosModelNode> ChildNodes) : ScenariosModelNode
+public class CapabilityNode(Type Type, IEnumerable<ScenariosModelNode> ChildNodes) : ScenariosModelNode
 {
-  public string Name => Wrapped.Name;
+  public Type Type { get; } = Type;
+
+  public string Name => Type.Name;
 
   public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
 

@@ -26,6 +26,8 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public class BehaviorNode(Type HostType, MethodInfo Method) : ScenariosModelNode
 {
+  public Type HostType { get; } = HostType;
+  public MethodInfo Method { get; } = Method;
   public string Name => Method.Name;
 
   public IEnumerable<ScenariosModelNode> ChildNodes { get; } = [];
