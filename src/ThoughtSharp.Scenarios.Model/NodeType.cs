@@ -22,7 +22,9 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-class TypeScenariosModelNode(Type Type) : ScenariosModelNode
+public enum NodeType
 {
-  public string Name => Type.FullName!;
+  Model,
+  Directory,
+  Curriculum
 }

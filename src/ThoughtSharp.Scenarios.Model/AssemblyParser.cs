@@ -33,8 +33,27 @@ public class AssemblyParser
     ]);
   }
 
-  static ScenariosModelNode ParseType(Type Arg)
+  static ScenariosModelNode ParseType(Type Type)
   {
-    return new TypeScenariosModelNode(Arg);
+    return ParseDirectory(Type);
   }
+
+  static DirectoryNode ParseDirectory(Type Type)
+  {
+    return new(Type, Type.GetNestedTypes().Select(ParseDirectoryMemberType));
+  }
+
+  static ScenariosModelNode ParseDirectoryMemberType(Type Node)
+  {
+    return new CurriculumNode(Node, []);
+  }
+}
+
+class CurriculumNode(Type Wrapped, List<ScenariosModelNode> ChildNodes) : ScenariosModelNode
+{
+  public string Name => Wrapped.Name;
+
+  public NodeType Type => NodeType.Curriculum;
+
+  public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
 }

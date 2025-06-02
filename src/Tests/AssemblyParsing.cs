@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+using System.Linq.Expressions;
 using System.Reflection;
 using FluentAssertions;
 using Tests.SampleScenarios;
@@ -41,6 +43,15 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void ModelProperties()
+  {
+    WhenParseAssembly();
+
+    ThenModelNameIs("");
+    ThenModelTypeIs(NodeType.Model);
+  }
+
+  [TestMethod]
   public void FindsDirectories()
   {
     WhenParseAssembly();
@@ -48,15 +59,49 @@ public class AssemblyParsing
     ThenStructureContainsDirectory(typeof(FizzBuzzTraining).FullName);
   }
 
-  void ThenStructureContainsDirectory(string? FullName)
+  [TestMethod]
+  public void FindsCapabilities()
   {
-    Model.Nodes.Should().ContainSingle(
-      I => I.Name == FullName
-    );
+    WhenParseAssembly();
+
+    ThenStructureContainsCurriculum(
+      typeof(FizzBuzzTraining).FullName,
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan));
+  }
+
+  void ThenStructureContainsCurriculum(params ImmutableArray<string?> Path)
+  {
+    var ContainerNodes = Path[..^1];
+    var Parent =
+      ContainerNodes.Aggregate((ScenariosModelNode)Model, (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
+
+    Parent.ChildNodes.Should().ContainSingle(HasNameAndType(Path[^1], NodeType.Curriculum));
   }
 
   void WhenParseAssembly()
   {
     Model =  new AssemblyParser().Parse(LoadedAssembly);
+  }
+
+  void ThenStructureContainsDirectory(string? FullName)
+  {
+    Model.ChildNodes.Should().ContainSingle(
+      HasNameAndType(FullName, NodeType.Directory)
+    );
+  }
+
+  void ThenModelNameIs(string Expected)
+  {
+    Model.Name.Should().Be(Expected);
+  }
+
+  void ThenModelTypeIs(NodeType Expected)
+  {
+    Model.Type.Should().Be(Expected);
+  }
+
+  static Expression<Func<ScenariosModelNode, bool>> HasNameAndType(string? FullName, NodeType NodeType)
+  {
+    return I => I.Name == FullName && I.Type == NodeType;
   }
 }
