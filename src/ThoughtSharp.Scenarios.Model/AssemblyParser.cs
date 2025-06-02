@@ -60,7 +60,7 @@ public class AssemblyParser
   static ScenariosModelNode ParseType(Type Type)
   {
     if (IsCurriculumType(Type))
-      return new CurriculumNode(Type, []);
+      return new CurriculumNode(Type, [..ParseTypes(Type)]);
 
     if (IsCapabilityType(Type))
       return ParseCapabilityType(Type);
@@ -68,7 +68,15 @@ public class AssemblyParser
     if (IsMindPlaceType(Type))
       return new MindPlaceNode(Type);
 
+    if (IsCurriculumPhaseType(Type))
+      return new CurriculumPhaseNode(Type, ParseTypes(Type));
+
     return new DirectoryNode(Type.Name, ParseTypes(Type));
+  }
+
+  static bool IsCurriculumPhaseType(Type Type)
+  {
+    return HasAttribute<PhaseAttribute>(Type);
   }
 
   static CapabilityNode ParseCapabilityType(Type Type)

@@ -127,6 +127,18 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void FindsCurriculumPhases()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsCurriculumPhase(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.InitialSteps));
+  }
+
+  [TestMethod]
   public void DoesNotFindStaticBehaviors()
   {
     WhenParseAssembly();
@@ -257,6 +269,11 @@ public class AssemblyParsing
     ThenStructureHasNodeOfTypeAtPath(NodeType.Capability, Path);
   }
 
+  void ThenStructureContainsCurriculumPhase(params ImmutableArray<string?> Path)
+  {
+    ThenStructureHasNodeOfTypeAtPath(NodeType.CurriculumPhase, Path);
+  }
+
   void ThenStructureContainsCurriculum(params ImmutableArray<string?> Path)
   {
     ThenStructureHasNodeOfTypeAtPath(NodeType.Curriculum, Path);
@@ -321,7 +338,8 @@ public class AssemblyParsing
     Curriculum,
     Capability,
     MindPlace,
-    Behavior
+    Behavior,
+    CurriculumPhase
   }
 
   class GetNodeTypeVisitor : ScenariosModelNodeVisitor<NodeType>
@@ -354,6 +372,11 @@ public class AssemblyParsing
     public NodeType Visit(BehaviorNode MindPlace)
     {
       return NodeType.Behavior;
+    }
+
+    public NodeType Visit(CurriculumPhaseNode CurriculumPhase)
+    {
+      return NodeType.CurriculumPhase;
     }
   }
 }

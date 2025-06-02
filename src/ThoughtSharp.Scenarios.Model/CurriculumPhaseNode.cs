@@ -22,13 +22,14 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public interface ScenariosModelNodeVisitor<out TResult>
+public class CurriculumPhaseNode(Type Wrapped, IEnumerable<ScenariosModelNode> ChildNodes) : ScenariosModelNode
 {
-  TResult Visit(ScenariosModel Model);
-  TResult Visit(DirectoryNode Directory);
-  TResult Visit(CurriculumNode Curriculum);
-  TResult Visit(CapabilityNode Capability);
-  TResult Visit(MindPlaceNode MindPlace);
-  TResult Visit(BehaviorNode MindPlace);
-  TResult Visit(CurriculumPhaseNode CurriculumPhase);
+  public string Name => Wrapped.Name;
+
+  public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
+
+  public TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor)
+  {
+    return Visitor.Visit(this);
+  }
 }
