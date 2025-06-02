@@ -53,6 +53,7 @@ static class MindRenderer
     W.WriteLine("Brain Brain;");
     W.WriteLine("CognitionMode CognitionMode;");
     W.WriteLine();
+    W.WriteLine($"public static {M.TypeName.FullName} Create(Brain Brain) => new(Brain);");
     W.WriteLine();
     W.WriteLine($"public {M.TypeName.TypeName.Name}(Brain Brain) : this(Brain, new IsolatedCognitionMode(Brain)) {{ }}");
     W.WriteLine();

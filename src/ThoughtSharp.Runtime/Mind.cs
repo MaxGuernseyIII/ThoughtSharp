@@ -28,5 +28,7 @@ public interface Mind<out T>
   T WithChainedReasoning();
 
   public static abstract int InputLength { get; }
-  public static abstract int OutputLength { get; } 
+  public static abstract int OutputLength { get; }
+
+  public static abstract T Create(Brain Brain);
 }

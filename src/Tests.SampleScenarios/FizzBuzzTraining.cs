@@ -21,22 +21,20 @@
 // SOFTWARE.
 
 using System.Text;
-using Tests.SampleScenarios;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Runtime.Codecs;
 using ThoughtSharp.Scenarios;
 using static Tests.SampleScenarios.FizzBuzzTraining.FizzbuzzScenarios;
 
-[assembly: MindPlace<FizzBuzzTraining.FizzBuzzMindPlace, FizzBuzzTraining.FizzBuzzMind, TorchBrain>]
-
 namespace Tests.SampleScenarios;
 
 public static partial class FizzBuzzTraining
 {
+  [MindPlace]
   public class FizzBuzzMindPlace(MindPlaceConfig Config) : MindPlace<FizzBuzzMind, TorchBrain>
   {
-    public TorchBrain MakeNewBrain()
+    public override TorchBrain MakeNewBrain()
     {
       return TorchBrainBuilder.ForTraining<FizzBuzzMind>()
         .UsingSequence(Outer =>
@@ -48,12 +46,12 @@ public static partial class FizzBuzzTraining
         ).Build();
     }
 
-    public void LoadSavedBrain(TorchBrain ToLoad, string Discriminator)
+    public override void LoadSavedBrain(TorchBrain ToLoad, string Discriminator)
     {
       ToLoad.Load(GetSavePath(Discriminator));
     }
 
-    public void SaveBrain(TorchBrain ToSave, string Discriminator)
+    public override void SaveBrain(TorchBrain ToSave, string Discriminator)
     {
       ToSave.Save(GetSavePath(Discriminator));
     }

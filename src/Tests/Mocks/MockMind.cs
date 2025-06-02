@@ -36,4 +36,8 @@ class MockMind : MockDisposable, Mind<MockMind>
   public static int InputLength => throw new NotImplementedException();
 
   public static int OutputLength => throw new NotImplementedException();
+  public static MockMind Create(Brain Brain)
+  {
+    throw new NotImplementedException();
+  }
 }

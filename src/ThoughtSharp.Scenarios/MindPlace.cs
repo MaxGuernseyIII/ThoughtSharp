@@ -20,13 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using ThoughtSharp.Runtime;
+
 namespace ThoughtSharp.Scenarios;
 
-public abstract class MindPlace
+public interface MindPlace
 {
-
+  Brain MakeNewBrain();
+  object MakeNewMind(Brain Brain);
+  void LoadSavedBrain(Brain ToLoad, string Discriminator);
+  void SaveBrain(Brain ToSave, string Discriminator);
 }
 
 public abstract class MindPlace<TMind, TBrain> : MindPlace
+  where TMind : Mind<TMind>
+  where TBrain : Brain
 {
+  Brain MindPlace.MakeNewBrain() => MakeNewBrain();
+  object MindPlace.MakeNewMind(Brain Brain) => TMind.Create(Brain);
+  void MindPlace.LoadSavedBrain(Brain ToLoad, string Discriminator) => LoadSavedBrain((TBrain) ToLoad, Discriminator);
+  void MindPlace.SaveBrain(Brain ToSave, string Discriminator) => SaveBrain((TBrain) ToSave, Discriminator);
+
+  public abstract TBrain MakeNewBrain();
+  public abstract void LoadSavedBrain(TBrain ToLoad, string Discriminator);
+  public abstract void SaveBrain(TBrain ToSave, string Discriminator);
 }
