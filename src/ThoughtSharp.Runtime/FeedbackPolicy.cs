@@ -33,7 +33,7 @@ public class InferenceFeedback(Inference Target)
 public class MakeFeedback<TMade>(InferenceFeedback Underlying, Func<TMade, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
   where TMade : CognitiveData<TMade>
 {
-  public void ResultShouldHaveBeen(TMade Expected)
+  public void TrainWith(TMade Expected)
   {
     var Buffer = ToExpectedOutput(Expected);
     Underlying.ApplyLoses(Buffer);

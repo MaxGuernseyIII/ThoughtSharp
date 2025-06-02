@@ -417,7 +417,7 @@ void MindfulComparisonCheck()
     FailureLog.Add(Failure);
 
     //if (Failure)
-    T.Feedback.ResultShouldHaveBeen(new()
+    T.Feedback.TrainWith(new()
     {
       Comparison = (short) Expected
     });

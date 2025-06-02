@@ -227,6 +227,34 @@ public class NullFeedbackConfigurator
 
 public record FeedbackSource<TConfigurator, TFeedback>(TConfigurator Configurator, Func<TFeedback> CreateFeedback);
 
+public static class CognitiveResult
+{
+  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(TPayload Payload,
+    Action<TFeedback> AcceptFeedback)
+  {
+    return new AdHocCognitiveResult<TPayload, TFeedback>(Payload, new AdHocFeedbackSink<TFeedback>(AcceptFeedback));
+  }
+
+  class AdHocFeedbackSink<TFeedback>(Action<TFeedback> AcceptFeedback) : FeedbackSink<TFeedback>
+  {
+    public void TrainWith(TFeedback Feedback)
+    {
+      AcceptFeedback(Feedback);
+    }
+  }
+
+  class AdHocCognitiveResult<TPayload, TFeedback>(TPayload Payload, FeedbackSink<TFeedback> FeedbackSink)
+    : CognitiveResult<TPayload, TFeedback>
+  {
+    public void TrainWith(TFeedback Feedback)
+    {
+      FeedbackSink.TrainWith(Feedback);
+    }
+
+    public TPayload Payload { get; } = Payload;
+  }
+}
+
 public interface CognitiveResult<out TPayload, in TFeedback> : FeedbackSink<TFeedback>
 {
   TPayload Payload { get; }
@@ -240,7 +268,6 @@ public interface FeedbackSink<in TFeedback>
 public readonly record struct IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback>
   : CognitiveResult<TPayload, TFeedback>
 {
-
   readonly Func<IEnumerable<TDelta>, TPayload> CombineIntoPayload;
   readonly Func<TFeedback, IEnumerable<TDeltaFeedback>> SeparateIntoFeedbackDeltas;
 
@@ -255,16 +282,16 @@ public readonly record struct IncrementalCognitiveResult<TPayload, TFeedback, TD
 
   public TPayload Payload => CombineIntoPayload(DeltaResults.Select(Result => Result.Payload));
 
-  public IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback> Add(
-    CognitiveResult<TDelta, TDeltaFeedback> Increment)
-  {
-    return this with {DeltaResults = [..DeltaResults, Increment]};
-  }
-
   public void TrainWith(TFeedback Feedback)
   {
     var DeltaFeedbackItems = SeparateIntoFeedbackDeltas(Feedback);
-    foreach (var (Result, DeltaFeedback) in DeltaResults.Zip(DeltaFeedbackItems)) 
+    foreach (var (Result, DeltaFeedback) in DeltaResults.Zip(DeltaFeedbackItems))
       Result.TrainWith(DeltaFeedback);
+  }
+
+  public IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback> Including(
+    CognitiveResult<TDelta, TDeltaFeedback> Increment)
+  {
+    return this with {DeltaResults = [..DeltaResults, Increment]};
   }
 }

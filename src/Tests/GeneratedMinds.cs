@@ -80,7 +80,7 @@ public partial class GeneratedMinds
       R1 = Any.Float
     };
 
-    T.Feedback.ResultShouldHaveBeen(ExpectedObject);
+    T.Feedback.TrainWith(ExpectedObject);
 
     var Inference = Brain.MockInferences.Single();
     Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output

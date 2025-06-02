@@ -182,3 +182,38 @@ public class AccumulatedUseFeedbackTraining
     Step.RequiresMore.Value.Should().Be(true);
   }
 }
+
+[TestClass]
+public class IncrementalCognitiveResultTraining
+{
+  [TestMethod]
+  public void CompilesResult()
+  {
+    var R = new IncrementalCognitiveResult<string, string, string, string>(
+        Parts => string.Join(" ", Parts),
+        Whole => Whole.Split(" "))
+      .Including(CognitiveResult.From("a", (string _) => { }))
+      .Including(CognitiveResult.From("B", (string _) => { }));
+
+    var Payload = R.Payload;
+
+    Payload.Should().Be("a B");
+  }
+
+  [TestMethod]
+  public void ParsesFeedback()
+  {
+    string ATraining = "";
+    string BTraining = "";
+    var R = new IncrementalCognitiveResult<string, string, string, string>(
+        Parts => string.Join(" ", Parts),
+        Whole => Whole.Split(" "))
+      .Including(CognitiveResult.From("a", (string A) => { ATraining = A; }))
+      .Including(CognitiveResult.From("B", (string B) => { BTraining = B; }));
+
+    R.TrainWith("X y");
+
+    ATraining.Should().Be("X");
+    BTraining.Should().Be("y");
+  }
+}
