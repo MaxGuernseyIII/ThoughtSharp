@@ -20,30 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
-
-[AttributeUsage(AttributeTargets.Method)]
-public class ScenarioAttribute : Attribute
-{
-  public int ConvergenceThreshold { get; set; } = 5000;
-}
-
-[AttributeUsage(AttributeTargets.Class)]
-public class ScenarioSetAttribute : Attribute
-{
-  public int ConvergenceThreshold { get; set; } = 5000;
-}
-
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public class TrainingDependencyAttribute : Attribute
-{
-  public string? Scenario { get; set; }
-  public Type? ScenarioSet { get; set; }
-  public double RequiredConfidenceThreshold = .95;
-}
 
 public abstract class MindPlaceAttribute : Attribute
 {
@@ -59,18 +38,4 @@ public class MindPlaceAttribute<TMindPlace, TMind, TBrain> : MindPlaceAttribute
   {
     throw new NotImplementedException();
   }
-}
-
-public abstract class MindPlace
-{
-
-}
-
-public abstract class MindPlace<TMind, TBrain> : MindPlace
-{
-}
-
-public class MindPlaceConfig(IImmutableDictionary<string, string> Strings)
-{
-  public IImmutableDictionary<string, string> Strings { get; } = Strings;
 }
