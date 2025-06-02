@@ -24,27 +24,24 @@ namespace ThoughtSharp.Runtime;
 
 public static class MindExtensions
 {
-  public static Thought<AccumulatedUseFeedback<TSurface>> Use<TMind, TSurface>(
+  public static AccumulatedUseFeedback<TSurface> Use<TMind, TSurface>(
     this TMind Mind,
-    Func<TMind, Thought<bool, UseFeedback<TSurface>>> Action, Thought.UseConfiguration? Configuration = null)
+    Func<TMind, CognitiveResult<bool, UseFeedbackMethod<TSurface>>> Action,
+    Thought.UseConfiguration? Configuration = null)
     where TMind : Mind<TMind>
   {
     var ChainedMind = Mind.WithChainedReasoning();
     var EffectiveConfiguration = Configuration ?? new();
+    var Source = AccumulatedUseFeedback.GetSource<TSurface>();
+    foreach (var _ in Enumerable.Range(0, EffectiveConfiguration.MaxTrials))
+    {
+      var T = Action(ChainedMind);
+      Source.Configurator.AddStep(T);
+      var MoreRequested = T.Payload;
+      if (!MoreRequested)
+        break;
+    }
 
-    return Thought.Think(R =>
-      ThoughtResult.WithFeedbackSource(AccumulatedUseFeedback.GetSource<TSurface>()).FromLogic(A =>
-      {
-        foreach (var _ in Enumerable.Range(0, EffectiveConfiguration.MaxTrials))
-        {
-          var T = Action(ChainedMind);
-          A.AddStep(T.Feedback);
-          var MoreRequested = R.Consume(T);
-          if (!MoreRequested)
-            break;
-        }
-
-        return (object?) null;
-      }));
+    return Source.CreateFeedback();
   }
 }

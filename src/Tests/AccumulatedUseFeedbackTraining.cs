@@ -142,7 +142,7 @@ public class AccumulatedUseFeedbackTraining
   {
     var RequiresMore = new BoxedBool { Value = Any.Bool };
     var ActionSurfaceMock = new MockToUse();
-    var OperationFeedback = new UseFeedback<MockToUse>(ActionSurfaceMock, B => RequiresMore.Value = B);
+    var OperationFeedback = new UseFeedbackSink<MockToUse>(ActionSurfaceMock, B => RequiresMore.Value = B);
     Source.Configurator.AddStep(OperationFeedback);
     return (RequiresMore, ActionSurfaceMock);
   }

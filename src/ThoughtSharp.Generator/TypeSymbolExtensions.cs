@@ -71,6 +71,11 @@ public static class TypeSymbolExtensions
     return IsType(Type, "ThoughtSharp.Runtime.Thought");
   }
 
+  public static bool IsCognitiveResultOf(this ITypeSymbol Type, params Func<ITypeSymbol, bool>[] Arguments)
+  {
+    return IsGenericOf(Type, "ThoughtSharp.Runtime.CognitiveResult", Arguments);
+  }
+
   public static bool IsTaskType(this ITypeSymbol Type)
   {
     return IsType(Type, "System.Threading.Tasks.Task");

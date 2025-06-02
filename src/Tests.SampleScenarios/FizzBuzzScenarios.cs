@@ -124,6 +124,6 @@ public static partial class FizzBuzzScenarios
   public partial class FizzBuzzMind
   {
     [Use]
-    public partial Thought<bool, UseFeedback<FizzBuzzTerminal>> WriteForNumber(FizzBuzzTerminal Surface, FizzBuzzInput InputData);
+    public partial CognitiveResult<bool, UseFeedbackMethod<FizzBuzzTerminal>> WriteForNumber(FizzBuzzTerminal Surface, FizzBuzzInput InputData);
   }
 }

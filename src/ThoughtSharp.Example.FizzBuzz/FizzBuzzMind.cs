@@ -41,7 +41,7 @@ partial class FizzBuzzInput
 partial class FizzBuzzMind
 {
   [Use]
-  public partial Thought<bool, UseFeedback<FizzBuzzTerminal>> WriteForNumber(FizzBuzzTerminal Surface, FizzBuzzInput InputData);
+  public partial CognitiveResult<bool, UseFeedbackMethod<FizzBuzzTerminal>> WriteForNumber(FizzBuzzTerminal Surface, FizzBuzzInput InputData);
 }
 
 [CognitiveData]
@@ -55,7 +55,7 @@ partial class ShapeInfo
 partial class ShapesMind
 {
   [Make]
-  public partial Thought<ShapeInfo, MakeFeedback<ShapeInfo>> MakeSquare([CognitiveDataBounds<float>(-1e3f, 1e3f)] float SideLength);
+  public partial CognitiveResult<ShapeInfo, ShapeInfo> MakeSquare([CognitiveDataBounds<float>(-1e3f, 1e3f)] float SideLength);
 }
 
 [CognitiveData]
@@ -79,5 +79,5 @@ public partial class ComparisonInputData
 public partial class ComparisonMind
 {
   [Make]
-  public partial Thought<ComparisonData, MakeFeedback<ComparisonData>> Compare(ComparisonInputData Parameters);
+  public partial CognitiveResult<ComparisonData, ComparisonData> Compare(ComparisonInputData Parameters);
 }

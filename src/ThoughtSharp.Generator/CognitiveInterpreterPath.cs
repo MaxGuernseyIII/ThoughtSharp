@@ -26,13 +26,11 @@ class CognitiveInterpreterPath(
   string MethodName,
   CognitiveDataClass ParametersClass,
   bool RequiresAwait,
-  bool IsThoughtful,
   string ReturnType
   )
 {
   public string MethodName { get; } = MethodName;
   public CognitiveDataClass ParametersClass { get; } = ParametersClass;
   public bool RequiresAwait { get; } = RequiresAwait;
-  public bool IsThoughtful { get; } = IsThoughtful;
   public string ReturnType { get; } = ReturnType;
 }

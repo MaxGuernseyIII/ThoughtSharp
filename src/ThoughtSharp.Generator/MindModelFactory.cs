@@ -70,7 +70,7 @@ static class MindModelFactory
     if (
       S is IMethodSymbol {IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public} M &&
       M.HasAttribute(CognitiveAttributeNames.MakeAttributeName) &&
-      M.ReturnType.IsThoughtTypeWithPayload())
+      M.ReturnType.IsCognitiveResultOf(_ => true, _ => true))
     {
       Method = M;
       return true;
@@ -93,7 +93,7 @@ static class MindModelFactory
       if (CognitiveCategories.Count() == 1)
       {
         var PayloadType = CognitiveCategories.Single().CategoryData!.Value.PayloadType;
-        if (M.ReturnType.IsThoughtOf(T => T.IsEquivalentTo(PayloadType), T => T.IsGenericOf("UseFeedback", F => F.IsEquivalentTo(PayloadType))))
+        if (M.ReturnType.IsCognitiveResultOf(T => T.IsEquivalentTo(PayloadType), T => T.IsEquivalentTo(PayloadType)))
         {
           Method = M;
           return true;

@@ -22,15 +22,9 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class InferenceFeedback(Inference Target)
-{
-  public void ApplyLoses(params IReadOnlyList<(int, LossRule)> LossRules)
-  {
-    Target.Train(LossRules);
-  }
-}
-
-public class MakeFeedback<TMade>(InferenceFeedback Underlying, Func<TMade, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
+public class MakeFeedbackSink<TMade>(
+  InferenceFeedback Underlying,
+  Func<TMade, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
   : FeedbackSink<TMade>
   where TMade : CognitiveData<TMade>
 {
@@ -38,36 +32,5 @@ public class MakeFeedback<TMade>(InferenceFeedback Underlying, Func<TMade, IRead
   {
     var Buffer = ToExpectedOutput(Expected);
     Underlying.ApplyLoses(Buffer);
-  }
-}
-
-public class BoxedBool
-{
-  public bool Value { get; set; }
-}
-
-public class UseFeedback<TSurface>(TSurface Mock, Action<bool> Commit)
-{
-  public delegate void TrainingMethod(TSurface Mock, BoxedBool ShouldHaveRequestedMore);
-
-  public void ExpectationsWere(TrainingMethod Configure)
-  {
-    var ShouldHaveRequestedMore = new BoxedBool();
-    Configure(Mock, ShouldHaveRequestedMore);
-
-    Commit(ShouldHaveRequestedMore.Value);
-  }
-}
-
-public class AsyncUseFeedback<TSurface>(TSurface Mock, Action<bool> Commit)
-{
-  public delegate Task TrainingMethod(TSurface Mock, BoxedBool ShouldHaveRequestedMore);
-
-  public void ExpectationsWere(TrainingMethod Configure)
-  {
-    var ShouldHaveRequestedMore = new BoxedBool();
-    Configure(Mock, ShouldHaveRequestedMore);
-
-    Commit(ShouldHaveRequestedMore.Value);
   }
 }

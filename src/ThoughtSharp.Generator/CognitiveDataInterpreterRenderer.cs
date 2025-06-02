@@ -37,24 +37,19 @@ static class CognitiveDataInterpreterRenderer
         WriteBody = W =>
         {
           var MethodIsAsync = Interpreter.RequiresAwait;
-          var ReturnValue = $"Thought<bool, NullFeedback>";
+          var ReturnValue = $"CognitiveResult<bool, NullFeedback>";
           if (MethodIsAsync)
             ReturnValue = $"Task<{ReturnValue}>";
 
-          W.WriteLine($"public {ReturnValue} InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
+          var Async = MethodIsAsync ? "async " : "";
+
+          W.WriteLine($"public {Async}{ReturnValue} InterpretFor({Interpreter.ToInterpretType.FullName} ToInterpret)");
           W.WriteLine("{");
           W.Indent++;
           W.WriteLine("var ActionCode = this.ActionCode;");
           W.WriteLine("var MoreActions = this.MoreActions;");
           W.WriteLine("var Parameters = this.Parameters;");
           W.WriteLine();
-          if (MethodIsAsync)
-            W.WriteLine("return Thought.WithoutFeedback.ThinkAsync(async R =>");
-          else
-            W.WriteLine("return Thought.WithoutFeedback.Think(R =>");
-          W.Indent++;
-          W.WriteLine("{");
-          W.Indent++;
           W.WriteLine("switch (ActionCode)");
           W.WriteLine("{");
           W.Indent++;
@@ -66,16 +61,11 @@ static class CognitiveDataInterpreterRenderer
             W.WriteLine($"case {PathId}:");
             W.Indent++;
 
-            if (Path.IsThoughtful)
-              W.Write("R.Incorporate(");
-
             if (Path.RequiresAwait)
               W.Write("await ");
 
             W.Write($"ToInterpret.{Path.MethodName}({string.Join(", ",
               Path.ParametersClass.Parameters.Select(P => $"Parameters.{Path.MethodName}.{P.Name}"))})");
-            if (Path.IsThoughtful)
-              W.Write(")");
 
             W.WriteLine(";");
 
@@ -90,11 +80,7 @@ static class CognitiveDataInterpreterRenderer
           W.Indent--;
           W.WriteLine("}");
           W.WriteLine();
-          W.WriteLine("return MoreActions;");
-          W.Indent--;
-          W.WriteLine("}");
-          W.Indent--;
-          W.WriteLine(");");
+          W.WriteLine("return CognitiveResult.From(MoreActions, (NullFeedback _) => {});");
           W.Indent--;
           W.WriteLine("}");
         },

@@ -64,7 +64,7 @@ public partial class GeneratedMinds
       }
     });
 
-    var Actual = Mind.MakeSimpleOutput(InputToMakeCall).ConsumeDetached();
+    var Actual = Mind.MakeSimpleOutput(InputToMakeCall).Payload;
 
     Actual.Should().BeEquivalentTo(ExpectedOutput);
   }
@@ -80,7 +80,7 @@ public partial class GeneratedMinds
       R1 = Any.Float
     };
 
-    T.Feedback.TrainWith(ExpectedObject);
+    T.TrainWith(ExpectedObject);
 
     var Inference = Brain.MockInferences.Single();
     Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
@@ -159,7 +159,7 @@ public partial class GeneratedMinds
     var ExpectedMore = Any.Bool;
     var SomeOtherData = Any.Float;
 
-    T.Feedback.ExpectationsWere((Mock, More) =>
+    T.TrainWith((Mock, More) =>
     {
       Mock.DoSomething2(SomeOtherData);
       More.Value = ExpectedMore;
@@ -253,7 +253,7 @@ public partial class GeneratedMinds
     var ExpectedMore = Any.Bool;
     var SomeOtherData = Any.Float;
 
-    T.Feedback.ExpectationsWere((Mock, More) =>
+    T.TrainWith((Mock, More) =>
     {
       Mock.DoSomething2(SomeOtherData);
       More.Value = ExpectedMore;
@@ -350,9 +350,8 @@ public partial class GeneratedMinds
     };
     var T = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArgument);
     var Selected = Any.Of(Category.AllOptions);
-    T.RaiseAnyExceptions();
 
-    T.Feedback.TrainWith(Selected.Payload);
+    T.TrainWith(Selected.Payload);
 
     var Offset = StatelessMind.Output.ParametersIndex + StatelessMind.Output.OutputParameters.ChooseItemsIndex +
                  StatelessMind.Output.OutputParameters.ChooseItemsParameters.CategoryIndex;
@@ -384,7 +383,7 @@ public partial class GeneratedMinds
 
     var Mind = new StatelessMind(Brain);
 
-    var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg).ConsumeDetached();
+    var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg).Payload;
 
     Result.Should().BeSameAs(Selected.Payload);
 
@@ -448,7 +447,7 @@ public partial class GeneratedMinds
     var Thought = new StatelessMind(Brain).SynchronousUseSomeInterface(Surface,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument1,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument2);
-    var More = Thought.ConsumeDetached();
+    var More = Thought.Payload;
     return More;
   }
 
@@ -493,7 +492,7 @@ public partial class GeneratedMinds
     var Thought = await new StatelessMind(Brain).AsynchronousUseSomeInterface(Surface,
       ExpectedInput.Parameters.AsynchronousUseSomeInterface.Argument1,
       ExpectedInput.Parameters.AsynchronousUseSomeInterface.Argument2);
-    var More = Thought.ConsumeDetached();
+    var More = Thought.Payload;
     return More;
   }
 
@@ -512,9 +511,9 @@ public partial class GeneratedMinds
       this.SomeData = SomeData;
     }
 
-    public Thought DoSomething2(float SomeOtherData)
+    public void DoSomething2(float SomeOtherData)
     {
-      return Thought.WithoutFeedback.Do(_ => { this.SomeOtherData = SomeOtherData; });
+      this.SomeOtherData = SomeOtherData;
     }
   }
 
@@ -528,9 +527,10 @@ public partial class GeneratedMinds
       this.SomeData = SomeData;
     }
 
-    public Task<Thought> DoSomething2(float SomeOtherData)
+    public Task DoSomething2(float SomeOtherData)
     {
-      return Task.FromResult(Thought.WithoutFeedback.Do(_ => { this.SomeOtherData = SomeOtherData; }));
+      this.SomeOtherData = SomeOtherData;
+      return Task.CompletedTask;
     }
   }
 
@@ -551,43 +551,44 @@ public partial class GeneratedMinds
   partial class SimpleMakeMockMind
   {
     [Make]
-    public partial Thought<SimpleOutputData, MakeFeedback<SimpleOutputData>> MakeSimpleOutput(SimpleInputData Simple1);
+    public partial CognitiveResult<SimpleOutputData, SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
+    //public partial CognitiveData<SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
   }
 
   [CognitiveActions]
   partial interface SynchronousActionSurface
   {
     void DoSomething1(float SomeData);
-    Thought DoSomething2(float SomeOtherData);
+    void DoSomething2(float SomeOtherData);
   }
 
   [CognitiveActions]
   partial interface AsynchronousActionSurface
   {
     void DoSomething1(float SomeData);
-    Task<Thought> DoSomething2(float SomeOtherData);
+    Task DoSomething2(float SomeOtherData);
   }
 
   [Mind]
   partial class StatelessMind
   {
     [Make]
-    public partial Thought<SimpleOutputData, MakeFeedback<SimpleOutputData>> MakeSimpleOutput(SimpleInputData Simple1);
+    public partial CognitiveResult<SimpleOutputData, SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
 
     [Use]
-    public partial Thought<bool, UseFeedback<SynchronousActionSurface>> SynchronousUseSomeInterface(
+    public partial CognitiveResult<bool, UseFeedbackMethod<SynchronousActionSurface>> SynchronousUseSomeInterface(
       SynchronousActionSurface Surface,
       int Argument1,
       int Argument2);
 
     [Use]
-    public partial Task<Thought<bool, AsyncUseFeedback<AsynchronousActionSurface>>> AsynchronousUseSomeInterface(
+    public partial Task<CognitiveResult<bool, AsyncUseFeedbackMethod<AsynchronousActionSurface>>> AsynchronousUseSomeInterface(
       AsynchronousActionSurface Surface,
       int Argument1,
       int Argument2);
 
     [Choose]
-    public partial Thought<MockSelectable, ChooseFeedback<MockSelectable>> ChooseItems(MockCategory Category,
+    public partial CognitiveResult<MockSelectable, MockSelectable> ChooseItems(MockCategory Category,
       float ArgumentA, float Argument2,
       float AThirdArg);
   }

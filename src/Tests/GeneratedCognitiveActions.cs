@@ -101,9 +101,7 @@ public partial class GeneratedCognitiveActions
       ActionCode = 4
     };
 
-    var T = P.InterpretFor(Choices);
-
-    T.Invoking(It => It.ConsumeDetached()).Should().Throw<InvalidOperationException>();
+    P.Invoking(It => It.InterpretFor(Choices)).Should().Throw<InvalidOperationException>();
   }
 
   [TestMethod]
@@ -161,7 +159,7 @@ public partial class GeneratedCognitiveActions
 
     var Actual = Parameters.InterpretFor(Actions);
 
-    Actual.ConsumeDetached().Should().Be(Expected);
+    Actual.Payload.Should().Be(Expected);
   }
 
   [DataRow(false)]
@@ -175,7 +173,7 @@ public partial class GeneratedCognitiveActions
 
     var Actual = await Parameters.InterpretFor(Actions);
 
-    Actual.ConsumeDetached().Should().Be(Expected);
+    Actual.Payload.Should().Be(Expected);
   }
 
   [CognitiveActions]

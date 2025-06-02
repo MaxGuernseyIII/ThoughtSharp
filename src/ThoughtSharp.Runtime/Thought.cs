@@ -232,7 +232,12 @@ public static class CognitiveResult
   public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(TPayload Payload,
     Action<TFeedback> AcceptFeedback)
   {
-    return new AdHocCognitiveResult<TPayload, TFeedback>(Payload, new AdHocFeedbackSink<TFeedback>(AcceptFeedback));
+    return From(Payload, new AdHocFeedbackSink<TFeedback>(AcceptFeedback));
+  }
+
+  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(TPayload Payload, FeedbackSink<TFeedback> FeedbackSink)
+  {
+    return new AdHocCognitiveResult<TPayload, TFeedback>(Payload, FeedbackSink);
   }
 
   class AdHocFeedbackSink<TFeedback>(Action<TFeedback> AcceptFeedback) : FeedbackSink<TFeedback>
@@ -259,8 +264,6 @@ public interface CognitiveResult<out TPayload, in TFeedback> : FeedbackSink<TFee
 {
   TPayload Payload { get; }
 }
-
-public interface CognitiveResult<TPayloadFeedback> : CognitiveResult<TPayloadFeedback, TPayloadFeedback>;
 
 public interface FeedbackSink<in TFeedback>
 {

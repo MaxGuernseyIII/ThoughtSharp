@@ -20,23 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Generator;
-
-class CognitiveDataInterpreterBuilder(TypeAddress ToInterpretType)
+public class BoxedBool
 {
-  readonly List<CognitiveInterpreterPath> Paths = [];
-  public CognitiveDataClass? ParametersClass { get; set; }
-
-  public CognitiveDataInterpreter Build()
-  {
-    return new(ToInterpretType, ParametersClass!, Paths.ToImmutableArray());
-  }
-
-  public void AssociateMethodWithDataClass(IMethodSymbol Method, CognitiveDataClass Parameters)
-  {
-    Paths.Add(new(Method.Name, Parameters, Method.ReturnType.RequiresAwait(), Method.ReturnType.GetFullPath()));
-  }
+  public bool Value { get; set; }
 }

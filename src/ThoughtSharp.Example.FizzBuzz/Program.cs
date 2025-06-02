@@ -255,8 +255,6 @@ void DoFizzBuzz()
     var Actual = string.Empty;
     try
     {
-      T.RaiseAnyExceptions();
-
       Actual = Terminal.Content.ToString();
       if (Expected is not (Fizz or Buzz or FizzBuzz))
         foreach (var WrittenByte in Terminal.WrittenBytes)
@@ -306,20 +304,20 @@ void DoFizzBuzz()
     switch (Expected)
     {
       case Fizz:
-        T.Feedback.TrainWith(
+        T.TrainWith(
           M => M.Fizz());
         break;
       case Buzz:
-        T.Feedback.TrainWith(
+        T.TrainWith(
           M => M.Buzz());
         break;
       case FizzBuzz:
-        T.Feedback.TrainWith(
+        T.TrainWith(
           M => M.Fizz(), 
           M => M.Buzz());
         break;
       default:
-        T.Feedback.TrainWith(
+        T.TrainWith(
           M => M.WriteNumber((byte) Input));
         break;
     }
@@ -393,7 +391,7 @@ void MindfulComparisonCheck()
     bool Failure;
     try
     {
-      var Actual = T.ConsumeDetached();
+      var Actual = T.Payload;
       if (Actual.Comparison != Expected)
       {
         Failures++;
@@ -417,7 +415,7 @@ void MindfulComparisonCheck()
     FailureLog.Add(Failure);
 
     //if (Failure)
-    T.Feedback.TrainWith(new()
+    T.TrainWith(new()
     {
       Comparison = (short) Expected
     });
@@ -726,7 +724,7 @@ void DoChooseShape()
       var Failure = false;
       try
       {
-        var Actual = T.ConsumeDetached();
+        var Actual = T.Payload;
         if (Actual != Expected)
         {
           Failure = true;
@@ -745,7 +743,7 @@ void DoChooseShape()
         Console.Write(Ex);
       }
 
-      T.Feedback.TrainWith(Expected);
+      T.TrainWith(Expected);
 
       RecordSuccess(!Failure);
 
@@ -872,7 +870,7 @@ class PlusHandler : ShapeHandler
 partial class ShapeClassifyingMind
 {
   [Choose]
-  public partial Thought<ShapeHandler, ChooseFeedback<ShapeHandler>> ChooseHandlerFor(Shape Shape,
+  public partial CognitiveResult<ShapeHandler, ShapeHandler> ChooseHandlerFor(Shape Shape,
     ShapeHandlerCategory Handlers);
 }
 

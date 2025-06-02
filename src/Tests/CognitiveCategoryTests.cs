@@ -53,7 +53,7 @@ public partial class CognitiveCategoryTests
     var Right = AnyCognitiveOption();
     var Output = new TestCategory.Output { RightIsWinner = false };
 
-    var Selected = new TestCategory([]).Interpret(Left, Right, Output, AnyMockInference(), Any.Int(0, 100)).ConsumeDetached();
+    var Selected = new TestCategory([]).Interpret(Left, Right, Output, AnyMockInference(), Any.Int(0, 100)).Payload;
 
     Selected.Should().BeSameAs(Left);
   }
@@ -65,7 +65,7 @@ public partial class CognitiveCategoryTests
     var Right = AnyCognitiveOption();
     var Output = new TestCategory.Output { RightIsWinner = true };
 
-    var Selected = new TestCategory([]).Interpret(Left, Right, Output, AnyMockInference(), Any.Int(0, 100)).ConsumeDetached();
+    var Selected = new TestCategory([]).Interpret(Left, Right, Output, AnyMockInference(), Any.Int(0, 100)).Payload;
 
     Selected.Should().BeSameAs(Right);
   }
@@ -79,7 +79,7 @@ public partial class CognitiveCategoryTests
     var Offset = Any.Int(0, 100);
     var T = new TestCategory([]).Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    T.Feedback.TrainWith(Left.Payload);
+    T.TrainWith(Left.Payload);
 
     MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = false }.ExtractLossRules(Offset));
   }
@@ -93,7 +93,7 @@ public partial class CognitiveCategoryTests
     var Offset = Any.Int(0, 100);
     var T = new TestCategory([]).Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    T.Feedback.TrainWith(Right.Payload);
+    T.TrainWith(Right.Payload);
 
     MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = true }.ExtractLossRules(Offset));
   }
@@ -107,7 +107,7 @@ public partial class CognitiveCategoryTests
     var Offset = Any.Int(0, 100);
     var T = new TestCategory([]).Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    T.Feedback.TrainWith(new());
+    T.TrainWith(new());
 
     MockInference.ShouldNotHaveBeenTrained();
   }

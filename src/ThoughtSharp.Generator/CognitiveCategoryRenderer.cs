@@ -78,9 +78,9 @@ static class CognitiveCategoryRenderer
       var FeedbackType = $"SingleChoiceFeedbackSink<{PayloadType}, Output>";
       var FeedbackReturnType = $"FeedbackSink<{PayloadType}>";
       using (W.DeclareWithBlock(
-               $"public Thought<{OptionType}, {FeedbackReturnType}> Interpret({OptionType} Left, {OptionType} Right, Output O, Inference I, int Offset)"))
+               $"public CognitiveResult<{OptionType}, {PayloadType}> Interpret({OptionType} Left, {OptionType} Right, Output O, Inference I, int Offset)"))
       {
-        W.WriteLine($"return Thought.Capture<{OptionType}, {FeedbackReturnType}>(O.RightIsWinner ? Right : Left, new {FeedbackType}(I, Left.Payload, Right.Payload, B => new() {{ RightIsWinner = B }}, Offset));");
+        W.WriteLine($"return CognitiveResult.From<{OptionType}, {PayloadType}>(O.RightIsWinner ? Right : Left, new {FeedbackType}(I, Left.Payload, Right.Payload, B => new() {{ RightIsWinner = B }}, Offset));");
       }
     }
 

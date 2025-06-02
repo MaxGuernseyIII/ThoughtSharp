@@ -99,7 +99,7 @@ static class MindRenderer
     ushort OperationCode)
   {
     W.WriteLine(
-      $"public partial Thought<{MakeOperation.ReturnType}, MakeFeedback<{MakeOperation.ReturnType}>> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
+      $"public partial CognitiveResult<{MakeOperation.ReturnType}, {MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
     RenderInputObjectForOpCode(W, OperationCode);
@@ -113,10 +113,10 @@ static class MindRenderer
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
     W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
 
-    W.WriteLine("return Thought.Capture(");
+    W.WriteLine("return CognitiveResult.From(");
     W.Indent++;
     W.WriteLine($"OutputObject.Parameters.{MakeOperation.Name}.Value,");
-    W.WriteLine($"new MakeFeedback<{MakeOperation.ReturnType}>(");
+    W.WriteLine($"new MakeFeedbackSink<{MakeOperation.ReturnType}>(");
     W.Indent++;
     W.WriteLine("new(");
     W.Indent++;
@@ -158,11 +158,15 @@ static class MindRenderer
     var ActionSurface = ActionSurfaces.Single();
 
     var MethodIsAsync = ActionSurface.AssociatedInterpreter!.RequiresAwait;
-    var FeedbackType = $"UseFeedback<{ActionSurface.TypeName}>";
+    var FeedbackType = $"UseFeedbackMethod<{ActionSurface.TypeName}>";
+    var FeedbackSinkType = $"UseFeedbackSink<{ActionSurface.TypeName}>";
     if (MethodIsAsync)
+    {
       FeedbackType = "Async" + FeedbackType;
+      FeedbackSinkType = "Async" + FeedbackSinkType;
+    }
 
-    var ReturnType = $"Thought<bool, {FeedbackType}>";
+    var ReturnType = $"CognitiveResult<bool, {FeedbackType}>";
     if (MethodIsAsync)
       ReturnType = $"Task<{ReturnType}>";
 
@@ -190,14 +194,8 @@ static class MindRenderer
         W.WriteLine(
           $"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.Parameters.{Path.MethodName}.{Parameter.Name} = {Parameter.Name};");
 
-      var ReturnValue = Path.IsThoughtful ? "Thought.Done()" : "";
-      if (Path.RequiresAwait)
-        ReturnValue = $"Task.FromResult({ReturnValue})";
-
-      if (ReturnValue.Length > 0)
-        ReturnValue = " " + ReturnValue;
-      if (Path.IsThoughtful)
-        W.WriteLine($"return{ReturnValue};");
+      var ReturnValue = Path.RequiresAwait ? " Task.CompletedTask" : "";
+      W.WriteLine($"return{ReturnValue};");
 
       W.Indent--;
       W.WriteLine("}");
@@ -218,9 +216,12 @@ static class MindRenderer
     W.Indent--;
     W.WriteLine("}");
     W.WriteLine();
+    var (Async, Unwrap) = MethodIsAsync
+      ? ("async ", "await ")
+      : ("", "");
 
     W.WriteLine(
-      $"public partial {ReturnType} {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
+      $"public partial {Async}{ReturnType} {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
     RenderInputObjectForOpCode(W, OperationCode);
@@ -237,7 +238,7 @@ static class MindRenderer
     W.WriteLine();
 
     W.WriteLine($"var FeedbackMock = new {UseOperation.Name}FeedbackMock(Inference);");
-    W.WriteLine($"var Feedback = new {FeedbackType}(");
+    W.WriteLine($"var Feedback = new {FeedbackSinkType}(");
     W.Indent++;
     W.WriteLine("FeedbackMock,");
     W.WriteLine("FeedbackMock.Commit");
@@ -245,29 +246,11 @@ static class MindRenderer
     W.WriteLine(");");
     W.WriteLine();
 
-    var (ThoughtMethod, FromLogicMethod, Async, Unwrap) = MethodIsAsync
-      ? ("ThinkAsync", "FromLogicAsync", "async ", "await ")
-      : ("Think", "FromLogic", "", "");
-    W.WriteLine($"return Thought.{ThoughtMethod}({Async}R =>");
-    W.WriteLine("{");
-    W.Indent++;
-    W.WriteLine($"return {Unwrap}ThoughtResult.WithFeedback(Feedback)");
-    W.Indent++;
-    W.WriteLine($".{FromLogicMethod}({Async}_ => ");
-    W.WriteLine("{");
-    W.Indent++;
-
-    W.WriteLine();
     W.WriteLine(
-      $"var MoreActions = R.Consume({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name}));");
+      $"var MoreActions = ({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name})).Payload;");
 
     W.WriteLine();
-    W.WriteLine("return MoreActions;");
-    W.Indent--;
-    W.WriteLine("});");
-    W.Indent--;
-    W.Indent--;
-    W.WriteLine("});");
+    W.WriteLine("return CognitiveResult.From(MoreActions, Feedback);");
     W.Indent--;
     W.WriteLine("}");
   }
@@ -282,16 +265,7 @@ static class MindRenderer
       $"public partial {ChooseOperation.ReturnType} {ChooseOperation.Name}({string.Join(", ", ChooseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
-    W.WriteLine("return Thought.Think(R =>");
-    W.Indent++;
-    W.WriteLine("ThoughtResult.WithFeedbackSource(");
-    W.Indent++;
-    W.WriteLine($"ChooseFeedback<{ChooseOperation.SelectableTypeName}>.GetSource<{ChooseOperation.Parameters.Single(P => P.Name == ChooseOperation.CategoryParameter).TypeName}.Output>()");
-    W.Indent--;
-    W.WriteLine(").FromLogic(Source =>");
-    W.WriteLine("{");
-    W.Indent++;
-
+    W.WriteLine($"var Source = ChooseFeedback<{ChooseOperation.SelectableTypeName}>.GetSource<{ChooseOperation.Parameters.Single(P => P.Name == ChooseOperation.CategoryParameter).TypeName}.Output>();");
     W.WriteLine($"var Champion = {ChooseOperation.CategoryParameter}.AllOptions.First();");
     W.WriteLine();
     W.WriteLine($"foreach (var Contender in {ChooseOperation.CategoryParameter}.AllOptions.Skip(1))");
@@ -309,17 +283,12 @@ static class MindRenderer
 
       W.WriteLine($"var Offset = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index + Output.OutputParameters.{ChooseOperation.Name}Parameters.{ChooseOperation.CategoryParameter}Index;");
       W.WriteLine($"var T = {ChooseOperation.CategoryParameter}.Interpret(Champion, Contender, OutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}, Inference, Offset);");
-      W.WriteLine("Source.AddSingleChoice(T.Feedback);");
-      W.WriteLine("Champion = R.Consume(T);");
+      W.WriteLine("Source.Configurator.AddSingleChoice(T);");
+      W.WriteLine("Champion = T.Payload;");
     }
 
     W.WriteLine(
-      $"return Champion.Payload;");
-    W.Indent--;
-    W.WriteLine("})");
-
-    W.Indent--;
-    W.WriteLine(");");
+      $"return CognitiveResult.From(Champion.Payload, Source.CreateFeedback());");
     W.Indent--;
     W.WriteLine("}");
   }

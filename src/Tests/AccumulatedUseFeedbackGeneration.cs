@@ -30,7 +30,7 @@ namespace Tests;
 [TestClass]
 public class AccumulatedUseFeedbackGeneration
 {
-  Queue<UseFeedback<MockSurface>> Steps = null!;
+  Queue<UseFeedbackSink<MockSurface>> Steps = null!;
   MockMind Mind = null!;
   MockMind ChainedMind = null!;
   List<MockMind> UsedMinds = null!;
@@ -105,30 +105,30 @@ public class AccumulatedUseFeedbackGeneration
     ThenStepsShouldBe(T, [.. Expected]);
   }
 
-  List<UseFeedback<MockSurface>> GivenSteps(int Count)
+  List<UseFeedbackSink<MockSurface>> GivenSteps(int Count)
   {
     return Enumerable.Range(0, Count).Select(_ => GivenStep()).ToList();
   }
 
-  Thought<AccumulatedUseFeedback<MockSurface>> WhenUse(Thought.UseConfiguration? UseConfiguration = null)
+  FeedbackSink<IEnumerable<Action<MockSurface>>> WhenUse(Thought.UseConfiguration? UseConfiguration = null)
   {
     return Mind.Use(M =>
     {
       UsedMinds.Add(M);
       var ThisStep = Steps.Dequeue();
-      return Thought.Capture(Steps.Any(), ThisStep);
+      return CognitiveResult.From(Steps.Any(), ThisStep);
     }, UseConfiguration);
   }
 
-  static void ThenStepsShouldBe(Thought<AccumulatedUseFeedback<MockSurface>> T,
-    params ImmutableArray<UseFeedback<MockSurface>> Expected)
+  static void ThenStepsShouldBe(FeedbackSink<IEnumerable<Action<MockSurface>>> T,
+    params ImmutableArray<UseFeedbackSink<MockSurface>> Expected)
   {
-    T.Feedback.Should().Be(new AccumulatedUseFeedback<MockSurface>(Expected));
+    T.Should().Be(new AccumulatedUseFeedback<MockSurface>([..Expected]));
   }
 
-  UseFeedback<MockSurface> GivenStep()
+  UseFeedbackSink<MockSurface> GivenStep()
   {
-    var Step = new UseFeedback<MockSurface>(null!,
+    var Step = new UseFeedbackSink<MockSurface>(null!,
       delegate { Assert.Fail("This object is only used for its identity."); });
     Steps.Enqueue(Step);
     return Step;
