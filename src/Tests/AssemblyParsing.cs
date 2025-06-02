@@ -91,6 +91,17 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void FindsMindPlace()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsMindPlace(
+      typeof(FizzBuzzTraining).Namespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzMindPlace));
+  }
+
+  [TestMethod]
   public void FindsNestedCapabilities()
   {
     WhenParseAssembly();
@@ -177,6 +188,11 @@ public class AssemblyParsing
     Model.Name.Should().Be(Expected);
   }
 
+  void ThenStructureContainsMindPlace(params ImmutableArray<string?> Path)
+  {
+    ThenStructureHasNodeOfTypeAtPath(Path, NodeType.MindPlace);
+  }
+
   void ThenModelTypeIs(NodeType Expected)
   {
     GetNodeType(Model).Should().Be(Expected);
@@ -206,7 +222,8 @@ public class AssemblyParsing
     Model,
     Directory,
     Curriculum,
-    Capability
+    Capability,
+    MindPlace
   }
 
   class GetNodeTypeVisitor : ScenariosModelNodeVisitor<NodeType>
@@ -229,6 +246,11 @@ public class AssemblyParsing
     public NodeType Visit(CapabilityNode Capability)
     {
       return NodeType.Capability;
+    }
+
+    public NodeType Visit(MindPlaceNode MindPlace)
+    {
+      return NodeType.MindPlace;
     }
   }
 }

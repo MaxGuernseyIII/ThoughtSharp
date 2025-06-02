@@ -65,16 +65,29 @@ public class AssemblyParser
     if (IsCapabilityType(Type))
       return new CapabilityNode(Type, ParseMembers(Type));
 
+    if (IsMindPlaceType(Type))
+      return new MindPlaceNode(Type);
+
     return new DirectoryNode(Type.Name, ParseMembers(Type));
+  }
+
+  static bool IsMindPlaceType(Type Type)
+  {
+    return HasAttribute<MindPlaceAttribute>(Type);
   }
 
   static bool IsCapabilityType(Type Type)
   {
-    return Type.GetCustomAttributes().Any(A => A is CapabilityAttribute);
+    return HasAttribute<CapabilityAttribute>(Type);
   }
 
   static bool IsCurriculumType(Type Type)
   {
-    return Type.GetCustomAttributes().Any(A => A is CurriculumAttribute);
+    return HasAttribute<CurriculumAttribute>(Type);
+  }
+
+  static bool HasAttribute<T>(Type Type)
+  {
+    return Type.GetCustomAttributes().Any(A => A is T);
   }
 }
