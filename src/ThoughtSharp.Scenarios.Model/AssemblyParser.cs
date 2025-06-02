@@ -40,10 +40,10 @@ public class AssemblyParser
 
   static DirectoryNode ParseDirectory(Type Type)
   {
-    return new(Type.FullName!, ParseDirectoryMembers(Type));
+    return new(Type.FullName!, ParseMembers(Type));
   }
 
-  static IEnumerable<ScenariosModelNode> ParseDirectoryMembers(Type Type)
+  static IEnumerable<ScenariosModelNode> ParseMembers(Type Type)
   {
     return Type.GetNestedTypes().Select(ParseDirectoryMemberType);
   }
@@ -56,8 +56,8 @@ public class AssemblyParser
       return new CurriculumNode(Type, []);
 
     if (Attributes.Any(A => A is CapabilityAttribute))
-      return new CapabilityNode(Type, []);
+      return new CapabilityNode(Type, ParseMembers(Type));
 
-    return new DirectoryNode(Type.Name, ParseDirectoryMembers(Type));
+    return new DirectoryNode(Type.Name, ParseMembers(Type));
   }
 }

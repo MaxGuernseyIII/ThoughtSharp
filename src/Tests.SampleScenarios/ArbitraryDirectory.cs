@@ -20,13 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios.Model;
+using ThoughtSharp.Scenarios;
 
-class CapabilityNode(Type Wrapped, IEnumerable<ScenariosModelNode> ChildNodes) : ScenariosModelNode
+namespace Tests.SampleScenarios;
+
+public class ArbitraryDirectory
 {
-  public string Name => Wrapped.Name;
+  [Capability]
+  public class ArbitraryCapability
+  {
+    [Capability]
+    public class ArbitrarySubCapability1
+    {
 
-  public NodeType Type => NodeType.Capability;
+    }
 
-  public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
+    [Capability]
+    public class ArbitrarySubCapability2
+    {
+
+    }
+  }
 }

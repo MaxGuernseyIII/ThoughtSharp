@@ -85,6 +85,26 @@ public class AssemblyParsing
       nameof(FizzBuzzTraining.FizzbuzzScenarios.Solution));
   }
 
+  [TestMethod]
+  public void FindsNestedCapabilities()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsCapability(
+      typeof(ArbitraryDirectory).FullName,
+      nameof(ArbitraryDirectory.ArbitraryCapability));
+
+    ThenStructureContainsCapability(
+      typeof(ArbitraryDirectory).FullName,
+      nameof(ArbitraryDirectory.ArbitraryCapability),
+      nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability1));
+
+    ThenStructureContainsCapability(
+      typeof(ArbitraryDirectory).FullName,
+      nameof(ArbitraryDirectory.ArbitraryCapability),
+      nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
+  }
+
   void ThenStructureContainsCapability(params ImmutableArray<string?> Path)
   {
     ThenHasNodeOfTypeAtPath(Path, NodeType.Capability);
