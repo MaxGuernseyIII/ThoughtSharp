@@ -745,7 +745,7 @@ void DoChooseShape()
         Console.Write(Ex);
       }
 
-      T.Feedback.SelectionShouldHaveBeen(Expected);
+      T.Feedback.TrainWith(Expected);
 
       RecordSuccess(!Failure);
 

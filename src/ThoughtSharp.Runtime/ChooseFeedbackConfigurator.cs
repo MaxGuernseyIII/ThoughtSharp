@@ -24,9 +24,9 @@ namespace ThoughtSharp.Runtime;
 
 public class ChooseFeedbackConfigurator<TSelectable>()
 {
-  readonly List<SingleChoiceFeedback<TSelectable>> SingleChoices = [];
+  readonly List<SingleChoiceFeedbackSink<TSelectable>> SingleChoices = [];
 
-  public void AddSingleChoice(SingleChoiceFeedback<TSelectable> SingleChoice) => SingleChoices.Add(SingleChoice);
+  public void AddSingleChoice(SingleChoiceFeedbackSink<TSelectable> SingleChoice) => SingleChoices.Add(SingleChoice);
 
   public ChooseFeedback<TSelectable> Create()
   {

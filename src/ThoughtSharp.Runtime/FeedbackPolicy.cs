@@ -31,6 +31,7 @@ public class InferenceFeedback(Inference Target)
 }
 
 public class MakeFeedback<TMade>(InferenceFeedback Underlying, Func<TMade, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
+  : FeedbackSink<TMade>
   where TMade : CognitiveData<TMade>
 {
   public void TrainWith(TMade Expected)

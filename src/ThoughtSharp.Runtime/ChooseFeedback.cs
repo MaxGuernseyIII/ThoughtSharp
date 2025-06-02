@@ -22,7 +22,8 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedback<TSelectable>(List<SingleChoiceFeedback<TSelectable>> SingleChoices)
+public class ChooseFeedback<TSelectable>(List<SingleChoiceFeedbackSink<TSelectable>> SingleChoices)
+   : FeedbackSink<TSelectable>
 {
   public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseFeedback<TSelectable>> GetSource<TOutput>()
     where TOutput : CognitiveData<TOutput>
@@ -31,7 +32,7 @@ public class ChooseFeedback<TSelectable>(List<SingleChoiceFeedback<TSelectable>>
     return new(Configurator, Configurator.Create);
   }
 
-  public void SelectionShouldHaveBeen(TSelectable Payload)
+  public void TrainWith(TSelectable Payload)
   {
     foreach (var SingleChoice in SingleChoices)
     {
@@ -40,17 +41,17 @@ public class ChooseFeedback<TSelectable>(List<SingleChoiceFeedback<TSelectable>>
   }
 }
 
-public interface SingleChoiceFeedback<in TSelectable>
+public interface SingleChoiceFeedbackSink<in TSelectable>
 {
   void WinnerShouldBe(TSelectable ExpectedWinner);
 }
 
-public class SingleChoiceFeedback<TSelectable, TOutput>(
+public class SingleChoiceFeedbackSink<TSelectable, TOutput>(
   Inference Inference,
   TSelectable Left,
   TSelectable Right,
   Func<bool, TOutput> MakeOutput,
-  int Offset) : SingleChoiceFeedback<TSelectable>
+  int Offset) : SingleChoiceFeedbackSink<TSelectable>
   where TOutput : CognitiveData<TOutput>
 {
   public void WinnerShouldBe(TSelectable ExpectedWinner)

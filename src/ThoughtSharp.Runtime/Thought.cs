@@ -260,6 +260,8 @@ public interface CognitiveResult<out TPayload, in TFeedback> : FeedbackSink<TFee
   TPayload Payload { get; }
 }
 
+public interface CognitiveResult<TPayloadFeedback> : CognitiveResult<TPayloadFeedback, TPayloadFeedback>;
+
 public interface FeedbackSink<in TFeedback>
 {
   void TrainWith(TFeedback Feedback);

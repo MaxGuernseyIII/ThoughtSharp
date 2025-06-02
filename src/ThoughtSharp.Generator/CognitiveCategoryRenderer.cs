@@ -75,8 +75,8 @@ static class CognitiveCategoryRenderer
     void GenerateInterpretMethod(IndentedTextWriter W)
     {
       var PayloadType = Model.PayloadType.FullName;
-      var FeedbackType = $"SingleChoiceFeedback<{PayloadType}, Output>";
-      var FeedbackReturnType = $"SingleChoiceFeedback<{PayloadType}>";
+      var FeedbackType = $"SingleChoiceFeedbackSink<{PayloadType}, Output>";
+      var FeedbackReturnType = $"SingleChoiceFeedbackSink<{PayloadType}>";
       using (W.DeclareWithBlock(
                $"public Thought<{OptionType}, {FeedbackReturnType}> Interpret({OptionType} Left, {OptionType} Right, Output O, Inference I, int Offset)"))
       {

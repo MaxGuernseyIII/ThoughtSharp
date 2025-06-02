@@ -352,7 +352,7 @@ public partial class GeneratedMinds
     var Selected = Any.Of(Category.AllOptions);
     T.RaiseAnyExceptions();
 
-    T.Feedback.SelectionShouldHaveBeen(Selected.Payload);
+    T.Feedback.TrainWith(Selected.Payload);
 
     var Offset = StatelessMind.Output.ParametersIndex + StatelessMind.Output.OutputParameters.ChooseItemsIndex +
                  StatelessMind.Output.OutputParameters.ChooseItemsParameters.CategoryIndex;
