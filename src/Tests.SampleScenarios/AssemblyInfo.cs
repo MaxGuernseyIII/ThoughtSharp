@@ -20,22 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Scenarios;
+using System.Runtime.CompilerServices;
 
-namespace Tests.SampleScenarios;
-
-[Capability]
-public class ArbitraryRootCapability
-{
-  [Behavior]
-  public static void StaticBehavior() { }
-
-  [Behavior]
-  internal static void InternalBehavior() { }
-
-  [Behavior]
-  public Task AsyncBehavior() => Task.CompletedTask;
-
-  [Behavior]
-  public int IntBehavior() => 0;
-}
+[assembly: InternalsVisibleTo("Tests")]

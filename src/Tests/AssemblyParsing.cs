@@ -138,6 +138,39 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void DoesNotFindNonPublicBehaviors()
+  {
+    WhenParseAssembly();
+
+    ThenStructureDoesNotContainNode(
+      RootNamespace,
+      nameof(ArbitraryRootCapability),
+      nameof(ArbitraryRootCapability.InternalBehavior));
+  }
+
+  [TestMethod]
+  public void DoesNotFindNonVoidBehaviors()
+  {
+    WhenParseAssembly();
+
+    ThenStructureDoesNotContainNode(
+      RootNamespace,
+      nameof(ArbitraryRootCapability),
+      nameof(ArbitraryRootCapability.IntBehavior));
+  }
+
+  [TestMethod]
+  public void FindsAsyncTaskBehaviors()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(ArbitraryRootCapability),
+      nameof(ArbitraryRootCapability.AsyncBehavior));
+  }
+
+  [TestMethod]
   public void FindsMindPlace()
   {
     WhenParseAssembly();
