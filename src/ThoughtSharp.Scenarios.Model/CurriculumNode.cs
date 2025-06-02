@@ -22,11 +22,14 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-class CurriculumNode(Type Wrapped, List<ScenariosModelNode> ChildNodes) : ScenariosModelNode
+public class CurriculumNode(Type Wrapped, List<ScenariosModelNode> ChildNodes) : ScenariosModelNode
 {
   public string Name => Wrapped.Name;
 
-  public NodeType Type => NodeType.Curriculum;
-
   public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
+
+  public TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor)
+  {
+    return Visitor.Visit(this);
+  }
 }

@@ -25,6 +25,7 @@ namespace ThoughtSharp.Scenarios.Model;
 public interface ScenariosModelNode
 {
   string Name { get; }
-  NodeType Type { get; }
   IEnumerable<ScenariosModelNode> ChildNodes { get; }
+
+  TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor);
 }

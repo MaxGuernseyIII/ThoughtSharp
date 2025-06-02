@@ -22,10 +22,10 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public enum NodeType
+public interface ScenariosModelNodeVisitor<out TResult>
 {
-  Model,
-  Directory,
-  Curriculum,
-  Capability
+  TResult Visit(ScenariosModel Model);
+  TResult Visit(DirectoryNode Directory);
+  TResult Visit(CurriculumNode Curriculum);
+  TResult Visit(CapabilityNode Capability);
 }

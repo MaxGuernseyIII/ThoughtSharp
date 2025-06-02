@@ -179,12 +179,17 @@ public class AssemblyParsing
 
   void ThenModelTypeIs(NodeType Expected)
   {
-    Model.Type.Should().Be(Expected);
+    GetNodeType(Model).Should().Be(Expected);
+  }
+
+  static NodeType GetNodeType(ScenariosModelNode Node)
+  {
+    return Node.Query(new GetNodeTypeVisitor());
   }
 
   static Expression<Func<ScenariosModelNode, bool>> HasNameAndType(string? Name, NodeType NodeType)
   {
-    return I => I.Name == Name && I.Type == NodeType;
+    return I => I.Name == Name && GetNodeType(I) == NodeType;
   }
 
   (ScenariosModelNode Parent, string? FinalName) GetParentNodeAndFinalNodeName(ImmutableArray<string?> Path)
@@ -194,5 +199,36 @@ public class AssemblyParsing
     var Parent =
       ContainerNodes.Aggregate((ScenariosModelNode)Model, (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
     return (Parent, FinalName);
+  }
+
+  public enum NodeType
+  {
+    Model,
+    Directory,
+    Curriculum,
+    Capability
+  }
+
+  class GetNodeTypeVisitor : ScenariosModelNodeVisitor<NodeType>
+  {
+    public NodeType Visit(ScenariosModel Model)
+    {
+      return NodeType.Model;
+    }
+
+    public NodeType Visit(DirectoryNode Directory)
+    {
+      return NodeType.Directory;
+    }
+
+    public NodeType Visit(CurriculumNode Curriculum)
+    {
+      return NodeType.Curriculum;
+    }
+
+    public NodeType Visit(CapabilityNode Capability)
+    {
+      return NodeType.Capability;
+    }
   }
 }

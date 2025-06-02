@@ -28,5 +28,8 @@ public class ScenariosModel(IEnumerable<ScenariosModelNode> ChildNodes) : Scenar
 
   public string Name => "";
 
-  public NodeType Type => NodeType.Model;
+  public TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor)
+  {
+    return Visitor.Visit(this);
+  }
 }
