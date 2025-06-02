@@ -211,7 +211,7 @@ public class IncrementalCognitiveResultTraining
       .Including(CognitiveResult.From("a", (string A) => { ATraining = A; }))
       .Including(CognitiveResult.From("B", (string B) => { BTraining = B; }));
 
-    R.TrainWith("X y");
+    R.FeedbackSink.TrainWith("X y");
 
     ATraining.Should().Be("X");
     BTraining.Should().Be("y");

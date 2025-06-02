@@ -80,7 +80,7 @@ public partial class GeneratedMinds
       R1 = Any.Float
     };
 
-    T.TrainWith(ExpectedObject);
+    T.FeedbackSink.TrainWith(ExpectedObject);
 
     var Inference = Brain.MockInferences.Single();
     Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
@@ -159,7 +159,7 @@ public partial class GeneratedMinds
     var ExpectedMore = Any.Bool;
     var SomeOtherData = Any.Float;
 
-    T.TrainWith((Mock, More) =>
+    T.FeedbackSink.TrainWith((Mock, More) =>
     {
       Mock.DoSomething2(SomeOtherData);
       More.Value = ExpectedMore;
@@ -253,7 +253,7 @@ public partial class GeneratedMinds
     var ExpectedMore = Any.Bool;
     var SomeOtherData = Any.Float;
 
-    T.TrainWith((Mock, More) =>
+    T.FeedbackSink.TrainWith((Mock, More) =>
     {
       Mock.DoSomething2(SomeOtherData);
       More.Value = ExpectedMore;
@@ -351,7 +351,7 @@ public partial class GeneratedMinds
     var T = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArgument);
     var Selected = Any.Of(Category.AllOptions);
 
-    T.TrainWith(Selected.Payload);
+    T.FeedbackSink.TrainWith(Selected.Payload);
 
     var Offset = StatelessMind.Output.ParametersIndex + StatelessMind.Output.OutputParameters.ChooseItemsIndex +
                  StatelessMind.Output.OutputParameters.ChooseItemsParameters.CategoryIndex;

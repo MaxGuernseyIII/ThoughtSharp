@@ -283,7 +283,7 @@ static class MindRenderer
 
       W.WriteLine($"var Offset = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index + Output.OutputParameters.{ChooseOperation.Name}Parameters.{ChooseOperation.CategoryParameter}Index;");
       W.WriteLine($"var T = {ChooseOperation.CategoryParameter}.Interpret(Champion, Contender, OutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}, Inference, Offset);");
-      W.WriteLine("Source.Configurator.AddSingleChoice(T);");
+      W.WriteLine("Source.Configurator.AddSingleChoice(T.FeedbackSink);");
       W.WriteLine("Champion = T.Payload;");
     }
 

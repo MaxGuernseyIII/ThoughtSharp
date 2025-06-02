@@ -22,26 +22,38 @@
 
 namespace ThoughtSharp.Runtime;
 
-public static class MindExtensions
+public interface CognitiveResult<out TPayload, in TFeedback>
 {
-  public static AccumulatedUseFeedback<TSurface> Use<TMind, TSurface>(
-    this TMind Mind,
-    Func<TMind, CognitiveResult<bool, UseFeedbackMethod<TSurface>>> Action,
-    Thought.UseConfiguration? Configuration = null)
-    where TMind : Mind<TMind>
-  {
-    var ChainedMind = Mind.WithChainedReasoning();
-    var EffectiveConfiguration = Configuration ?? new();
-    var Source = AccumulatedUseFeedback.GetSource<TSurface>();
-    foreach (var _ in Enumerable.Range(0, EffectiveConfiguration.MaxTrials))
-    {
-      var T = Action(ChainedMind);
-      Source.Configurator.AddStep(T.FeedbackSink);
-      var MoreRequested = T.Payload;
-      if (!MoreRequested)
-        break;
-    }
+  TPayload Payload { get; }
+  FeedbackSink<TFeedback> FeedbackSink { get; }
+}
 
-    return Source.CreateFeedback();
+public static class CognitiveResult
+{
+  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(TPayload Payload,
+    Action<TFeedback> AcceptFeedback)
+  {
+    return From(Payload, new AdHocFeedbackSink<TFeedback>(AcceptFeedback));
+  }
+
+  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(TPayload Payload,
+    FeedbackSink<TFeedback> FeedbackSink)
+  {
+    return new AdHocCognitiveResult<TPayload, TFeedback>(Payload, FeedbackSink);
+  }
+
+  class AdHocFeedbackSink<TFeedback>(Action<TFeedback> AcceptFeedback) : FeedbackSink<TFeedback>
+  {
+    public void TrainWith(TFeedback Feedback)
+    {
+      AcceptFeedback(Feedback);
+    }
+  }
+
+  class AdHocCognitiveResult<TPayload, TFeedback>(TPayload Payload, FeedbackSink<TFeedback> FeedbackSink)
+    : CognitiveResult<TPayload, TFeedback>
+  {
+    public TPayload Payload { get; } = Payload;
+    public FeedbackSink<TFeedback> FeedbackSink { get; } = FeedbackSink;
   }
 }

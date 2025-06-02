@@ -79,7 +79,7 @@ public partial class CognitiveCategoryTests
     var Offset = Any.Int(0, 100);
     var T = new TestCategory([]).Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    T.TrainWith(Left.Payload);
+    T.FeedbackSink.TrainWith(Left.Payload);
 
     MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = false }.ExtractLossRules(Offset));
   }
@@ -93,7 +93,7 @@ public partial class CognitiveCategoryTests
     var Offset = Any.Int(0, 100);
     var T = new TestCategory([]).Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    T.TrainWith(Right.Payload);
+    T.FeedbackSink.TrainWith(Right.Payload);
 
     MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = true }.ExtractLossRules(Offset));
   }
@@ -107,7 +107,7 @@ public partial class CognitiveCategoryTests
     var Offset = Any.Int(0, 100);
     var T = new TestCategory([]).Interpret(Left, Right, new() { RightIsWinner = Any.Bool }, MockInference, Offset);
 
-    T.TrainWith(new());
+    T.FeedbackSink.TrainWith(new());
 
     MockInference.ShouldNotHaveBeenTrained();
   }

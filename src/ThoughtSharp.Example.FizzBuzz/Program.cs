@@ -415,7 +415,7 @@ void MindfulComparisonCheck()
     FailureLog.Add(Failure);
 
     //if (Failure)
-    T.TrainWith(new()
+    T.FeedbackSink.TrainWith(new()
     {
       Comparison = (short) Expected
     });
@@ -743,7 +743,7 @@ void DoChooseShape()
         Console.Write(Ex);
       }
 
-      T.TrainWith(Expected);
+      T.FeedbackSink.TrainWith(Expected);
 
       RecordSuccess(!Failure);
 

@@ -20,8 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-
 namespace ThoughtSharp.Runtime;
 
 public abstract partial class Thought : IDisposable
@@ -226,77 +224,3 @@ public class NullFeedbackConfigurator
 }
 
 public record FeedbackSource<TConfigurator, TFeedback>(TConfigurator Configurator, Func<TFeedback> CreateFeedback);
-
-public static class CognitiveResult
-{
-  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(TPayload Payload,
-    Action<TFeedback> AcceptFeedback)
-  {
-    return From(Payload, new AdHocFeedbackSink<TFeedback>(AcceptFeedback));
-  }
-
-  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(TPayload Payload, FeedbackSink<TFeedback> FeedbackSink)
-  {
-    return new AdHocCognitiveResult<TPayload, TFeedback>(Payload, FeedbackSink);
-  }
-
-  class AdHocFeedbackSink<TFeedback>(Action<TFeedback> AcceptFeedback) : FeedbackSink<TFeedback>
-  {
-    public void TrainWith(TFeedback Feedback)
-    {
-      AcceptFeedback(Feedback);
-    }
-  }
-
-  class AdHocCognitiveResult<TPayload, TFeedback>(TPayload Payload, FeedbackSink<TFeedback> FeedbackSink)
-    : CognitiveResult<TPayload, TFeedback>
-  {
-    public void TrainWith(TFeedback Feedback)
-    {
-      FeedbackSink.TrainWith(Feedback);
-    }
-
-    public TPayload Payload { get; } = Payload;
-  }
-}
-
-public interface CognitiveResult<out TPayload, in TFeedback> : FeedbackSink<TFeedback>
-{
-  TPayload Payload { get; }
-}
-
-public interface FeedbackSink<in TFeedback>
-{
-  void TrainWith(TFeedback Feedback);
-}
-
-public readonly record struct IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback>
-  : CognitiveResult<TPayload, TFeedback>
-{
-  readonly Func<IEnumerable<TDelta>, TPayload> CombineIntoPayload;
-  readonly Func<TFeedback, IEnumerable<TDeltaFeedback>> SeparateIntoFeedbackDeltas;
-
-  public IncrementalCognitiveResult(Func<IEnumerable<TDelta>, TPayload> CombineIntoPayload,
-    Func<TFeedback, IEnumerable<TDeltaFeedback>> SeparateIntoFeedbackDeltas)
-  {
-    this.CombineIntoPayload = CombineIntoPayload;
-    this.SeparateIntoFeedbackDeltas = SeparateIntoFeedbackDeltas;
-  }
-
-  ImmutableArray<CognitiveResult<TDelta, TDeltaFeedback>> DeltaResults { get; init; } = [];
-
-  public TPayload Payload => CombineIntoPayload(DeltaResults.Select(Result => Result.Payload));
-
-  public void TrainWith(TFeedback Feedback)
-  {
-    var DeltaFeedbackItems = SeparateIntoFeedbackDeltas(Feedback);
-    foreach (var (Result, DeltaFeedback) in DeltaResults.Zip(DeltaFeedbackItems))
-      Result.TrainWith(DeltaFeedback);
-  }
-
-  public IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback> Including(
-    CognitiveResult<TDelta, TDeltaFeedback> Increment)
-  {
-    return this with {DeltaResults = [..DeltaResults, Increment]};
-  }
-}

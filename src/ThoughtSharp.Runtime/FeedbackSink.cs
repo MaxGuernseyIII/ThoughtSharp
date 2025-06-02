@@ -22,26 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-public static class MindExtensions
+public interface FeedbackSink<in TFeedback>
 {
-  public static AccumulatedUseFeedback<TSurface> Use<TMind, TSurface>(
-    this TMind Mind,
-    Func<TMind, CognitiveResult<bool, UseFeedbackMethod<TSurface>>> Action,
-    Thought.UseConfiguration? Configuration = null)
-    where TMind : Mind<TMind>
-  {
-    var ChainedMind = Mind.WithChainedReasoning();
-    var EffectiveConfiguration = Configuration ?? new();
-    var Source = AccumulatedUseFeedback.GetSource<TSurface>();
-    foreach (var _ in Enumerable.Range(0, EffectiveConfiguration.MaxTrials))
-    {
-      var T = Action(ChainedMind);
-      Source.Configurator.AddStep(T.FeedbackSink);
-      var MoreRequested = T.Payload;
-      if (!MoreRequested)
-        break;
-    }
-
-    return Source.CreateFeedback();
-  }
+  void TrainWith(TFeedback Feedback);
 }
