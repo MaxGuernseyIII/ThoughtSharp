@@ -20,44 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Reflection;
-
 namespace ThoughtSharp.Scenarios.Model;
 
-public class AssemblyParser
+class CurriculumNode(Type Wrapped, List<ScenariosModelNode> ChildNodes) : ScenariosModelNode
 {
-  public ScenariosModel Parse(Assembly LoadedAssembly)
-  {
-    return new([
-      ..LoadedAssembly.GetExportedTypes().Select(ParseType)
-    ]);
-  }
+  public string Name => Wrapped.Name;
 
-  static ScenariosModelNode ParseType(Type Type)
-  {
-    return ParseDirectory(Type);
-  }
+  public NodeType Type => NodeType.Curriculum;
 
-  static DirectoryNode ParseDirectory(Type Type)
-  {
-    return new(Type.FullName!, ParseDirectoryMembers(Type));
-  }
-
-  static IEnumerable<ScenariosModelNode> ParseDirectoryMembers(Type Type)
-  {
-    return Type.GetNestedTypes().Select(ParseDirectoryMemberType);
-  }
-
-  static ScenariosModelNode ParseDirectoryMemberType(Type Type)
-  {
-    var Attributes = Type.GetCustomAttributes();
-
-    if (Attributes.Any(A => A is CurriculumAttribute))
-      return new CurriculumNode(Type, []);
-
-    if (Attributes.Any(A => A is CapabilityAttribute))
-      return new CapabilityNode(Type, []);
-
-    return new DirectoryNode(Type.Name, ParseDirectoryMembers(Type));
-  }
+  public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
 }

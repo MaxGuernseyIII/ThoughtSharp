@@ -60,7 +60,7 @@ public class AssemblyParsing
   }
 
   [TestMethod]
-  public void FindsCapabilities()
+  public void FindsCurricula()
   {
     WhenParseAssembly();
 
@@ -69,13 +69,39 @@ public class AssemblyParsing
       nameof(FizzBuzzTraining.FizzBuzzTrainingPlan));
   }
 
+  [TestMethod]
+  public void FindsCapabilities()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsCapability(
+      typeof(FizzBuzzTraining).FullName,
+      nameof(FizzBuzzTraining.FizzbuzzScenarios),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations));
+
+    ThenStructureContainsCapability(
+      typeof(FizzBuzzTraining).FullName,
+      nameof(FizzBuzzTraining.FizzbuzzScenarios),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Solution));
+  }
+
+  void ThenStructureContainsCapability(params ImmutableArray<string?> Path)
+  {
+    ThenHasNodeOfTypeAtPath(Path, NodeType.Capability);
+  }
+
   void ThenStructureContainsCurriculum(params ImmutableArray<string?> Path)
+  {
+    ThenHasNodeOfTypeAtPath(Path, NodeType.Curriculum);
+  }
+
+  void ThenHasNodeOfTypeAtPath(ImmutableArray<string?> Path, NodeType NodeType)
   {
     var ContainerNodes = Path[..^1];
     var Parent =
       ContainerNodes.Aggregate((ScenariosModelNode)Model, (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
 
-    Parent.ChildNodes.Should().ContainSingle(HasNameAndType(Path[^1], NodeType.Curriculum));
+    Parent.ChildNodes.Should().ContainSingle(HasNameAndType(Path[^1], NodeType));
   }
 
   void WhenParseAssembly()

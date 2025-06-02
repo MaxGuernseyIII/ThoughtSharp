@@ -64,7 +64,6 @@ public static partial class FizzBuzzTraining
     }
   }
 
-  [Capability]
   public class FizzbuzzScenarios
   {
     record MockActionSurface : FizzBuzzTerminal

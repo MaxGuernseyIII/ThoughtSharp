@@ -26,5 +26,6 @@ public enum NodeType
 {
   Model,
   Directory,
-  Curriculum
+  Curriculum,
+  Capability
 }

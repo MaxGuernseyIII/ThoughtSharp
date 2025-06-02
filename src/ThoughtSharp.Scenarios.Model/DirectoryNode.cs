@@ -22,9 +22,9 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-class DirectoryNode(Type Wrapped, IEnumerable<ScenariosModelNode> ChildNodes) : ScenariosModelNode
+class DirectoryNode(string WrappedFullName, IEnumerable<ScenariosModelNode> ChildNodes) : ScenariosModelNode
 {
-  public string Name => Wrapped.FullName!;
+  public string Name => WrappedFullName;
   
   public NodeType Type => NodeType.Directory;
 
