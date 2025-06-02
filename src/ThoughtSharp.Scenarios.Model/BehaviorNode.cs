@@ -20,14 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Reflection;
+
 namespace ThoughtSharp.Scenarios.Model;
 
-public interface ScenariosModelNodeVisitor<out TResult>
+public class BehaviorNode(Type HostType, MethodInfo Method) : ScenariosModelNode
 {
-  TResult Visit(ScenariosModel Model);
-  TResult Visit(DirectoryNode Directory);
-  TResult Visit(CurriculumNode Curriculum);
-  TResult Visit(CapabilityNode Capability);
-  TResult Visit(MindPlaceNode MindPlace);
-  TResult Visit(BehaviorNode MindPlace);
+  public string Name => Method.Name;
+
+  public IEnumerable<ScenariosModelNode> ChildNodes { get; } = [];
+
+  public TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor)
+  {
+    return Visitor.Visit(this);
+  }
 }

@@ -32,6 +32,8 @@ namespace Tests;
 [TestClass]
 public class AssemblyParsing
 {
+  static readonly string RootNamespace = typeof(Anchor).Namespace!;
+
   ScenariosModel Model = null!;
   Assembly LoadedAssembly = null!;
 
@@ -57,7 +59,7 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureContainsDirectory(
-      typeof(FizzBuzzTraining).Namespace,
+      RootNamespace,
       nameof(FizzBuzzTraining));
   }
 
@@ -67,7 +69,7 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureContainsCurriculum(
-      typeof(FizzBuzzTraining).Namespace,
+      RootNamespace,
       nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzBuzzTrainingPlan));
   }
@@ -78,16 +80,61 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureContainsCapability(
-      typeof(FizzBuzzTraining).Namespace,
+      RootNamespace,
       nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzbuzzScenarios),
       nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations));
 
     ThenStructureContainsCapability(
-      typeof(FizzBuzzTraining).Namespace,
+      RootNamespace,
       nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzbuzzScenarios),
       nameof(FizzBuzzTraining.FizzbuzzScenarios.Solution));
+  }
+
+  [TestMethod]
+  public void FindsBehaviors()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations.Fizz));
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations.Buzz));
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations.FizzBuzz));
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations),
+      nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations.WriteValue));
+  }
+
+  [TestMethod]
+  public void DoesNotFindStaticBehaviors()
+  {
+    WhenParseAssembly();
+
+    ThenStructureDoesNotContainNode(
+      RootNamespace,
+      nameof(ArbitraryRootCapability),
+      nameof(ArbitraryRootCapability.StaticBehavior));
   }
 
   [TestMethod]
@@ -96,7 +143,7 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureContainsMindPlace(
-      typeof(FizzBuzzTraining).Namespace,
+      RootNamespace,
       nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzBuzzMindPlace));
   }
@@ -107,18 +154,18 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureContainsCapability(
-      typeof(ArbitraryDirectory).Namespace,
+      RootNamespace,
       nameof(ArbitraryDirectory),
       nameof(ArbitraryDirectory.ArbitraryCapability));
 
     ThenStructureContainsCapability(
-      typeof(ArbitraryDirectory).Namespace,
+      RootNamespace,
       nameof(ArbitraryDirectory),
       nameof(ArbitraryDirectory.ArbitraryCapability),
       nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability1));
 
     ThenStructureContainsCapability(
-      typeof(ArbitraryDirectory).Namespace,
+      RootNamespace,
       nameof(ArbitraryDirectory),
       nameof(ArbitraryDirectory.ArbitraryCapability),
       nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
@@ -130,14 +177,14 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureContainsDirectory(
-      typeof(ArbitraryRootCapability).Namespace);
+      RootNamespace);
 
     ThenStructureContainsCapability(
-      typeof(ArbitraryRootCapability).Namespace,
+      RootNamespace,
       nameof(ArbitraryRootCapability));
 
     ThenStructureContainsCurriculum(
-      typeof(ArbitraryRootCurriculum).Namespace,
+      RootNamespace,
       nameof(ArbitraryRootCurriculum));
   }
 
@@ -147,7 +194,7 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenStructureDoesNotContainNode(
-      typeof(Anchor).Namespace,
+      RootNamespace,
       nameof(Anchor));
   }
 
@@ -156,23 +203,22 @@ public class AssemblyParsing
     Model =  new AssemblyParser().Parse(LoadedAssembly);
   }
 
-  void ThenStructureDoesNotContainNode(params ImmutableArray<string?> Path)
+  void ThenStructureContainsBehavior(params ImmutableArray<string?> Path)
   {
-    var (Parent, FinalName) = GetParentNodeAndFinalNodeName(Path);
-    Parent.ChildNodes.Should().NotContain(I => I.Name == FinalName);
+    ThenStructureHasNodeOfTypeAtPath(NodeType.Behavior, Path);
   }
 
   void ThenStructureContainsCapability(params ImmutableArray<string?> Path)
   {
-    ThenStructureHasNodeOfTypeAtPath(Path, NodeType.Capability);
+    ThenStructureHasNodeOfTypeAtPath(NodeType.Capability, Path);
   }
 
   void ThenStructureContainsCurriculum(params ImmutableArray<string?> Path)
   {
-    ThenStructureHasNodeOfTypeAtPath(Path, NodeType.Curriculum);
+    ThenStructureHasNodeOfTypeAtPath(NodeType.Curriculum, Path);
   }
 
-  void ThenStructureHasNodeOfTypeAtPath(ImmutableArray<string?> Path, NodeType NodeType)
+  void ThenStructureHasNodeOfTypeAtPath(NodeType NodeType, params ImmutableArray<string?> Path)
   {
     var (Parent, Name) = GetParentNodeAndFinalNodeName(Path);
     Parent.ChildNodes.Should().ContainSingle(HasNameAndType(Name, NodeType));
@@ -180,7 +226,7 @@ public class AssemblyParsing
 
   void ThenStructureContainsDirectory(params ImmutableArray<string?> Path)
   {
-    ThenStructureHasNodeOfTypeAtPath(Path, NodeType.Directory);
+    ThenStructureHasNodeOfTypeAtPath(NodeType.Directory, Path);
   }
 
   void ThenModelNameIs(string Expected)
@@ -190,7 +236,7 @@ public class AssemblyParsing
 
   void ThenStructureContainsMindPlace(params ImmutableArray<string?> Path)
   {
-    ThenStructureHasNodeOfTypeAtPath(Path, NodeType.MindPlace);
+    ThenStructureHasNodeOfTypeAtPath(NodeType.MindPlace, Path);
   }
 
   void ThenModelTypeIs(NodeType Expected)
@@ -217,13 +263,20 @@ public class AssemblyParsing
     return (Parent, FinalName);
   }
 
+  void ThenStructureDoesNotContainNode(params ImmutableArray<string?> Path)
+  {
+    var (Parent, FinalName) = GetParentNodeAndFinalNodeName(Path);
+    Parent.ChildNodes.Should().NotContain(I => I.Name == FinalName);
+  }
+
   public enum NodeType
   {
     Model,
     Directory,
     Curriculum,
     Capability,
-    MindPlace
+    MindPlace,
+    Behavior
   }
 
   class GetNodeTypeVisitor : ScenariosModelNodeVisitor<NodeType>
@@ -251,6 +304,11 @@ public class AssemblyParsing
     public NodeType Visit(MindPlaceNode MindPlace)
     {
       return NodeType.MindPlace;
+    }
+
+    public NodeType Visit(BehaviorNode MindPlace)
+    {
+      return NodeType.Behavior;
     }
   }
 }

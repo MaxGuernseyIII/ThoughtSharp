@@ -42,15 +42,3 @@ public class ArbitraryDirectory
     }
   }
 }
-
-[Capability]
-public class ArbitraryRootCapability
-{
-
-}
-
-[Curriculum]
-public class ArbitraryRootCurriculum
-{
-
-}

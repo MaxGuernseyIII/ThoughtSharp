@@ -20,14 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios.Model;
+using ThoughtSharp.Scenarios;
 
-public interface ScenariosModelNodeVisitor<out TResult>
+namespace Tests.SampleScenarios;
+
+[Capability]
+public class ArbitraryRootCapability
 {
-  TResult Visit(ScenariosModel Model);
-  TResult Visit(DirectoryNode Directory);
-  TResult Visit(CurriculumNode Curriculum);
-  TResult Visit(CapabilityNode Capability);
-  TResult Visit(MindPlaceNode MindPlace);
-  TResult Visit(BehaviorNode MindPlace);
+  [Behavior]
+  public static void StaticBehavior() { }
+
+  [Behavior]
+  public Task AsyncBehavior() => Task.CompletedTask;
+
+  [Behavior]
+  public int IntBehavior() => 0;
 }

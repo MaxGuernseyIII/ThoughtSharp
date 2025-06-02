@@ -39,7 +39,7 @@ public class AssemblyParser
       if (!RootDirectories.TryGetValue(NamespaceDirectoryName, out var List))
         RootDirectories[NamespaceDirectoryName] = List = new();
 
-      List.Add(ParseMemberType(Type));
+      List.Add(ParseType(Type));
     }
 
     return new([
@@ -52,23 +52,42 @@ public class AssemblyParser
     return IsCurriculumType(Type) || IsCapabilityType(Type) || Type.GetNestedTypes().Any(IsThoughtSharpTrainingType);
   }
 
-  static IEnumerable<ScenariosModelNode> ParseMembers(Type Type)
+  static IEnumerable<ScenariosModelNode> ParseTypes(Type Type)
   {
-    return Type.GetNestedTypes().Select(ParseMemberType);
+    return Type.GetNestedTypes().Select(ParseType);
   }
 
-  static ScenariosModelNode ParseMemberType(Type Type)
+  static ScenariosModelNode ParseType(Type Type)
   {
     if (IsCurriculumType(Type))
       return new CurriculumNode(Type, []);
 
     if (IsCapabilityType(Type))
-      return new CapabilityNode(Type, ParseMembers(Type));
+      return ParseCapabilityType(Type);
 
     if (IsMindPlaceType(Type))
       return new MindPlaceNode(Type);
 
-    return new DirectoryNode(Type.Name, ParseMembers(Type));
+    return new DirectoryNode(Type.Name, ParseTypes(Type));
+  }
+
+  static CapabilityNode ParseCapabilityType(Type Type)
+  {
+    return new(Type, 
+      [
+        ..ParseTypes(Type),
+        ..ParseBehaviors(Type)
+      ]);
+  }
+
+  static IEnumerable<ScenariosModelNode> ParseBehaviors(Type Type)
+  {
+    return Type.GetMethods().Where(IsValidBehaviorMethod).Select(T => new BehaviorNode(Type, T));
+  }
+
+  static bool IsValidBehaviorMethod(MethodInfo M)
+  {
+    return M is {IsStatic: false};
   }
 
   static bool IsMindPlaceType(Type Type)

@@ -144,7 +144,7 @@ public static partial class FizzBuzzTraining
       }
 
       [Behavior]
-      public void WriteValueScenario()
+      public void WriteValue()
       {
         var Input = AnyByteNotDivisibleBy(FizzFactor, BuzzFactor);
 
@@ -206,7 +206,7 @@ public static partial class FizzBuzzTraining
       public class FocusOnFizzBuzz;
 
       [Phase(2.4)]
-      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.WriteValueScenario)])]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.WriteValue)])]
       public class FocusOnWriting;
     }
 
