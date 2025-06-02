@@ -136,6 +136,46 @@ public class AssemblyParsing
       nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
       nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.InitialSteps));
+
+    ThenStructureContainsCurriculumPhase(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining));
+
+    ThenStructureContainsCurriculumPhase(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnBuzz));
+
+    ThenStructureContainsCurriculumPhase(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnFizz));
+
+    ThenStructureContainsCurriculumPhase(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnFizzBuzz));
+
+    ThenStructureContainsCurriculumPhase(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnWriting));
+
+    ThenStructureContainsCurriculumPhase(
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.TrainFullSolution));
   }
 
   [TestMethod]
