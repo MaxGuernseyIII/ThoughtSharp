@@ -32,10 +32,21 @@ namespace Tests;
 [TestClass]
 public class AssemblyParsing
 {
+  public enum NodeType
+  {
+    Model,
+    Directory,
+    Curriculum,
+    Capability,
+    MindPlace,
+    Behavior,
+    CurriculumPhase
+  }
+
   static readonly string RootNamespace = typeof(Anchor).Namespace!;
+  Assembly LoadedAssembly = null!;
 
   ScenariosModel Model = null!;
-  Assembly LoadedAssembly = null!;
 
   [TestInitialize]
   public void SetUp()
@@ -255,6 +266,45 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void PhasesAreOrderedByPhaseNumberRegardlessOfPositionInClassOrName()
+  {
+    WhenParseAssembly();
+
+    ThenPhasesHaveOrder(
+      [
+        RootNamespace,
+        nameof(CurriculumWithNumerousPhases)
+      ],
+      [
+        nameof(CurriculumWithNumerousPhases.PhaseY),
+        nameof(CurriculumWithNumerousPhases.PhaseZ),
+        nameof(CurriculumWithNumerousPhases.PhaseX)
+      ]
+    );
+
+    ThenPhasesHaveOrder(
+      [
+        RootNamespace,
+        nameof(CurriculumWithNumerousPhases),
+        nameof(CurriculumWithNumerousPhases.PhaseZ)
+      ],
+      [
+        nameof(CurriculumWithNumerousPhases.PhaseZ.Phase4),
+        nameof(CurriculumWithNumerousPhases.PhaseZ.PhaseZA),
+        nameof(CurriculumWithNumerousPhases.PhaseZ.Phase0),
+      ]
+    );
+  }
+
+  void ThenPhasesHaveOrder(ImmutableArray<string?> Path, ImmutableArray<string> ExpectedPhaseOrder)
+  {
+    var Node = GetNodeAtPath(Path);
+    var Phases = Node.GetChildPhases();
+
+    Phases.Select(P => P.Name).Should().BeEquivalentTo(ExpectedPhaseOrder, O => O.WithStrictOrdering());
+  }
+
+  [TestMethod]
   public void MultipleInclusionsAllowed()
   {
     WhenParseAssembly();
@@ -271,7 +321,7 @@ public class AssemblyParsing
           RootNamespace,
           nameof(FizzBuzzTraining),
           nameof(FizzBuzzTraining.FizzbuzzScenarios),
-          nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations)
         ],
         [
           RootNamespace,
@@ -288,11 +338,13 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenIncludedNodesForPhaseIs(
-      [RootNamespace,
+      [
+        RootNamespace,
         nameof(FizzBuzzTraining),
         nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
         nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
-        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnFizz)],
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnFizz)
+      ],
       [
         [
           RootNamespace,
@@ -304,11 +356,13 @@ public class AssemblyParsing
       ]);
 
     ThenIncludedNodesForPhaseIs(
-      [RootNamespace,
+      [
+        RootNamespace,
         nameof(FizzBuzzTraining),
         nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
         nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
-        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnBuzz)],
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnBuzz)
+      ],
       [
         [
           RootNamespace,
@@ -438,7 +492,7 @@ public class AssemblyParsing
 
   void WhenParseAssembly()
   {
-    Model =  new AssemblyParser().Parse(LoadedAssembly);
+    Model = new AssemblyParser().Parse(LoadedAssembly);
   }
 
   void ThenStructureContainsBehavior(params ImmutableArray<string?> Path)
@@ -511,7 +565,8 @@ public class AssemblyParsing
 
   ScenariosModelNode GetNodeAtPath(ImmutableArray<string?> Path)
   {
-    return Path.Aggregate((ScenariosModelNode)Model, (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
+    return Path.Aggregate((ScenariosModelNode) Model,
+      (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
   }
 
   void ThenStructureDoesNotContainNode(params ImmutableArray<string?> Path)
@@ -527,17 +582,6 @@ public class AssemblyParsing
 
     var ActualNodes = Node.Query(new FetchIncludedTrainingScenarios(Model));
     ActualNodes.Should().BeEquivalentTo(ExpectedNodes);
-  }
-
-  public enum NodeType
-  {
-    Model,
-    Directory,
-    Curriculum,
-    Capability,
-    MindPlace,
-    Behavior,
-    CurriculumPhase
   }
 
   class GetNodeTypeVisitor : ScenariosModelNodeVisitor<NodeType>

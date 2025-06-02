@@ -82,6 +82,7 @@ public class AssemblyParser
 
   static CurriculumPhaseNode ParsePhaseType(Type Type, TrainingMetadata ContextTrainingMetadata)
   {
+    var PhaseAttribute = Type.GetCustomAttribute<PhaseAttribute>()!;
     List<ScenariosModelNodeVisitor<ScenariosModelNode?>> Finders = [];
 
     foreach (var IncludeAttribute in Type.GetCustomAttributes().OfType<IncludeAttribute>())
@@ -100,7 +101,7 @@ public class AssemblyParser
       SampleSize = Standard.Of
     } : ContextTrainingMetadata;
 
-    return new(Type, Metadata, ParseTypes(Type, Metadata), Finders);
+    return new(Type, PhaseAttribute.Order, Metadata, ParseTypes(Type, Metadata), Finders);
   }
 
   abstract class CrawlerFinder : ScenariosModelNodeVisitor<ScenariosModelNode?>

@@ -26,6 +26,7 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public class CurriculumPhaseNode(
   Type Wrapped,
+  double PhaseNumber,
   TrainingMetadata Metadata,
   IEnumerable<ScenariosModelNode> ChildNodes,
   IEnumerable<ScenariosModelNodeVisitor<ScenariosModelNode?>> IncludedTrainingScenarioNodeFinders) 
@@ -33,6 +34,7 @@ public class CurriculumPhaseNode(
 {
   public string Name => Wrapped.Name;
 
+  public double PhaseNumber { get; } = PhaseNumber;
   public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
 
   public IEnumerable<ScenariosModelNodeVisitor<ScenariosModelNode?>> IncludedTrainingScenarioNodeFinders { get; } =

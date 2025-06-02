@@ -20,9 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Scenarios;
+using System.Collections.Immutable;
 
-namespace Tests.SampleScenarios;
+namespace ThoughtSharp.Scenarios.Model;
 
-[Curriculum]
-public class ArbitraryRootCurriculum;
+public static class ScenariosModelNodeExtensions
+{
+  public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)
+  {
+    return Node.ChildNodes.OfType<CurriculumPhaseNode>().OrderBy(N => N.PhaseNumber).ToImmutableArray();
+  }
+}

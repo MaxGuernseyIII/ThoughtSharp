@@ -25,4 +25,8 @@ using ThoughtSharp.Scenarios;
 namespace Tests.SampleScenarios;
 
 [Curriculum]
-public class ArbitraryRootCurriculum;
+public class CurriculumWithDefaultPhase
+{
+  [Phase(1)]
+  public class SomePhase;
+}
