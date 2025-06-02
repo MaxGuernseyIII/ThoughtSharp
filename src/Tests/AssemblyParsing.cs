@@ -238,6 +238,23 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void DefaultTrainingMetadata()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = .95,
+        SampleSize = 1000
+      },
+      RootNamespace,
+      nameof(CurriculumWithDefaultPhase),
+      nameof(CurriculumWithDefaultPhase.SomePhase)
+    );
+  }
+
+  [TestMethod]
   public void MultipleInclusionsAllowed()
   {
     WhenParseAssembly();

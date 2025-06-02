@@ -80,7 +80,7 @@ public class AssemblyParser
     return new DirectoryNode(Type.Name, ParseTypes(Type, StandardTrainingMetadata));
   }
 
-  static CurriculumPhaseNode ParsePhaseType(Type Type, TrainingMetadata DefaultTrainingMetadata)
+  static CurriculumPhaseNode ParsePhaseType(Type Type, TrainingMetadata ContextTrainingMetadata)
   {
     List<ScenariosModelNodeVisitor<ScenariosModelNode?>> Finders = [];
 
@@ -98,7 +98,7 @@ public class AssemblyParser
     {
       SuccessFraction = Standard.Fraction,
       SampleSize = Standard.Of
-    } : DefaultTrainingMetadata;
+    } : ContextTrainingMetadata;
 
     return new(Type, Metadata, ParseTypes(Type, Metadata), Finders);
   }
