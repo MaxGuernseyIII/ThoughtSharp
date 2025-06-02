@@ -212,8 +212,9 @@ public static partial class FizzBuzzTraining
 
     [Phase(3)]
     [ConvergenceStandard(Fraction = 1, Of = 50)]
+    [Include(typeof(Calculations))]
     [Include(typeof(Solution))]
-    public class TrainFullSolution;
+    public class FinalTraining;
   }
 
   [CognitiveActions]

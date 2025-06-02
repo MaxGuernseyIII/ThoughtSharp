@@ -78,8 +78,13 @@ public class AssemblyParser
   {
     List<ScenariosModelNodeVisitor<ScenariosModelNode?>> Finders = [];
 
-    foreach (var IncludeAttribute in Type.GetCustomAttributes().OfType<IncludeAttribute>()) 
-      Finders.Add(new CapabilityFinder(IncludeAttribute.Capability));
+    foreach (var IncludeAttribute in Type.GetCustomAttributes().OfType<IncludeAttribute>())
+    {
+      if (IncludeAttribute.Behaviors is null)
+        Finders.Add(new CapabilityFinder(IncludeAttribute.Capability));
+      else
+        Finders.AddRange(IncludeAttribute.Behaviors.Select(B => new BehaviorFinder(IncludeAttribute.Capability, B)));
+    }
 
     return new(Type, ParseTypes(Type), Finders);
   }
@@ -133,6 +138,14 @@ public class AssemblyParser
     public override ScenariosModelNode? Visit(CapabilityNode Capability)
     {
       return Capability.Type == Type ? Capability : base.Visit(Capability);
+    }
+  }
+
+  class BehaviorFinder(Type Type, string BehaviorName) : CrawlerFinder
+  {
+    public override ScenariosModelNode? Visit(BehaviorNode Behavior)
+    {
+      return Behavior.HostType == Type && Behavior.Name == BehaviorName ? Behavior : base.Visit(Behavior);
     }
   }
 

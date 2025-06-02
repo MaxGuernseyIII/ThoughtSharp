@@ -175,20 +175,21 @@ public class AssemblyParsing
       RootNamespace,
       nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
-      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.TrainFullSolution));
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FinalTraining));
   }
 
   [TestMethod]
-  public void IncludesCapabilities()
+  public void IncludesCapabilitiesInPhases()
   {
     WhenParseAssembly();
 
     ThenIncludedNodesForPhaseIs(
-      [RootNamespace,
-      nameof(FizzBuzzTraining),
-      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
-      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
-      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnFizz)],
+      [
+        RootNamespace,
+        nameof(FizzBuzzTraining),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.InitialSteps)
+      ],
       [
         [
           RootNamespace,
@@ -199,6 +200,43 @@ public class AssemblyParsing
       ]);
   }
 
+  [TestMethod]
+  public void IncludesSpecificBehaviorsInPhases()
+  {
+    WhenParseAssembly();
+
+    ThenIncludedNodesForPhaseIs(
+      [RootNamespace,
+        nameof(FizzBuzzTraining),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnFizz)],
+      [
+        [
+          RootNamespace,
+          nameof(FizzBuzzTraining),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations.Fizz)
+        ]
+      ]);
+
+    ThenIncludedNodesForPhaseIs(
+      [RootNamespace,
+        nameof(FizzBuzzTraining),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnBuzz)],
+      [
+        [
+          RootNamespace,
+          nameof(FizzBuzzTraining),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations.Buzz)
+        ]
+      ]);
+  }
 
   [TestMethod]
   public void DoesNotFindStaticBehaviors()
@@ -362,44 +400,6 @@ public class AssemblyParsing
     ThenStructureHasNodeOfTypeAtPath(NodeType.MindPlace, Path);
   }
 
-  class FetchIncludedTrainingScenarios(ScenariosModel Model) : ScenariosModelNodeVisitor<ImmutableArray<ScenariosModelNode>>
-  {
-    public ImmutableArray<ScenariosModelNode> Visit(ScenariosModel Model)
-    {
-      throw new AssertFailedException("Should not get here.");
-    }
-
-    public ImmutableArray<ScenariosModelNode> Visit(DirectoryNode Directory)
-    {
-      throw new AssertFailedException("Should not get here.");
-    }
-
-    public ImmutableArray<ScenariosModelNode> Visit(CurriculumNode Curriculum)
-    {
-      throw new AssertFailedException("Should not get here.");
-    }
-
-    public ImmutableArray<ScenariosModelNode> Visit(CapabilityNode Capability)
-    {
-      throw new AssertFailedException("Should not get here.");
-    }
-
-    public ImmutableArray<ScenariosModelNode> Visit(MindPlaceNode MindPlace)
-    {
-      throw new AssertFailedException("Should not get here.");
-    }
-
-    public ImmutableArray<ScenariosModelNode> Visit(BehaviorNode Behavior)
-    {
-      throw new AssertFailedException("Should not get here.");
-    }
-
-    public ImmutableArray<ScenariosModelNode> Visit(CurriculumPhaseNode CurriculumPhase)
-    {
-      return [..CurriculumPhase.IncludedTrainingScenarioNodeFinders.Select(Model.Query)];
-    }
-  }
-
   void ThenModelTypeIs(NodeType Expected)
   {
     GetNodeType(Model).Should().Be(Expected);
@@ -486,6 +486,52 @@ public class AssemblyParsing
     public NodeType Visit(CurriculumPhaseNode CurriculumPhase)
     {
       return NodeType.CurriculumPhase;
+    }
+  }
+
+  class FetchIncludedTrainingScenarios(ScenariosModel Model) : FetchDataFromNode
+  {
+    public override ImmutableArray<ScenariosModelNode?> Visit(CurriculumPhaseNode CurriculumPhase)
+    {
+      return [..CurriculumPhase.IncludedTrainingScenarioNodeFinders.Select(Model.Query)];
+    }
+  }
+
+  abstract class FetchDataFromNode : ScenariosModelNodeVisitor<ImmutableArray<ScenariosModelNode?>>
+  {
+    public virtual ImmutableArray<ScenariosModelNode?> Visit(ScenariosModel _)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public virtual ImmutableArray<ScenariosModelNode?> Visit(DirectoryNode _)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public virtual ImmutableArray<ScenariosModelNode?> Visit(CurriculumNode Curriculum)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public virtual ImmutableArray<ScenariosModelNode?> Visit(CapabilityNode Capability)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public virtual ImmutableArray<ScenariosModelNode?> Visit(MindPlaceNode MindPlace)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public virtual ImmutableArray<ScenariosModelNode?> Visit(BehaviorNode Behavior)
+    {
+      throw new AssertFailedException("Should not get here.");
+    }
+
+    public virtual ImmutableArray<ScenariosModelNode?> Visit(CurriculumPhaseNode CurriculumPhase)
+    {
+      throw new AssertFailedException("Should not get here.");
     }
   }
 }
