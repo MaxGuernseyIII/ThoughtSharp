@@ -20,28 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-
 namespace ThoughtSharp.Scenarios.Model;
 
-public class CurriculumPhaseNode(
-  Type Wrapped,
-  TrainingMetadata Metadata,
-  IEnumerable<ScenariosModelNode> ChildNodes,
-  IEnumerable<ScenariosModelNodeVisitor<ScenariosModelNode?>> IncludedTrainingScenarioNodeFinders) 
-  : ScenariosModelNode
+public record TrainingMetadata
 {
-  public string Name => Wrapped.Name;
-
-  public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
-
-  public IEnumerable<ScenariosModelNodeVisitor<ScenariosModelNode?>> IncludedTrainingScenarioNodeFinders { get; } =
-    IncludedTrainingScenarioNodeFinders;
-
-  public TrainingMetadata TrainingMetadata { get; } = Metadata;
-
-  public TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor)
-  {
-    return Visitor.Visit(this);
-  }
+  public required double SuccessFraction { get; init; }
+  public required int SampleSize { get; init; }
 }

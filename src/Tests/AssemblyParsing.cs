@@ -201,6 +201,43 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void GetsPhaseMetadata()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = .8,
+        SampleSize = 200
+      },
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.InitialSteps)
+    );
+  }
+
+  [TestMethod]
+  public void InheritedTrainingMetadata()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = .98,
+        SampleSize = 500
+      },
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining.FocusOnFizz)
+    );
+  }
+
+  [TestMethod]
   public void MultipleInclusionsAllowed()
   {
     WhenParseAssembly();
@@ -433,6 +470,13 @@ public class AssemblyParsing
     GetNodeType(Model).Should().Be(Expected);
   }
 
+  void ThenTrainingMetadataIsAt(TrainingMetadata Expected, params ImmutableArray<string?> Path)
+  {
+    var Node = GetNodeAtPath(Path);
+    var Actual = Node.Query(new GetTrainingMetadata());
+    Actual.Should().Be(Expected);
+  }
+
   static NodeType GetNodeType(ScenariosModelNode Node)
   {
     return Node.Query(new GetNodeTypeVisitor());
@@ -517,7 +561,7 @@ public class AssemblyParsing
     }
   }
 
-  class FetchIncludedTrainingScenarios(ScenariosModel Model) : FetchDataFromNode
+  class FetchIncludedTrainingScenarios(ScenariosModel Model) : FetchDataFromNode<ImmutableArray<ScenariosModelNode?>>
   {
     public override ImmutableArray<ScenariosModelNode?> Visit(CurriculumPhaseNode CurriculumPhase)
     {
@@ -525,39 +569,47 @@ public class AssemblyParsing
     }
   }
 
-  abstract class FetchDataFromNode : ScenariosModelNodeVisitor<ImmutableArray<ScenariosModelNode?>>
+  class GetTrainingMetadata : FetchDataFromNode<TrainingMetadata?>
   {
-    public virtual ImmutableArray<ScenariosModelNode?> Visit(ScenariosModel _)
+    public override TrainingMetadata Visit(CurriculumPhaseNode CurriculumPhase)
+    {
+      return CurriculumPhase.TrainingMetadata;
+    }
+  }
+
+  abstract class FetchDataFromNode<T> : ScenariosModelNodeVisitor<T>
+  {
+    public virtual T Visit(ScenariosModel _)
     {
       throw new AssertFailedException("Should not get here.");
     }
 
-    public virtual ImmutableArray<ScenariosModelNode?> Visit(DirectoryNode _)
+    public virtual T Visit(DirectoryNode _)
     {
       throw new AssertFailedException("Should not get here.");
     }
 
-    public virtual ImmutableArray<ScenariosModelNode?> Visit(CurriculumNode Curriculum)
+    public virtual T Visit(CurriculumNode Curriculum)
     {
       throw new AssertFailedException("Should not get here.");
     }
 
-    public virtual ImmutableArray<ScenariosModelNode?> Visit(CapabilityNode Capability)
+    public virtual T Visit(CapabilityNode Capability)
     {
       throw new AssertFailedException("Should not get here.");
     }
 
-    public virtual ImmutableArray<ScenariosModelNode?> Visit(MindPlaceNode MindPlace)
+    public virtual T Visit(MindPlaceNode MindPlace)
     {
       throw new AssertFailedException("Should not get here.");
     }
 
-    public virtual ImmutableArray<ScenariosModelNode?> Visit(BehaviorNode Behavior)
+    public virtual T Visit(BehaviorNode Behavior)
     {
       throw new AssertFailedException("Should not get here.");
     }
 
-    public virtual ImmutableArray<ScenariosModelNode?> Visit(CurriculumPhaseNode CurriculumPhase)
+    public virtual T Visit(CurriculumPhaseNode CurriculumPhase)
     {
       throw new AssertFailedException("Should not get here.");
     }

@@ -26,6 +26,12 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public class AssemblyParser
 {
+  static readonly TrainingMetadata StandardTrainingMetadata = new()
+  {
+    SuccessFraction = .95,
+    SampleSize = 1000
+  };
+
   public ScenariosModel Parse(Assembly LoadedAssembly)
   {
     Dictionary<string, List<ScenariosModelNode>> RootDirectories = [];
@@ -39,7 +45,7 @@ public class AssemblyParser
       if (!RootDirectories.TryGetValue(NamespaceDirectoryName, out var List))
         RootDirectories[NamespaceDirectoryName] = List = new();
 
-      List.Add(ParseType(Type));
+      List.Add(ParseType(Type, StandardTrainingMetadata));
     }
 
     return new([
@@ -52,15 +58,15 @@ public class AssemblyParser
     return IsCurriculumType(Type) || IsCapabilityType(Type) || Type.GetNestedTypes().Any(IsThoughtSharpTrainingType);
   }
 
-  static IEnumerable<ScenariosModelNode> ParseTypes(Type Type)
+  static IEnumerable<ScenariosModelNode> ParseTypes(Type Type, TrainingMetadata DefaultTrainingMetadata)
   {
-    return Type.GetNestedTypes().Select(ParseType);
+    return Type.GetNestedTypes().Select(T => ParseType(T, DefaultTrainingMetadata));
   }
 
-  static ScenariosModelNode ParseType(Type Type)
+  static ScenariosModelNode ParseType(Type Type, TrainingMetadata ContextTrainingMetadata)
   {
     if (IsCurriculumType(Type))
-      return new CurriculumNode(Type, [..ParseTypes(Type)]);
+      return new CurriculumNode(Type, [..ParseTypes(Type, StandardTrainingMetadata)]);
 
     if (IsCapabilityType(Type))
       return ParseCapabilityType(Type);
@@ -69,12 +75,12 @@ public class AssemblyParser
       return new MindPlaceNode(Type);
 
     if (IsCurriculumPhaseType(Type))
-      return ParsePhaseType(Type);
+      return ParsePhaseType(Type, ContextTrainingMetadata);
 
-    return new DirectoryNode(Type.Name, ParseTypes(Type));
+    return new DirectoryNode(Type.Name, ParseTypes(Type, StandardTrainingMetadata));
   }
 
-  static CurriculumPhaseNode ParsePhaseType(Type Type)
+  static CurriculumPhaseNode ParsePhaseType(Type Type, TrainingMetadata DefaultTrainingMetadata)
   {
     List<ScenariosModelNodeVisitor<ScenariosModelNode?>> Finders = [];
 
@@ -86,7 +92,15 @@ public class AssemblyParser
         Finders.AddRange(IncludeAttribute.Behaviors.Select(B => new BehaviorFinder(IncludeAttribute.Capability, B)));
     }
 
-    return new(Type, ParseTypes(Type), Finders);
+    var Standard = Type.GetCustomAttribute<ConvergenceStandard>();
+
+    var Metadata = Standard is not null ? new()
+    {
+      SuccessFraction = Standard.Fraction,
+      SampleSize = Standard.Of
+    } : DefaultTrainingMetadata;
+
+    return new(Type, Metadata, ParseTypes(Type, Metadata), Finders);
   }
 
   abstract class CrawlerFinder : ScenariosModelNodeVisitor<ScenariosModelNode?>
@@ -158,7 +172,7 @@ public class AssemblyParser
   {
     return new(Type, 
       [
-        ..ParseTypes(Type),
+        ..ParseTypes(Type, StandardTrainingMetadata),
         ..ParseBehaviors(Type)
       ]);
   }
