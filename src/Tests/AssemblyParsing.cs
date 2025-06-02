@@ -201,6 +201,34 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void MultipleInclusionsAllowed()
+  {
+    WhenParseAssembly();
+
+    ThenIncludedNodesForPhaseIs(
+      [
+        RootNamespace,
+        nameof(FizzBuzzTraining),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+        nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FinalTraining)
+      ],
+      [
+        [
+          RootNamespace,
+          nameof(FizzBuzzTraining),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios.Calculations),
+        ],
+        [
+          RootNamespace,
+          nameof(FizzBuzzTraining),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios),
+          nameof(FizzBuzzTraining.FizzbuzzScenarios.Solution)
+        ]
+      ]);
+  }
+
+  [TestMethod]
   public void IncludesSpecificBehaviorsInPhases()
   {
     WhenParseAssembly();
