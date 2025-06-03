@@ -11,5 +11,7 @@ public class AutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Ru
       var Result = await Runnable.Run();
       Reporter.ReportRunResult(Node, Result);
     }
+
+    Saver.Save();
   }
 }

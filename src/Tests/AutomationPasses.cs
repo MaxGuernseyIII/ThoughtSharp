@@ -66,6 +66,44 @@ public class AutomationPasses
     ThenResultWasReported(Node, Result);
   }
 
+  [TestMethod]
+  public async Task SavesIfAppropriate()
+  {
+    var Pass = GivenAutomationPass();
+    GivenSaveGateStateIs(true);
+
+    await Pass.Run();
+
+    ThenWasSaved();
+  }
+
+  [TestMethod]
+  public async Task DoesNotSaveWhenItShouldNot()
+  {
+    var Pass = GivenAutomationPass();
+    GivenSaveGateStateIs(false);
+
+    await Pass.Run();
+
+    ThenWasNotSaved();
+  }
+
+  void GivenSaveGateStateIs(bool State)
+  {
+    SaveGate.Answers.Clear();
+    SaveGate.Answers.Enqueue(State);
+  }
+
+  void ThenWasSaved()
+  {
+    Saver.SaveCount.Should().Be(1);
+  }
+
+  void ThenWasNotSaved()
+  {
+    Saver.SaveCount.Should().Be(0);
+  }
+
   static RunResult GivenRunnableWillReturnResult(MockRunnable Runnable)
   {
     var Result = new RunResult()
