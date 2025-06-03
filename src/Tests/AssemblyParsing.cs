@@ -115,9 +115,7 @@ public class AssemblyParsing
   {
     var Index = Model.FullPathIndex;
 
-    ImmutableArray<ScenariosModelNode> ScenariosModelNodes = [Model];
-    var Expected = Path.Aggregate(ScenariosModelNodes,
-      (Predecessor, Step) => [..Predecessor, Predecessor[^1].ChildNodes.Single(N => N.Name == Step)])[1..];
+    ImmutableArray<ScenariosModelNode> Expected = [..Model.GetStepsAlongPath(Path).Skip(1)];
 
     var SubjectNode = GetNodeAtPath(Path);
 
@@ -587,6 +585,7 @@ public class AssemblyParsing
 
   ScenariosModelNode GetNodeAtPath(ImmutableArray<string?> Path)
   {
+    return Model.GetNodeAtEndOfPath(Path);
     return Path.Aggregate((ScenariosModelNode) Model,
       (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
   }

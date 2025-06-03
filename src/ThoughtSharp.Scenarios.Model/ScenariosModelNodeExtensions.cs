@@ -30,4 +30,24 @@ public static class ScenariosModelNodeExtensions
   {
     return Node.ChildNodes.OfType<CurriculumPhaseNode>().OrderBy(N => N.PhaseNumber).ToImmutableArray();
   }
+
+  public static IEnumerable<ScenariosModelNode> GetStepsAlongPath(this ScenariosModelNode Node,
+    params ImmutableArray<string?> Steps)
+  {
+    var Current = Node;
+
+    foreach (var Step in Steps)
+    {
+      yield return Current;
+      Current = Current.ChildNodes.Single(N => N.Name == Step);
+    }
+
+    yield return Current;
+  }
+
+  public static ScenariosModelNode GetNodeAtEndOfPath(this ScenariosModelNode Node,
+    params ImmutableArray<string?> Steps)
+  {
+    return Node.GetStepsAlongPath(Steps).Last();
+  }
 }
