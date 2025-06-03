@@ -24,8 +24,8 @@ using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
 using FluentAssertions;
-using Microsoft.Testing.Platform.Capabilities;
 using Tests.SampleScenarios;
+using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
@@ -62,7 +62,9 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTraversalWorksTheSameAsByBruteForce(RootNamespace, nameof(ArbitraryDirectory), nameof(ArbitraryDirectory.ArbitraryCapability), nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
+    ThenTraversalWorksTheSameAsByBruteForce(RootNamespace, nameof(ArbitraryDirectory),
+      nameof(ArbitraryDirectory.ArbitraryCapability),
+      nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
   }
 
   [TestMethod]
@@ -70,7 +72,9 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenGettingAPathWorksTheSameAsByBruteForce(RootNamespace, nameof(ArbitraryDirectory), nameof(ArbitraryDirectory.ArbitraryCapability), nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
+    ThenGettingAPathWorksTheSameAsByBruteForce(RootNamespace, nameof(ArbitraryDirectory),
+      nameof(ArbitraryDirectory.ArbitraryCapability),
+      nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
   }
 
   [TestMethod]
@@ -126,7 +130,9 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenIndexedPathIsSameAsSelectionPath(RootNamespace, nameof(ArbitraryDirectory), nameof(ArbitraryDirectory.ArbitraryCapability), nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
+    ThenIndexedPathIsSameAsSelectionPath(RootNamespace, nameof(ArbitraryDirectory),
+      nameof(ArbitraryDirectory.ArbitraryCapability),
+      nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
   }
 
   void ThenIndexedPathIsSameAsSelectionPath(params ImmutableArray<string?> Path)
@@ -329,7 +335,7 @@ public class AssemblyParsing
       [
         nameof(CurriculumWithNumerousPhases.PhaseZ.Phase4),
         nameof(CurriculumWithNumerousPhases.PhaseZ.PhaseZA),
-        nameof(CurriculumWithNumerousPhases.PhaseZ.Phase0),
+        nameof(CurriculumWithNumerousPhases.PhaseZ.Phase0)
       ]
     );
   }
@@ -502,24 +508,21 @@ public class AssemblyParsing
       nameof(FizzBuzzTraining.FizzBuzzMindPlace));
   }
 
-  void ThenMindPlaceTypeIs(Type Expected, params ImmutableArray<string?> Path)
+  [TestMethod]
+  public void MindPlacesAreIndexedByType()
   {
-    var MindPlaceNode = GetNodeAtPath(Path);
-    var MindType = MindPlaceNode.Query(new FetchDataFromNode<Type>()
-    {
-      VisitMindPlace = MindPlace => MindPlace.MindPlaceType
-    });
-    MindType.Should().Be(Expected);
+    WhenParseAssembly();
+
+    ThenMindPlaceInstanceForMindTypeIs<FizzBuzzTraining.FizzBuzzMind, FizzBuzzTraining.FizzBuzzMindPlace>();
   }
 
-  void ThenMindPlaceMindTypeIs(Type Expected, params ImmutableArray<string?> Path)
+  void ThenMindPlaceInstanceForMindTypeIs<
+    TMind,
+    TMindPlace>()
+    where TMind : Mind<TMind>
+    where TMindPlace : MindPlace
   {
-    var MindPlaceNode = GetNodeAtPath(Path);
-    var MindType = MindPlaceNode.Query(new FetchDataFromNode<Type>()
-    {
-      VisitMindPlace = MindPlace => MindPlace.MindType
-    });
-    MindType.Should().Be(Expected);
+    Model.MindPlaceIndex[typeof(TMind)].Should().BeOfType<TMindPlace>();
   }
 
   [TestMethod]
@@ -626,7 +629,7 @@ public class AssemblyParsing
   void ThenTrainingMetadataIsAt(TrainingMetadata Expected, params ImmutableArray<string?> Path)
   {
     var Node = GetNodeAtPath(Path);
-    var Actual = Node.Query(new FetchDataFromNode<TrainingMetadata>()
+    var Actual = Node.Query(new FetchDataFromNode<TrainingMetadata>
     {
       VisitCurriculumPhase = CurriculumPhase => CurriculumPhase.TrainingMetadata
     });
@@ -671,7 +674,7 @@ public class AssemblyParsing
 
   ScenariosModelNode GetNodeAtPathByBruteforce(ImmutableArray<string?> Path)
   {
-    return Path.Aggregate((ScenariosModelNode)Model,
+    return Path.Aggregate((ScenariosModelNode) Model,
       (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
   }
 
@@ -696,9 +699,30 @@ public class AssemblyParsing
     var ActualNodes = Node.Query(
       new FetchDataFromNode<ImmutableArray<ScenariosModelNode?>>
       {
-        VisitCurriculumPhase = CurriculumPhase => [.. CurriculumPhase.IncludedTrainingScenarioNodeFinders.Select(Model.Query)]
+        VisitCurriculumPhase = CurriculumPhase =>
+          [.. CurriculumPhase.IncludedTrainingScenarioNodeFinders.Select(Model.Query)]
       });
     ActualNodes.Should().BeEquivalentTo(ExpectedNodes);
+  }
+
+  void ThenMindPlaceTypeIs(Type Expected, params ImmutableArray<string?> Path)
+  {
+    var MindPlaceNode = GetNodeAtPath(Path);
+    var MindType = MindPlaceNode.Query(new FetchDataFromNode<Type>
+    {
+      VisitMindPlace = MindPlace => MindPlace.MindPlaceType
+    });
+    MindType.Should().Be(Expected);
+  }
+
+  void ThenMindPlaceMindTypeIs(Type Expected, params ImmutableArray<string?> Path)
+  {
+    var MindPlaceNode = GetNodeAtPath(Path);
+    var MindType = MindPlaceNode.Query(new FetchDataFromNode<Type>
+    {
+      VisitMindPlace = MindPlace => MindPlace.MindType
+    });
+    MindType.Should().Be(Expected);
   }
 
   class GetNodeTypeVisitor : ScenariosModelNodeVisitor<NodeType>
@@ -741,17 +765,12 @@ public class AssemblyParsing
 
   class FetchDataFromNode<T> : ScenariosModelNodeVisitor<T>
   {
-    static T AssertFail<U>(U _)
-    {
-      throw new AssertFailedException("Should not get here.");
-    }
-
-    public Func<ScenariosModel, T> VisitModel { get; init; } = AssertFail;
-    public Func<DirectoryNode, T> VisitDirectory { get; init; } = AssertFail;
-    public Func<CurriculumNode, T> VisitCurriculum { get; init; } = AssertFail;
-    public Func<CapabilityNode, T> VisitCapability { get; init; } = AssertFail;
+    public Func<ScenariosModel, T> VisitModel { get; } = AssertFail;
+    public Func<DirectoryNode, T> VisitDirectory { get; } = AssertFail;
+    public Func<CurriculumNode, T> VisitCurriculum { get; } = AssertFail;
+    public Func<CapabilityNode, T> VisitCapability { get; } = AssertFail;
     public Func<MindPlaceNode, T> VisitMindPlace { get; init; } = AssertFail;
-    public Func<BehaviorNode, T> VisitBehavior { get; init; } = AssertFail;
+    public Func<BehaviorNode, T> VisitBehavior { get; } = AssertFail;
     public Func<CurriculumPhaseNode, T> VisitCurriculumPhase { get; init; } = AssertFail;
 
     T ScenariosModelNodeVisitor<T>.Visit(ScenariosModel Model)
@@ -787,7 +806,11 @@ public class AssemblyParsing
     T ScenariosModelNodeVisitor<T>.Visit(CurriculumPhaseNode CurriculumPhase)
     {
       return VisitCurriculumPhase(CurriculumPhase);
+    }
 
+    static T AssertFail<U>(U _)
+    {
+      throw new AssertFailedException("Should not get here.");
     }
   }
 }

@@ -33,7 +33,7 @@ namespace Tests.SampleScenarios;
 public static partial class FizzBuzzTraining
 {
   [MindPlace]
-  public class FizzBuzzMindPlace() : MindPlace<FizzBuzzMind, TorchBrain>
+  public class FizzBuzzMindPlace : MindPlace<FizzBuzzMind, TorchBrain>
   {
     public override TorchBrain MakeNewBrain()
     {
