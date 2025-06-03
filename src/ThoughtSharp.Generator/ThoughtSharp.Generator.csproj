@@ -5,7 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsRoslynComponent>true</IsRoslynComponent>
-    <PackageType>Analyzer</PackageType>
     <Authors>Max Guernsey, III</Authors>
     <PackageId>ThoughtSharp.Generator</PackageId>
     <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
@@ -15,7 +14,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <LangVersion>latest</LangVersion>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
