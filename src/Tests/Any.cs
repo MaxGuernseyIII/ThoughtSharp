@@ -60,7 +60,7 @@ static class Any
 
     foreach (var _ in Enumerable.Range(0, Length)) ResultBuilder.Append((char) Core.Next(128));
 
-    return ResultBuilder.ToString();
+    return ResultBuilder.ToString().TrimEnd(['\0']);
   }
 
   public static string StringWithBitsLength(int Length)

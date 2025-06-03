@@ -28,9 +28,9 @@ namespace Tests;
 [TestClass]
 public class ConvergenceTracking
 {
+  double Convergence;
   int Length;
   ConvergenceTracker Tracker = null!;
-  double Convergence;
 
   [TestInitialize]
   public void SetUp()
@@ -69,10 +69,56 @@ public class ConvergenceTracking
     ThenConvergenceIs(1d * Amount / Length);
   }
 
+  [TestMethod]
+  public void OldResultsFallOff()
+  {
+    var OldHistory = AnyTrackRecord(1);
+    var RecentHistory = AnyTrackRecord(Length);
+    GivenTrackRecord(
+    [
+      ..OldHistory,
+      ..RecentHistory
+    ]);
+
+    WhenMeasureConvergence();
+
+    ThenConvergenceIsSameAsForHistory(RecentHistory);
+  }
+
+  void ThenConvergenceIsSameAsForHistory(ImmutableArray<(int Amount, bool Result)> RecentHistory)
+  {
+    var Tracker = new ConvergenceTracker(Length);
+    
+    ApplyToTracker(RecentHistory, Tracker);
+    
+    ThenConvergenceIs(Tracker.MeasureConvergence());
+  }
+
+  ImmutableArray<(int Amount, bool Result)> AnyTrackRecord(int Amount)
+  {
+    var Result = new List<(int, bool)>();
+
+    while (Amount > 0)
+    {
+      var ChunkSize = Any.Int(1, Amount);
+
+      Result.Add((ChunkSize, Any.Bool));
+
+      Amount -= ChunkSize;
+    }
+
+    return [..Result];
+  }
+
   void GivenTrackRecord(params ImmutableArray<(int Amount, bool Result)> Trials)
   {
+    ApplyToTracker(Trials, Tracker);
+  }
+
+  static void ApplyToTracker(ImmutableArray<(int Amount, bool Result)> Trials, ConvergenceTracker ConvergenceTracker)
+  {
     foreach (var Run in from Run in Trials from _ in Enumerable.Range(0, Run.Amount) select Run)
-      Tracker.RecordResult(Run.Result);
+      ConvergenceTracker.RecordResult(Run.Result);
   }
 
   void ThenConvergenceIs(double Expected)
@@ -99,5 +145,7 @@ public class ConvergenceTracker(int Length)
   public void RecordResult(bool RunResult)
   {
     Results.Enqueue(RunResult);
+    while (Results.Count > Length) 
+      Results.Dequeue();
   }
 }
