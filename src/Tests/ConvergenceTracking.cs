@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using FluentAssertions;
 
 namespace Tests;
@@ -46,6 +47,34 @@ public class ConvergenceTracking
     ThenConvergenceIs(0);
   }
 
+  [TestMethod]
+  public void ComputesBasedOnTotalSuccessesWhenNotFull()
+  {
+    var Amount = Any.Int(1, Length - 1);
+    GivenTrackRecord((Amount, true));
+
+    WhenMeasureConvergence();
+
+    ThenConvergenceIs(1d * Amount / Length);
+  }
+
+  [TestMethod]
+  public void DoesNotIncludeFailuresAsConvergence()
+  {
+    var Amount = Any.Int(1, Length - 1);
+    GivenTrackRecord((Amount, true), (1, false));
+
+    WhenMeasureConvergence();
+
+    ThenConvergenceIs(1d * Amount / Length);
+  }
+
+  void GivenTrackRecord(params ImmutableArray<(int Amount, bool Result)> Trials)
+  {
+    foreach (var Run in from Run in Trials from _ in Enumerable.Range(0, Run.Amount) select Run)
+      Tracker.RecordResult(Run.Result);
+  }
+
   void ThenConvergenceIs(double Expected)
   {
     Convergence.Should().BeApproximately(Expected, 0.00001);
@@ -59,8 +88,16 @@ public class ConvergenceTracking
 
 public class ConvergenceTracker(int Length)
 {
+  readonly Queue<bool> Results = new();
+
   public double MeasureConvergence()
   {
-    return 0;
+    var Successes = Results.Count(B => B);
+    return 1d * Successes / Length;
+  }
+
+  public void RecordResult(bool RunResult)
+  {
+    Results.Enqueue(RunResult);
   }
 }
