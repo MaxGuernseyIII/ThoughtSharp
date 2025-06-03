@@ -26,7 +26,7 @@ public sealed class Counter
 {
   const int InitialValue = 0;
 
-  public int Value { get; private set; } = InitialValue;
+  public int Value { get; set; } = InitialValue;
 
   public void Increment()
   {

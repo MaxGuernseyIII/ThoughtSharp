@@ -20,24 +20,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios.Model;
+using FluentAssertions;
+using ThoughtSharp.Scenarios.Model;
 
-public interface Gate
+namespace Tests;
+
+[TestClass]
+public class Counting
 {
-  bool IsOpen { get; }
-
-  static Gate ForConvergenceTrackerAndThreshold(ConvergenceTracker Tracker, double Threshold)
+  [TestMethod]
+  public void InitialValueIsZero()
   {
-    return new ConvergenceTrackerAndThresholdGate(Tracker, Threshold);
+    var Counter = new Counter();
+
+    Counter.Value.Should().Be(0);
   }
 
-  static Gate ForAnd(Gate LeftGate, Gate RightGate)
+  [TestMethod]
+  public void ResetToOriginalValue()
   {
-    return new AndGate(LeftGate, RightGate);
+    var Counter = GivenCounterInSomeState();
+
+    Counter.Reset();
+
+    Counter.Value.Should().Be(new Counter().Value);
   }
 
-  static Gate ForCounterAndThreshold(Counter Counter, int Threshold)
+  [TestMethod]
+  public void IncrementUpdatesValue()
   {
-    return new CounterAndThresholdGate(Counter, Threshold);
+    var Counter = GivenCounterInSomeState();
+    var Previous = Counter.Value;
+
+    Counter.Increment();
+
+    Counter.Value.Should().Be(Previous + 1);
+  }
+
+  [TestMethod]
+  public void SetCounterValue()
+  {
+    var Value = Any.Int(1000, 2000);
+
+    var Counter = new Counter {Value = Value};
+
+    Counter.Value.Should().Be(Value);
+  }
+
+  static Counter GivenCounterInSomeState()
+  {
+    var Counter = new Counter();
+    foreach (var _ in Enumerable.Range(0, Any.Int(0, 20)))
+      Counter.Increment();
+    return Counter;
   }
 }

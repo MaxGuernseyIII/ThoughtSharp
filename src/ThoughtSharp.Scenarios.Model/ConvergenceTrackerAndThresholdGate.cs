@@ -22,22 +22,7 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public interface Gate
+public class ConvergenceTrackerAndThresholdGate(ConvergenceTracker Tracker, double Threshold) : Gate
 {
-  bool IsOpen { get; }
-
-  static Gate ForConvergenceTrackerAndThreshold(ConvergenceTracker Tracker, double Threshold)
-  {
-    return new ConvergenceTrackerAndThresholdGate(Tracker, Threshold);
-  }
-
-  static Gate ForAnd(Gate LeftGate, Gate RightGate)
-  {
-    return new AndGate(LeftGate, RightGate);
-  }
-
-  static Gate ForCounterAndThreshold(Counter Counter, int Threshold)
-  {
-    return new CounterAndThresholdGate(Counter, Threshold);
-  }
+  public bool IsOpen => Tracker.MeasureConvergence() >= Threshold;
 }

@@ -72,45 +72,30 @@ public class Gating
 
     GateIsOpen.Should().Be(Expected);
   }
-}
 
-[TestClass]
-public class Counting
-{
   [TestMethod]
-  public void InitialValueIsZero()
+  public void CounterAndThresholdGateWhenCountIsBelowThreshold()
   {
     var Counter = new Counter();
+    var Threshold = Any.Int(10, 20);
+    var G = Gate.ForCounterAndThreshold(Counter, Threshold);
+    Counter.Value = Any.Int(0, Threshold - 1);
 
-    Counter.Value.Should().Be(0);
+    var IsOpen = G.IsOpen;
+
+    IsOpen.Should().Be(false);
   }
 
   [TestMethod]
-  public void ResetToOriginalValue()
-  {
-    var Counter = GivenCounterInSomeState();
-
-    Counter.Reset();
-
-    Counter.Value.Should().Be(new Counter().Value);
-  }
-
-  [TestMethod]
-  public void IncrementUpdatesValue()
-  {
-    var Counter = GivenCounterInSomeState();
-    var Previous = Counter.Value;
-
-    Counter.Increment();
-
-    Counter.Value.Should().Be(Previous + 1);
-  }
-
-  static Counter GivenCounterInSomeState()
+  public void CounterAndThresholdGateWhenCountIsAtOrAboveThreshold()
   {
     var Counter = new Counter();
-    foreach (var _ in Enumerable.Range(0, Any.Int(0, 20))) 
-      Counter.Increment();
-    return Counter;
+    var Threshold = Any.Int(10, 20);
+    var G = Gate.ForCounterAndThreshold(Counter, Threshold);
+    Counter.Value = Any.Int(Threshold, Threshold + 1);
+
+    var IsOpen = G.IsOpen;
+
+    IsOpen.Should().Be(true);
   }
 }
