@@ -26,50 +26,12 @@ using Tests.Mocks;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
-using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace Tests;
 
 [TestClass]
 public class MindPooling
 {
-  public record MockMind(Brain Brain);
-  public record MockMind2(Brain Brain);
-  public record MockMind3(Brain Brain);
-
-  public class MockMindPlace : MindPlace
-  {
-    public Queue<Brain> BrainsToMake { get; } = [];
-    public bool FailOnLoad { get; set; }
-
-    public Brain MakeNewBrain()
-    {
-      return BrainsToMake.Dequeue();
-    }
-
-    public object MakeNewMind(Brain Brain)
-    {
-      return new MockMind(Brain);
-    }
-
-    public List<Brain> Loaded { get; } = [];
-
-    public void LoadSavedBrain(Brain ToLoad)
-    {
-      if (FailOnLoad)
-        throw new("Could not load the brain data.");
-
-      Loaded.Add(ToLoad);
-    }
-
-    public List<Brain> Saved { get; } = [];
-
-    public void SaveBrain(Brain ToSave)
-    {
-      Saved.Add(ToSave);
-    }
-  }
-
   ImmutableDictionary<Type, MindPlace> Places = null!;
 
   [TestInitialize]
@@ -204,21 +166,14 @@ public class MindPooling
 
   MockMindPlace GivenPlaceBinding(Type MindType)
   {
-    var MockPlace = new MockMindPlace();
+    var MockPlace = new MockMindPlace {MakeMind = B => new MockMind(B)};
     Places = Places.Add(MindType, MockPlace);
     return MockPlace;
   }
 
-  class DummyBrain : Brain
-  {
-    public void Dispose()
-    {
-      throw new NotImplementedException();
-    }
+  public record MockMind(Brain Brain);
 
-    public Inference MakeInference(float[] Parameters)
-    {
-      throw new NotImplementedException();
-    }
-  }
+  public record MockMind2(Brain Brain);
+
+  public record MockMind3(Brain Brain);
 }
