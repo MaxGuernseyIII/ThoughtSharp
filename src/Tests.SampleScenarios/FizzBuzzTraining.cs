@@ -46,19 +46,19 @@ public static partial class FizzBuzzTraining
         ).Build();
     }
 
-    public override void LoadSavedBrain(TorchBrain ToLoad, string Discriminator)
+    public override void LoadSavedBrain(TorchBrain ToLoad)
     {
-      ToLoad.Load(GetSavePath(Discriminator));
+      ToLoad.Load(GetSavePath());
     }
 
-    public override void SaveBrain(TorchBrain ToSave, string Discriminator)
+    public override void SaveBrain(TorchBrain ToSave)
     {
-      ToSave.Save(GetSavePath(Discriminator));
+      ToSave.Save(GetSavePath());
     }
 
-    string GetSavePath(string Discriminator)
+    string GetSavePath()
     {
-      return $"{Config.Strings["models.path"]}fizzbuzz{Discriminator}.pt";
+      return $"{Config.Strings["models.path"]}fizzbuzz.pt";
     }
   }
 

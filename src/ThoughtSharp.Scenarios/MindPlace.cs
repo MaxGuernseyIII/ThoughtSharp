@@ -28,8 +28,8 @@ public interface MindPlace
 {
   Brain MakeNewBrain();
   object MakeNewMind(Brain Brain);
-  void LoadSavedBrain(Brain ToLoad, string Discriminator);
-  void SaveBrain(Brain ToSave, string Discriminator);
+  void LoadSavedBrain(Brain ToLoad);
+  void SaveBrain(Brain ToSave);
 }
 
 public abstract class MindPlace<TMind, TBrain> : MindPlace
@@ -38,10 +38,10 @@ public abstract class MindPlace<TMind, TBrain> : MindPlace
 {
   Brain MindPlace.MakeNewBrain() => MakeNewBrain();
   object MindPlace.MakeNewMind(Brain Brain) => TMind.Create(Brain);
-  void MindPlace.LoadSavedBrain(Brain ToLoad, string Discriminator) => LoadSavedBrain((TBrain) ToLoad, Discriminator);
-  void MindPlace.SaveBrain(Brain ToSave, string Discriminator) => SaveBrain((TBrain) ToSave, Discriminator);
+  void MindPlace.LoadSavedBrain(Brain ToLoad) => LoadSavedBrain((TBrain) ToLoad);
+  void MindPlace.SaveBrain(Brain ToSave) => SaveBrain((TBrain) ToSave);
 
   public abstract TBrain MakeNewBrain();
-  public abstract void LoadSavedBrain(TBrain ToLoad, string Discriminator);
-  public abstract void SaveBrain(TBrain ToSave, string Discriminator);
+  public abstract void LoadSavedBrain(TBrain ToLoad);
+  public abstract void SaveBrain(TBrain ToSave);
 }
