@@ -5,20 +5,27 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Authors>Max Guernsey, III</Authors>
-    <PackageId>ThoughtSharp.Adapters.TorchSharp</PackageId>
+    <PackageId>ThoughtSharp</PackageId>
     <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/MaxGuernseyIII/ThoughtSharp</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <BuildOutputTargetFolder />
+    <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <NoBuildPackageAnalysis>true</NoBuildPackageAnalysis>
+    <PackageTags>thoughtsharp;ai;tdd2.0;source-generator</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="TorchSharp" Version="0.105.0" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\ThoughtSharp.Generator\ThoughtSharp.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ThoughtSharp.Runtime\ThoughtSharp.Runtime.csproj" />
   </ItemGroup>
+
+  <Target Name="DeleteBuiltDll" AfterTargets="Build">
+    <Delete Files="$(TargetPath)" />
+  </Target>
 
   <ItemGroup>
     <None Include="Metadata\README.md" Pack="true" PackagePath="README.md" Link="README.md" />

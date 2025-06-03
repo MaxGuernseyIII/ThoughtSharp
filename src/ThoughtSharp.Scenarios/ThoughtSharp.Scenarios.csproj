@@ -7,8 +7,6 @@
     <Authors>Max Guernsey, III</Authors>
     <PackageId>ThoughtSharp.Scenarios</PackageId>
     <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
-    <IsPackable>true</IsPackable>
-    <PublishPackage>true</PublishPackage>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/MaxGuernseyIII/ThoughtSharp</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>

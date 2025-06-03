@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>Max Guernsey, III</Authors>
+    <PackageId>ThoughtSharp.Shaping</PackageId>
+    <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/MaxGuernseyIII/ThoughtSharp</PackageProjectUrl>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <BuildOutputTargetFolder />
+    <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <NoBuildPackageAnalysis>true</NoBuildPackageAnalysis>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>thoughtsharp;ai;tdd2.0;testing;training;source-generator</PackageTags>
+    
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Metadata\README.md" Pack="true" PackagePath="README.md" Link="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ThoughtSharp.Generator\ThoughtSharp.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\ThoughtSharp.Scenarios.Model\ThoughtSharp.Scenarios.Model.csproj" />
+    <ProjectReference Include="..\ThoughtSharp.Scenarios\ThoughtSharp.Scenarios.csproj" />
+    <ProjectReference Include="..\ThoughtSharp\ThoughtSharp.csproj" />
+  </ItemGroup>
+
+  <Target Name="DeleteBuiltDll" AfterTargets="Build">
+    <Delete Files="$(TargetPath)" />
+  </Target>
+
+</Project>
