@@ -31,9 +31,11 @@ jobs:
       - name: Find projects with <PublishPackage>true</PublishPackage>
         id: find_projects
         run: |
-          echo "projects<<" >> $GITHUB_OUTPUT
-          find . -name "*.csproj" -exec grep -l "<PublishPackage>true</PublishPackage>" {} \; >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "projects<<EOF"
+            find . -name "*.csproj" -exec grep -l "<PublishPackage>true</PublishPackage>" {} \;
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Build selected projects
         run: |
