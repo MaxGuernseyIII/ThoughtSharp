@@ -40,6 +40,7 @@ public class MindPooling
   public class MockMindPlace : MindPlace
   {
     public Queue<Brain> BrainsToMake { get; } = [];
+    public bool FailOnLoad { get; set; }
 
     public Brain MakeNewBrain()
     {
@@ -55,6 +56,9 @@ public class MindPooling
 
     public void LoadSavedBrain(Brain ToLoad)
     {
+      if (FailOnLoad)
+        throw new("Could not load the brain data.");
+
       Loaded.Add(ToLoad);
     }
 
@@ -102,9 +106,18 @@ public class MindPooling
     ThenBrainWasLoadedFromPlace(MockPlace, Brain);
   }
 
-  static void ThenBrainWasLoadedFromPlace(MockMindPlace MockPlace, DummyBrain Brain)
+  [TestMethod]
+  public void BrainLoadFailureIsTolerated()
   {
-    MockPlace.Loaded.Should().BeEquivalentTo([Brain]);
+    var MindType = typeof(MockMind);
+    var MockPlace = GivenPlaceBinding(MindType);
+    var Brain = GivenPlaceWillMakeBrain(MockPlace);
+    GivenPlaceWillFailToLoadBrain(MockPlace);
+    var Pool = GivenPool();
+
+    var Actual = WhenMakeMind(Pool, MindType);
+
+    ThenMindShouldBe(Actual, new MockMind(Brain));
   }
 
   [TestMethod]
@@ -134,6 +147,16 @@ public class MindPooling
     WhenSavePool(Pool);
 
     ThenBrainWasSavedToMindPlace(MockPlace, Brain);
+  }
+
+  void GivenPlaceWillFailToLoadBrain(MockMindPlace Place)
+  {
+    Place.FailOnLoad = true;
+  }
+
+  static void ThenBrainWasLoadedFromPlace(MockMindPlace MockPlace, DummyBrain Brain)
+  {
+    MockPlace.Loaded.Should().BeEquivalentTo([Brain]);
   }
 
   static void ThenBrainWasSavedToMindPlace(MockMindPlace MockPlace, DummyBrain Brain)

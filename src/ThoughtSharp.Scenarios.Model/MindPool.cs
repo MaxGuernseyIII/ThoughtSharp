@@ -14,7 +14,13 @@ public class MindPool(ImmutableDictionary<Type, MindPlace> Places)
     
     var Place = Places[MindType];
     var Brain = Place.MakeNewBrain();
-    Place.LoadSavedBrain(Brain);
+    try
+    {
+      Place.LoadSavedBrain(Brain);
+    }
+    catch
+    {
+    }
 
     Fragments = (Brain, Place.MakeNewMind(Brain));
     Minds.Add(MindType, Fragments);
