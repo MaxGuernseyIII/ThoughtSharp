@@ -87,15 +87,39 @@ public class MindPooling
     ThenMindShouldBe(Actual, new MockMind(Brain));
   }
 
+  [TestMethod]
+  public void DoesNotRegenerateMindASecondTime()
+  {
+    var MindType = typeof(MockMind);
+    var MockPlace = GivenPlaceBinding(MindType);
+    var Brain = GivenPlaceWillMakeBrain(MockPlace);
+    GivenPlaceWillMakeBrain(MockPlace);
+    var Pool = GivenPool();
+    var Expected = GivenMindWasMade(Pool, MindType);
+
+    var Actual = WhenMakeMind(Pool, MindType);
+
+    ThenMindShouldBeSame(Actual, Expected);
+  }
+
+  static void ThenMindShouldBeSame(object Actual, object Expected)
+  {
+    Actual.Should().BeSameAs(Expected);
+  }
+
   static void ThenMindShouldBe(object Actual, object Expected)
   {
     Actual.Should().Be(Expected);
   }
 
+  static object GivenMindWasMade(MindPool Pool, Type MindType)
+  {
+    return Pool.GetMind(MindType);
+  }
+
   static object WhenMakeMind(MindPool Pool, Type MindType)
   {
-    var Actual = Pool.GetMind(MindType);
-    return Actual;
+    return Pool.GetMind(MindType);
   }
 
   MindPool GivenPool()
