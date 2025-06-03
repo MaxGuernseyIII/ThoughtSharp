@@ -56,6 +56,38 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void TraversalWorksAsExpected()
+  {
+    WhenParseAssembly();
+
+    ThenTraversalWorksTheSameAsByBruteForce(RootNamespace, nameof(ArbitraryDirectory), nameof(ArbitraryDirectory.ArbitraryCapability), nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
+  }
+
+  [TestMethod]
+  public void PathWorksAsExpected()
+  {
+    WhenParseAssembly();
+
+    ThenGettingAPathWorksTheSameAsByBruteForce(RootNamespace, nameof(ArbitraryDirectory), nameof(ArbitraryDirectory.ArbitraryCapability), nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
+  }
+
+  void ThenTraversalWorksTheSameAsByBruteForce(params ImmutableArray<string?> Path)
+  {
+    var Expected = GetNodeAtPathByBruteforce(Path);
+    var Actual = Model.GetNodeAtEndOfPath(Path);
+
+    Actual.Should().BeSameAs(Expected);
+  }
+
+  void ThenGettingAPathWorksTheSameAsByBruteForce(params ImmutableArray<string?> Path)
+  {
+    var Expected = GetNodePathByBruteforce(Path);
+    var Actual = Model.GetStepsAlongPath(Path);
+
+    Actual.Should().BeEquivalentTo(Expected, O => O.WithStrictOrdering());
+  }
+
+  [TestMethod]
   public void ModelProperties()
   {
     WhenParseAssembly();
@@ -586,8 +618,19 @@ public class AssemblyParsing
   ScenariosModelNode GetNodeAtPath(ImmutableArray<string?> Path)
   {
     return Model.GetNodeAtEndOfPath(Path);
-    return Path.Aggregate((ScenariosModelNode) Model,
+  }
+
+  ScenariosModelNode GetNodeAtPathByBruteforce(ImmutableArray<string?> Path)
+  {
+    return Path.Aggregate((ScenariosModelNode)Model,
       (Predecessor, Name) => Predecessor.ChildNodes.Single(N => N.Name == Name));
+  }
+
+  ImmutableArray<ScenariosModelNode> GetNodePathByBruteforce(ImmutableArray<string?> Path)
+  {
+    ImmutableArray<ScenariosModelNode> Result = [Model];
+    return Path.Aggregate(Result,
+      (Predecessor, Current) => [..Predecessor, Predecessor[^1].ChildNodes.Single(N => N.Name == Current)]);
   }
 
   void ThenStructureDoesNotContainNode(params ImmutableArray<string?> Path)
