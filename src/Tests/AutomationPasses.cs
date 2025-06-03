@@ -30,10 +30,10 @@ namespace Tests;
 [TestClass]
 public class AutomationPasses
 {
-  ImmutableArray<(ScenariosModelNode Node, MockRunnable Runnable)> Steps;
-  MockGate SaveGate;
-  MockSaver Saver;
-  MockReporter Reporter;
+  ImmutableArray<(ScenariosModelNode Node, MockRunnable Runnable)> Steps = [];
+  MockGate SaveGate = null!;
+  MockSaver Saver = null!;
+  MockReporter Reporter = null!;
 
   [TestInitialize]
   public void SetUp()
