@@ -1,0 +1,50 @@
+﻿name: Build and Publish to NuGet
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+
+      - name: Generate version based on date
+        run: echo "PACKAGE_VERSION=$(date +'%Y.%m.%d').${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Find projects with <PublishPackage>true</PublishPackage>
+        id: find_projects
+        run: |
+          echo "projects<<" >> $GITHUB_OUTPUT
+          find . -name "*.csproj" -exec grep -l "<PublishPackage>true</PublishPackage>" {} \; >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Build selected projects
+        run: |
+          for proj in ${{ steps.find_projects.outputs.projects }}; do
+            echo "Building $proj"
+            dotnet build "$proj" --configuration Release --no-restore
+          done
+
+      - name: Pack selected projects
+        run: |
+          mkdir -p out
+          for proj in ${{ steps.find_projects.outputs.projects }}; do
+            echo "Packing $proj"
+            dotnet pack "$proj" --configuration Release --no-build --output out -p:PackageVersion=${{ env.PACKAGE_VERSION }}
+          done
+
+      - name: Push to NuGet
+        run: dotnet nuget push "out/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}

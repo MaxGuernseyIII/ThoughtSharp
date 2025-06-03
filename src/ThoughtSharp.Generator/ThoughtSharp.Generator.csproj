@@ -6,6 +6,11 @@
     <Nullable>enable</Nullable>
     <IsRoslynComponent>true</IsRoslynComponent>
     <PackageType>Analyzer</PackageType>
+    <Authors>Max Guernsey, III</Authors>
+    <PackageId>ThoughtSharp.Runtime</PackageId>
+    <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
+    <IsPackable>true</IsPackable>
+    <PublishPackage>true</PublishPackage>
   </PropertyGroup>
 
   <PropertyGroup>

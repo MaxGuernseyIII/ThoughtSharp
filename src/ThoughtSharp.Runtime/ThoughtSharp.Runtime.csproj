@@ -5,6 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
+    <Authors>Max Guernsey, III</Authors>
+    <PackageId>ThoughtSharp.Runtime</PackageId>
+    <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
+    <IsPackable>true</IsPackable>
+    <PublishPackage>true</PublishPackage>
   </PropertyGroup>
 
 </Project>
