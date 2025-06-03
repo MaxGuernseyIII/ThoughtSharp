@@ -73,3 +73,44 @@ public class Gating
     GateIsOpen.Should().Be(Expected);
   }
 }
+
+[TestClass]
+public class Counting
+{
+  [TestMethod]
+  public void InitialValueIsZero()
+  {
+    var Counter = new Counter();
+
+    Counter.Value.Should().Be(0);
+  }
+
+  [TestMethod]
+  public void ResetToOriginalValue()
+  {
+    var Counter = GivenCounterInSomeState();
+
+    Counter.Reset();
+
+    Counter.Value.Should().Be(new Counter().Value);
+  }
+
+  [TestMethod]
+  public void IncrementUpdatesValue()
+  {
+    var Counter = GivenCounterInSomeState();
+    var Previous = Counter.Value;
+
+    Counter.Increment();
+
+    Counter.Value.Should().Be(Previous + 1);
+  }
+
+  static Counter GivenCounterInSomeState()
+  {
+    var Counter = new Counter();
+    foreach (var _ in Enumerable.Range(0, Any.Int(0, 20))) 
+      Counter.Increment();
+    return Counter;
+  }
+}
