@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Scenarios.Model;
 
 public class ScenariosModel(IEnumerable<ScenariosModelNode> ChildNodes) : ScenariosModelNode
@@ -27,9 +29,29 @@ public class ScenariosModel(IEnumerable<ScenariosModelNode> ChildNodes) : Scenar
   public IEnumerable<ScenariosModelNode> ChildNodes { get;  } = ChildNodes;
 
   public string Name => "";
+  public ImmutableDictionary<ScenariosModelNode, ImmutableArray<ScenariosModelNode>> FullPathIndex { get; } = GetFullPaths([], ChildNodes)
+    .ToImmutableDictionary(Pair => Pair.Node, Pair => Pair.Path);
 
   public TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor)
   {
     return Visitor.Visit(this);
   }
-}
+
+  static IEnumerable<(ScenariosModelNode Node, ImmutableArray<ScenariosModelNode> Path)> GetFullPaths(
+    ImmutableArray<ScenariosModelNode> Base,
+    ScenariosModelNode Node)
+  {
+    ImmutableArray<ScenariosModelNode> NewBase = [..Base, Node];
+
+    yield return (Node, NewBase);
+
+    foreach (var ValueTuple in GetFullPaths(NewBase, Node.ChildNodes)) yield return ValueTuple;
+  }
+
+  private static IEnumerable<(ScenariosModelNode Node, ImmutableArray<ScenariosModelNode> Path)> GetFullPaths(
+    ImmutableArray<ScenariosModelNode> Base, IEnumerable<ScenariosModelNode> Nodes)
+  {
+    foreach (var Result in Nodes.SelectMany(N => GetFullPaths(Base, N)))
+      yield return Result;
+  }
+} 

@@ -49,7 +49,7 @@ public class AssemblyParser
     }
 
     return new([
-      ..RootDirectories.Select(Pair => new DirectoryNode(Pair.Key, Pair.Value))
+      ..RootDirectories.Select(Pair => new DirectoryNode(Pair.Key, [..Pair.Value]))
     ]);
   }
 
@@ -77,7 +77,7 @@ public class AssemblyParser
     if (IsCurriculumPhaseType(Type))
       return ParsePhaseType(Type, ContextTrainingMetadata);
 
-    return new DirectoryNode(Type.Name, ParseTypes(Type, StandardTrainingMetadata));
+    return new DirectoryNode(Type.Name, [..ParseTypes(Type, StandardTrainingMetadata)]);
   }
 
   static CurriculumPhaseNode ParsePhaseType(Type Type, TrainingMetadata ContextTrainingMetadata)

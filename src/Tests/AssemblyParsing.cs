@@ -104,6 +104,28 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void IndexesWithFullPath()
+  {
+    WhenParseAssembly();
+
+    ThenIndexedPathIsSameAsSelectionPath(RootNamespace, nameof(ArbitraryDirectory), nameof(ArbitraryDirectory.ArbitraryCapability), nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
+  }
+
+  void ThenIndexedPathIsSameAsSelectionPath(params ImmutableArray<string?> Path)
+  {
+    var Index = Model.FullPathIndex;
+
+    ImmutableArray<ScenariosModelNode> ScenariosModelNodes = [Model];
+    var Expected = Path.Aggregate(ScenariosModelNodes,
+      (Predecessor, Step) => [..Predecessor, Predecessor[^1].ChildNodes.Single(N => N.Name == Step)])[1..];
+
+    var SubjectNode = GetNodeAtPath(Path);
+
+    var Actual = Index[SubjectNode];
+    Actual.Select(A => A.Name).Should().BeEquivalentTo(Expected.Select(E => E.Name), O => O.WithStrictOrdering());
+  }
+
+  [TestMethod]
   public void FindsBehaviors()
   {
     WhenParseAssembly();

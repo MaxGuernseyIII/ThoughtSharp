@@ -20,9 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Scenarios.Model;
 
-public class CapabilityNode(Type Type, IEnumerable<ScenariosModelNode> ChildNodes) : ScenariosModelNode
+public class CapabilityNode(Type Type, ImmutableArray<ScenariosModelNode> ChildNodes) : ScenariosModelNode
 {
   public Type Type { get; } = Type;
 
