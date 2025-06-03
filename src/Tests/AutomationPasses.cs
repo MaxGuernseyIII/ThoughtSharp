@@ -30,7 +30,7 @@ namespace Tests;
 [TestClass]
 public class AutomationPasses
 {
-  ImmutableArray<MockRunnable> Steps;
+  ImmutableArray<(ScenariosModelNode Node, MockRunnable Runnable)> Steps;
   MockGate SaveGate;
   MockSaver Saver;
   MockReporter Reporter;
@@ -38,7 +38,7 @@ public class AutomationPasses
   [TestInitialize]
   public void SetUp()
   {
-    Steps = Any.MockRunnables();
+    Steps = [..Any.MockRunnables().Select(R => (new MockNode(), R))];
     SaveGate = new(Any.Bool);
     Saver = new();
     Reporter = new();
@@ -59,7 +59,7 @@ public class AutomationPasses
 
   void ThenEachStepWasRun()
   {
-    Steps.Should().AllSatisfy(S => S.RunCount.Should().Be(1));
+    Steps.Should().AllSatisfy(S => S.Runnable.RunCount.Should().Be(1));
   }
 
   AutomationPass GivenAutomationPass()
