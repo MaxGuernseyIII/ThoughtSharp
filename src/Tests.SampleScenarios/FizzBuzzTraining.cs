@@ -44,7 +44,7 @@ public static partial class FizzBuzzTraining
     {
       get
       {
-        return TorchBrainBuilder.ForTraining<FizzBuzzMind>()
+        return TorchBrainBuilder.For<FizzBuzzMind>()
           .UsingSequence(Outer =>
             Outer
               .AddGRU(128)

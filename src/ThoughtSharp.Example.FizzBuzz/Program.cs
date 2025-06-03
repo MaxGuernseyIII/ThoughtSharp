@@ -202,7 +202,7 @@ DoFizzBuzz();
 
 void DoFizzBuzz()
 {
-  var BrainBuilder = TorchBrainBuilder.ForTraining<FizzBuzzMind>()
+  var BrainBuilder = TorchBrainBuilder.For<FizzBuzzMind>()
     .UsingSequence(Outer =>
       Outer
         .AddGRU(128)
@@ -383,7 +383,7 @@ void DoFizzBuzz()
 
 void MindfulComparisonCheck()
 {
-  var Brain = TorchBrainBuilder.ForTraining<ComparisonMind>().ForLogic().Build();
+  var Brain = TorchBrainBuilder.For<ComparisonMind>().ForLogic().Build();
   var Mind = new ComparisonMind(Brain);
   var Random = new Random();
   var Successes = 0;
@@ -457,7 +457,7 @@ void DoChooseShape()
   //}
   //throw new ApplicationException("Generated.");
 
-  var BrainBuilder = TorchBrainBuilder.ForTraining<ShapeClassifyingMind>()
+  var BrainBuilder = TorchBrainBuilder.For<ShapeClassifyingMind>()
     .UsingParallel(P => P.AddLogicPath(4, 2).AddMathPath(4, 2));
   var Brain = BrainBuilder.Build();
 

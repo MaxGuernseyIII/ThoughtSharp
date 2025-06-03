@@ -11,6 +11,8 @@
     <IsPackable>true</IsPackable>
     <PublishPackage>true</PublishPackage>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/MaxGuernseyIII/ThoughtSharp</PackageProjectUrl>
+    <PackageReadmeFile>Metadata\README.md</PackageReadmeFile>
   </PropertyGroup>
 
 </Project>

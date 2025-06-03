@@ -4,6 +4,14 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Authors>Max Guernsey, III</Authors>
+    <PackageId>ThoughtSharp.Adapters.TorchSharp</PackageId>
+    <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
+    <IsPackable>true</IsPackable>
+    <PublishPackage>true</PublishPackage>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/MaxGuernseyIII/ThoughtSharp</PackageProjectUrl>
+    <PackageReadmeFile>Metadata\README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
