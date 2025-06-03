@@ -22,7 +22,11 @@ jobs:
         run: echo "PACKAGE_VERSION=$(date +'%Y.%m.%d').${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: |
+          for sln in $(find . -name "*.sln"); do
+            echo "Restoring $sln"
+            dotnet restore "$sln"
+          done
 
       - name: Find projects with <PublishPackage>true</PublishPackage>
         id: find_projects
