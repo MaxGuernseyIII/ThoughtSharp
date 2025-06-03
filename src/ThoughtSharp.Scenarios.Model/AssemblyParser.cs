@@ -72,12 +72,27 @@ public class AssemblyParser
       return ParseCapabilityType(Type);
 
     if (IsMindPlaceType(Type))
-      return new MindPlaceNode(Type);
+      return ParseMindPlaceType(Type);
 
     if (IsCurriculumPhaseType(Type))
       return ParsePhaseType(Type, ContextTrainingMetadata);
 
     return new DirectoryNode(Type.Name, [..ParseTypes(Type, StandardTrainingMetadata)]);
+  }
+
+  static MindPlaceNode ParseMindPlaceType(Type Type)
+  {
+    var BaseType = Type.BaseType;
+    while (BaseType is not null)
+    {
+      if (BaseType is { IsGenericType: true } && BaseType.GetGenericTypeDefinition() == typeof(MindPlace<,>))
+        break;
+
+      BaseType = BaseType.BaseType;
+    }
+
+    var MindType = BaseType?.GetGenericArguments()?[0];
+    return new(Type, MindType!);
   }
 
   static CurriculumPhaseNode ParsePhaseType(Type Type, TrainingMetadata ContextTrainingMetadata)

@@ -24,7 +24,9 @@ using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
 using FluentAssertions;
+using Microsoft.Testing.Platform.Capabilities;
 using Tests.SampleScenarios;
+using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -69,22 +71,6 @@ public class AssemblyParsing
     WhenParseAssembly();
 
     ThenGettingAPathWorksTheSameAsByBruteForce(RootNamespace, nameof(ArbitraryDirectory), nameof(ArbitraryDirectory.ArbitraryCapability), nameof(ArbitraryDirectory.ArbitraryCapability.ArbitrarySubCapability2));
-  }
-
-  void ThenTraversalWorksTheSameAsByBruteForce(params ImmutableArray<string?> Path)
-  {
-    var Expected = GetNodeAtPathByBruteforce(Path);
-    var Actual = Model.GetNodeAtEndOfPath(Path);
-
-    Actual.Should().BeSameAs(Expected);
-  }
-
-  void ThenGettingAPathWorksTheSameAsByBruteForce(params ImmutableArray<string?> Path)
-  {
-    var Expected = GetNodePathByBruteforce(Path);
-    var Actual = Model.GetStepsAlongPath(Path);
-
-    Actual.Should().BeEquivalentTo(Expected, O => O.WithStrictOrdering());
   }
 
   [TestMethod]
@@ -493,6 +479,28 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void InfersMindPlaceType()
+  {
+    WhenParseAssembly();
+
+    ThenMindPlaceMindTypeIs(
+      typeof(FizzBuzzTraining.FizzBuzzMind),
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzMindPlace));
+  }
+
+  void ThenMindPlaceMindTypeIs(Type Expected, params ImmutableArray<string?> Path)
+  {
+    var MindPlaceNode = GetNodeAtPath(Path);
+    var MindType = MindPlaceNode.Query(new FetchDataFromNode<Type>()
+    {
+      VisitMindPlace = MindPlace => MindPlace.MindType
+    });
+    MindType.Should().Be(Expected);
+  }
+
+  [TestMethod]
   public void FindsNestedCapabilities()
   {
     WhenParseAssembly();
@@ -596,13 +604,32 @@ public class AssemblyParsing
   void ThenTrainingMetadataIsAt(TrainingMetadata Expected, params ImmutableArray<string?> Path)
   {
     var Node = GetNodeAtPath(Path);
-    var Actual = Node.Query(new GetTrainingMetadata());
+    var Actual = Node.Query(new FetchDataFromNode<TrainingMetadata>()
+    {
+      VisitCurriculumPhase = CurriculumPhase => CurriculumPhase.TrainingMetadata
+    });
     Actual.Should().Be(Expected);
   }
 
   static NodeType GetNodeType(ScenariosModelNode Node)
   {
     return Node.Query(new GetNodeTypeVisitor());
+  }
+
+  void ThenTraversalWorksTheSameAsByBruteForce(params ImmutableArray<string?> Path)
+  {
+    var Expected = GetNodeAtPathByBruteforce(Path);
+    var Actual = Model.GetNodeAtEndOfPath(Path);
+
+    Actual.Should().BeSameAs(Expected);
+  }
+
+  void ThenGettingAPathWorksTheSameAsByBruteForce(params ImmutableArray<string?> Path)
+  {
+    var Expected = GetNodePathByBruteforce(Path);
+    var Actual = Model.GetStepsAlongPath(Path);
+
+    Actual.Should().BeEquivalentTo(Expected, O => O.WithStrictOrdering());
   }
 
   static Expression<Func<ScenariosModelNode, bool>> HasNameAndType(string? Name, NodeType NodeType)
@@ -644,7 +671,11 @@ public class AssemblyParsing
     var Node = GetNodeAtPath(Path);
     var ExpectedNodes = ExpectedPaths.Select(GetNodeAtPath).ToImmutableArray();
 
-    var ActualNodes = Node.Query(new FetchIncludedTrainingScenarios(Model));
+    var ActualNodes = Node.Query(
+      new FetchDataFromNode<ImmutableArray<ScenariosModelNode?>>
+      {
+        VisitCurriculumPhase = CurriculumPhase => [.. CurriculumPhase.IncludedTrainingScenarioNodeFinders.Select(Model.Query)]
+      });
     ActualNodes.Should().BeEquivalentTo(ExpectedNodes);
   }
 
@@ -686,57 +717,55 @@ public class AssemblyParsing
     }
   }
 
-  class FetchIncludedTrainingScenarios(ScenariosModel Model) : FetchDataFromNode<ImmutableArray<ScenariosModelNode?>>
+  class FetchDataFromNode<T> : ScenariosModelNodeVisitor<T>
   {
-    public override ImmutableArray<ScenariosModelNode?> Visit(CurriculumPhaseNode CurriculumPhase)
-    {
-      return [..CurriculumPhase.IncludedTrainingScenarioNodeFinders.Select(Model.Query)];
-    }
-  }
-
-  class GetTrainingMetadata : FetchDataFromNode<TrainingMetadata?>
-  {
-    public override TrainingMetadata Visit(CurriculumPhaseNode CurriculumPhase)
-    {
-      return CurriculumPhase.TrainingMetadata;
-    }
-  }
-
-  abstract class FetchDataFromNode<T> : ScenariosModelNodeVisitor<T>
-  {
-    public virtual T Visit(ScenariosModel _)
+    static T AssertFail<U>(U _)
     {
       throw new AssertFailedException("Should not get here.");
     }
 
-    public virtual T Visit(DirectoryNode _)
+    public Func<ScenariosModel, T> VisitModel { get; init; } = AssertFail;
+    public Func<DirectoryNode, T> VisitDirectory { get; init; } = AssertFail;
+    public Func<CurriculumNode, T> VisitCurriculum { get; init; } = AssertFail;
+    public Func<CapabilityNode, T> VisitCapability { get; init; } = AssertFail;
+    public Func<MindPlaceNode, T> VisitMindPlace { get; init; } = AssertFail;
+    public Func<BehaviorNode, T> VisitBehavior { get; init; } = AssertFail;
+    public Func<CurriculumPhaseNode, T> VisitCurriculumPhase { get; init; } = AssertFail;
+
+    T ScenariosModelNodeVisitor<T>.Visit(ScenariosModel Model)
     {
-      throw new AssertFailedException("Should not get here.");
+      return VisitModel(Model);
     }
 
-    public virtual T Visit(CurriculumNode Curriculum)
+    T ScenariosModelNodeVisitor<T>.Visit(DirectoryNode Directory)
     {
-      throw new AssertFailedException("Should not get here.");
+      return VisitDirectory(Directory);
     }
 
-    public virtual T Visit(CapabilityNode Capability)
+    T ScenariosModelNodeVisitor<T>.Visit(CurriculumNode Curriculum)
     {
-      throw new AssertFailedException("Should not get here.");
+      return VisitCurriculum(Curriculum);
     }
 
-    public virtual T Visit(MindPlaceNode MindPlace)
+    T ScenariosModelNodeVisitor<T>.Visit(CapabilityNode Capability)
     {
-      throw new AssertFailedException("Should not get here.");
+      return VisitCapability(Capability);
     }
 
-    public virtual T Visit(BehaviorNode Behavior)
+    T ScenariosModelNodeVisitor<T>.Visit(MindPlaceNode MindPlace)
     {
-      throw new AssertFailedException("Should not get here.");
+      return VisitMindPlace(MindPlace);
     }
 
-    public virtual T Visit(CurriculumPhaseNode CurriculumPhase)
+    T ScenariosModelNodeVisitor<T>.Visit(BehaviorNode Behavior)
     {
-      throw new AssertFailedException("Should not get here.");
+      return VisitBehavior(Behavior);
+    }
+
+    T ScenariosModelNodeVisitor<T>.Visit(CurriculumPhaseNode CurriculumPhase)
+    {
+      return VisitCurriculumPhase(CurriculumPhase);
+
     }
   }
 }

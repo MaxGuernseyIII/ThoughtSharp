@@ -26,6 +26,4 @@ namespace ThoughtSharp.Scenarios;
 
 [MeansImplicitUse(ImplicitUseKindFlags.InstantiatedWithFixedConstructorSignature)]
 [AttributeUsage(AttributeTargets.Class)]
-public class MindPlaceAttribute : Attribute
-{
-}
+public class MindPlaceAttribute : Attribute;
