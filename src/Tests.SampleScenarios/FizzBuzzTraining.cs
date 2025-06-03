@@ -25,6 +25,7 @@ using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Runtime.Codecs;
 using ThoughtSharp.Scenarios;
+using TorchSharp;
 using static Tests.SampleScenarios.FizzBuzzTraining.FizzbuzzScenarios;
 
 namespace Tests.SampleScenarios;
@@ -32,18 +33,26 @@ namespace Tests.SampleScenarios;
 public static partial class FizzBuzzTraining
 {
   [MindPlace]
-  public class FizzBuzzMindPlace(MindPlaceConfig Config) : MindPlace<FizzBuzzMind, TorchBrain>
+  public class FizzBuzzMindPlace() : MindPlace<FizzBuzzMind, TorchBrain>
   {
     public override TorchBrain MakeNewBrain()
     {
-      return TorchBrainBuilder.ForTraining<FizzBuzzMind>()
-        .UsingSequence(Outer =>
-          Outer
-            .AddGRU(128)
-            .AddParallel(P => P
-              .AddLogicPath(16, 4, 8)
-              .AddPath(S => S))
-        ).Build();
+      return Builder.Build();
+    }
+
+    static BrainBuilder<TorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device> Builder
+    {
+      get
+      {
+        return TorchBrainBuilder.ForTraining<FizzBuzzMind>()
+          .UsingSequence(Outer =>
+            Outer
+              .AddGRU(128)
+              .AddParallel(P => P
+                .AddLogicPath(16, 4, 8)
+                .AddPath(S => S))
+          );
+      }
     }
 
     public override void LoadSavedBrain(TorchBrain ToLoad)
@@ -58,7 +67,7 @@ public static partial class FizzBuzzTraining
 
     string GetSavePath()
     {
-      return $"{Config.Strings["models.path"]}fizzbuzz.pt";
+      return $"fizzbuzz-{Builder.CompactDescriptiveText}.pt";
     }
   }
 
