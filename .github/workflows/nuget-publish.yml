@@ -48,7 +48,8 @@ jobs:
       - name: Pack selected projects
         run: |
           mkdir -p out
-          for proj in ${{ steps.find_projects.outputs.projects }}; do
+          readarray -t PROJECTS <<< "${{ steps.find_projects.outputs.projects }}"
+          for proj in "${PROJECTS[@]}"; do
             echo "Packing $proj"
             dotnet pack "$proj" --configuration Release --no-build --output out -p:PackageVersion=${{ env.PACKAGE_VERSION }}
           done
