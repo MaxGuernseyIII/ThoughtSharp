@@ -4,6 +4,12 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Authors>Max Guernsey, III</Authors>
+    <PackageId>ThoughtSharp.Scenarios.Model</PackageId>
+    <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
+    <IsPackable>true</IsPackable>
+    <PublishPackage>true</PublishPackage>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

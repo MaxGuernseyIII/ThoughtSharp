@@ -7,10 +7,11 @@
     <IsRoslynComponent>true</IsRoslynComponent>
     <PackageType>Analyzer</PackageType>
     <Authors>Max Guernsey, III</Authors>
-    <PackageId>ThoughtSharp.Runtime</PackageId>
+    <PackageId>ThoughtSharp.Generator</PackageId>
     <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
     <IsPackable>true</IsPackable>
     <PublishPackage>true</PublishPackage>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <PropertyGroup>

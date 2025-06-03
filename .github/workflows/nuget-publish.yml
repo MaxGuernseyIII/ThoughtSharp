@@ -28,6 +28,14 @@ jobs:
             dotnet restore "$sln"
           done
 
+      - name: Pack all solutions
+        run: |
+          mkdir -p out
+          for sln in $(find . -name "*.sln"); do
+            echo "Packing $sln"
+            dotnet pack "$sln" --configuration Release --output out -p:PackageVersion=${{ env.PACKAGE_VERSION }}
+          done
+
       - name: Find projects with <PublishPackage>true</PublishPackage>
         id: find_projects
         run: |
@@ -37,22 +45,16 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
-      - name: Build selected projects
+      - name: Push selected packages to NuGet
         run: |
           readarray -t PROJECTS <<< "${{ steps.find_projects.outputs.projects }}"
           for proj in "${PROJECTS[@]}"; do
-            echo "Building $proj"
-            dotnet build "$proj" --configuration Release --no-restore
+            id=$(basename "$proj" .csproj)
+            pkg="out/$id.${{ env.PACKAGE_VERSION }}.nupkg"
+            if [[ -f "$pkg" ]]; then
+              echo "Pushing $pkg"
+              dotnet nuget push "$pkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+            else
+              echo "WARNING: $pkg not found — skipping"
+            fi
           done
-
-      - name: Pack selected projects
-        run: |
-          mkdir -p out
-          readarray -t PROJECTS <<< "${{ steps.find_projects.outputs.projects }}"
-          for proj in "${PROJECTS[@]}"; do
-            echo "Packing $proj"
-            dotnet pack "$proj" --configuration Release --no-build --output out -p:PackageVersion=${{ env.PACKAGE_VERSION }}
-          done
-
-      - name: Push to NuGet
-        run: dotnet nuget push "out/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}

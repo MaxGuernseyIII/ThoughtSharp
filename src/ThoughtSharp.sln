@@ -21,6 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.SampleScenarios", "Te
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{69F646ED-E3CD-4B95-BA48-831B32EBD6D7}"
 	ProjectSection(SolutionItems) = preProject
+		..\LICENSE.txt = ..\LICENSE.txt
 		..\.github\workflows\nuget-publish.yml = ..\.github\workflows\nuget-publish.yml
 		..\README.md = ..\README.md
 	EndProjectSection
