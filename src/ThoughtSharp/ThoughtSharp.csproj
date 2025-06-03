@@ -10,11 +10,6 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/MaxGuernseyIII/ThoughtSharp</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
-    <BuildOutputTargetFolder />
-    <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
-    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <NoBuildPackageAnalysis>true</NoBuildPackageAnalysis>
     <PackageTags>thoughtsharp;ai;tdd2.0;source-generator</PackageTags>
   </PropertyGroup>
 
