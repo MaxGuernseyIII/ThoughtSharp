@@ -22,6 +22,11 @@
 
   <ItemGroup>
     <None Include="Metadata\README.md" Pack="true" PackagePath="README.md" Link="README.md" />
+
+    <None Include="..\ThoughtSharp.Generator\bin\Release\netstandard2.0\ThoughtSharp.Generator.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
   </ItemGroup>
 
 </Project>
