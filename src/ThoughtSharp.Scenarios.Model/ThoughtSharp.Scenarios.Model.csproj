@@ -11,11 +11,15 @@
     <PublishPackage>true</PublishPackage>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/MaxGuernseyIII/ThoughtSharp</PackageProjectUrl>
-    <PackageReadmeFile>Metadata\README.md</PackageReadmeFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ThoughtSharp.Scenarios\ThoughtSharp.Scenarios.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Metadata\README.md" Pack="true" PackagePath="README.md" Link="README.md" />
   </ItemGroup>
 
 </Project>
