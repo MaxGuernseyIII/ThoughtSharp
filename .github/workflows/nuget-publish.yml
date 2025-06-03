@@ -39,7 +39,8 @@ jobs:
 
       - name: Build selected projects
         run: |
-          for proj in ${{ steps.find_projects.outputs.projects }}; do
+          readarray -t PROJECTS <<< "${{ steps.find_projects.outputs.projects }}"
+          for proj in "${PROJECTS[@]}"; do
             echo "Building $proj"
             dotnet build "$proj" --configuration Release --no-restore
           done
