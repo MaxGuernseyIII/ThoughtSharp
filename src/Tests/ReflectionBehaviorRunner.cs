@@ -20,15 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using System.Reflection;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
 
-public class BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMethod)
+public class BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMethod) : Runnable
 {
-  public async Task<BehaviorRunResult> Run()
+  public async Task<RunResult> Run()
   {
     var Constructor = HostType.GetConstructors().Single();
     var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();

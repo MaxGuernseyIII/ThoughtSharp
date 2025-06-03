@@ -22,8 +22,7 @@
 
 namespace Tests;
 
-public record BehaviorRunResult
+public interface Runnable
 {
-  public required BehaviorRunStatus Status { get; init; }
-  public Exception? Exception { get; init; }
+  Task<RunResult> Run();
 }
