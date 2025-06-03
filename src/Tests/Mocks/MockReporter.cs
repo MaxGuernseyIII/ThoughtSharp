@@ -4,7 +4,6 @@ namespace Tests.Mocks;
 
 class MockReporter : Reporter
 {
-  public int UpdateCount { get; set; }
   public Dictionary<ScenariosModelNode, List<RunResult>> Results = [];
 
   public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
@@ -13,10 +12,5 @@ class MockReporter : Reporter
       Results[Node] = List = new();
 
     List.Add(Result);
-  }
-
-  public void Update()
-  {
-    UpdateCount++;
   }
 }

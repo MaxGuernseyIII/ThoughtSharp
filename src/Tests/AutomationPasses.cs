@@ -54,8 +54,27 @@ public class AutomationPasses
     ThenEachStepWasRun();
   }
 
-  //[TestMethod]
-  //public async Task 
+  [TestMethod]
+  public async Task ReportsResultsOfRunnables()
+  {
+    var Pass = GivenAutomationPass();
+    var (Node, Runnable) = Any.Of(Steps);
+    var Result = new RunResult()
+    {
+      Status = Any.EnumValue<BehaviorRunStatus>(),
+      Exception = new()
+    };  
+    Runnable.Result = Result;
+
+    await Pass.Run();
+
+    ThenResultWasReported(Node, Result);
+  }
+
+  void ThenResultWasReported(ScenariosModelNode Node, RunResult Result)
+  {
+    (Reporter.Results.GetValueOrDefault(Node)?[0]).Should().BeSameAs(Result);
+  }
 
   void ThenEachStepWasRun()
   {

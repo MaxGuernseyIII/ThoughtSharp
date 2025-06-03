@@ -2,6 +2,5 @@
 
 public interface Reporter
 {
-  void Update();
   void ReportRunResult(ScenariosModelNode Node, RunResult Result);
 }

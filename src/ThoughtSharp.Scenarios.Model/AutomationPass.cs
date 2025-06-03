@@ -6,7 +6,10 @@ public class AutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Ru
 {
   public async Task Run()
   {
-    foreach (var (_, Runnable) in Steps) 
-      await Runnable.Run();
+    foreach (var (Node, Runnable) in Steps)
+    {
+      var Result = await Runnable.Run();
+      Reporter.ReportRunResult(Node, Result);
+    }
   }
 }
