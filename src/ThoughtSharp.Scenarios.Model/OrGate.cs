@@ -22,27 +22,7 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public interface Gate
+public class OrGate(Gate LeftGate, Gate RightGate) : Gate
 {
-  bool IsOpen { get; }
-
-  static Gate ForConvergenceTrackerAndThreshold(ConvergenceTracker Tracker, double Threshold)
-  {
-    return new ConvergenceTrackerAndThresholdGate(Tracker, Threshold);
-  }
-
-  static Gate ForAnd(Gate LeftGate, Gate RightGate)
-  {
-    return new AndGate(LeftGate, RightGate);
-  }
-
-  static Gate ForCounterAndThreshold(Counter Counter, int Threshold)
-  {
-    return new CounterAndThresholdGate(Counter, Threshold);
-  }
-
-  static Gate ForOr(Gate LeftGate, Gate RightGate)
-  {
-    return new OrGate(LeftGate, RightGate);
-  }
+  public bool IsOpen => LeftGate.IsOpen || RightGate.IsOpen;
 }

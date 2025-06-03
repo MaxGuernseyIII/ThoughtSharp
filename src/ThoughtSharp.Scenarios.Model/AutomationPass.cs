@@ -12,6 +12,7 @@ public class AutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Ru
       Reporter.ReportRunResult(Node, Result);
     }
 
-    Saver.Save();
+    if (SaveGate.IsOpen)
+      Saver.Save();
   }
 }

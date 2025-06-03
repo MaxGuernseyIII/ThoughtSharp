@@ -74,6 +74,22 @@ public class Gating
   }
 
   [TestMethod]
+  [DataRow(false, false, false)]
+  [DataRow(false, true, true)]
+  [DataRow(true, false, true)]
+  [DataRow(true, true, true)]
+  public void OrGate(bool LeftValue, bool RightVale, bool Expected)
+  {
+    var LeftGate = new MockGate(LeftValue);
+    var RightGate = new MockGate(RightVale);
+    var AndGate = Gate.ForOr(LeftGate, RightGate);
+
+    var GateIsOpen = AndGate.IsOpen;
+
+    GateIsOpen.Should().Be(Expected);
+  }
+
+  [TestMethod]
   public void CounterAndThresholdGateWhenCountIsBelowThreshold()
   {
     var Counter = new Counter();
