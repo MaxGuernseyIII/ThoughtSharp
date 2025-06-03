@@ -90,6 +90,24 @@ public class MindPooling
   }
 
   [TestMethod]
+  public void BrainIsLoadedFirstTime()
+  {
+    var MindType = typeof(MockMind);
+    var MockPlace = GivenPlaceBinding(MindType);
+    var Brain = GivenPlaceWillMakeBrain(MockPlace);
+    var Pool = GivenPool();
+
+    WhenMakeMind(Pool, MindType);
+
+    ThenBrainWasLoadedFromPlace(MockPlace, Brain);
+  }
+
+  static void ThenBrainWasLoadedFromPlace(MockMindPlace MockPlace, DummyBrain Brain)
+  {
+    MockPlace.Loaded.Should().BeEquivalentTo([Brain]);
+  }
+
+  [TestMethod]
   public void DoesNotRegenerateMindASecondTime()
   {
     var MindType = typeof(MockMind);
@@ -115,6 +133,11 @@ public class MindPooling
 
     WhenSavePool(Pool);
 
+    ThenBrainWasSavedToMindPlace(MockPlace, Brain);
+  }
+
+  static void ThenBrainWasSavedToMindPlace(MockMindPlace MockPlace, DummyBrain Brain)
+  {
     MockPlace.Saved.Should().BeEquivalentTo([Brain]);
   }
 
