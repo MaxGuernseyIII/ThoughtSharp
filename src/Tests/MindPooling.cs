@@ -58,9 +58,11 @@ public class MindPooling
       Loaded.Add(ToLoad);
     }
 
+    public List<Brain> Saved { get; } = [];
+
     public void SaveBrain(Brain ToSave)
     {
-      Assert.Fail("Not supported, yet.");
+      Saved.Add(ToSave);
     }
   }
 
@@ -92,7 +94,7 @@ public class MindPooling
   {
     var MindType = typeof(MockMind);
     var MockPlace = GivenPlaceBinding(MindType);
-    var Brain = GivenPlaceWillMakeBrain(MockPlace);
+    GivenPlaceWillMakeBrain(MockPlace);
     GivenPlaceWillMakeBrain(MockPlace);
     var Pool = GivenPool();
     var Expected = GivenMindWasMade(Pool, MindType);
@@ -100,6 +102,25 @@ public class MindPooling
     var Actual = WhenMakeMind(Pool, MindType);
 
     ThenMindShouldBeSame(Actual, Expected);
+  }
+
+  [TestMethod]
+  public void SaveSavesAllCreatedBrains()
+  {
+    var MindType = typeof(MockMind);
+    var MockPlace = GivenPlaceBinding(MindType);
+    var Brain = GivenPlaceWillMakeBrain(MockPlace);
+    var Pool = GivenPool();
+    GivenMindWasMade(Pool, MindType);
+
+    WhenSavePool(Pool);
+
+    MockPlace.Saved.Should().BeEquivalentTo([Brain]);
+  }
+
+  void WhenSavePool(MindPool Pool)
+  {
+    Pool.Save();
   }
 
   static void ThenMindShouldBeSame(object Actual, object Expected)

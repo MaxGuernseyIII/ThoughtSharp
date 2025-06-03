@@ -1,22 +1,29 @@
 ﻿using System.Collections.Immutable;
+using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios.Model;
 
 public class MindPool(ImmutableDictionary<Type, MindPlace> Places)
 {
-  readonly Dictionary<Type, object> Minds = [];
+  readonly Dictionary<Type, (Brain ToSave, object Mind)> Minds = [];
 
   public object GetMind(Type MindType)
   {
-    if (Minds.TryGetValue(MindType, out var Mind))
-      return Mind;
+    if (Minds.TryGetValue(MindType, out var Fragments))
+      return Fragments.Mind;
     
     var Place = Places[MindType];
     var Brain = Place.MakeNewBrain();
 
-    Mind = Place.MakeNewMind(Brain);
-    Minds.Add(MindType, Mind);
+    Fragments = (Brain, Place.MakeNewMind(Brain));
+    Minds.Add(MindType, Fragments);
 
-    return Mind;
+    return Fragments.Mind;
+  }
+
+  public void Save()
+  {
+    foreach (var (Type,(ToSave, _)) in Minds) 
+      Places[Type].SaveBrain(ToSave);
   }
 }
