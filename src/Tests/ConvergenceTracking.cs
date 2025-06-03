@@ -22,7 +22,6 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
-using Tests.Mocks;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -109,53 +108,5 @@ public class ConvergenceTracking
   void WhenMeasureConvergence()
   {
     Convergence = Tracker.MeasureConvergence();
-  }
-}
-
-[TestClass]
-public class ConvergenceGating
-{
-  [TestMethod]
-  public void BasedOnTrackerAndThresholdFailsWhenConvergenceTooLow()
-  {
-    var Length = Any.Int(1, 10);
-    var Tracker = new ConvergenceTracker(Length);
-    Tracker.ApplyHistory(Any.ConvergenceRecord(Length));
-    var Gate = ConvergenceGate.ForTrackerAndThreshold(Tracker,
-      Tracker.MeasureConvergence() + ConvergenceConstants.Precision);
-
-    var GateIsOpen = Gate.IsOpen;
-
-    GateIsOpen.Should().Be(false);
-  }
-
-  [TestMethod]
-  public void BasedOnTrackerAndThresholdSucceedsWhenConvergenceIsHighEnough()
-  {
-    var Length = Any.Int(1, 10);
-    var Tracker = new ConvergenceTracker(Length);
-    Tracker.ApplyHistory(Any.ConvergenceRecord(Length));
-    var Gate = ConvergenceGate.ForTrackerAndThreshold(Tracker,
-      Tracker.MeasureConvergence());
-
-    var GateIsOpen = Gate.IsOpen;
-
-    GateIsOpen.Should().Be(true);
-  }
-
-  [TestMethod]
-  [DataRow(false, false, false)]
-  [DataRow(false, true, false)]
-  [DataRow(true, false, false)]
-  [DataRow(true, true, true)]
-  public void AndGate(bool LeftValue, bool RightVale, bool Expected)
-  {
-    var LeftGate = new MockConvergenceGate(LeftValue);
-    var RightGate = new MockConvergenceGate(RightVale);
-    var AndGate = ConvergenceGate.ForAnd(LeftGate, RightGate);
-
-    var GateIsOpen = AndGate.IsOpen;
-
-    GateIsOpen.Should().Be(Expected);
   }
 }

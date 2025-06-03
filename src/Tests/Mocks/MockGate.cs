@@ -3,11 +3,11 @@ using ThoughtSharp.Scenarios.Model;
 
 namespace Tests.Mocks;
 
-class MockConvergenceGate : ConvergenceGate
+class MockGate : Gate
 {
   public Queue<bool> Answers = [];
 
-  public MockConvergenceGate(params IEnumerable<bool> Answers)
+  public MockGate(params IEnumerable<bool> Answers)
   {
     foreach (var Answer in Answers) 
       this.Answers.Enqueue(Answer);
