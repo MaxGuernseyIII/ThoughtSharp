@@ -22,6 +22,7 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
+using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
 
@@ -129,23 +130,5 @@ public class ConvergenceTracking
   void WhenMeasureConvergence()
   {
     Convergence = Tracker.MeasureConvergence();
-  }
-}
-
-public class ConvergenceTracker(int Length)
-{
-  readonly Queue<bool> Results = new();
-
-  public double MeasureConvergence()
-  {
-    var Successes = Results.Count(B => B);
-    return 1d * Successes / Length;
-  }
-
-  public void RecordResult(bool RunResult)
-  {
-    Results.Enqueue(RunResult);
-    while (Results.Count > Length) 
-      Results.Dequeue();
   }
 }
