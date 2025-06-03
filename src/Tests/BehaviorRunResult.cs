@@ -20,27 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-using System.Reflection;
-using ThoughtSharp.Scenarios.Model;
-
 namespace Tests;
 
-public class BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMethod)
+public record BehaviorRunResult
 {
-  public async Task<BehaviorRunResult> Run()
-  {
-    var Constructor = HostType.GetConstructors().Single();
-    var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
-    var Instance = Constructor.Invoke(Minds);
-
-    var Result = BehaviorMethod.Invoke(Instance, []);
-    if (Result is Task T)
-      await T;
-
-    return new()
-    {
-      Status = BehaviorRunStatus.Success
-    };
-  }
+  public required BehaviorRunStatus Status { get; set; }
 }

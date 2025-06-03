@@ -70,6 +70,20 @@ public class BehaviorRunning
   }
 
   [TestMethod]
+  public async Task RunSynchronousSuccess()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(BehaviorTestingHost),
+      typeof(BehaviorTestingHost).GetMethod(nameof(BehaviorTestingHost.Behavior))!);
+
+    BehaviorTestingHost.BehaviorAction = () => { };
+
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Success);
+  }
+
+  [TestMethod]
   public async Task RunAsynchronous()
   {
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
@@ -88,6 +102,22 @@ public class BehaviorRunning
     await Runner.Run();
 
     WasRun.Should().BeTrue();
+  }
+
+  [TestMethod]
+  public async Task RunAsynchronousSuccess()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(BehaviorTestingHost),
+      typeof(BehaviorTestingHost).GetMethod(nameof(BehaviorTestingHost.AsyncBehavior))!);
+    BehaviorTestingHost.AsyncBehaviorAction = () =>
+    {
+      return Task.Run(() => Task.CompletedTask);
+    };
+
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Success);
   }
 
   public class Mind1(Brain Brain);
