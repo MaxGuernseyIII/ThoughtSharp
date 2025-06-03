@@ -1,0 +1,4 @@
+The .Production solution exists exclusively for selection of packages to publish.
+
+If a new project is added that needs to be published as a 1st-class package or a transitive property,
+it needs to be added to the .Production solution.

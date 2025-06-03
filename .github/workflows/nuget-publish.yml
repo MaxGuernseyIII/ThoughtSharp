@@ -22,39 +22,24 @@ jobs:
         run: echo "PACKAGE_VERSION=$(date +'%Y.%m.%d').${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Restore dependencies
-        run: |
-          for sln in $(find . -name "*.sln"); do
-            echo "Restoring $sln"
-            dotnet restore "$sln"
-          done
+        run: dotnet restore src/ThoughtSharp.sln
 
-      - name: Pack all solutions
+      - name: Run tests
+        run: dotnet test src/ThoughtSharp.sln --configuration Release --no-build
+
+      - name: Create NuGet packages
         run: |
           mkdir -p out
-          for sln in $(find . -name "*.sln"); do
-            echo "Packing $sln"
-            dotnet pack "$sln" --configuration Release --output out -p:PackageVersion=${{ env.PACKAGE_VERSION }}
-          done
-
-      - name: Find projects with <PublishPackage>true</PublishPackage>
-        id: find_projects
-        run: |
-          {
-            echo "projects<<EOF"
-            find . -name "*.csproj" -exec grep -l "<PublishPackage>true</PublishPackage>" {} \;
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          dotnet pack src/ThoughtSharp.Production.sln \
+            --configuration Release \
+            --output out \
+            -p:PackageVersion=${{ env.PACKAGE_VERSION }}
 
       - name: Push selected packages to NuGet
         run: |
-          readarray -t PROJECTS <<< "${{ steps.find_projects.outputs.projects }}"
-          for proj in "${PROJECTS[@]}"; do
-            id=$(basename "$proj" .csproj)
-            pkg="out/$id.${{ env.PACKAGE_VERSION }}.nupkg"
-            if [[ -f "$pkg" ]]; then
-              echo "Pushing $pkg"
-              dotnet nuget push "$pkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-            else
-              echo "WARNING: $pkg not found — skipping"
-            fi
+          for pkg in out/*.nupkg; do
+            echo "Pushing $pkg"
+            dotnet nuget push "$pkg" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key ${{ secrets.NUGET_API_KEY }}
           done
