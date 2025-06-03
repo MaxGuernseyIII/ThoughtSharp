@@ -24,10 +24,12 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public class MindPlaceNode(Type Wrapped, Type MindType) : ScenariosModelNode
 {
-  public string Name => Wrapped.Name;
+  public string Name => MindPlaceType.Name;
 
   public IEnumerable<ScenariosModelNode> ChildNodes { get; } = [];
   public Type MindType { get; } = MindType;
+
+  public Type MindPlaceType { get; } = Wrapped;
 
   public TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor)
   {

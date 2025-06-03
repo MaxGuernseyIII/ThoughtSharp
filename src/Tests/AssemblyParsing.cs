@@ -479,7 +479,7 @@ public class AssemblyParsing
   }
 
   [TestMethod]
-  public void InfersMindPlaceType()
+  public void InfersMindPlaceMindType()
   {
     WhenParseAssembly();
 
@@ -488,6 +488,28 @@ public class AssemblyParsing
       RootNamespace,
       nameof(FizzBuzzTraining),
       nameof(FizzBuzzTraining.FizzBuzzMindPlace));
+  }
+
+  [TestMethod]
+  public void CapturesMindPlaceType()
+  {
+    WhenParseAssembly();
+
+    ThenMindPlaceTypeIs(
+      typeof(FizzBuzzTraining.FizzBuzzMindPlace),
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzMindPlace));
+  }
+
+  void ThenMindPlaceTypeIs(Type Expected, params ImmutableArray<string?> Path)
+  {
+    var MindPlaceNode = GetNodeAtPath(Path);
+    var MindType = MindPlaceNode.Query(new FetchDataFromNode<Type>()
+    {
+      VisitMindPlace = MindPlace => MindPlace.MindPlaceType
+    });
+    MindType.Should().Be(Expected);
   }
 
   void ThenMindPlaceMindTypeIs(Type Expected, params ImmutableArray<string?> Path)
