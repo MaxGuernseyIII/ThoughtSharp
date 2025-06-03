@@ -7,9 +7,18 @@ class MockConvergenceGate : ConvergenceGate
 {
   public Queue<bool> Answers = [];
 
-  public bool IsGateCleared()
+  public MockConvergenceGate(params IEnumerable<bool> Answers)
   {
-    Answers.Count.Should().BeGreaterThan(0);
-    return Answers.Dequeue();
+    foreach (var Answer in Answers) 
+      this.Answers.Enqueue(Answer);
+  }
+
+  public bool IsOpen
+  {
+    get
+    {
+      Answers.Count.Should().BeGreaterThan(0);
+      return Answers.Dequeue();
+    }
   }
 }

@@ -22,6 +22,7 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
+using Tests.Mocks;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -123,10 +124,11 @@ public class ConvergenceGating
     var Gate = ConvergenceGate.ForTrackerAndThreshold(Tracker,
       Tracker.MeasureConvergence() + ConvergenceConstants.Precision);
 
-    var GateIsOpen = Gate.IsGateCleared();
+    var GateIsOpen = Gate.IsOpen;
 
     GateIsOpen.Should().Be(false);
   }
+
   [TestMethod]
   public void BasedOnTrackerAndThresholdSucceedsWhenConvergenceIsHighEnough()
   {
@@ -136,8 +138,44 @@ public class ConvergenceGating
     var Gate = ConvergenceGate.ForTrackerAndThreshold(Tracker,
       Tracker.MeasureConvergence());
 
-    var GateIsOpen = Gate.IsGateCleared();
+    var GateIsOpen = Gate.IsOpen;
 
     GateIsOpen.Should().Be(true);
+  }
+
+  [TestMethod]
+  public void AndGateIsClosedIfLeftGateIsClosed()
+  {
+    var LeftGate = new MockConvergenceGate(false);
+    var RightGate = new MockConvergenceGate(Any.Bool);
+    var AndGate = ConvergenceGate.ForAnd(LeftGate, RightGate);
+
+    var GateIsOpen = AndGate.IsOpen;
+
+    GateIsOpen.Should().Be(false);
+  }
+
+  [TestMethod]
+  public void AndGateIsOpenIfBothGatesAreOpen()
+  {
+    var LeftGate = new MockConvergenceGate(true);
+    var RightGate = new MockConvergenceGate(true);
+    var AndGate = ConvergenceGate.ForAnd(LeftGate, RightGate);
+
+    var GateIsOpen = AndGate.IsOpen;
+
+    GateIsOpen.Should().Be(true);
+  }
+
+  [TestMethod]
+  public void AndGateIsClosedIfRightGateIsClosed()
+  {
+    var LeftGate = new MockConvergenceGate(Any.Bool);
+    var RightGate = new MockConvergenceGate(false);
+    var AndGate = ConvergenceGate.ForAnd(LeftGate, RightGate);
+
+    var GateIsOpen = AndGate.IsOpen;
+
+    GateIsOpen.Should().Be(false);
   }
 }
