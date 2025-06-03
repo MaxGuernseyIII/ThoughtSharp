@@ -34,6 +34,8 @@ namespace Tests;
 public class MindPooling
 {
   public record MockMind(Brain Brain);
+  public record MockMind2(Brain Brain);
+  public record MockMind3(Brain Brain);
 
   public class MockMindPlace : MindPlace
   {
@@ -49,9 +51,11 @@ public class MindPooling
       return new MockMind(Brain);
     }
 
+    public List<Brain> Loaded { get; } = [];
+
     public void LoadSavedBrain(Brain ToLoad)
     {
-      Assert.Fail("Not supported, yet.");
+      Loaded.Add(ToLoad);
     }
 
     public void SaveBrain(Brain ToSave)
@@ -71,32 +75,57 @@ public class MindPooling
   [TestMethod]
   public void GeneratesMindsTheFirstTime()
   {
-    var Brain = new MockBrain<MockData, MockData>();
-    var MockPlace = new MockMindPlace();
-    MockPlace.BrainsToMake.Enqueue(Brain);
-    Places = Places.Add(typeof(MockMind), MockPlace);
-    var Pool = new MindPool(Places);
+    var MindType = typeof(MockMind);
+    GivenPlaceBinding(typeof(MockMind2));
+    var MockPlace = GivenPlaceBinding(MindType);
+    GivenPlaceBinding(typeof(MockMind3));
+    var Brain = GivenPlaceWillMakeBrain(MockPlace);
+    var Pool = GivenPool();
 
-    var Actual = Pool.GetMind(typeof(MockMind));
+    var Actual = WhenMakeMind(Pool, MindType);
 
-    Actual.Should().Be(new MockMind(Brain));
+    ThenMindShouldBe(Actual, new MockMind(Brain));
   }
 
-  class MockData : CognitiveData<MockData>
+  static void ThenMindShouldBe(object Actual, object Expected)
   {
-    public static int Length => 1;
+    Actual.Should().Be(Expected);
+  }
 
-    public void MarshalTo(Span<float> Target)
+  static object WhenMakeMind(MindPool Pool, Type MindType)
+  {
+    var Actual = Pool.GetMind(MindType);
+    return Actual;
+  }
+
+  MindPool GivenPool()
+  {
+    var Pool = new MindPool(Places);
+    return Pool;
+  }
+
+  static DummyBrain GivenPlaceWillMakeBrain(MockMindPlace MockPlace)
+  {
+    var Brain = new DummyBrain();
+    MockPlace.BrainsToMake.Enqueue(Brain);
+    return Brain;
+  }
+
+  MockMindPlace GivenPlaceBinding(Type MindType)
+  {
+    var MockPlace = new MockMindPlace();
+    Places = Places.Add(MindType, MockPlace);
+    return MockPlace;
+  }
+
+  class DummyBrain : Brain
+  {
+    public void Dispose()
     {
       throw new NotImplementedException();
     }
 
-    public void WriteAsLossRules(LossRuleWriter Target)
-    {
-      throw new NotImplementedException();
-    }
-
-    public static MockData UnmarshalFrom(ReadOnlySpan<float> Source)
+    public Inference MakeInference(float[] Parameters)
     {
       throw new NotImplementedException();
     }
