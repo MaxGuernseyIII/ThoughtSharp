@@ -3,7 +3,7 @@ using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class MindPool(ImmutableDictionary<Type, MindPlace> Places)
+public class MindPool(ImmutableDictionary<Type, MindPlace> Places) : Saver
 {
   readonly Dictionary<Type, (Brain ToSave, object Mind)> Minds = [];
 

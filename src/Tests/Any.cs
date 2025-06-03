@@ -22,6 +22,7 @@
 
 using System.Collections.Immutable;
 using System.Text;
+using Tests.Mocks;
 
 namespace Tests;
 
@@ -109,5 +110,10 @@ static class Any
     }
 
     return [..Result];
+  }
+
+  public static ImmutableArray<MockRunnable> MockRunnables()
+  {
+    return [..Enumerable.Range(0, Int(1, 5)).Select(_ => new MockRunnable())];
   }
 }

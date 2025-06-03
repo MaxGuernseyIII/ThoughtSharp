@@ -20,10 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace Tests;
+namespace ThoughtSharp.Scenarios.Model;
 
-public record RunResult
+public interface Saver
 {
-  public required BehaviorRunStatus Status { get; init; }
-  public Exception? Exception { get; init; }
+  void Save();
 }

@@ -20,9 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace Tests;
+namespace ThoughtSharp.Scenarios.Model;
 
-public interface Runnable
+public enum BehaviorRunStatus 
 {
-  Task<RunResult> Run();
+  NotRun,
+  Failure,
+  Success
 }
