@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ThoughtSharp.Runtime" Version="2025.6.3.14" />
+    <PackageReference Include="ThoughtSharp" Version="2025.6.3.16" />
   </ItemGroup>
 
 </Project>

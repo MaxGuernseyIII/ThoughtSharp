@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ThoughtSharp.Generator\ThoughtSharp.Generator.csproj" PrivateAssets="all" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\ThoughtSharp.Generator\ThoughtSharp.Generator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ThoughtSharp.Runtime\ThoughtSharp.Runtime.csproj" />
     <ProjectReference Include="..\ThoughtSharp.Scenarios.Model\ThoughtSharp.Scenarios.Model.csproj" />
     <ProjectReference Include="..\ThoughtSharp.Scenarios\ThoughtSharp.Scenarios.csproj" />
