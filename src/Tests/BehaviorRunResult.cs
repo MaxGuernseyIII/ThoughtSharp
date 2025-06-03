@@ -24,5 +24,6 @@ namespace Tests;
 
 public record BehaviorRunResult
 {
-  public required BehaviorRunStatus Status { get; set; }
+  public required BehaviorRunStatus Status { get; init; }
+  public Exception? Exception { get; init; }
 }

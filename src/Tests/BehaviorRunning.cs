@@ -84,6 +84,22 @@ public class BehaviorRunning
   }
 
   [TestMethod]
+  public async Task RunSynchronousFail()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(BehaviorTestingHost),
+      typeof(BehaviorTestingHost).GetMethod(nameof(BehaviorTestingHost.Behavior))!);
+
+    var Exception = new Exception();
+    BehaviorTestingHost.BehaviorAction = () => throw Exception;
+
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Failure);
+    Result.Exception.Should().Be(Exception);
+  }
+
+  [TestMethod]
   public async Task RunAsynchronous()
   {
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
@@ -118,6 +134,24 @@ public class BehaviorRunning
     var Result = await Runner.Run();
 
     Result.Status.Should().Be(BehaviorRunStatus.Success);
+  }
+
+  [TestMethod]
+  public async Task RunAsynchronousFailure()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(BehaviorTestingHost),
+      typeof(BehaviorTestingHost).GetMethod(nameof(BehaviorTestingHost.AsyncBehavior))!);
+    var Exception = new Exception();
+    BehaviorTestingHost.AsyncBehaviorAction = () =>
+    {
+      return Task.Run(() => Task.FromException(Exception));
+    };
+
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Failure);
+    Result.Exception.Should().Be(Exception);
   }
 
   public class Mind1(Brain Brain);

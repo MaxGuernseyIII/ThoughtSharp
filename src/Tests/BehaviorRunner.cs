@@ -34,9 +34,21 @@ public class BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMet
     var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
     var Instance = Constructor.Invoke(Minds);
 
-    var Result = BehaviorMethod.Invoke(Instance, []);
-    if (Result is Task T)
-      await T;
+    try
+    {
+      var Result = BehaviorMethod.Invoke(Instance, []);
+      if (Result is Task T)
+        await T;
+    }
+    catch (Exception Exception)
+    {
+      var Unwrapped = Exception is TargetInvocationException ? Exception.InnerException : Exception;
+      return new()
+      {
+        Status = BehaviorRunStatus.Failure,
+        Exception = Unwrapped
+      };
+    }
 
     return new()
     {
