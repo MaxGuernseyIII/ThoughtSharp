@@ -27,7 +27,7 @@ using ThoughtSharp.Scenarios.Model;
 namespace Tests;
 
 [TestClass]
-public class ConvergenceGating
+public class Gating
 {
   [TestMethod]
   public void BasedOnTrackerAndThresholdFailsWhenConvergenceTooLow()
