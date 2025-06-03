@@ -69,9 +69,6 @@ public class Counting
 
   static Counter GivenCounterInSomeState()
   {
-    var Counter = new Counter();
-    foreach (var _ in Enumerable.Range(0, Any.Int(0, 20)))
-      Counter.Increment();
-    return Counter;
+    return new() { Value = Any.Int(0, 20)  };
   }
 }
