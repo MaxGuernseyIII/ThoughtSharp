@@ -59,16 +59,22 @@ public class AutomationPasses
   {
     var Pass = GivenAutomationPass();
     var (Node, Runnable) = Any.Of(Steps);
-    var Result = new RunResult()
-    {
-      Status = Any.EnumValue<BehaviorRunStatus>(),
-      Exception = new()
-    };  
-    Runnable.Result = Result;
+    var Result = GivenRunnableWillReturnResult(Runnable);
 
     await Pass.Run();
 
     ThenResultWasReported(Node, Result);
+  }
+
+  static RunResult GivenRunnableWillReturnResult(MockRunnable Runnable)
+  {
+    var Result = new RunResult()
+    {
+      Status = Any.EnumValue<BehaviorRunStatus>(),
+      Exception = new()
+    };
+    Runnable.Result = Result;
+    return Result;
   }
 
   void ThenResultWasReported(ScenariosModelNode Node, RunResult Result)
