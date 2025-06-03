@@ -73,8 +73,8 @@ public class ConvergenceTracking
   [TestMethod]
   public void OldResultsFallOff()
   {
-    var OldHistory = AnyTrackRecord(1);
-    var RecentHistory = AnyTrackRecord(Length);
+    var OldHistory = Any.ConvergenceRecord(1);
+    var RecentHistory = Any.ConvergenceRecord(Length);
     GivenTrackRecord(
     [
       ..OldHistory,
@@ -89,46 +89,55 @@ public class ConvergenceTracking
   void ThenConvergenceIsSameAsForHistory(ImmutableArray<(int Amount, bool Result)> RecentHistory)
   {
     var Tracker = new ConvergenceTracker(Length);
-    
-    ApplyToTracker(RecentHistory, Tracker);
+
+    Tracker.ApplyHistory(RecentHistory);
     
     ThenConvergenceIs(Tracker.MeasureConvergence());
   }
 
-  ImmutableArray<(int Amount, bool Result)> AnyTrackRecord(int Amount)
-  {
-    var Result = new List<(int, bool)>();
-
-    while (Amount > 0)
-    {
-      var ChunkSize = Any.Int(1, Amount);
-
-      Result.Add((ChunkSize, Any.Bool));
-
-      Amount -= ChunkSize;
-    }
-
-    return [..Result];
-  }
-
   void GivenTrackRecord(params ImmutableArray<(int Amount, bool Result)> Trials)
   {
-    ApplyToTracker(Trials, Tracker);
-  }
-
-  static void ApplyToTracker(ImmutableArray<(int Amount, bool Result)> Trials, ConvergenceTracker ConvergenceTracker)
-  {
-    foreach (var Run in from Run in Trials from _ in Enumerable.Range(0, Run.Amount) select Run)
-      ConvergenceTracker.RecordResult(Run.Result);
+    Tracker.ApplyHistory(Trials);
   }
 
   void ThenConvergenceIs(double Expected)
   {
-    Convergence.Should().BeApproximately(Expected, 0.00001);
+    Convergence.Should().BeApproximately(Expected, ConvergenceConstants.Precision);
   }
 
   void WhenMeasureConvergence()
   {
     Convergence = Tracker.MeasureConvergence();
+  }
+}
+
+[TestClass]
+public class ConvergenceGating
+{
+  [TestMethod]
+  public void BasedOnTrackerAndThresholdFailsWhenConvergenceTooLow()
+  {
+    var Length = Any.Int(1, 10);
+    var Tracker = new ConvergenceTracker(Length);
+    Tracker.ApplyHistory(Any.ConvergenceRecord(Length));
+    var Gate = ConvergenceGate.ForTrackerAndThreshold(Tracker,
+      Tracker.MeasureConvergence() + ConvergenceConstants.Precision);
+
+    var GateIsOpen = Gate.IsGateCleared();
+
+    GateIsOpen.Should().Be(false);
+  }
+  [TestMethod]
+  public void BasedOnTrackerAndThresholdSucceedsWhenConvergenceIsHighEnough()
+  {
+    var Length = Any.Int(1, 10);
+    var Tracker = new ConvergenceTracker(Length);
+    Tracker.ApplyHistory(Any.ConvergenceRecord(Length));
+    var Gate = ConvergenceGate.ForTrackerAndThreshold(Tracker,
+      Tracker.MeasureConvergence());
+
+    var GateIsOpen = Gate.IsGateCleared();
+
+    GateIsOpen.Should().Be(true);
   }
 }

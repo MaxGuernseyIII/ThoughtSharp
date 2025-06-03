@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Text;
 
 namespace Tests;
@@ -92,5 +93,21 @@ static class Any
       Result[I] = Float;
 
     return Result;
+  }
+
+  public static ImmutableArray<(int Amount, bool Result)> ConvergenceRecord(int Amount)
+  {
+    var Result = new List<(int, bool)>();
+
+    while (Amount > 0)
+    {
+      var ChunkSize = Any.Int(1, Amount);
+
+      Result.Add((ChunkSize, Any.Bool));
+
+      Amount -= ChunkSize;
+    }
+
+    return [..Result];
   }
 }
