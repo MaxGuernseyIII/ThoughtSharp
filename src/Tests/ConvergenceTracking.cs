@@ -92,7 +92,7 @@ public class ConvergenceTracking
     var Tracker = new ConvergenceTracker(Length);
 
     Tracker.ApplyHistory(RecentHistory);
-    
+
     ThenConvergenceIs(Tracker.MeasureConvergence());
   }
 
@@ -144,38 +144,18 @@ public class ConvergenceGating
   }
 
   [TestMethod]
-  public void AndGateIsClosedIfLeftGateIsClosed()
+  [DataRow(false, false, false)]
+  [DataRow(false, true, false)]
+  [DataRow(true, false, false)]
+  [DataRow(true, true, true)]
+  public void AndGate(bool LeftValue, bool RightVale, bool Expected)
   {
-    var LeftGate = new MockConvergenceGate(false);
-    var RightGate = new MockConvergenceGate(Any.Bool);
+    var LeftGate = new MockConvergenceGate(LeftValue);
+    var RightGate = new MockConvergenceGate(RightVale);
     var AndGate = ConvergenceGate.ForAnd(LeftGate, RightGate);
 
     var GateIsOpen = AndGate.IsOpen;
 
-    GateIsOpen.Should().Be(false);
-  }
-
-  [TestMethod]
-  public void AndGateIsOpenIfBothGatesAreOpen()
-  {
-    var LeftGate = new MockConvergenceGate(true);
-    var RightGate = new MockConvergenceGate(true);
-    var AndGate = ConvergenceGate.ForAnd(LeftGate, RightGate);
-
-    var GateIsOpen = AndGate.IsOpen;
-
-    GateIsOpen.Should().Be(true);
-  }
-
-  [TestMethod]
-  public void AndGateIsClosedIfRightGateIsClosed()
-  {
-    var LeftGate = new MockConvergenceGate(Any.Bool);
-    var RightGate = new MockConvergenceGate(false);
-    var AndGate = ConvergenceGate.ForAnd(LeftGate, RightGate);
-
-    var GateIsOpen = AndGate.IsOpen;
-
-    GateIsOpen.Should().Be(false);
+    GateIsOpen.Should().Be(Expected);
   }
 }
