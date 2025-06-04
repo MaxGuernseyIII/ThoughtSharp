@@ -26,10 +26,10 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public static class ScenariosModelNodeExtensions
 {
-  public static AutomationJob GetTestPassFor(this ScenariosModel This, MindPool Pool,
+  public static AutomationJob GetTestPassFor(this ScenariosModel This, MindPool Pool, Reporter Reporter, 
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
-    return null!;
+    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, Reporter);
   }
 
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)

@@ -229,39 +229,38 @@ public class BehaviorRunning
     ]);
   }
 
-  //[TestMethod]
-  //public void BuildsAutomationJobFromRunners()
-  //{
-  //  var Model = new ScenariosModel([]);
-  //  var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
-  //  var HostType1 = typeof(BehaviorTestingHost);
-  //  var MethodInfo1 = HostType1.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
-  //  var MethodInfo2 = HostType1.GetMethod(nameof(BehaviorTestingHost.AsyncBehaviorAction))!;
-  //  var HostType2 = typeof(MindCatchingHost);
-  //  var MethodInfo3 = HostType1.GetMethod(nameof(MindCatchingHost.AlwaysSucceed))!;
-  //  ImmutableArray<ScenariosModelNode> Nodes =
-  //  [
-  //    new CapabilityNode(null!, [
-  //      new CapabilityNode(HostType1, [
-  //        new BehaviorNode(HostType1, MethodInfo1),
-  //        new BehaviorNode(HostType1, MethodInfo2)
-  //      ]),
-  //      new CapabilityNode(HostType2, [
-  //        new BehaviorNode(HostType2, MethodInfo3)
-  //      ])
-  //    ]),
-  //    new CapabilityNode(HostType2, [
-  //      new BehaviorNode(HostType2, MethodInfo3)
-  //    ])
-  //  ];
+  [TestMethod]
+  public void BuildsAutomationJobFromRunners()
+  {
+    var Model = new ScenariosModel([]);
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Reporter = new MockReporter();
+    var HostType1 = typeof(BehaviorTestingHost);
+    var MethodInfo1 = HostType1.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
+    var MethodInfo2 = HostType1.GetMethod(nameof(BehaviorTestingHost.AsyncBehaviorAction))!;
+    var HostType2 = typeof(MindCatchingHost);
+    var MethodInfo3 = HostType1.GetMethod(nameof(MindCatchingHost.AlwaysSucceed))!;
+    ImmutableArray<ScenariosModelNode> Nodes =
+    [
+      new CapabilityNode(null!, [
+        new CapabilityNode(HostType1, [
+          new BehaviorNode(HostType1, MethodInfo1),
+          new BehaviorNode(HostType1, MethodInfo2)
+        ]),
+        new CapabilityNode(HostType2, [
+          new BehaviorNode(HostType2, MethodInfo3)
+        ])
+      ]),
+      new CapabilityNode(HostType2, [
+        new BehaviorNode(HostType2, MethodInfo3)
+      ])
+    ];
 
-  //  var Job = Model.GetTestPassFor(Pool, Nodes);
+    var Job = Model.GetTestPassFor(Pool, Reporter, Nodes);
 
-  //  ImmutableArray<BehaviorRunner> Runners = [.. Nodes.GetBehaviorRunners(Pool)];
-
-  //  Job.Should().BeEquivalentTo(new AutomationPass(Runners))
-
-  //}
+    Job.Should().BeEquivalentTo(new AutomationPass([.. Nodes.GetBehaviorRunners(Pool)],
+      new FalseGate(), Pool, Reporter));
+  }
 
   public record Mind1(Brain Brain);
 

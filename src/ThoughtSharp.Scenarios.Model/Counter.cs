@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public sealed record Counter(int Value) : Incrementable
+public sealed class Counter(int Value = Counter.InitialValue) : Incrementable
 {
   public const int InitialValue = 0;
 
