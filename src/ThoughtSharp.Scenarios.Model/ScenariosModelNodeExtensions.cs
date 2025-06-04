@@ -41,6 +41,12 @@ public static class ScenariosModelNodeExtensions
     }
   }
 
+  public static IEnumerable<BehaviorRunner> GetBehaviorRunners(this IEnumerable<ScenariosModelNode> Nodes,
+    MindPool Pool)
+  {
+    return Nodes.SelectMany(N => N.GetBehaviorRunners(Pool)).Distinct();
+  }
+
   public static IEnumerable<ScenariosModelNode> GetStepsAlongPath(this ScenariosModelNode Node,
     params ImmutableArray<string?> Steps)
   {

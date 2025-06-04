@@ -126,10 +126,7 @@ public class BehaviorRunning
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
     var Runner = new BehaviorRunner(Pool, typeof(BehaviorTestingHost),
       typeof(BehaviorTestingHost).GetMethod(nameof(BehaviorTestingHost.AsyncBehavior))!);
-    BehaviorTestingHost.AsyncBehaviorAction = () =>
-    {
-      return Task.Run(() => Task.CompletedTask);
-    };
+    BehaviorTestingHost.AsyncBehaviorAction = () => { return Task.Run(() => Task.CompletedTask); };
 
     var Result = await Runner.Run();
 
@@ -143,10 +140,7 @@ public class BehaviorRunning
     var Runner = new BehaviorRunner(Pool, typeof(BehaviorTestingHost),
       typeof(BehaviorTestingHost).GetMethod(nameof(BehaviorTestingHost.AsyncBehavior))!);
     var Exception = new Exception();
-    BehaviorTestingHost.AsyncBehaviorAction = () =>
-    {
-      return Task.Run(() => Task.FromException(Exception));
-    };
+    BehaviorTestingHost.AsyncBehaviorAction = () => { return Task.Run(() => Task.FromException(Exception)); };
 
     var Result = await Runner.Run();
 
@@ -162,9 +156,72 @@ public class BehaviorRunning
     var MethodInfo = HostType.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
     var Node = new BehaviorNode(HostType, MethodInfo);
 
-    ImmutableArray<BehaviorRunner> Runners = [..Node.GetBehaviorRunners(Pool)];
+    ImmutableArray<BehaviorRunner> Runners = [.. Node.GetBehaviorRunners(Pool)];
 
     Runners.Should().BeEquivalentTo([new BehaviorRunner(Pool, HostType, MethodInfo)]);
+  }
+
+  [TestMethod]
+  public void GetRunnersFromChildNodes()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var HostType1 = typeof(BehaviorTestingHost);
+    var MethodInfo1 = HostType1.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
+    var MethodInfo2 = HostType1.GetMethod(nameof(BehaviorTestingHost.AsyncBehaviorAction))!;
+    var HostType2 = typeof(MindCatchingHost);
+    var MethodInfo3 = HostType1.GetMethod(nameof(MindCatchingHost.AlwaysSucceed))!;
+    var Node =
+      new CapabilityNode(null!, [
+        new CapabilityNode(HostType1, [
+          new BehaviorNode(HostType1, MethodInfo1),
+          new BehaviorNode(HostType1, MethodInfo2)
+        ]),
+        new CapabilityNode(HostType2, [
+          new BehaviorNode(HostType2, MethodInfo3)
+        ])
+      ]);
+
+    ImmutableArray<BehaviorRunner> Runners = [.. Node.GetBehaviorRunners(Pool)];
+
+    Runners.Should().BeEquivalentTo([
+      new BehaviorRunner(Pool, HostType1, MethodInfo1),
+      new(Pool, HostType1, MethodInfo2),
+      new(Pool, HostType2, MethodInfo3),
+    ]);
+  }
+
+  [TestMethod]
+  public void DoesNotDuplicateRunners()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var HostType1 = typeof(BehaviorTestingHost);
+    var MethodInfo1 = HostType1.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
+    var MethodInfo2 = HostType1.GetMethod(nameof(BehaviorTestingHost.AsyncBehaviorAction))!;
+    var HostType2 = typeof(MindCatchingHost);
+    var MethodInfo3 = HostType1.GetMethod(nameof(MindCatchingHost.AlwaysSucceed))!;
+    ImmutableArray<ScenariosModelNode> Nodes =
+    [
+      new CapabilityNode(null!, [
+        new CapabilityNode(HostType1, [
+          new BehaviorNode(HostType1, MethodInfo1),
+          new BehaviorNode(HostType1, MethodInfo2)
+        ]),
+        new CapabilityNode(HostType2, [
+          new BehaviorNode(HostType2, MethodInfo3)
+        ])
+      ]),
+      new CapabilityNode(HostType2, [
+        new BehaviorNode(HostType2, MethodInfo3)
+      ])
+    ];
+
+    ImmutableArray<BehaviorRunner> Runners = [.. Nodes.GetBehaviorRunners(Pool)];
+
+    Runners.Should().BeEquivalentTo([
+      new BehaviorRunner(Pool, HostType1, MethodInfo1),
+      new(Pool, HostType1, MethodInfo2),
+      new(Pool, HostType2, MethodInfo3),
+    ]);
   }
 
   public record Mind1(Brain Brain);
