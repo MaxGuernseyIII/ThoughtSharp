@@ -26,22 +26,28 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public static class ScenariosModelNodeExtensions
 {
+  public static AutomationJob GetTestPassFor(this ScenariosModel This, MindPool Pool,
+    params ImmutableArray<ScenariosModelNode> Nodes)
+  {
+    return null!;
+  }
+
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)
   {
     return Node.ChildNodes.OfType<CurriculumPhaseNode>().OrderBy(N => N.PhaseNumber).ToImmutableArray();
   }
 
-  public static IEnumerable<BehaviorRunner> GetBehaviorRunners(this ScenariosModelNode Node, MindPool Pool)
+  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(this ScenariosModelNode Node, MindPool Pool)
   {
-    return Node.Query(new CrawlingVisitor<BehaviorRunner>() {VisitBehavior = VisitBehavior});
+    return Node.Query(new CrawlingVisitor<(ScenariosModelNode Node, BehaviorRunner Runner)>() {VisitBehavior = VisitBehavior});
 
-    IEnumerable<BehaviorRunner> VisitBehavior(BehaviorNode BehaviorNode)
+    IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> VisitBehavior(BehaviorNode BehaviorNode)
     {
-      yield return new(Pool, BehaviorNode.HostType, BehaviorNode.Method);
+      yield return (BehaviorNode, new(Pool, BehaviorNode.HostType, BehaviorNode.Method));
     }
   }
 
-  public static IEnumerable<BehaviorRunner> GetBehaviorRunners(this IEnumerable<ScenariosModelNode> Nodes,
+  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(this IEnumerable<ScenariosModelNode> Nodes,
     MindPool Pool)
   {
     return Nodes.SelectMany(N => N.GetBehaviorRunners(Pool)).Distinct();

@@ -156,9 +156,9 @@ public class BehaviorRunning
     var MethodInfo = HostType.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
     var Node = new BehaviorNode(HostType, MethodInfo);
 
-    ImmutableArray<BehaviorRunner> Runners = [.. Node.GetBehaviorRunners(Pool)];
+    ImmutableArray<(ScenariosModelNode Node, BehaviorRunner Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
 
-    Runners.Should().BeEquivalentTo([new BehaviorRunner(Pool, HostType, MethodInfo)]);
+    Runners.Should().BeEquivalentTo([(Node, new BehaviorRunner(Pool, HostType, MethodInfo))]);
   }
 
   [TestMethod]
@@ -170,23 +170,26 @@ public class BehaviorRunning
     var MethodInfo2 = HostType1.GetMethod(nameof(BehaviorTestingHost.AsyncBehaviorAction))!;
     var HostType2 = typeof(MindCatchingHost);
     var MethodInfo3 = HostType1.GetMethod(nameof(MindCatchingHost.AlwaysSucceed))!;
+    var Node1 = new BehaviorNode(HostType1, MethodInfo1);
+    var Node2 = new BehaviorNode(HostType1, MethodInfo2);
+    var Node3 = new BehaviorNode(HostType2, MethodInfo3);
     var Node =
       new CapabilityNode(null!, [
         new CapabilityNode(HostType1, [
-          new BehaviorNode(HostType1, MethodInfo1),
-          new BehaviorNode(HostType1, MethodInfo2)
+          Node1,
+          Node2
         ]),
         new CapabilityNode(HostType2, [
-          new BehaviorNode(HostType2, MethodInfo3)
+          Node3
         ])
       ]);
 
-    ImmutableArray<BehaviorRunner> Runners = [.. Node.GetBehaviorRunners(Pool)];
+    ImmutableArray<(ScenariosModelNode Node, BehaviorRunner Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
 
     Runners.Should().BeEquivalentTo([
-      new BehaviorRunner(Pool, HostType1, MethodInfo1),
-      new(Pool, HostType1, MethodInfo2),
-      new(Pool, HostType2, MethodInfo3),
+      (Node1, new BehaviorRunner(Pool, HostType1, MethodInfo1)),
+      (Node2, new(Pool, HostType1, MethodInfo2)),
+      (Node3, new(Pool, HostType2, MethodInfo3))
     ]);
   }
 
@@ -199,30 +202,66 @@ public class BehaviorRunning
     var MethodInfo2 = HostType1.GetMethod(nameof(BehaviorTestingHost.AsyncBehaviorAction))!;
     var HostType2 = typeof(MindCatchingHost);
     var MethodInfo3 = HostType1.GetMethod(nameof(MindCatchingHost.AlwaysSucceed))!;
+    var Node1 = new BehaviorNode(HostType1, MethodInfo1);
+    var Node2 = new BehaviorNode(HostType1, MethodInfo2);
+    var Node3 = new BehaviorNode(HostType2, MethodInfo3);
+    var Repeated = new CapabilityNode(HostType2, [
+      Node3
+    ]);
     ImmutableArray<ScenariosModelNode> Nodes =
     [
       new CapabilityNode(null!, [
         new CapabilityNode(HostType1, [
-          new BehaviorNode(HostType1, MethodInfo1),
-          new BehaviorNode(HostType1, MethodInfo2)
+          Node1,
+          Node2
         ]),
-        new CapabilityNode(HostType2, [
-          new BehaviorNode(HostType2, MethodInfo3)
-        ])
+        Repeated
       ]),
-      new CapabilityNode(HostType2, [
-        new BehaviorNode(HostType2, MethodInfo3)
-      ])
+      Repeated
     ];
 
-    ImmutableArray<BehaviorRunner> Runners = [.. Nodes.GetBehaviorRunners(Pool)];
+    ImmutableArray<(ScenariosModelNode Node, BehaviorRunner Runner)> Runners = [.. Nodes.GetBehaviorRunners(Pool)];
 
     Runners.Should().BeEquivalentTo([
-      new BehaviorRunner(Pool, HostType1, MethodInfo1),
-      new(Pool, HostType1, MethodInfo2),
-      new(Pool, HostType2, MethodInfo3),
+      (Node1, new BehaviorRunner(Pool, HostType1, MethodInfo1)),
+      (Node2, new(Pool, HostType1, MethodInfo2)),
+      (Node3, new(Pool, HostType2, MethodInfo3))
     ]);
   }
+
+  //[TestMethod]
+  //public void BuildsAutomationJobFromRunners()
+  //{
+  //  var Model = new ScenariosModel([]);
+  //  var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+  //  var HostType1 = typeof(BehaviorTestingHost);
+  //  var MethodInfo1 = HostType1.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
+  //  var MethodInfo2 = HostType1.GetMethod(nameof(BehaviorTestingHost.AsyncBehaviorAction))!;
+  //  var HostType2 = typeof(MindCatchingHost);
+  //  var MethodInfo3 = HostType1.GetMethod(nameof(MindCatchingHost.AlwaysSucceed))!;
+  //  ImmutableArray<ScenariosModelNode> Nodes =
+  //  [
+  //    new CapabilityNode(null!, [
+  //      new CapabilityNode(HostType1, [
+  //        new BehaviorNode(HostType1, MethodInfo1),
+  //        new BehaviorNode(HostType1, MethodInfo2)
+  //      ]),
+  //      new CapabilityNode(HostType2, [
+  //        new BehaviorNode(HostType2, MethodInfo3)
+  //      ])
+  //    ]),
+  //    new CapabilityNode(HostType2, [
+  //      new BehaviorNode(HostType2, MethodInfo3)
+  //    ])
+  //  ];
+
+  //  var Job = Model.GetTestPassFor(Pool, Nodes);
+
+  //  ImmutableArray<BehaviorRunner> Runners = [.. Nodes.GetBehaviorRunners(Pool)];
+
+  //  Job.Should().BeEquivalentTo(new AutomationPass(Runners))
+
+  //}
 
   public record Mind1(Brain Brain);
 
