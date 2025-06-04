@@ -40,7 +40,7 @@ public class AutomationLoops
     Gate = new();
     Pass = new();
     Counter = new();
-    Loop = new StandardModelKit().CreateAutomationLoop(Pass, Gate, Counter);
+    Loop = new AutomationLoop(Pass, Gate, Counter);
   }
 
   [TestMethod]

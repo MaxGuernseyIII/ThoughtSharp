@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class ConvergenceTrackerAndThresholdGate(ConvergenceTracker Tracker, double Threshold) : Gate
+public sealed record ConvergenceTrackerAndThresholdGate(ConvergenceTracker Tracker, double Threshold) : Gate
 {
   public bool IsOpen => Tracker.MeasureConvergence() >= Threshold;
 }

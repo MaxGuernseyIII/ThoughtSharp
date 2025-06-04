@@ -1,18 +1,8 @@
 ﻿namespace ThoughtSharp.Scenarios.Model;
 
-public class AutomationLoop : AutomationJob
+public sealed record AutomationLoop(AutomationJob Pass, Gate ContinueGate, Incrementable Counter)
+  : AutomationJob
 {
-  readonly AutomationJob Pass;
-  readonly Gate ContinueGate;
-  readonly Incrementable Counter;
-
-  internal AutomationLoop(AutomationJob Pass, Gate ContinueGate, Incrementable Counter)
-  {
-    this.Pass = Pass;
-    this.ContinueGate = ContinueGate;
-    this.Counter = Counter;
-  }
-
   public async Task Run()
   {
     while (ContinueGate.IsOpen) 

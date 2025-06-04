@@ -30,10 +30,10 @@ namespace Tests;
 [TestClass]
 public class AutomationPasses
 {
-  ImmutableArray<(ScenariosModelNode Node, MockRunnable Runnable)> Steps = [];
+  MockReporter Reporter = null!;
   MockGate SaveGate = null!;
   MockSaver Saver = null!;
-  MockReporter Reporter = null!;
+  ImmutableArray<(ScenariosModelNode Node, MockRunnable Runnable)> Steps = [];
 
   [TestInitialize]
   public void SetUp()
@@ -106,7 +106,7 @@ public class AutomationPasses
 
   static RunResult GivenRunnableWillReturnResult(MockRunnable Runnable)
   {
-    var Result = new RunResult()
+    var Result = new RunResult
     {
       Status = Any.EnumValue<BehaviorRunStatus>(),
       Exception = new()
@@ -127,6 +127,23 @@ public class AutomationPasses
 
   AutomationJob GivenAutomationPass()
   {
-    return new StandardModelKit().CreateAutomationPass([..Steps], SaveGate, Saver, Reporter);
+    return new AutomationPass((ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)>) [..Steps], SaveGate, Saver, Reporter);
   }
+}
+
+[TestClass]
+public class AutomationPassConstruction
+{
+  class HostType
+  {
+    public void Method(){}
+  }
+  //[TestMethod]
+  //public void BuildFromSingleNode()
+  //{
+  //  var Kit = new MockModelKit();
+  //  var Node = new BehaviorNode(typeof(HostType), typeof(HostType).GetMethod(nameof(HostType.Method))!);
+
+  //  var Pass = Kit.CreateAutomationPassFrom(Node);
+  //}
 }

@@ -2,20 +2,17 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class AutomationPass : AutomationJob
+public sealed class AutomationPass(
+  ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps,
+  Gate SaveGate,
+  Saver Saver,
+  Reporter Reporter)
+  : AutomationJob
 {
-  readonly ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps;
-  readonly Gate SaveGate;
-  readonly Saver Saver;
-  readonly Reporter Reporter;
-
-  internal AutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps, Gate SaveGate, Saver Saver, Reporter Reporter)
-  {
-    this.Steps = Steps;
-    this.SaveGate = SaveGate;
-    this.Saver = Saver;
-    this.Reporter = Reporter;
-  }
+  readonly ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps = Steps;
+  readonly Gate SaveGate = SaveGate;
+  readonly Saver Saver = Saver;
+  readonly Reporter Reporter = Reporter;
 
   public async Task Run()
   {
@@ -27,6 +24,25 @@ public class AutomationPass : AutomationJob
 
     if (SaveGate.IsOpen)
       Saver.Save();
+  }
+
+  bool Equals(AutomationPass Other)
+  {
+    return 
+      Steps.SequenceEqual(Other.Steps) && 
+      SaveGate.Equals(Other.SaveGate) && 
+      Saver.Equals(Other.Saver) && 
+      Reporter.Equals(Other.Reporter);
+  }
+
+  public override bool Equals(object? Obj)
+  {
+    return ReferenceEquals(this, Obj) || Obj is AutomationPass Other && Equals(Other);
+  }
+
+  public override int GetHashCode()
+  {
+    return Steps.OfType<object>().Concat([SaveGate, Saver, Reporter]).Aggregate(0, HashCode.Combine);
   }
 }
 

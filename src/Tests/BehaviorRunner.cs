@@ -20,29 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
+using System.Reflection;
+using ThoughtSharp.Scenarios.Model;
 
-namespace ThoughtSharp.Scenarios.Model;
+namespace Tests;
 
-public sealed class StandardModelKit : ModelKit
+public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMethod) : Runnable
 {
-  public Counter CreateCounter(int Value = Counter.InitialValue)
+  public async Task<RunResult> Run()
   {
-    return new(Value);
-  }
+    var Constructor = HostType.GetConstructors().Single();
+    var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
+    var Instance = Constructor.Invoke(Minds);
 
-  public Incrementable CreateCompoundIncrementable(params ImmutableArray<Incrementable> Counters)
-  {
-    return new CompoundIncrementable(Counters);
-  }
+    try
+    {
+      var Result = BehaviorMethod.Invoke(Instance, []);
+      if (Result is Task T)
+        await T;
+    }
+    catch (Exception Exception)
+    {
+      var Unwrapped = Exception is TargetInvocationException ? Exception.InnerException : Exception;
+      return new()
+      {
+        Status = BehaviorRunStatus.Failure,
+        Exception = Unwrapped
+      };
+    }
 
-  public AutomationJob CreateAutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps, Gate SaveGate, Saver Saver, Reporter Reporter)
-  {
-    return new AutomationPass(Steps, SaveGate, Saver, Reporter);
-  }
-
-  public AutomationJob CreateAutomationLoop(AutomationJob Pass, Gate ContinueGate, Incrementable Counter)
-  {
-    return new AutomationLoop(Pass, ContinueGate, Counter);
+    return new()
+    {
+      Status = BehaviorRunStatus.Success
+    };
   }
 }

@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class CounterAndThresholdGate(Counter Counter, int Threshold) : Gate
+public sealed record CounterAndThresholdGate(Counter Counter, int Threshold) : Gate
 {
   public bool IsOpen => Counter.Value >= Threshold;
 }

@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class OrGate(Gate LeftGate, Gate RightGate) : Gate
+public sealed record OrGate(Gate LeftGate, Gate RightGate) : Gate
 {
   public bool IsOpen => LeftGate.IsOpen || RightGate.IsOpen;
 }

@@ -22,16 +22,11 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public sealed class Counter : Incrementable
+public sealed record Counter(int Value) : Incrementable
 {
   public const int InitialValue = 0;
 
-  internal Counter(int Value)
-  {
-    this.Value = Value;
-  }
-
-  public int Value { get; private set; }
+  public int Value { get; private set; } = Value;
 
   public void Increment()
   {
