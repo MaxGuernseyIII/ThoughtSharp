@@ -28,7 +28,11 @@ using System.Numerics;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Example.FizzBuzz;
 using ThoughtSharp.Runtime;
+using TorchSharp;
+using TorchSharp.Modules;
 using static Disposition;
+using static TorchSharp.torch;
+using static TorchSharp.torch.nn;
 
 Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal;
 
@@ -36,7 +40,67 @@ Console.WriteLine("Training...");
 const int TotalTrainingPasses = 1000000;
 const int ReportEvery = 1000;
 
-DoFizzBuzz();
+BlindRewardTraining();
+
+void BlindRewardTraining(int Epochs = 500)
+{
+  var Brain = TorchBrainBuilder.ForFeatureCounts(2, 3)
+    .UsingSequence(S => S
+      .AddLinear(9)
+      .AddTanh()
+    ).Build();
+
+  var Random = new Random();
+  foreach (var _ in Enumerable.Range(0, 100))
+  {
+    foreach (var _2 in Enumerable.Range(0, Epochs))
+    {
+      var X = Random.NextSingle();
+      var Y = Random.NextSingle();
+
+      var (Inference, _2XPlusY, _XSquared, _SqrtX) = RunScenario(X, Y);
+      const float Precision = 0.01f;
+      var Score = 0f;
+      var Delta1 = _2XPlusY - (2 * X + Y);
+      if (MathF.Abs(Delta1) < Precision)
+        Score += 1;
+      else
+        Score -= Delta1;
+
+      var Delta2 = MathF.Abs(_XSquared - X * X);
+      if (Delta2 < Precision)
+        Score += 1;
+      else
+        Score -= Delta2;
+
+      var Delta3 = MathF.Abs(_SqrtX - MathF.Sqrt(Y));
+      if (Delta3 < Precision)
+        Score += 1;
+      else
+        Score -= Delta3;
+
+      Inference.ApplyIncentive(Score, (0, 3));
+    }
+    Report(0.5f, 0.5f);
+  }
+
+  Report(0.5f, 0.5f);
+
+  (Inference Inference, float _2XPlusY, float _XSquared, float _SqrtY) RunScenario(float X, float Y)
+  {
+    var Actual = Brain.MakeInference([X, Y]).Result;
+    return (Inference: Brain.MakeInference([X, Y]), _2XPlusY: Actual[0], _XSquared: Actual[1], _SqrtY: Actual[2]);
+  }
+
+  void Report(float X1, float Y1)
+  {
+    var Example1 = RunScenario(X1, Y1);
+
+    Console.WriteLine($"X = {X1}, Y = {Y1}, 2X + Y = {Example1._2XPlusY}, X^2 = {Example1._XSquared}, sqrt(Y) = {Example1._SqrtY}");
+  }
+}
+
+//DoFizzBuzz();
 //DoChooseShape();
 
 //void DoForcedTraining()
@@ -1262,3 +1326,4 @@ static class ShapeRenderer
     );
   }
 }
+

@@ -32,6 +32,11 @@ public class TorchBrainBuilder
     For<TMind>()
     where TMind : Mind<TMind>
   {
-    return new(TorchBrainFactory.Instance, TMind.InputLength, TMind.OutputLength);
+    return ForFeatureCounts(TMind.InputLength, TMind.OutputLength);
+  }
+
+  public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device> ForFeatureCounts(int InputFeatures, int OutputFeatures)
+  {
+    return new(TorchBrainFactory.Instance, InputFeatures, OutputFeatures);
   }
 }

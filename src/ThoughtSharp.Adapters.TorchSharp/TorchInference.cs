@@ -77,16 +77,33 @@ public class TorchInference(
 
   public void ApplyIncentive(float Incentive, params IReadOnlyList<(int Start, int End)> Regions)
   {
-    var TensorForBackPropagation = Replay().Payload;
-    var CumulativeLoss = torch.tensor(0.0f, requires_grad: true);
-    foreach (var (At, End) in Regions)
+    var Random = new Random();
+    using var TensorForBackPropagation = Replay().Payload;
+    //var (FirstAt, FirstEnd) = Regions[0];
+    var Scale = 0.5f;
+    var ExponentScale = -2f;
+    // Create noisy target with same shape and values
+    var Noise = torch.empty_like(TensorForBackPropagation);
+    for (int i = 0; i < Noise.shape[1]; i++)
     {
-      var AffectedSlice = TensorForBackPropagation.slice(1, At, End, 1).tanh();
-      var Target = AffectedSlice.detach() * Incentive;
-      CumulativeLoss += torch.nn.functional.huber_loss(AffectedSlice, Target);
+      var delta = MathF.Exp(Incentive * ExponentScale) * Scale * MathF.Sign(Random.NextSingle() - 0.5f);
+      Noise[0, i] = delta;
     }
 
-    Brain.ApplyLoss(CumulativeLoss);
+    var Target = (TensorForBackPropagation + Noise).detach();
+
+    var Loss = torch.nn.functional.mse_loss(TensorForBackPropagation, Target);
+
+    ////var CumulativeLoss = torch.tensor(0.0f, requires_grad: true);
+    //foreach (var (At, End) in Regions.Skip(1))
+    //{
+    //  Affected = torch.concat([Affected, ], 1)
+    //  //var AffectedSlice = TensorForBackPropagation.slice(1, At, End, 1).tanh();
+    //  //var Target = AffectedSlice.detach() * Incentive;
+    //  //CumulativeLoss += torch.nn.functional.huber_loss(AffectedSlice, Target);
+    //}
+
+    Brain.ApplyLoss(Loss);
   }
 
   TorchInferenceParts Replay()
