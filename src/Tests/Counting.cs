@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using FluentAssertions;
+using Tests.Mocks;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -65,6 +66,21 @@ public class Counting
     var Counter = new Counter(Value);
 
     Counter.Value.Should().Be(Value);
+  }
+
+  [TestMethod]
+  public void CompoundIncrementer()
+  {
+    var Counter1 = new MockIncrementable() { Count = Any.Int(100, 200) };
+    var Counter2 = new MockIncrementable() { Count = Any.Int(100, 200) };
+    var Compound = new CompoundIncrementable(Counter1, Counter2);
+    var Original1 = Counter1.Count;
+    var Original2 = Counter2.Count;
+
+    Compound.Increment();
+
+    Counter1.Count.Should().Be(Original1 + 1);
+    Counter2.Count.Should().Be(Original2 + 1);
   }
 
   static Counter GivenCounterInSomeState()
