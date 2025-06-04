@@ -22,10 +22,11 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedback<TSelectable>(List<FeedbackSink<TSelectable>> SingleChoices)
-   : FeedbackSink<TSelectable>
+public class ChooseSemanticFeedback<TSelectable>(List<SemanticFeedbackSink<TSelectable>> SingleChoices)
+   : SemanticFeedbackSink<TSelectable>
 {
-  public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseFeedback<TSelectable>> GetSource<TOutput>()
+
+  public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseSemanticFeedback<TSelectable>> GetSource<TOutput>()
     where TOutput : CognitiveData<TOutput>
   {
     var Configurator = new ChooseFeedbackConfigurator<TSelectable>();

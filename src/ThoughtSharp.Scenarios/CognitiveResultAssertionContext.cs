@@ -28,6 +28,6 @@ public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TR
 {
   public void Is(TResultFeedback Expected)
   {
-    Subject.FeedbackSink.TrainWith(Expected);
+    Subject.FeedbackSink.Semantic.TrainWith(Expected);
   }
 }

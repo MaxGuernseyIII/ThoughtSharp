@@ -26,14 +26,14 @@ namespace ThoughtSharp.Runtime;
 
 public static class AccumulatedUseFeedback
 {
-  public static FeedbackSource<AccumulatedUseFeedbackConfigurator<T>, AccumulatedUseFeedback<T>> GetSource<T>()
+  public static FeedbackSource<AccumulatedUseFeedbackConfigurator<T>, AccumulatedUseSemanticFeedback<T>> GetSource<T>()
   {
     var Configurator = new AccumulatedUseFeedbackConfigurator<T>();
     return new(Configurator, Configurator.CreateFeedback);
   }
 }
 
-public sealed record AccumulatedUseFeedback<TSurface>(params ImmutableArray<FeedbackSink<UseFeedbackMethod<TSurface>>> Steps) : FeedbackSink<IEnumerable<Action<TSurface>>>
+public sealed record AccumulatedUseSemanticFeedback<TSurface>(params ImmutableArray<SemanticFeedbackSink<UseSemanticFeedbackMethod<TSurface>>> Steps) : SemanticFeedbackSink<IEnumerable<Action<TSurface>>>
 {
   public void TrainWith(params IEnumerable<Action<TSurface>> Actions)
   {
@@ -43,7 +43,7 @@ public sealed record AccumulatedUseFeedback<TSurface>(params ImmutableArray<Feed
     var ActionsArray = Actions.ToImmutableArray();
 
     (Action<TSurface> Action, bool RequiresMore)[] Expectations = [.. ActionsArray[..^1].Select(A => (A, true)), (ActionsArray[^1], false)];
-    ImmutableArray<(FeedbackSink<UseFeedbackMethod<TSurface>> Feedback, (Action<TSurface> Action, bool IstLast))> Assertions = [..Steps.Zip(Expectations)];
+    ImmutableArray<(SemanticFeedbackSink<UseSemanticFeedbackMethod<TSurface>> Feedback, (Action<TSurface> Action, bool IstLast))> Assertions = [..Steps.Zip(Expectations)];
 
     foreach (var (Feedback, (Action, RequiresMore)) in Assertions)
     {
@@ -55,7 +55,7 @@ public sealed record AccumulatedUseFeedback<TSurface>(params ImmutableArray<Feed
     }
   }
 
-  public bool Equals(AccumulatedUseFeedback<TSurface>? Other)
+  public bool Equals(AccumulatedUseSemanticFeedback<TSurface>? Other)
   {
     if (Other is null) return false;
     if (ReferenceEquals(this, Other)) return true;

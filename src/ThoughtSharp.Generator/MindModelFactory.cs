@@ -38,16 +38,19 @@ static class MindModelFactory
 
     var MindModelBuilder = Generator.MindModelBuilder.Create(TypeName);
 
-    //if (!Debugger.IsAttached)
-    //  Debugger.Launch();
-
     foreach (var Member in PossibleGenerationTargets)
+    {
+      //if (!Debugger.IsAttached && Member.Name == "AsynchronousUseSomeInterface")
+      //  Debugger.Launch();
+
+
       if (TryGetMakeMethod(Member, out var MakeMethod))
         MindModelBuilder.AddMakeMethodFor(MakeMethod);
       else if (TryGetUseMethod(Member, out var UseMethod))
         MindModelBuilder.AddUseMethodFor(UseMethod);
       else if (TryGetChooseMethod(Member, out var ChooseMethod))
         MindModelBuilder.AddChooseMethodFor(ChooseMethod);
+    }
 
     var Result = MindModelBuilder.Build();
     return (Result, MindModelBuilder.AssociatedDataTypes);

@@ -30,19 +30,31 @@ public interface CognitiveResult<out TPayload, in TFeedback>
 
 public static class CognitiveResult
 {
-  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(TPayload Payload,
-    Action<TFeedback> AcceptFeedback)
+  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(
+    TPayload Payload,
+    Action<TFeedback> AcceptFeedback,
+    IncentiveSink IncentiveSink)
   {
-    return From(Payload, new AdHocFeedbackSink<TFeedback>(AcceptFeedback));
+    return From(Payload, new AdHocSemanticFeedbackSink<TFeedback>(AcceptFeedback), IncentiveSink);
   }
 
-  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(TPayload Payload,
+  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(
+    TPayload Payload,
+    SemanticFeedbackSink<TFeedback> SemanticFeedbackSink,
+    IncentiveSink IncentiveSink)
+  {
+    return new AdHocCognitiveResult<TPayload, TFeedback>(Payload,
+      FeedbackSink.From(SemanticFeedbackSink, IncentiveSink));
+  }
+
+  public static CognitiveResult<TPayload, TFeedback> From<TPayload, TFeedback>(
+    TPayload Payload,
     FeedbackSink<TFeedback> FeedbackSink)
   {
     return new AdHocCognitiveResult<TPayload, TFeedback>(Payload, FeedbackSink);
   }
 
-  class AdHocFeedbackSink<TFeedback>(Action<TFeedback> AcceptFeedback) : FeedbackSink<TFeedback>
+  class AdHocSemanticFeedbackSink<TFeedback>(Action<TFeedback> AcceptFeedback) : SemanticFeedbackSink<TFeedback>
   {
     public void TrainWith(TFeedback Feedback)
     {
@@ -50,10 +62,13 @@ public static class CognitiveResult
     }
   }
 
-  class AdHocCognitiveResult<TPayload, TFeedback>(TPayload Payload, FeedbackSink<TFeedback> FeedbackSink)
+  class AdHocCognitiveResult<TPayload, TFeedback>(
+    TPayload Payload,
+    FeedbackSink<TFeedback> FeedbackSink)
     : CognitiveResult<TPayload, TFeedback>
   {
     public TPayload Payload { get; } = Payload;
+
     public FeedbackSink<TFeedback> FeedbackSink { get; } = FeedbackSink;
   }
 }

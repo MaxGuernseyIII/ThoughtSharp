@@ -22,14 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedbackConfigurator<TSelectable>()
+public interface IncentiveSink
 {
-  readonly List<SemanticFeedbackSink<TSelectable>> SingleChoices = [];
-
-  public void AddSingleChoice(SemanticFeedbackSink<TSelectable> SingleChoice) => SingleChoices.Add(SingleChoice);
-
-  public ChooseSemanticFeedback<TSelectable> Create()
-  {
-    return new(SingleChoices);
-  }
+  void ApplyIncentive(float Incentive);
 }

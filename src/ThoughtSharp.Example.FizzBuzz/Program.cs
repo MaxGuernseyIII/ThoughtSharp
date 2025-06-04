@@ -339,7 +339,7 @@ void DoFizzBuzz()
       break;
 
     Console.WriteLine("Failed, retrying.");
-    Result.FeedbackSink.TrainWith(ExpectedFinalOutput);
+    Result.FeedbackSink.Semantic.TrainWith(ExpectedFinalOutput);
   }
 
   Console.WriteLine("Done");
@@ -430,7 +430,7 @@ void MindfulComparisonCheck()
     FailureLog.Add(Failure);
 
     //if (Failure)
-    T.FeedbackSink.TrainWith(new()
+    T.FeedbackSink.Semantic.TrainWith(new()
     {
       Comparison = (short) Expected
     });
@@ -758,7 +758,7 @@ void DoChooseShape()
         Console.Write(Ex);
       }
 
-      T.FeedbackSink.TrainWith(Expected);
+      T.FeedbackSink.Semantic.TrainWith(Expected);
 
       RecordSuccess(!Failure);
 

@@ -137,7 +137,7 @@ public partial class GeneratedCognitiveActions
 
     var Actual = Parameters.InterpretFor(Actions);
 
-    Actual.Payload.Should().Be(Expected);
+    Actual.Should().Be(Expected);
   }
 
   [DataRow(false)]
@@ -153,7 +153,7 @@ public partial class GeneratedCognitiveActions
 
     var Actual = await Parameters.InterpretFor(Actions);
 
-    Actual.Payload.Should().Be(Expected);
+    Actual.Should().Be(Expected);
   }
 
   [CognitiveActions]

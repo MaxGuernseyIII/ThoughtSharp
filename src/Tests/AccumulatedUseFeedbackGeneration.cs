@@ -30,7 +30,7 @@ namespace Tests;
 [TestClass]
 public class AccumulatedUseFeedbackGeneration
 {
-  Queue<UseFeedbackSink<MockSurface>> Steps = null!;
+  Queue<UseSemanticFeedbackSink<MockSurface>> Steps = null!;
   MockMind Mind = null!;
   MockMind ChainedMind = null!;
   List<MockMind> UsedMinds = null!;
@@ -105,30 +105,30 @@ public class AccumulatedUseFeedbackGeneration
     ThenStepsShouldBe(T, [.. Expected]);
   }
 
-  List<UseFeedbackSink<MockSurface>> GivenSteps(int Count)
+  List<UseSemanticFeedbackSink<MockSurface>> GivenSteps(int Count)
   {
     return Enumerable.Range(0, Count).Select(_ => GivenStep()).ToList();
   }
 
-  FeedbackSink<IEnumerable<Action<MockSurface>>> WhenUse(MindExtensions.UseConfiguration? UseConfiguration = null)
+  SemanticFeedbackSink<IEnumerable<Action<MockSurface>>> WhenUse(MindExtensions.UseConfiguration? UseConfiguration = null)
   {
     return Mind.Use(M =>
     {
       UsedMinds.Add(M);
       var ThisStep = Steps.Dequeue();
-      return CognitiveResult.From(Steps.Any(), ThisStep);
+      return CognitiveResult.From(Steps.Any(), ThisStep, null!);
     }, UseConfiguration);
   }
 
-  static void ThenStepsShouldBe(FeedbackSink<IEnumerable<Action<MockSurface>>> T,
-    params ImmutableArray<UseFeedbackSink<MockSurface>> Expected)
+  static void ThenStepsShouldBe(SemanticFeedbackSink<IEnumerable<Action<MockSurface>>> T,
+    params ImmutableArray<UseSemanticFeedbackSink<MockSurface>> Expected)
   {
-    T.Should().Be(new AccumulatedUseFeedback<MockSurface>([..Expected]));
+    T.Should().Be(new AccumulatedUseSemanticFeedback<MockSurface>([..Expected]));
   }
 
-  UseFeedbackSink<MockSurface> GivenStep()
+  UseSemanticFeedbackSink<MockSurface> GivenStep()
   {
-    var Step = new UseFeedbackSink<MockSurface>(null!,
+    var Step = new UseSemanticFeedbackSink<MockSurface>(null!,
       delegate { Assert.Fail("This object is only used for its identity."); });
     Steps.Enqueue(Step);
     return Step;

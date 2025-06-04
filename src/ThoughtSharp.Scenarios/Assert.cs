@@ -26,7 +26,7 @@ namespace ThoughtSharp.Scenarios;
 
 public static class Assert
 {
-  public static AccumulatedUseAssertionContext<TSurface> That<TSurface>(AccumulatedUseFeedback<TSurface> Subject)
+  public static AccumulatedUseAssertionContext<TSurface> That<TSurface>(AccumulatedUseSemanticFeedback<TSurface> Subject)
   {
     return new(Subject);
   }

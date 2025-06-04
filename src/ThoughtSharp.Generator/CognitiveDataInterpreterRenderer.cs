@@ -37,7 +37,7 @@ static class CognitiveDataInterpreterRenderer
         WriteBody = W =>
         {
           var MethodIsAsync = Interpreter.RequiresAwait;
-          var ReturnValue = $"CognitiveResult<bool, NullFeedback>";
+          var ReturnValue = $"bool";
           if (MethodIsAsync)
             ReturnValue = $"Task<{ReturnValue}>";
 
@@ -80,7 +80,7 @@ static class CognitiveDataInterpreterRenderer
           W.Indent--;
           W.WriteLine("}");
           W.WriteLine();
-          W.WriteLine("return CognitiveResult.From(MoreActions, (NullFeedback _) => {});");
+          W.WriteLine("return MoreActions;");
           W.Indent--;
           W.WriteLine("}");
         },

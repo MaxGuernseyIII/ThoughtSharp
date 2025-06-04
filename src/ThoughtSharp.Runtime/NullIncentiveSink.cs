@@ -22,5 +22,13 @@
 
 namespace ThoughtSharp.Runtime;
 
-public delegate void UseFeedbackMethod<in TSurface>(TSurface Mock, BoxedBool NeedsMore);
-public delegate Task AsyncUseFeedbackMethod<in TSurface>(TSurface Mock, BoxedBool NeedsMore);
+public class NullIncentiveSink : IncentiveSink
+{
+  NullIncentiveSink() {}
+
+  public static IncentiveSink Instance { get; } = new NullIncentiveSink();
+
+  public void ApplyIncentive(float Incentive)
+  {
+  }
+}

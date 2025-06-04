@@ -20,16 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+using ThoughtSharp.Runtime;
 
-public class ChooseFeedbackConfigurator<TSelectable>()
+namespace Tests;
+
+public class MockIncentiveSink : IncentiveSink
 {
-  readonly List<SemanticFeedbackSink<TSelectable>> SingleChoices = [];
+  public List<float> AppliedIncentives { get; } = [];
 
-  public void AddSingleChoice(SemanticFeedbackSink<TSelectable> SingleChoice) => SingleChoices.Add(SingleChoice);
-
-  public ChooseSemanticFeedback<TSelectable> Create()
+  public void ApplyIncentive(float Incentive)
   {
-    return new(SingleChoices);
+    AppliedIncentives.Add(Incentive);
   }
 }

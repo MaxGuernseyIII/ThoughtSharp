@@ -80,7 +80,7 @@ public partial class GeneratedMinds
       R1 = Any.Float
     };
 
-    T.FeedbackSink.TrainWith(ExpectedObject);
+    T.FeedbackSink.Semantic.TrainWith(ExpectedObject);
 
     var Inference = Brain.MockInferences.Single();
     Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
@@ -159,7 +159,7 @@ public partial class GeneratedMinds
     var ExpectedMore = Any.Bool;
     var SomeOtherData = Any.Float;
 
-    T.FeedbackSink.TrainWith((Mock, More) =>
+    T.FeedbackSink.Semantic.TrainWith((Mock, More) =>
     {
       Mock.DoSomething2(SomeOtherData);
       More.Value = ExpectedMore;
@@ -253,7 +253,7 @@ public partial class GeneratedMinds
     var ExpectedMore = Any.Bool;
     var SomeOtherData = Any.Float;
 
-    T.FeedbackSink.TrainWith((Mock, More) =>
+    T.FeedbackSink.Semantic.TrainWith((Mock, More) =>
     {
       Mock.DoSomething2(SomeOtherData);
       More.Value = ExpectedMore;
@@ -351,7 +351,7 @@ public partial class GeneratedMinds
     var T = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArgument);
     var Selected = Any.Of(Category.AllOptions);
 
-    T.FeedbackSink.TrainWith(Selected.Payload);
+    T.FeedbackSink.Semantic.TrainWith(Selected.Payload);
 
     var Offset = StatelessMind.Output.ParametersIndex + StatelessMind.Output.OutputParameters.ChooseItemsIndex +
                  StatelessMind.Output.OutputParameters.ChooseItemsParameters.CategoryIndex;
@@ -576,13 +576,13 @@ public partial class GeneratedMinds
     public partial CognitiveResult<SimpleOutputData, SimpleOutputData> MakeSimpleOutput(SimpleInputData Simple1);
 
     [Use]
-    public partial CognitiveResult<bool, UseFeedbackMethod<SynchronousActionSurface>> SynchronousUseSomeInterface(
+    public partial CognitiveResult<bool, UseSemanticFeedbackMethod<SynchronousActionSurface>> SynchronousUseSomeInterface(
       SynchronousActionSurface Surface,
       int Argument1,
       int Argument2);
 
     [Use]
-    public partial Task<CognitiveResult<bool, AsyncUseFeedbackMethod<AsynchronousActionSurface>>> AsynchronousUseSomeInterface(
+    public partial Task<CognitiveResult<bool, AsyncUseSemanticFeedbackMethod<AsynchronousActionSurface>>> AsynchronousUseSomeInterface(
       AsynchronousActionSurface Surface,
       int Argument1,
       int Argument2);

@@ -29,7 +29,7 @@ namespace Tests;
 [TestClass]
 public class AccumulatedUseFeedbackTraining
 {
-  FeedbackSource<AccumulatedUseFeedbackConfigurator<MockToUse>, AccumulatedUseFeedback<MockToUse>> Source = null!;
+  FeedbackSource<AccumulatedUseFeedbackConfigurator<MockToUse>, AccumulatedUseSemanticFeedback<MockToUse>> Source = null!;
 
   public class MockToUse
   {
@@ -142,7 +142,7 @@ public class AccumulatedUseFeedbackTraining
   {
     var RequiresMore = new BoxedBool { Value = Any.Bool };
     var ActionSurfaceMock = new MockToUse();
-    var OperationFeedback = new UseFeedbackSink<MockToUse>(ActionSurfaceMock, B => RequiresMore.Value = B);
+    var OperationFeedback = new UseSemanticFeedbackSink<MockToUse>(ActionSurfaceMock, B => RequiresMore.Value = B);
     Source.Configurator.AddStep(OperationFeedback);
     return (RequiresMore, ActionSurfaceMock);
   }
@@ -180,40 +180,5 @@ public class AccumulatedUseFeedbackTraining
   static void ThenStepDoesRequireMoreCalls((BoxedBool RequiresMore, MockToUse ActionSurfaceMock) Step)
   {
     Step.RequiresMore.Value.Should().Be(true);
-  }
-}
-
-[TestClass]
-public class IncrementalCognitiveResultTraining
-{
-  [TestMethod]
-  public void CompilesResult()
-  {
-    var R = new IncrementalCognitiveResult<string, string, string, string>(
-        Parts => string.Join(" ", Parts),
-        Whole => Whole.Split(" "))
-      .Add(CognitiveResult.From("a", (string _) => { }))
-      .Add(CognitiveResult.From("B", (string _) => { }));
-
-    var Payload = R.Payload;
-
-    Payload.Should().Be("a B");
-  }
-
-  [TestMethod]
-  public void ParsesFeedback()
-  {
-    string ATraining = "";
-    string BTraining = "";
-    var R = new IncrementalCognitiveResult<string, string, string, string>(
-        Parts => string.Join(" ", Parts),
-        Whole => Whole.Split(" "))
-      .Add(CognitiveResult.From("a", (string A) => { ATraining = A; }))
-      .Add(CognitiveResult.From("B", (string B) => { BTraining = B; }));
-
-    R.FeedbackSink.TrainWith("X y");
-
-    ATraining.Should().Be("X");
-    BTraining.Should().Be("y");
   }
 }

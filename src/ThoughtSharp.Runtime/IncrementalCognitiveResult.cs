@@ -30,20 +30,22 @@ public readonly record struct IncrementalCognitiveResult<TPayload, TFeedback, TD
   readonly Func<IEnumerable<TDelta>, TPayload> CombineIntoPayload;
   readonly Func<TFeedback, IEnumerable<TDeltaFeedback>> SeparateIntoFeedbackDeltas;
 
-  readonly struct InnerFeedbackSink(
+  readonly struct InnerSemanticFeedbackSink(
     ImmutableArray<CognitiveResult<TDelta, TDeltaFeedback>> DeltaResults,
     Func<TFeedback, IEnumerable<TDeltaFeedback>> SeparateIntoFeedbackDeltas)
-    : FeedbackSink<TFeedback>
+    : SemanticFeedbackSink<TFeedback>
   {
+
     public void TrainWith(TFeedback Feedback)
     {
       var DeltaFeedbackItems = SeparateIntoFeedbackDeltas(Feedback);
       foreach (var (Result, DeltaFeedback) in DeltaResults.Zip(DeltaFeedbackItems))
-        Result.FeedbackSink.TrainWith(DeltaFeedback);
+        Result.FeedbackSink.Semantic.TrainWith(DeltaFeedback);
     }
   }
 
-  public IncrementalCognitiveResult(Func<IEnumerable<TDelta>, TPayload> CombineIntoPayload,
+  public IncrementalCognitiveResult(
+    Func<IEnumerable<TDelta>, TPayload> CombineIntoPayload,
     Func<TFeedback, IEnumerable<TDeltaFeedback>> SeparateIntoFeedbackDeltas)
   {
     this.CombineIntoPayload = CombineIntoPayload;
@@ -54,7 +56,9 @@ public readonly record struct IncrementalCognitiveResult<TPayload, TFeedback, TD
 
   public TPayload Payload => CombineIntoPayload(DeltaResults.Select(Result => Result.Payload));
 
-  public FeedbackSink<TFeedback> FeedbackSink => new InnerFeedbackSink(DeltaResults, SeparateIntoFeedbackDeltas);
+  public FeedbackSink<TFeedback> FeedbackSink => Runtime.FeedbackSink.From(SemanticFeedbackSink, null!);
+
+  public SemanticFeedbackSink<TFeedback> SemanticFeedbackSink => new InnerSemanticFeedbackSink(DeltaResults, SeparateIntoFeedbackDeltas);
 
   public IncrementalCognitiveResult<TPayload, TFeedback, TDelta, TDeltaFeedback> Add(
     CognitiveResult<TDelta, TDeltaFeedback> Increment)

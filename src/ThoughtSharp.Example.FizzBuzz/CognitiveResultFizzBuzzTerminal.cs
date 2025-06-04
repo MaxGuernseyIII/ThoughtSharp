@@ -67,9 +67,9 @@ class CognitiveResultFizzBuzzTerminal : FizzBuzzTerminal
     CurrentContent.Append("buzz");
   }
 
-  public void Flush(FeedbackSink<IEnumerable<Action<FizzBuzzTerminal>>> FeedbackSink)
+  public void Flush(SemanticFeedbackSink<IEnumerable<Action<FizzBuzzTerminal>>> SemanticFeedbackSink)
   {
-    Result = Result.Add(CognitiveResult.From(CurrentContent.ToString(), FeedbackSink));
+    Result = Result.Add(CognitiveResult.From(CurrentContent.ToString(), SemanticFeedbackSink, null!));
     CurrentContent = new();
   }
 }

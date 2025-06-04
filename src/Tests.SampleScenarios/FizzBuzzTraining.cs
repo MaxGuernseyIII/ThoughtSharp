@@ -250,7 +250,7 @@ public static partial class FizzBuzzTraining
   public partial class FizzBuzzMind
   {
     [Use]
-    public partial CognitiveResult<bool, UseFeedbackMethod<FizzBuzzTerminal>> WriteForNumber(FizzBuzzTerminal Surface,
+    public partial CognitiveResult<bool, UseSemanticFeedbackMethod<FizzBuzzTerminal>> WriteForNumber(FizzBuzzTerminal Surface,
       FizzBuzzInput InputData);
   }
 
@@ -269,7 +269,7 @@ public static partial class FizzBuzzTraining
       return Terminal.Result;
     }
 
-    public AccumulatedUseFeedback<FizzBuzzTerminal> CalculateStepValue(byte Input, FizzBuzzTerminal Terminal)
+    public AccumulatedUseSemanticFeedback<FizzBuzzTerminal> CalculateStepValue(byte Input, FizzBuzzTerminal Terminal)
     {
       return Mind.Use(M => M.WriteForNumber(Terminal, new() {Value = Input}));
     }
@@ -324,9 +324,9 @@ public static partial class FizzBuzzTraining
         }
       }
 
-      public void Flush(FeedbackSink<IEnumerable<Action<FizzBuzzTerminal>>> FeedbackSink)
+      public void Flush(SemanticFeedbackSink<IEnumerable<Action<FizzBuzzTerminal>>> SemanticFeedbackSink)
       {
-        Result = Result.Add(CognitiveResult.From(CurrentContentBuilder.ToString(), FeedbackSink));
+        Result = Result.Add(CognitiveResult.From(CurrentContentBuilder.ToString(), SemanticFeedbackSink, null!));
         CurrentContentBuilder = new();
       }
     }

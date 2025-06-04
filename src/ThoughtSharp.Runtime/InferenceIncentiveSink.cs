@@ -22,14 +22,11 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class AsyncUseFeedbackSink<TSurface>(TSurface Mock, Action<bool> Commit)
-  : FeedbackSink<AsyncUseFeedbackMethod<TSurface>>
+public class InferenceIncentiveSink(Inference Underlying, params IReadOnlyList<(int Start, int End)> Regions)
+  : IncentiveSink
 {
-  public void TrainWith(AsyncUseFeedbackMethod<TSurface> Configure)
+  public void ApplyIncentive(float Incentive)
   {
-    var ShouldHaveRequestedMore = new BoxedBool();
-    Configure(Mock, ShouldHaveRequestedMore);
-
-    Commit(ShouldHaveRequestedMore.Value);
+    Underlying.ApplyIncentive(Incentive, Regions);
   }
 }

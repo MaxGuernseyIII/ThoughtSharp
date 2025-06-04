@@ -24,10 +24,10 @@ namespace ThoughtSharp.Runtime;
 
 public static class MindExtensions
 {
-  public static AccumulatedUseFeedback<TSurface> Use<TMind, TSurface>(
+  public static AccumulatedUseSemanticFeedback<TSurface> Use<TMind, TSurface>(
     this TMind Mind,
-    Func<TMind, CognitiveResult<bool, UseFeedbackMethod<TSurface>>> Action,
-    MindExtensions.UseConfiguration? Configuration = null)
+    Func<TMind, CognitiveResult<bool, UseSemanticFeedbackMethod<TSurface>>> Action,
+    UseConfiguration? Configuration = null)
     where TMind : Mind<TMind>
   {
     var ChainedMind = Mind.WithChainedReasoning();
@@ -36,7 +36,7 @@ public static class MindExtensions
     foreach (var _ in Enumerable.Range(0, EffectiveConfiguration.MaxTrials))
     {
       var T = Action(ChainedMind);
-      Source.Configurator.AddStep(T.FeedbackSink);
+      Source.Configurator.AddStep(T.FeedbackSink.Semantic);
       var MoreRequested = T.Payload;
       if (!MoreRequested)
         break;

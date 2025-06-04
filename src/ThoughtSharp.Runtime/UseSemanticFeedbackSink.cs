@@ -22,14 +22,14 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedbackConfigurator<TSelectable>()
+public class UseSemanticFeedbackSink<TSurface>(TSurface Mock, Action<bool> Commit)
+  : SemanticFeedbackSink<UseSemanticFeedbackMethod<TSurface>>
 {
-  readonly List<SemanticFeedbackSink<TSelectable>> SingleChoices = [];
-
-  public void AddSingleChoice(SemanticFeedbackSink<TSelectable> SingleChoice) => SingleChoices.Add(SingleChoice);
-
-  public ChooseSemanticFeedback<TSelectable> Create()
+  public void TrainWith(UseSemanticFeedbackMethod<TSurface> Configure)
   {
-    return new(SingleChoices);
+    var ShouldHaveRequestedMore = new BoxedBool();
+    Configure(Mock, ShouldHaveRequestedMore);
+
+    Commit(ShouldHaveRequestedMore.Value);
   }
 }

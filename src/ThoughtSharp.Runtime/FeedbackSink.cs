@@ -24,5 +24,40 @@ namespace ThoughtSharp.Runtime;
 
 public interface FeedbackSink<in TFeedback>
 {
-  void TrainWith(TFeedback Feedback);
+  SemanticFeedbackSink<TFeedback> Semantic { get; }
+  IncentiveSink Incentive { get; }
+}
+
+public static class FeedbackSink
+{
+  public static FeedbackSink<TFeedback> From<TFeedback>(
+    Action<TFeedback> AcceptFeedback,
+    IncentiveSink IncentiveSink)
+  {
+    return From(
+      new AdHocSemanticFeedbackSink<TFeedback>(AcceptFeedback),
+      IncentiveSink);
+  }
+
+  public static FeedbackSink<TFeedback> From<TFeedback>(
+    SemanticFeedbackSink<TFeedback> SemanticFeedbackSink,
+    IncentiveSink IncentiveSink)
+  {
+    return new AdHocFeedbackSink<TFeedback>(SemanticFeedbackSink, IncentiveSink);
+  }
+
+  class AdHocSemanticFeedbackSink<TFeedback>(Action<TFeedback> AcceptFeedback) : SemanticFeedbackSink<TFeedback>
+  {
+    public void TrainWith(TFeedback Feedback)
+    {
+      AcceptFeedback(Feedback);
+    }
+  }
+
+  class AdHocFeedbackSink<TFeedback>(SemanticFeedbackSink<TFeedback> Semantic, IncentiveSink Incentive)
+    : FeedbackSink<TFeedback>
+  {
+    public SemanticFeedbackSink<TFeedback> Semantic { get; } = Semantic;
+    public IncentiveSink Incentive { get; } = Incentive;
+  }
 }

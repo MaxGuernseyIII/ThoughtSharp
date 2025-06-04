@@ -22,10 +22,10 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class MakeFeedbackSink<TMade>(
+public class MakeSemanticFeedbackSink<TMade>(
   InferenceFeedback Underlying,
   Func<TMade, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
-  : FeedbackSink<TMade>
+  : SemanticFeedbackSink<TMade>
   where TMade : CognitiveData<TMade>
 {
   public void TrainWith(TMade Expected)

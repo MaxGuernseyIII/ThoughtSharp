@@ -24,7 +24,7 @@ using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
 
-public class AccumulatedUseAssertionContext<TSurface>(AccumulatedUseFeedback<TSurface> Sink)
+public class AccumulatedUseAssertionContext<TSurface>(AccumulatedUseSemanticFeedback<TSurface> Sink)
 {
   public void ProducedCallsOn<TObject>(
     TObject Surface,

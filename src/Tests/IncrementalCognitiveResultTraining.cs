@@ -20,16 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+using FluentAssertions;
+using ThoughtSharp.Runtime;
 
-public class UseFeedbackSink<TSurface>(TSurface Mock, Action<bool> Commit)
-  : FeedbackSink<UseFeedbackMethod<TSurface>>
+namespace Tests;
+
+[TestClass]
+public class IncrementalCognitiveResultTraining
 {
-  public void TrainWith(UseFeedbackMethod<TSurface> Configure)
+  [TestMethod]
+  public void CompilesResult()
   {
-    var ShouldHaveRequestedMore = new BoxedBool();
-    Configure(Mock, ShouldHaveRequestedMore);
+    var R = new IncrementalCognitiveResult<string, string, string, string>(
+        Parts => string.Join(" ", Parts),
+        Whole => Whole.Split(" "))
+      .Add(CognitiveResult.From("a", (string _) => { }, new MockIncentiveSink()))
+      .Add(CognitiveResult.From("B", (string _) => { }, new MockIncentiveSink()));
 
-    Commit(ShouldHaveRequestedMore.Value);
+    var Payload = R.Payload;
+
+    Payload.Should().Be("a B");
+  }
+
+  [TestMethod]
+  public void ParsesFeedback()
+  {
+    string ATraining = "";
+    string BTraining = "";
+    var R = new IncrementalCognitiveResult<string, string, string, string>(
+        Parts => string.Join(" ", Parts),
+        Whole => Whole.Split(" "))
+      .Add(CognitiveResult.From("a", (string A) => { ATraining = A; }, new MockIncentiveSink()))
+      .Add(CognitiveResult.From("B", (string B) => { BTraining = B; }, new MockIncentiveSink()));
+
+    R.SemanticFeedbackSink.TrainWith("X y");
+
+    ATraining.Should().Be("X");
+    BTraining.Should().Be("y");
   }
 }

@@ -119,8 +119,8 @@ public static class TypeSymbolExtensions
     var ActionSurfaceType = ActionSurfaceTypes.Single();
 
     return Type.IsGenericOf("ThoughtSharp.Runtime.CognitiveResult", IsBooleanType, T => 
-      T.IsGenericOf("ThoughtSharp.Runtime.UseFeedbackMethod", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())) ||
-      T.IsGenericOf("ThoughtSharp.Runtime.AsyncUseFeedbackMethod", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())));
+      T.IsGenericOf("ThoughtSharp.Runtime.UseSemanticFeedbackMethod", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())) ||
+      T.IsGenericOf("ThoughtSharp.Runtime.AsyncUseSemanticFeedbackMethod", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())));
   }
 
   public static bool IsTaskOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> PayloadRequirement)

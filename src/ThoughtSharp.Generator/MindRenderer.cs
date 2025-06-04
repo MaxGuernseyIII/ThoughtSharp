@@ -117,7 +117,7 @@ static class MindRenderer
     W.WriteLine("return CognitiveResult.From(");
     W.Indent++;
     W.WriteLine($"OutputObject.Parameters.{MakeOperation.Name}.Value,");
-    W.WriteLine($"new MakeFeedbackSink<{MakeOperation.ReturnType}>(");
+    W.WriteLine($"new MakeSemanticFeedbackSink<{MakeOperation.ReturnType}>(");
     W.Indent++;
     W.WriteLine("new(");
     W.Indent++;
@@ -141,7 +141,8 @@ static class MindRenderer
     W.Indent--;
     W.WriteLine("}");
     W.Indent--;
-    W.WriteLine(")");
+    W.WriteLine("),");
+    W.WriteLine("new InferenceIncentiveSink(Inference, (OutputStart, OutputEnd))");
     W.Indent--;
     W.WriteLine(");");
     W.Indent--;
@@ -159,8 +160,8 @@ static class MindRenderer
     var ActionSurface = ActionSurfaces.Single();
 
     var MethodIsAsync = ActionSurface.AssociatedInterpreter!.RequiresAwait;
-    var FeedbackType = $"UseFeedbackMethod<{ActionSurface.TypeName}>";
-    var FeedbackSinkType = $"UseFeedbackSink<{ActionSurface.TypeName}>";
+    var FeedbackType = $"UseSemanticFeedbackMethod<{ActionSurface.TypeName}>";
+    var FeedbackSinkType = $"UseSemanticFeedbackSink<{ActionSurface.TypeName}>";
     if (MethodIsAsync)
     {
       FeedbackType = "Async" + FeedbackType;
@@ -248,10 +249,10 @@ static class MindRenderer
     W.WriteLine();
 
     W.WriteLine(
-      $"var MoreActions = ({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name})).Payload;");
+      $"var MoreActions = {Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name});");
 
     W.WriteLine();
-    W.WriteLine("return CognitiveResult.From(MoreActions, Feedback);");
+    W.WriteLine("return CognitiveResult.From(MoreActions, Feedback, new InferenceIncentiveSink(Inference, (OutputStart, OutputEnd)));");
     W.Indent--;
     W.WriteLine("}");
   }
@@ -266,10 +267,15 @@ static class MindRenderer
       $"public partial {ChooseOperation.ReturnType} {ChooseOperation.Name}({string.Join(", ", ChooseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
-    W.WriteLine($"var Source = ChooseFeedback<{ChooseOperation.SelectableTypeName}>.GetSource<{ChooseOperation.Parameters.Single(P => P.Name == ChooseOperation.CategoryParameter).TypeName}.Output>();");
+    W.WriteLine($"var Source = ChooseSemanticFeedback<{ChooseOperation.SelectableTypeName}>.GetSource<{ChooseOperation.Parameters.Single(P => P.Name == ChooseOperation.CategoryParameter).TypeName}.Output>();");
     W.WriteLine($"var Champion = {ChooseOperation.CategoryParameter}.AllOptions.First();");
+    W.WriteLine($"var IncentiveSink = NullIncentiveSink.Instance;");
+    W.WriteLine();
+    W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index;");
+    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{ChooseOperation.Name}Parameters.Length;");
     W.WriteLine();
     W.WriteLine($"foreach (var Contender in {ChooseOperation.CategoryParameter}.AllOptions.Skip(1))");
+
     using (W.EnterBlock())
     {
       RenderInputObjectForOpCode(W, OpCode);
@@ -284,12 +290,13 @@ static class MindRenderer
 
       W.WriteLine($"var Offset = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index + Output.OutputParameters.{ChooseOperation.Name}Parameters.{ChooseOperation.CategoryParameter}Index;");
       W.WriteLine($"var T = {ChooseOperation.CategoryParameter}.Interpret(Champion, Contender, OutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}, Inference, Offset);");
-      W.WriteLine("Source.Configurator.AddSingleChoice(T.FeedbackSink);");
+      W.WriteLine("Source.Configurator.AddSingleChoice(T.FeedbackSink.Semantic);");
       W.WriteLine("Champion = T.Payload;");
+      W.WriteLine("IncentiveSink = new InferenceIncentiveSink(Inference, (OutputStart, OutputEnd));");
     }
 
     W.WriteLine(
-      $"return CognitiveResult.From(Champion.Payload, Source.CreateFeedback());");
+      $"return CognitiveResult.From(Champion.Payload, Source.CreateFeedback(), IncentiveSink);");
     W.Indent--;
     W.WriteLine("}");
   }

@@ -38,7 +38,7 @@ class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
     return Terminal.Result;
   }
 
-  public AccumulatedUseFeedback<FizzBuzzTerminal> WriteForOneNumber(FizzBuzzTerminal Terminal, byte Input)
+  public AccumulatedUseSemanticFeedback<FizzBuzzTerminal> WriteForOneNumber(FizzBuzzTerminal Terminal, byte Input)
   {
     return Mind.Use(M => M.WriteForNumber(Terminal, new() {Value = Input}));
   }

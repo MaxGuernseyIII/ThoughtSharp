@@ -48,7 +48,7 @@ class MockInference<TInput, TOutput>(TOutput ResultOutput)
     TrainedLossRules = LossRules;
   }
 
-  public void ApplyIncentive(float Incentive, params IReadOnlyList<(int Start, int Length)> Area)
+  public void ApplyIncentive(float Incentive, params IReadOnlyList<(int Start, int End)> Regions)
   {
     throw new NotImplementedException();
   }
