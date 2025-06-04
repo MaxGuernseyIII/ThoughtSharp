@@ -2,7 +2,7 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class AutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps, Gate SaveGate, Saver Saver, Reporter Reporter)
+public class AutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps, Gate SaveGate, Saver Saver, Reporter Reporter) : AutomationJob
 {
   public async Task Run()
   {
@@ -16,3 +16,4 @@ public class AutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Ru
       Saver.Save();
   }
 }
+
