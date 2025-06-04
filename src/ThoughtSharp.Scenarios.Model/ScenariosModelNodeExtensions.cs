@@ -31,6 +31,16 @@ public static class ScenariosModelNodeExtensions
     return Node.ChildNodes.OfType<CurriculumPhaseNode>().OrderBy(N => N.PhaseNumber).ToImmutableArray();
   }
 
+  public static IEnumerable<BehaviorRunner> GetBehaviorRunners(this ScenariosModelNode Node, MindPool Pool)
+  {
+    return Node.Query(new CrawlingVisitor<BehaviorRunner>() {VisitBehavior = VisitBehavior});
+
+    IEnumerable<BehaviorRunner> VisitBehavior(BehaviorNode BehaviorNode)
+    {
+      yield return new(Pool, BehaviorNode.HostType, BehaviorNode.Method);
+    }
+  }
+
   public static IEnumerable<ScenariosModelNode> GetStepsAlongPath(this ScenariosModelNode Node,
     params ImmutableArray<string?> Steps)
   {

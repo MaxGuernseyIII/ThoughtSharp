@@ -154,6 +154,19 @@ public class BehaviorRunning
     Result.Exception.Should().Be(Exception);
   }
 
+  [TestMethod]
+  public void GetRunnerFromNode()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var HostType = typeof(BehaviorTestingHost);
+    var MethodInfo = HostType.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
+    var Node = new BehaviorNode(HostType, MethodInfo);
+
+    ImmutableArray<BehaviorRunner> Runners = [..Node.GetBehaviorRunners(Pool)];
+
+    Runners.Should().BeEquivalentTo([new BehaviorRunner(Pool, HostType, MethodInfo)]);
+  }
+
   public record Mind1(Brain Brain);
 
   public record Mind2(Brain Brain);

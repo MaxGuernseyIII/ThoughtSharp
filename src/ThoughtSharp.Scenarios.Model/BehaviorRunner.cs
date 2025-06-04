@@ -21,9 +21,8 @@
 // SOFTWARE.
 
 using System.Reflection;
-using ThoughtSharp.Scenarios.Model;
 
-namespace Tests;
+namespace ThoughtSharp.Scenarios.Model;
 
 public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMethod) : Runnable
 {
