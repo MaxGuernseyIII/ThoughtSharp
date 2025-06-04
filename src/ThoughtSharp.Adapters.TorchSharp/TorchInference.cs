@@ -75,6 +75,20 @@ public class TorchInference(
     Brain.ApplyLoss(CumulativeLoss);
   }
 
+  public void ApplyIncentive(float Incentive, params IReadOnlyList<(int Start, int Length)> Areas)
+  {
+    var TensorForBackPropagation = Replay().Payload;
+    var CumulativeLoss = torch.tensor(0.0f, requires_grad: true);
+    foreach (var (At, Length) in Areas)
+    {
+      var AffectedSlice = TensorForBackPropagation.slice(1, At, At + Length, 1).tanh();
+      var Target = AffectedSlice.detach() * Incentive;
+      CumulativeLoss += torch.nn.functional.huber_loss(AffectedSlice, Target);
+    }
+
+    Brain.ApplyLoss(CumulativeLoss);
+  }
+
   TorchInferenceParts Replay()
   {
     var StateTensor = Predecessor?.Replay().State ?? Brain.EmptyState;

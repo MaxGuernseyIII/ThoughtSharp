@@ -48,6 +48,11 @@ class MockInference<TInput, TOutput>(TOutput ResultOutput)
     TrainedLossRules = LossRules;
   }
 
+  public void ApplyIncentive(float Incentive, params IReadOnlyList<(int Start, int Length)> Area)
+  {
+    throw new NotImplementedException();
+  }
+
   public void ShouldHaveBeenTrainedWith(TOutput Output)
   {
     var Stream = new LossRuleStream();

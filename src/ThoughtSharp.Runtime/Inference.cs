@@ -27,4 +27,5 @@ public interface Inference : IDisposable, InferenceSource
   ReadOnlySpan<float> Result { get; }
 
   void Train(params IReadOnlyList<(int, LossRule)> LossRules);
+  void ApplyIncentive(float Incentive, params IReadOnlyList<(int Start, int Length)> Area);
 }
