@@ -127,23 +127,23 @@ public class AutomationPasses
 
   AutomationJob GivenAutomationPass()
   {
-    return new AutomationPass((ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)>) [..Steps], SaveGate, Saver, Reporter);
+    return new AutomationPass([..Steps], SaveGate, Saver, Reporter);
   }
 }
 
-[TestClass]
-public class AutomationPassConstruction
-{
-  class HostType
-  {
-    public void Method(){}
-  }
-  //[TestMethod]
-  //public void BuildFromSingleNode()
-  //{
-  //  var Kit = new MockModelKit();
-  //  var Node = new BehaviorNode(typeof(HostType), typeof(HostType).GetMethod(nameof(HostType.Method))!);
+//[TestClass]
+//public class AutomationPassConstruction
+//{
+//  class HostType
+//  {
+//    public void Method(){}
+//  }
+//  [TestMethod]
+//  public void BuildFromSingleNode()
+//  {
+//    var Kit = new MockModelKit();
+//    var Node = new BehaviorNode(typeof(HostType), typeof(HostType).GetMethod(nameof(HostType.Method))!);
 
-  //  var Pass = Kit.CreateAutomationPassFrom(Node);
-  //}
-}
+//    var Pass = Kit.CreateAutomationPassFrom(Node);
+//  }
+//}
