@@ -20,26 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Scenarios.Model;
 
-public sealed class Counter : Incrementable
+public sealed class StandardModelKit : ModelKit
 {
-  public const int InitialValue = 0;
-
-  internal Counter(int Value)
+  public Counter CreateCounter(int Value = Counter.InitialValue)
   {
-    this.Value = Value;
+    return new(Value);
   }
 
-  public int Value { get; private set; }
-
-  public void Increment()
+  public CompoundIncrementable CreateCompoundIncrementable(params ImmutableArray<Incrementable> Counters)
   {
-    Value++;
-  }
-
-  public void Reset()
-  {
-    Value = InitialValue;
+    return new(Counters);
   }
 }

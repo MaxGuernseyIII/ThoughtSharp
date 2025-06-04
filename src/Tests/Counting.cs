@@ -32,7 +32,7 @@ public class Counting
   [TestMethod]
   public void InitialValueIsZero()
   {
-    var Counter = new Counter();
+    var Counter = new StandardModelKit().CreateCounter();
 
     Counter.Value.Should().Be(0);
   }
@@ -44,7 +44,7 @@ public class Counting
 
     Counter.Reset();
 
-    Counter.Value.Should().Be(new Counter().Value);
+    Counter.Value.Should().Be(new StandardModelKit().CreateCounter().Value);
   }
 
   [TestMethod]
@@ -63,7 +63,7 @@ public class Counting
   {
     var Value = Any.Int(1000, 2000);
 
-    var Counter = new Counter(Value);
+    var Counter = new StandardModelKit().CreateCounter(Value);
 
     Counter.Value.Should().Be(Value);
   }
@@ -73,7 +73,7 @@ public class Counting
   {
     var Counter1 = new MockIncrementable() { Count = Any.Int(100, 200) };
     var Counter2 = new MockIncrementable() { Count = Any.Int(100, 200) };
-    var Compound = new CompoundIncrementable(Counter1, Counter2);
+    var Compound = new StandardModelKit().CreateCompoundIncrementable(Counter1, Counter2);
     var Original1 = Counter1.Count;
     var Original2 = Counter2.Count;
 
@@ -85,6 +85,6 @@ public class Counting
 
   static Counter GivenCounterInSomeState()
   {
-    return new(Any.Int(0, 20));
+    return new StandardModelKit().CreateCounter(Any.Int(0, 20));
   }
 }

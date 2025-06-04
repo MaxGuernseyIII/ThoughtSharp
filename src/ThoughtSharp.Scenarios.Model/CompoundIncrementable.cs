@@ -24,8 +24,15 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class CompoundIncrementable(params ImmutableArray<Incrementable> Counters) : Incrementable
+public class CompoundIncrementable : Incrementable
 {
+  readonly ImmutableArray<Incrementable> Counters;
+
+  internal CompoundIncrementable(ImmutableArray<Incrementable> Counters)
+  {
+    this.Counters = Counters;
+  }
+
   public void Increment()
   {
     foreach (var Incrementable in Counters)

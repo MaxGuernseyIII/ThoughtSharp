@@ -93,7 +93,7 @@ public class Gating
   public void CounterAndThresholdGateWhenCountIsBelowThreshold()
   {
     var Threshold = Any.Int(10, 20);
-    var Counter = new Counter(Any.Int(0, Threshold - 1));
+    var Counter = new StandardModelKit().CreateCounter(Any.Int(0, Threshold - 1));
     var G = Gate.ForCounterAndThreshold(Counter, Threshold);
 
     var IsOpen = G.IsOpen;
@@ -105,7 +105,7 @@ public class Gating
   public void CounterAndThresholdGateWhenCountIsAtOrAboveThreshold()
   {
     var Threshold = Any.Int(10, 20);
-    var Counter = new Counter(Any.Int(Threshold, Threshold + 1));
+    var Counter = new StandardModelKit().CreateCounter(Any.Int(Threshold, Threshold + 1));
     var G = Gate.ForCounterAndThreshold(Counter, Threshold);
 
     var IsOpen = G.IsOpen;
