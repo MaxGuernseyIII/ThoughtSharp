@@ -29,16 +29,18 @@ namespace Tests;
 [TestClass]
 public class AutomationLoops
 {
-  MockGate Gate;
-  MockAutomationJob Pass;
-  AutomationLoop AutomationLoop;
+  MockGate Gate = null!;
+  MockAutomationJob Pass = null!;
+  MockIncrementable Counter = null!;
+  AutomationLoop AutomationLoop = null!;
 
   [TestInitialize]
   public void SetUp()
   {
     Gate = new();
     Pass = new();
-    AutomationLoop = new(Pass, Gate);
+    Counter = new();
+    AutomationLoop = new(Pass, Gate, Counter);
   }
 
   [TestMethod]
@@ -50,6 +52,22 @@ public class AutomationLoops
     await WhenRunAutomationLoop();
 
     ThenPassesShouldBe(PassCount);
+  }
+
+  [TestMethod]
+  public async Task IncrementsCounter()
+  {
+    var PassCount = Any.Int(0, 10);
+    GivenGateWillCloseAfterPasses(PassCount);
+
+    await WhenRunAutomationLoop();
+
+    ThenIncrementableShouldBe(PassCount);
+  }
+
+  void ThenIncrementableShouldBe(int PassCount)
+  {
+    Counter.Count.Should().Be(PassCount);
   }
 
   void ThenPassesShouldBe(int PassCount)

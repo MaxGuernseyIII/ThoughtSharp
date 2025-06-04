@@ -20,21 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios.Model;
+using ThoughtSharp.Scenarios.Model;
 
-public sealed class Counter(int Value = Counter.InitialValue) : Incrementable
+namespace Tests.Mocks;
+
+public class MockIncrementable : Incrementable
 {
-  const int InitialValue = 0;
-
-  public int Value { get; private set; } = Value;
+  public int Count { get; set; }
 
   public void Increment()
   {
-    Value++;
-  }
-
-  public void Reset()
-  {
-    Value = InitialValue;
+    Count++;
   }
 }

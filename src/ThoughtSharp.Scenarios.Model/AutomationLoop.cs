@@ -1,10 +1,16 @@
 ﻿namespace ThoughtSharp.Scenarios.Model;
 
-public class AutomationLoop(AutomationJob Pass, Gate ContinueGate) : AutomationJob
+public class AutomationLoop(AutomationJob Pass, Gate ContinueGate, Incrementable Counter) : AutomationJob
 {
   public async Task Run()
   {
     while (ContinueGate.IsOpen) 
-      await Pass.Run();
+      await OnePass();
+  }
+
+  async Task OnePass()
+  {
+    await Pass.Run();
+    Counter.Increment();
   }
 }

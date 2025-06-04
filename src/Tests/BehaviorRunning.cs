@@ -154,9 +154,9 @@ public class BehaviorRunning
     Result.Exception.Should().Be(Exception);
   }
 
-  public class Mind1(Brain Brain);
+  public record Mind1(Brain Brain);
 
-  public class Mind2(Brain Brain);
+  public record Mind2(Brain Brain);
 
   public class MindCatchingHost
   {
@@ -218,6 +218,6 @@ public class BehaviorRunning
 
   internal class Box<T>
   {
-    public T Value { get; set; }
+    public T Value { get; set; } = default!;
   }
 }

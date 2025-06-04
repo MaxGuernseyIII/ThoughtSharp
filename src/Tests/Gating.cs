@@ -92,10 +92,9 @@ public class Gating
   [TestMethod]
   public void CounterAndThresholdGateWhenCountIsBelowThreshold()
   {
-    var Counter = new Counter();
     var Threshold = Any.Int(10, 20);
+    var Counter = new Counter(Any.Int(0, Threshold - 1));
     var G = Gate.ForCounterAndThreshold(Counter, Threshold);
-    Counter.Value = Any.Int(0, Threshold - 1);
 
     var IsOpen = G.IsOpen;
 
@@ -105,10 +104,9 @@ public class Gating
   [TestMethod]
   public void CounterAndThresholdGateWhenCountIsAtOrAboveThreshold()
   {
-    var Counter = new Counter();
     var Threshold = Any.Int(10, 20);
+    var Counter = new Counter(Any.Int(Threshold, Threshold + 1));
     var G = Gate.ForCounterAndThreshold(Counter, Threshold);
-    Counter.Value = Any.Int(Threshold, Threshold + 1);
 
     var IsOpen = G.IsOpen;
 

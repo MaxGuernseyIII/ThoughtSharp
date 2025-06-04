@@ -62,13 +62,13 @@ public class Counting
   {
     var Value = Any.Int(1000, 2000);
 
-    var Counter = new Counter {Value = Value};
+    var Counter = new Counter(Value);
 
     Counter.Value.Should().Be(Value);
   }
 
   static Counter GivenCounterInSomeState()
   {
-    return new() { Value = Any.Int(0, 20)  };
+    return new(Any.Int(0, 20));
   }
 }
