@@ -184,38 +184,43 @@ public static partial class FizzBuzzTraining
     }
   }
 
-  // this is a curriculum
   [Curriculum]
   public static class FizzBuzzTrainingPlan
   {
-    // this is the first phase
     [Phase(1)]
-    // continue until each included lesson has had 160 of the last 200 trials succeed
+    [MaximumAttempts(5000)]
     [ConvergenceStandard(Fraction = .8, Of = 200)]
-    // include all lessons from the Calculations class
     [Include(typeof(Calculations))]
     public class InitialSteps;
 
-    // this is the second phase
     [Phase(2)]
-    // continue until each included lesson has had 490 of the last 500 trials succeed
     [ConvergenceStandard(Fraction = .98, Of = 500)]
     public class FocusedTraining
     {
       [Phase(2.1)]
+      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)])]
       public class FocusOnFizz;
 
       [Phase(2.2)]
+      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)])]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.25)]
       public class FocusOnBuzz;
 
       [Phase(2.3)]
+      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.FizzBuzz)])]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.05)]
       public class FocusOnFizzBuzz;
 
       [Phase(2.4)]
+      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.WriteValue)])]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.05)]
+      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.FizzBuzz)], Weight = 0.05)]
       public class FocusOnWriting;
     }
 

@@ -26,6 +26,12 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public static class ScenariosModelNodeExtensions
 {
+  public static AutomationJob MakeAutomationLoopForPhase(this ScenariosModel This, ScenariosModelNode PhaseNode,
+    MindPool Pool, Reporter Reporter, Counter SaveCounter)
+  {
+    return null!;
+  }
+
   public static AutomationJob GetTestPassFor(this ScenariosModel This, MindPool Pool, Reporter Reporter, 
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
