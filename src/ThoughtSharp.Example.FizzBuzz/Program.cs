@@ -1217,6 +1217,7 @@ static class ShapeRenderer
 {
   public static void RenderShapeToImage(Shape shape, string outputPath, int imageSize = 256, bool closeShape = true)
   {
+#pragma warning disable CA1416
     using var bmp = new Bitmap(imageSize, imageSize);
     using var gfx = Graphics.FromImage(bmp);
     gfx.Clear(Color.White);
@@ -1252,6 +1253,7 @@ static class ShapeRenderer
     }
 
     bmp.Save(outputPath, ImageFormat.Png);
+#pragma warning restore CA1416
   }
 
   static PointF ToPixel(Point p, int imageSize)
