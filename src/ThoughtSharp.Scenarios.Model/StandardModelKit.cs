@@ -31,8 +31,13 @@ public sealed class StandardModelKit : ModelKit
     return new(Value);
   }
 
-  public CompoundIncrementable CreateCompoundIncrementable(params ImmutableArray<Incrementable> Counters)
+  public Incrementable CreateCompoundIncrementable(params ImmutableArray<Incrementable> Counters)
   {
-    return new(Counters);
+    return new CompoundIncrementable(Counters);
+  }
+
+  public AutomationJob CreateAutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps, Gate SaveGate, Saver Saver, Reporter Reporter)
+  {
+    return new AutomationPass(Steps, SaveGate, Saver, Reporter);
   }
 }

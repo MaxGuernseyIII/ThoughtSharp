@@ -27,5 +27,6 @@ namespace ThoughtSharp.Scenarios.Model;
 public interface ModelKit
 {
   Counter CreateCounter(int Value = Counter.InitialValue);
-  CompoundIncrementable CreateCompoundIncrementable(params ImmutableArray<Incrementable> Counters);
+  Incrementable CreateCompoundIncrementable(params ImmutableArray<Incrementable> Counters);
+  AutomationJob CreateAutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps, Gate SaveGate, Saver Saver, Reporter Reporter);
 }
