@@ -29,4 +29,5 @@ public interface ModelKit
   Counter CreateCounter(int Value = Counter.InitialValue);
   Incrementable CreateCompoundIncrementable(params ImmutableArray<Incrementable> Counters);
   AutomationJob CreateAutomationPass(ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps, Gate SaveGate, Saver Saver, Reporter Reporter);
+  AutomationJob CreateAutomationLoop(AutomationJob Pass, Gate ContinueGate, Incrementable Counter);
 }

@@ -32,7 +32,7 @@ public class AutomationLoops
   MockGate Gate = null!;
   MockAutomationJob Pass = null!;
   MockIncrementable Counter = null!;
-  AutomationLoop AutomationLoop = null!;
+  AutomationJob Loop = null!;
 
   [TestInitialize]
   public void SetUp()
@@ -40,7 +40,7 @@ public class AutomationLoops
     Gate = new();
     Pass = new();
     Counter = new();
-    AutomationLoop = new(Pass, Gate, Counter);
+    Loop = new StandardModelKit().CreateAutomationLoop(Pass, Gate, Counter);
   }
 
   [TestMethod]
@@ -77,7 +77,7 @@ public class AutomationLoops
 
   Task WhenRunAutomationLoop()
   {
-    return AutomationLoop.Run();
+    return Loop.Run();
   }
 
   void GivenGateWillCloseAfterPasses(int Count)

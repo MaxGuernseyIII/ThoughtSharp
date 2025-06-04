@@ -40,4 +40,9 @@ public sealed class StandardModelKit : ModelKit
   {
     return new AutomationPass(Steps, SaveGate, Saver, Reporter);
   }
+
+  public AutomationJob CreateAutomationLoop(AutomationJob Pass, Gate ContinueGate, Incrementable Counter)
+  {
+    return new AutomationLoop(Pass, ContinueGate, Counter);
+  }
 }
