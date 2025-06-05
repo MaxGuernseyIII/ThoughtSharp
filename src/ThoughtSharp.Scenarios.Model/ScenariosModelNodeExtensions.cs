@@ -73,7 +73,7 @@ public static class ScenariosModelNodeExtensions
     return new AutomationLoop(
       Pass,
       Gate.ForAnd(
-        Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, TrainingDataScheme.Metadata.MaximumAttempts), SuccessGate),
+        Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, TrainingDataScheme.Metadata.MaximumAttempts), Gate.NotGate(SuccessGate)),
         SuccessGate,
         new CompoundIncrementable(TrainingDataScheme.Attempts, TrainingDataScheme.TimesSinceSaved)
     );
