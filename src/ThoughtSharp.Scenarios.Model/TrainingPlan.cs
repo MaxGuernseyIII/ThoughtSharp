@@ -29,11 +29,15 @@ public record TrainingPlan(ScenariosModelNode PlanNode, ImmutableArray<Runnable>
   public async Task<RunResult> Run()
   {
     foreach (var SubJob in SubJobs)
-      await SubJob.Run();
+      if ((await SubJob.Run()).Status == BehaviorRunStatus.Failure)
+        return new()
+        {
+          Status = BehaviorRunStatus.Failure
+        };
 
     return new()
     {
-      Status = BehaviorRunStatus.NotRun
+      Status = BehaviorRunStatus.Success
     };
   }
 }

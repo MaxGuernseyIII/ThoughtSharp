@@ -50,9 +50,43 @@ public class TrainingPlans
     ThenRunJobsWere(SubJobs);
   }
 
-  void ThenRunJobsWere(IReadOnlyList<MockRunnable> SubJobs)
+  [TestMethod]
+  public async Task ReturnsSuccessIfAllJobsSuccessful()
   {
-    ActuallyRunJobs.Should().BeEquivalentTo(SubJobs, O => O.WithStrictOrdering());
+    var SubJobs = GivenAnySelfTrackingRunnables(BehaviorRunStatus.Success);
+    var Plan = GivenTrainingPlanForJobs(SubJobs);
+
+    var Result = await WhenRunPlan(Plan);
+
+    ThenResultIs(Result, BehaviorRunStatus.Success);
+  }
+
+  [TestMethod]
+  public async Task DoesNotRunAnythingAfterFailedSubJob()
+  {
+    var SuccessfulJobs = GivenAnySelfTrackingRunnables(BehaviorRunStatus.Success);
+    var FailedJob = GivenSelfTrackingRunnable(BehaviorRunStatus.Failure);
+    var OtherJobs = GivenAnySelfTrackingRunnables(Any.EnumValue<BehaviorRunStatus>());
+
+    var Plan = GivenTrainingPlanForJobs([.. SuccessfulJobs, FailedJob, .. OtherJobs]);
+
+    await WhenRunPlan(Plan);
+
+    ThenRunJobsWere([.. SuccessfulJobs, FailedJob]);
+  }
+
+  [TestMethod]
+  public async Task ReportsFailureIfAnythingFails()
+  {
+    var SuccessfulJobs = GivenAnySelfTrackingRunnables(BehaviorRunStatus.Success, 0, 2);
+    var FailedJob = GivenSelfTrackingRunnable(BehaviorRunStatus.Failure);
+    var OtherJobs = GivenAnySelfTrackingRunnables(BehaviorRunStatus.Success, 0, 2);
+
+    var Plan = GivenTrainingPlanForJobs([.. SuccessfulJobs, FailedJob, .. OtherJobs]);
+
+    var Result = await WhenRunPlan(Plan);
+
+    ThenResultIs(Result, BehaviorRunStatus.Failure);
   }
 
   TrainingPlan GivenTrainingPlanForJobs(IReadOnlyList<MockRunnable> SubJobs)
@@ -60,9 +94,9 @@ public class TrainingPlans
     return new(PlanNode, [..SubJobs]);
   }
 
-  IReadOnlyList<MockRunnable> GivenAnySelfTrackingRunnables(BehaviorRunStatus RunStatus)
+  IReadOnlyList<MockRunnable> GivenAnySelfTrackingRunnables(BehaviorRunStatus RunStatus, int Minimum = 1, int Maximum = 4)
   {
-    return Any.ListOf(() => GivenSelfTrackingRunnable(RunStatus), 1, 4);
+    return Any.ListOf(() => GivenSelfTrackingRunnable(RunStatus), Minimum, Maximum);
   }
 
   MockRunnable GivenSelfTrackingRunnable(BehaviorRunStatus RunStatus)
@@ -79,5 +113,15 @@ public class TrainingPlans
   static Task<RunResult> WhenRunPlan(TrainingPlan Plan)
   {
     return Plan.Run();
+  }
+
+  void ThenRunJobsWere(IReadOnlyList<MockRunnable> SubJobs)
+  {
+    ActuallyRunJobs.Should().BeEquivalentTo(SubJobs, O => O.WithStrictOrdering());
+  }
+
+  static void ThenResultIs(RunResult Result, BehaviorRunStatus Expected)
+  {
+    Result.Status.Should().Be(Expected);
   }
 }
