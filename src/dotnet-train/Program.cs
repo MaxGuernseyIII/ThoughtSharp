@@ -22,9 +22,15 @@
 
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.Diagnostics;
 
 var RootCommand = new RootCommand("Train models with ThoughtSharp");
-var TargetArgument = new Argument<FileInfo?>(
+var NoBuildOption = new Option<bool>(
+  "--no-build",
+  description: "Skip building",
+  getDefaultValue: () => false
+);
+var TargetArgument = new Argument<FileInfo>(
     "--target",
     description: "The .sln, .csproj, or .dll to train",
     isDefault: true,
@@ -38,7 +44,7 @@ var TargetArgument = new Argument<FileInfo?>(
       if (ToTrain is DirectoryInfo D)
         return ResolveDirectoryToFile(D, A);
 
-      return null;
+      throw new InvalidOperationException($"Unknown type of file system object: {ToTrain}");
     })
   {
     Arity = ArgumentArity.ZeroOrOne
@@ -55,18 +61,21 @@ var TargetArgument = new Argument<FileInfo?>(
   });
 
 RootCommand.AddArgument(TargetArgument);
+RootCommand.AddOption(NoBuildOption);
 
-RootCommand.SetHandler(ToTrain =>
+RootCommand.SetHandler((ToTrain, NoBuild) =>
 {
-  if (ToTrain is not null)
-    Console.WriteLine($"You want me to train {ToTrain.FullName}");
+  if (!NoBuild)
+    Process.Start("dotnet", ["build", ToTrain.FullName]).WaitForExit();
   else
-    Console.WriteLine("You want me to train whatever is in this directory.");
-}, TargetArgument);
+    Console.WriteLine("Skipping build.");
+
+  Console.WriteLine($"Training {ToTrain.FullName}:");
+}, TargetArgument, NoBuildOption);
 
 Environment.ExitCode = RootCommand.Invoke(args);
 
-static FileInfo? ResolveDirectoryToFile(DirectoryInfo Directory, ArgumentResult Result)
+static FileInfo ResolveDirectoryToFile(DirectoryInfo Directory, ArgumentResult Result)
 {
   var Options = Directory.GetFiles("*.sln").Concat(Directory.GetFiles("*.csproj"));
   FileInfo? Inferred = null;
@@ -81,10 +90,10 @@ static FileInfo? ResolveDirectoryToFile(DirectoryInfo Directory, ArgumentResult 
   return Inferred;
 }
 
-FileSystemInfo? GetFileSystemObjectToTrain(ArgumentResult ArgumentResult)
+FileSystemInfo GetFileSystemObjectToTrain(ArgumentResult ArgumentResult)
 {
-  if (!ArgumentResult.Tokens.Any()) 
-    return null;
+  if (!ArgumentResult.Tokens.Any())
+    return new DirectoryInfo(Directory.GetCurrentDirectory());
 
   var Path = ArgumentResult.Tokens.Single().Value;
 
