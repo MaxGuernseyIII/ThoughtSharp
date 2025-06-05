@@ -29,25 +29,55 @@ namespace Tests;
 [TestClass]
 public class TrainingPlans
 {
+  MockNode PlanNode = null!;
+  List<MockRunnable> ActuallyRunJobs = null!;
+
+  [TestInitialize]
+  public void SetUp()
+  {
+    PlanNode = new();
+    ActuallyRunJobs = new();
+  }
+
   [TestMethod]
   public async Task RunSuccessfulItemsInOrder()
   {
-    var Node = new MockNode();
-    var RunJobs = new List<MockRunnable>();
-    var SubJobs = Any.ListOf(() => new MockRunnable(), 1, 4);
-    foreach (var Job in SubJobs)
+    var SubJobs = GivenAnySelfTrackingRunnables(BehaviorRunStatus.Success);
+    var Plan = GivenTrainingPlanForJobs(SubJobs);
+
+    await WhenRunPlan(Plan);
+
+    ThenRunJobsWere(SubJobs);
+  }
+
+  void ThenRunJobsWere(IReadOnlyList<MockRunnable> SubJobs)
+  {
+    ActuallyRunJobs.Should().BeEquivalentTo(SubJobs, O => O.WithStrictOrdering());
+  }
+
+  TrainingPlan GivenTrainingPlanForJobs(IReadOnlyList<MockRunnable> SubJobs)
+  {
+    return new(PlanNode, [..SubJobs]);
+  }
+
+  IReadOnlyList<MockRunnable> GivenAnySelfTrackingRunnables(BehaviorRunStatus RunStatus)
+  {
+    return Any.ListOf(() => GivenSelfTrackingRunnable(RunStatus), 1, 4);
+  }
+
+  MockRunnable GivenSelfTrackingRunnable(BehaviorRunStatus RunStatus)
+  {
+    var Job = new MockRunnable();
+    Job.RunBehavior = () =>
     {
-      Job.RunBehavior = () =>
-      {
-        RunJobs.Add(Job);
-        return Task.FromResult(new RunResult() { Status = BehaviorRunStatus.Success });
-      };
-    }
+      ActuallyRunJobs.Add(Job);
+      return Task.FromResult(new RunResult() {Status = RunStatus});
+    };
+    return Job;
+  }
 
-    var Plan = new TrainingPlan(Node, [..SubJobs]);
-
-    await Plan.Run();
-
-    RunJobs.Should().BeEquivalentTo(SubJobs, O => O.WithStrictOrdering());
+  static Task<RunResult> WhenRunPlan(TrainingPlan Plan)
+  {
+    return Plan.Run();
   }
 }
