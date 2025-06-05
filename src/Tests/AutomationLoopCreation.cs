@@ -21,68 +21,85 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
+using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Scenarios;
+using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
 
 [TestClass]
 public class AutomationLoopCreation
 {
+  [Ignore]
+  [TestMethod]
+  public void CreatesFromAssociatedBehaviorRunners()
+  {
+    var Reporter = new MockReporter();
+    var Type1 = typeof(T1);
+    var Method1 = Type1.GetMethod(nameof(T1.Method1))!;
+    var Type2 = typeof(T2);
+    var Method2 = Type2.GetMethod(nameof(T2.Method2))!;
+    var Method3 = Type2.GetMethod(nameof(T2.Method3))!;
+
+    var BehaviorNode1 = new BehaviorNode(Type1, Method1);
+    var BehaviorNode2 = new BehaviorNode(Type1, Method2);
+    var BehaviorNode3 = new BehaviorNode(Type2, Method3);
+    var CapabilityNode = new CapabilityNode(Type2, [BehaviorNode2, BehaviorNode3]);
+
+    var Model = new ScenariosModel([]);
+
+    var MaximumAttempts = Any.Int(20, 100);
+    var SampleSize = Any.Int(100, 200);
+    var SuccessFraction = Any.Float;
+    var TrainingMetadata = new TrainingMetadata() {SampleSize = SampleSize, SuccessFraction = SuccessFraction, MaximumAttempts = MaximumAttempts};
+    var PhaseNode = new CurriculumPhaseNode(null!, Any.Float,
+      TrainingMetadata, [],
+      [
+        new FetchDataFromNode<ScenariosModelNode?>
+        {
+          VisitModel = _ => CapabilityNode
+        },
+        new FetchDataFromNode<ScenariosModelNode?>
+        {
+          VisitModel = _ => BehaviorNode3
+        },
+        new FetchDataFromNode<ScenariosModelNode?>
+        {
+          VisitModel = _ => BehaviorNode1
+        }
+      ]);
+    var Scheme = new TrainingDataScheme(TrainingMetadata);
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+
+    var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, Scheme);
+
+    Loop.Should().BeEquivalentTo(
+      new AutomationLoop(
+        Model.GetTestPassFor(Pool, Reporter, [
+          ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
+        ]),
+        new AndGate(
+          new CounterAndMaximumGate(Scheme.Attempts, MaximumAttempts),
+          Gate.ForConvergenceTrackerAndThreshold(new(SampleSize), SuccessFraction)),
+        Scheme.TimesSinceSaved));
+  }
+
   public class T1
   {
-    public void Method1() { }
+    public void Method1()
+    {
+    }
   }
 
   public class T2
   {
-    public void Method2() { }
-    public void Method3() { }
-  }
+    public void Method2()
+    {
+    }
 
-  [TestMethod]
-  public void CreatesFromAssociatedBehaviorRunners()
-  {
-    // TODO: make this test
-
-    //var Reporter = new MockReporter();
-    //var Type1 = typeof(T1);
-    //var Method1 = Type1.GetMethod(nameof(T1.Method1))!;
-    //var Type2 = typeof(T2);
-    //var Method2 = Type2.GetMethod(nameof(T2.Method2))!;
-    //var Method3 = Type2.GetMethod(nameof(T2.Method3))!;
-
-    //var BehaviorNode1 = new BehaviorNode(Type1, Method1);
-    //var BehaviorNode2 = new BehaviorNode(Type1, Method2);
-    //var BehaviorNode3 = new BehaviorNode(Type2, Method3);
-    //var CapabilityNode = new CapabilityNode(Type2, [BehaviorNode2, BehaviorNode3]);
-
-    //var Model = new ScenariosModel([]);
-
-    //var PhaseNode = new CurriculumPhaseNode(null!, Any.Float, new() { SampleSize = 100, SuccessFraction = 1 }, [],
-    //[
-    //  new FetchDataFromNode<ScenariosModelNode?>()
-    //  {
-    //    VisitModel = _ => CapabilityNode
-    //  },
-    //  new FetchDataFromNode<ScenariosModelNode?>()
-    //  {
-    //    VisitModel = _ => BehaviorNode3
-    //  },
-    //  new FetchDataFromNode<ScenariosModelNode?>()
-    //  {
-    //    VisitModel = _ => BehaviorNode1
-    //  },
-    //]);
-    //var SaveCounter = new Counter();
-    //var RunCounter = new Counter();
-    //var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
-
-    //var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, SaveCounter, RunCounter);
-
-    //Loop.Should().BeEquivalentTo(
-    //  new AutomationLoop(Model.GetTestPassFor(Pool, Reporter, [
-    //    ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)
-    //  ]), new AndGate(new CounterAndMaximumGate(RunCounter, ))))
+    public void Method3()
+    {
+    }
   }
 }

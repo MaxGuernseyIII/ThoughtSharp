@@ -26,9 +26,33 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public static class ScenariosModelNodeExtensions
 {
-  public static AutomationJob MakeAutomationLoopForPhase(this ScenariosModel This, ScenariosModelNode PhaseNode,
-    MindPool Pool, Reporter Reporter, HasValue<int> SaveCounter)
+  public static AutomationJob MakeAutomationLoopForPhase(
+    this ScenariosModel This, 
+    ScenariosModelNode PhaseNode,
+    MindPool Pool, 
+    Reporter Reporter, 
+    TrainingDataScheme TrainingDataScheme)
   {
+    //var IncludedScenariosFinders = PhaseNode.Query(new TargetedVisitor<ScenariosModelNodeVisitor<ScenariosModelNode?>>()
+    //{
+    //  VisitCurriculumPhase = Phase => Phase.IncludedTrainingScenarioNodeFinders
+    //});
+
+    //var Metadata = PhaseNode.Query(new TargetedVisitor<TrainingMetadata>()
+    //{
+    //  VisitCurriculumPhase = Phase => [Phase.TrainingMetadata]
+    //}).Single()!;
+
+    //var Behaviors = IncludedScenariosFinders.Select(This.Query).Where(B => B is not null);
+
+    //var Pass = This.GetTestPassFor(Pool, Reporter, [..Behaviors!]);
+    //return new AutomationLoop(
+    //  Pass, 
+    //    Gate.ForAnd(
+    //      Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, Metadata.MaximumAttempts),
+    //      Gate.ForConvergenceTrackerAndThreshold())      
+    //  );
+
     return null!;
   }
 

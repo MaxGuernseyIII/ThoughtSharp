@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using FluentAssertions;
+using Tests.Mocks;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -28,10 +29,24 @@ namespace Tests;
 [TestClass]
 public class TrainingDataTracking
 {
+  TrainingMetadata Metadata = null!;
+  TrainingDataScheme Scheme = null!;
+
+  [TestInitialize]
+  public void SetUp()
+  {
+    Metadata = new()
+    {
+      MaximumAttempts = Any.Int(1, 10),
+      SampleSize = Any.Int(1, 10),
+      SuccessFraction = Any.Float
+    };
+    Scheme = new(Metadata);
+  }
+
   [TestMethod]
   public void HasAPersistentTimesSinceSavedCounter()
   {
-    var Scheme = new TrainingDataScheme();
 
     var Actual = Scheme.TimesSinceSaved;
 
@@ -42,8 +57,6 @@ public class TrainingDataTracking
   [TestMethod]
   public void HasAPersistentAttemptsCounter()
   {
-    var Scheme = new TrainingDataScheme();
-
     var Actual = Scheme.Attempts;
 
     Actual.Should().NotBeNull();
@@ -53,8 +66,36 @@ public class TrainingDataTracking
   [TestMethod]
   public void AttemptsAndTimesSinceSavedCountersAreDistinct()
   {
-    var Scheme = new TrainingDataScheme();
-
     Scheme.Attempts.Should().NotBeSameAs(Scheme.TimesSinceSaved);
+  }
+
+  [TestMethod]
+  public void ManagesPersistentConvergenceTrackerForOneNode()
+  {
+    var Node = new MockNode();
+
+    var Tracker = Scheme.GetConvergenceTrackerFor(Node);
+
+    Tracker.Should().NotBeNull();
+    Tracker.Should().BeSameAs(Scheme.GetConvergenceTrackerFor(Node));
+  }
+
+  [TestMethod]
+  public void PersistentConvergenceTrackersAreCreatedWithCorrectSize()
+  {
+    var Node = new MockNode();
+
+    var Tracker = Scheme.GetConvergenceTrackerFor(Node);
+
+    Tracker.Should().Be(new ConvergenceTracker(Metadata.SampleSize));
+  }
+
+  [TestMethod]
+  public void ManagesConvergenceTrackersAreDistinctByNode()
+  {
+    var Tracker = Scheme.GetConvergenceTrackerFor(new MockNode());
+
+    Tracker.Should().NotBeNull();
+    Tracker.Should().NotBeSameAs(Scheme.GetConvergenceTrackerFor(new MockNode()));
   }
 }
