@@ -31,7 +31,6 @@ namespace Tests;
 [TestClass]
 public class AutomationLoopCreation
 {
-  [Ignore]
   [TestMethod]
   public void CreatesFromAssociatedBehaviorRunners()
   {
@@ -52,7 +51,8 @@ public class AutomationLoopCreation
     var MaximumAttempts = Any.Int(20, 100);
     var SampleSize = Any.Int(100, 200);
     var SuccessFraction = Any.Float;
-    var TrainingMetadata = new TrainingMetadata() {SampleSize = SampleSize, SuccessFraction = SuccessFraction, MaximumAttempts = MaximumAttempts};
+    var TrainingMetadata = new TrainingMetadata
+      {SampleSize = SampleSize, SuccessFraction = SuccessFraction, MaximumAttempts = MaximumAttempts};
     var PhaseNode = new CurriculumPhaseNode(null!, Any.Float,
       TrainingMetadata, [],
       [
@@ -69,9 +69,17 @@ public class AutomationLoopCreation
           VisitModel = _ => BehaviorNode1
         }
       ]);
+
+
     var Scheme = new TrainingDataScheme(TrainingMetadata);
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
-
+    ImmutableArray<ScenariosModelNode> SourceNodes = [CapabilityNode, BehaviorNode3, BehaviorNode1];
+    var ConvergenceGates = SourceNodes.GetBehaviorRunners(Pool)
+      .Select(Pair => Pair.Node)
+      .Select(N => Gate.ForConvergenceTrackerAndThreshold(Scheme.GetConvergenceTrackerFor(N),
+        TrainingMetadata.SuccessFraction))
+      .ToImmutableArray();
+    var ConvergenceRule = ConvergenceGates[1..].Aggregate(ConvergenceGates[0], Gate.ForAnd);
     var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, Scheme);
 
     Loop.Should().BeEquivalentTo(
@@ -81,8 +89,8 @@ public class AutomationLoopCreation
         ]),
         new AndGate(
           new CounterAndMaximumGate(Scheme.Attempts, MaximumAttempts),
-          Gate.ForConvergenceTrackerAndThreshold(new(SampleSize), SuccessFraction)),
-        Scheme.TimesSinceSaved));
+          ConvergenceRule),
+        new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts)));
   }
 
   public class T1

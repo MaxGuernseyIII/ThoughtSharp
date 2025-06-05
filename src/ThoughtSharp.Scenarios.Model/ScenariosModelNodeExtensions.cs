@@ -27,36 +27,39 @@ namespace ThoughtSharp.Scenarios.Model;
 public static class ScenariosModelNodeExtensions
 {
   public static AutomationJob MakeAutomationLoopForPhase(
-    this ScenariosModel This, 
+    this ScenariosModel This,
     ScenariosModelNode PhaseNode,
-    MindPool Pool, 
-    Reporter Reporter, 
+    MindPool Pool,
+    Reporter Reporter,
     TrainingDataScheme TrainingDataScheme)
   {
-    //var IncludedScenariosFinders = PhaseNode.Query(new TargetedVisitor<ScenariosModelNodeVisitor<ScenariosModelNode?>>()
-    //{
-    //  VisitCurriculumPhase = Phase => Phase.IncludedTrainingScenarioNodeFinders
-    //});
+    var IncludedScenariosFinders = PhaseNode.Query(new TargetedVisitor<ScenariosModelNodeVisitor<ScenariosModelNode?>>
+    {
+      VisitCurriculumPhase = Phase => Phase.IncludedTrainingScenarioNodeFinders
+    });
 
-    //var Metadata = PhaseNode.Query(new TargetedVisitor<TrainingMetadata>()
-    //{
-    //  VisitCurriculumPhase = Phase => [Phase.TrainingMetadata]
-    //}).Single()!;
+    var Metadata = PhaseNode.Query(new TargetedVisitor<TrainingMetadata>
+    {
+      VisitCurriculumPhase = Phase => [Phase.TrainingMetadata]
+    }).Single()!;
 
-    //var Behaviors = IncludedScenariosFinders.Select(This.Query).Where(B => B is not null);
+    var Behaviors = IncludedScenariosFinders.Select(This.Query).Where(B => B is not null).OfType<ScenariosModelNode>()
+      .ToImmutableArray();
 
-    //var Pass = This.GetTestPassFor(Pool, Reporter, [..Behaviors!]);
-    //return new AutomationLoop(
-    //  Pass, 
-    //    Gate.ForAnd(
-    //      Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, Metadata.MaximumAttempts),
-    //      Gate.ForConvergenceTrackerAndThreshold())      
-    //  );
+    var Pass = This.GetTestPassFor(Pool, Reporter, Behaviors!);
+    var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
+      Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), Metadata.SuccessFraction));
 
-    return null!;
+    return new AutomationLoop(
+      Pass,
+      Gate.ForAnd(
+        Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, Metadata.MaximumAttempts),
+        Nodes.Skip(1).Aggregate(Nodes.First(), Gate.ForAnd)),
+        new CompoundIncrementable(TrainingDataScheme.Attempts, TrainingDataScheme.TimesSinceSaved)
+    );
   }
 
-  public static AutomationJob GetTestPassFor(this ScenariosModel This, MindPool Pool, Reporter Reporter, 
+  public static AutomationJob GetTestPassFor(this ScenariosModel This, MindPool Pool, Reporter Reporter,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
     return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, Reporter, null!);
@@ -67,9 +70,11 @@ public static class ScenariosModelNodeExtensions
     return Node.ChildNodes.OfType<CurriculumPhaseNode>().OrderBy(N => N.PhaseNumber).ToImmutableArray();
   }
 
-  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(this ScenariosModelNode Node, MindPool Pool)
+  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(
+    this ScenariosModelNode Node, MindPool Pool)
   {
-    return Node.Query(new CrawlingVisitor<(ScenariosModelNode Node, BehaviorRunner Runner)>() {VisitBehavior = VisitBehavior});
+    return Node.Query(new CrawlingVisitor<(ScenariosModelNode Node, BehaviorRunner Runner)>
+      {VisitBehavior = VisitBehavior});
 
     IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> VisitBehavior(BehaviorNode BehaviorNode)
     {
@@ -77,7 +82,8 @@ public static class ScenariosModelNodeExtensions
     }
   }
 
-  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(this IEnumerable<ScenariosModelNode> Nodes,
+  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(
+    this IEnumerable<ScenariosModelNode> Nodes,
     MindPool Pool)
   {
     return Nodes.SelectMany(N => N.GetBehaviorRunners(Pool)).Distinct();
