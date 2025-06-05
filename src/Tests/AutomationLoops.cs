@@ -134,29 +134,3 @@ public class AutomationLoops
     Gate.Answers.Enqueue(false);
   }
 }
-
-[TestClass]
-public class TrainingPlans
-{
-  [TestMethod]
-  public async Task RunItemsInOrder()
-  {
-    var Node = new MockNode();
-    var RunJobs = new List<MockAutomationJob>();
-    var SubJobs = Any.ListOf(() => new MockAutomationJob(), 1, 4);
-    foreach (var Job in SubJobs)
-    {
-      Job.RunBehavior = () =>
-      {
-        RunJobs.Add(Job);
-        return Task.CompletedTask;
-      };
-    }
-
-    var Plan = new TrainingPlan(Node, [..SubJobs]);
-
-    await Plan.Run();
-
-    RunJobs.Should().BeEquivalentTo(SubJobs, O => O.WithStrictOrdering());
-  }
-}

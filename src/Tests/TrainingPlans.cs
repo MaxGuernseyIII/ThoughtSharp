@@ -20,20 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
+using FluentAssertions;
+using Tests.Mocks;
+using ThoughtSharp.Scenarios.Model;
 
-namespace ThoughtSharp.Scenarios.Model;
+namespace Tests;
 
-public record TrainingPlan(ScenariosModelNode PlanNode, ImmutableArray<Runnable> SubJobs) : Runnable
+[TestClass]
+public class TrainingPlans
 {
-  public async Task<RunResult> Run()
+  [TestMethod]
+  public async Task RunSuccessfulItemsInOrder()
   {
-    foreach (var SubJob in SubJobs)
-      await SubJob.Run();
-
-    return new()
+    var Node = new MockNode();
+    var RunJobs = new List<MockRunnable>();
+    var SubJobs = Any.ListOf(() => new MockRunnable(), 1, 4);
+    foreach (var Job in SubJobs)
     {
-      Status = BehaviorRunStatus.NotRun
-    };
+      Job.RunBehavior = () =>
+      {
+        RunJobs.Add(Job);
+        return Task.FromResult(new RunResult() { Status = BehaviorRunStatus.Success });
+      };
+    }
+
+    var Plan = new TrainingPlan(Node, [..SubJobs]);
+
+    await Plan.Run();
+
+    RunJobs.Should().BeEquivalentTo(SubJobs, O => O.WithStrictOrdering());
   }
 }
