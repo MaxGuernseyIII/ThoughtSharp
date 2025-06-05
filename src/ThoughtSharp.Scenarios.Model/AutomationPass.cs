@@ -6,7 +6,8 @@ public sealed class AutomationPass(
   ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps,
   Gate SaveGate,
   Saver Saver,
-  Reporter Reporter)
+  Reporter Reporter,
+  TrainingDataScheme Scheme)
   : AutomationJob
 {
   readonly ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps = Steps;
@@ -20,6 +21,7 @@ public sealed class AutomationPass(
     {
       var Result = await Runnable.Run();
       Reporter.ReportRunResult(Node, Result);
+      Scheme.GetConvergenceTrackerFor(Node).RecordResult(Result.Status == BehaviorRunStatus.Success);
     }
 
     if (SaveGate.IsOpen)

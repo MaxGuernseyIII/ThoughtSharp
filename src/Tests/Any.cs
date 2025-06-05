@@ -23,6 +23,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Tests.Mocks;
+using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
 
@@ -115,5 +116,15 @@ static class Any
   public static ImmutableArray<MockRunnable> MockRunnables()
   {
     return [..Enumerable.Range(0, Int(1, 5)).Select(_ => new MockRunnable())];
+  }
+
+  public static TrainingMetadata TrainingMetadata()
+  {
+    return new()
+    {
+      MaximumAttempts = Any.Int(1, 10),
+      SampleSize = Any.Int(1, 10),
+      SuccessFraction = Any.Float
+    };
   }
 }

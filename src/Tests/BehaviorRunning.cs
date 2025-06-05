@@ -259,7 +259,7 @@ public class BehaviorRunning
     var Job = Model.GetTestPassFor(Pool, Reporter, Nodes);
 
     Job.Should().BeEquivalentTo(new AutomationPass([.. Nodes.GetBehaviorRunners(Pool)],
-      new FalseGate(), Pool, Reporter));
+      new FalseGate(), Pool, Reporter, null!));
   }
 
   public record Mind1(Brain Brain);

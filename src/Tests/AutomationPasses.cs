@@ -33,6 +33,8 @@ public class AutomationPasses
   MockReporter Reporter = null!;
   MockGate SaveGate = null!;
   MockSaver Saver = null!;
+  TrainingDataScheme Scheme = null!;
+  TrainingMetadata Metadata = null!;
   ImmutableArray<(ScenariosModelNode Node, MockRunnable Runnable)> Steps = [];
 
   [TestInitialize]
@@ -42,6 +44,8 @@ public class AutomationPasses
     SaveGate = new(Any.Bool);
     Saver = new();
     Reporter = new();
+    Metadata = Any.TrainingMetadata();
+    Scheme = new(Metadata);
   }
 
   [TestMethod]
@@ -88,6 +92,70 @@ public class AutomationPasses
     ThenWasNotSaved();
   }
 
+  [TestMethod]
+  public async Task ReportsFailureToConvergenceTracker()
+  {
+    var (Node, Runnable) = Any.Of(Steps);
+    var Pass = GivenAutomationPass();
+    GivenConvergenceOf1For(Node);
+    GivenRunnableWillReturnResult(Runnable, new()
+    {
+      Status = BehaviorRunStatus.Failure,
+      Exception = null
+    });
+
+    await Pass.Run();
+
+    ThenConvergenceIsLessThan1For(Node);
+  }
+
+  [TestMethod]
+  public async Task ReportsSuccessToConvergenceTracker()
+  {
+    var (Node, Runnable) = Any.Of(Steps);
+    var Pass = GivenAutomationPass();
+    GivenConvergenceOf0For(Node);
+    GivenRunnableWillReturnResult(Runnable, new()
+    {
+      Status = BehaviorRunStatus.Success,
+      Exception = null
+    });
+
+    await Pass.Run();
+
+    ThenConvergenceIsGreaterThan0For(Node);
+  }
+
+  void ThenConvergenceIsLessThan1For(ScenariosModelNode Node)
+  {
+    var Tracker = Scheme.GetConvergenceTrackerFor(Node);
+
+    Tracker.MeasureConvergence().Should().BeLessThan(1);
+  }
+
+  void GivenConvergenceOf1For(ScenariosModelNode Node)
+  {
+    var Tracker = Scheme.GetConvergenceTrackerFor(Node);
+
+    foreach (var _ in Enumerable.Range(0, Metadata.SampleSize))
+      Tracker.RecordResult(true);
+  }
+
+  void ThenConvergenceIsGreaterThan0For(ScenariosModelNode Node)
+  {
+    var Tracker = Scheme.GetConvergenceTrackerFor(Node);
+
+    Tracker.MeasureConvergence().Should().BeGreaterThan(0);
+  }
+
+  void GivenConvergenceOf0For(ScenariosModelNode Node)
+  {
+    var Tracker = Scheme.GetConvergenceTrackerFor(Node);
+
+    foreach (var _ in Enumerable.Range(0, Metadata.SampleSize))
+      Tracker.RecordResult(false);
+  }
+
   void GivenSaveGateStateIs(bool State)
   {
     SaveGate.Answers.Clear();
@@ -111,8 +179,13 @@ public class AutomationPasses
       Status = Any.EnumValue<BehaviorRunStatus>(),
       Exception = new()
     };
-    Runnable.Result = Result;
+    GivenRunnableWillReturnResult(Runnable, Result);
     return Result;
+  }
+
+  static void GivenRunnableWillReturnResult(MockRunnable Runnable, RunResult Result)
+  {
+    Runnable.Result = Result;
   }
 
   void ThenResultWasReported(ScenariosModelNode Node, RunResult Result)
@@ -127,7 +200,7 @@ public class AutomationPasses
 
   AutomationJob GivenAutomationPass()
   {
-    return new AutomationPass([..Steps], SaveGate, Saver, Reporter);
+    return new AutomationPass([..Steps], SaveGate, Saver, Reporter, Scheme);
   }
 }
 

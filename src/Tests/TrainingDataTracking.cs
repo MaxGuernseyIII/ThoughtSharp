@@ -35,12 +35,7 @@ public class TrainingDataTracking
   [TestInitialize]
   public void SetUp()
   {
-    Metadata = new()
-    {
-      MaximumAttempts = Any.Int(1, 10),
-      SampleSize = Any.Int(1, 10),
-      SuccessFraction = Any.Float
-    };
+    Metadata = Any.TrainingMetadata();
     Scheme = new(Metadata);
   }
 
