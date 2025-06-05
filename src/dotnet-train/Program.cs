@@ -85,7 +85,7 @@ static FileInfo ResolveDirectoryToFile(DirectoryInfo Directory, ArgumentResult R
     Result.ErrorMessage = "No solution or project files found in that directory";
   else if (Options.Take(2).Count() > 1)
     Result.ErrorMessage =
-      $"Found too many files:{string.Join("", Options.Select(O => Environment.NewLine + "  - " + O.FullName))}";
+      $"Found too many candidate files:{string.Join("", Options.Select(O => Environment.NewLine + "  - " + O.FullName))}";
   else
     Inferred = Options.Single();
 
