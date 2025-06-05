@@ -61,9 +61,6 @@ RootCommand.SetHandler(ToTrain =>
     }
   );
 
-  //var Scheme = new TrainingDataScheme();
-  //var Reporter = new ConsoleReporter()
-
   foreach (var Curriculum in CurriculumNodes)
   {
     Console.WriteLine($"Training curriculum: {Curriculum.Name}");
