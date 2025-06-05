@@ -70,6 +70,8 @@ RootCommand.SetHandler((ToTrain, NoBuild) =>
   else
     Console.WriteLine("Skipping build.");
 
+  Console.WriteLine("");
+
   Console.WriteLine($"Training {ToTrain.FullName}:");
 }, TargetArgument, NoBuildOption);
 
