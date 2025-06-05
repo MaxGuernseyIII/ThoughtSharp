@@ -229,7 +229,7 @@ public class TrainingPlanConstruction
   }
 
   [TestMethod]
-  public void CurriculumConvertsToPlan()
+  public void CurriculumPhaseConvertsToConcretePlan()
   {
     var PlanNode = GivenCurriculumPhaseNode([], BehaviorNodes);
 
@@ -238,6 +238,26 @@ public class TrainingPlanConstruction
     Plan.Should().BeEquivalentTo(
       new TrainingPlan(PlanNode,
         [Model.MakeAutomationLoopForPhase(PlanNode, Pool, Reporter, Scheme)],
+        Reporter));
+  }
+
+  [TestMethod]
+  public void CurriculumPhaseWithChildPhasesConvertsToAbstractPlan()
+  {
+    var ChildPlan1 = GivenCurriculumPhaseNode([], [BehaviorNode1, BehaviorNode2]);
+    var ChildPlan2 = GivenCurriculumPhaseNode([], [BehaviorNode3]);
+    var PlanNode = GivenCurriculumPhaseNode([
+      ChildPlan1,
+      ChildPlan2
+    ], []);
+
+    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, Reporter, Scheme);
+
+    Plan.Should().BeEquivalentTo(
+      new TrainingPlan(PlanNode,
+        [
+          ..PlanNode.GetChildPhases().Select(Child => Model.BuildTrainingPlanFor(Child, Pool, Reporter, Scheme))
+        ],
         Reporter));
   }
 

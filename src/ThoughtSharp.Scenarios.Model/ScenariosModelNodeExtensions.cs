@@ -34,6 +34,13 @@ public static class ScenariosModelNodeExtensions
     TrainingDataScheme TrainingDataScheme
   )
   {
+    var ChildPhases = PhaseNode.GetChildPhases();
+    if (ChildPhases.Any())
+      return new TrainingPlan(
+        PhaseNode,
+        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, Reporter, TrainingDataScheme))],
+        Reporter);
+
     return new TrainingPlan(
       PhaseNode,
       [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, TrainingDataScheme)],
