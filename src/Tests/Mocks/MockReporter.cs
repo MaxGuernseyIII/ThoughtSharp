@@ -2,7 +2,7 @@
 
 namespace Tests.Mocks;
 
-class MockReporter : Reporter
+class MockReporter : MockDisposable, Reporter
 {
   public Action<ScenariosModelNode> ReportEnterBehavior = delegate { };
   public Action<ScenariosModelNode> ReportExitBehavior = delegate { };

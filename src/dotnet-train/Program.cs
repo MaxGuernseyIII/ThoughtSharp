@@ -76,11 +76,13 @@ Environment.ExitCode = RootCommand.Invoke(args);
 
 class ConsoleReporter(TrainingDataScheme Scheme) : Reporter
 {
+  readonly CancellationTokenSource Cancellation = new();
+
   public void Start()
   {
     Task.Run(async () =>
     {
-      while (true)
+      while (!Cancellation.Token.IsCancellationRequested)
       {
         await Task.Delay(TimeSpan.FromSeconds(0.5));
 
@@ -92,7 +94,6 @@ class ConsoleReporter(TrainingDataScheme Scheme) : Reporter
           Console.WriteLine($"{Node.Name}: {Convergence:P}");
         }
       }
-      // ReSharper disable once FunctionNeverReturns
     });
   }
   public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
@@ -107,5 +108,10 @@ class ConsoleReporter(TrainingDataScheme Scheme) : Reporter
   public void ReportExit(ScenariosModelNode Node)
   {
     Console.WriteLine($"Exit: {Node.Name}");
+  }
+
+  public void Dispose()
+  {
+    Cancellation.Cancel();
   }
 }
