@@ -55,60 +55,6 @@ RootCommand.SetHandler(ToTrain =>
   var Parser = new AssemblyParser();
 
   var Model = Parser.Parse(Assembly);
-  Console.WriteLine(Model.Query(new Scanner()));
 }, AssemblyArgument);
 
 Environment.ExitCode = RootCommand.Invoke(args);
-
-class Scanner : ScenariosModelNodeVisitor<string>
-{
-  string Scan(Action<IndentedTextWriter> Describe, IEnumerable<ScenariosModelNode> ChildNodes)
-  {
-    using StringWriter Core = new();
-    using IndentedTextWriter Writer = new IndentedTextWriter(Core, "  ");
-
-    Describe(Writer);
-
-    Writer.Indent++;
-
-    foreach (var Child in ChildNodes) 
-      Writer.Write(Child.Query(this));
-
-    return Core.ToString();
-  }
-
-  public string Visit(ScenariosModel Model)
-  {
-    return Scan(W => W.WriteLine("model:"), Model.ChildNodes);
-  }
-
-  public string Visit(DirectoryNode Directory)
-  {
-    return Scan(W => W.WriteLine($"directory: {Directory.Name}"), Directory.ChildNodes);
-  }
-
-  public string Visit(CurriculumNode Curriculum)
-  {
-    return Scan(W => W.WriteLine($"curriculum: {Curriculum.Name}"), Curriculum.ChildNodes);
-  }
-
-  public string Visit(CapabilityNode Capability)
-  {
-    return Scan(W => W.WriteLine($"capability: {Capability.Name}"), Capability.ChildNodes);
-  }
-
-  public string Visit(MindPlaceNode MindPlace)
-  {
-    return Scan(W => W.WriteLine($"mind place: {MindPlace.Name}"), MindPlace.ChildNodes);
-  }
-
-  public string Visit(BehaviorNode Behavior)
-  {
-    return Scan(W => W.WriteLine($"behavior: {Behavior.Name}"), Behavior.ChildNodes);
-  }
-
-  public string Visit(CurriculumPhaseNode CurriculumPhase)
-  {
-    return Scan(W => W.WriteLine($"curriculum phase: {CurriculumPhase.Name}"), CurriculumPhase.ChildNodes);
-  }
-}
