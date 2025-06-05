@@ -20,87 +20,95 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.CodeDom.Compiler;
 using System.CommandLine;
-using System.CommandLine.Parsing;
-using System.Diagnostics;
+using System.Reflection;
+using ThoughtSharp.Scenarios.Model;
 
 var RootCommand = new RootCommand("Train models with ThoughtSharp");
-var NoBuildOption = new Option<bool>(
-  "--no-build",
-  description: "Skip building",
-  getDefaultValue: () => false
-);
-var TargetArgument = new Argument<FileInfo>(
-    "--target",
-    description: "The .sln, .csproj, or .dll to train",
-    isDefault: true,
-    parse: A =>
-    {
-      var ToTrain = GetFileSystemObjectToTrain(A);
 
-      if (ToTrain is FileInfo R)
-        return R;
-
-      if (ToTrain is DirectoryInfo D)
-        return ResolveDirectoryToFile(D, A);
-
-      throw new InvalidOperationException($"Unknown type of file system object: {ToTrain}");
-    })
-  {
-    Arity = ArgumentArity.ZeroOrOne
-  }
-  .AddCompletions(C =>
-  {
-    return Directory
-      .EnumerateFileSystemEntries(Directory.GetCurrentDirectory(), "*.*", SearchOption.TopDirectoryOnly)
-      .Select(F => Path.GetFileName(F)!)
-      .Where(F => F.StartsWith(C.WordToComplete, StringComparison.OrdinalIgnoreCase))
-      .Where(F => F.EndsWith(".sln", StringComparison.OrdinalIgnoreCase) ||
-                  F.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase) ||
-                  F.EndsWith(".dll", StringComparison.OrdinalIgnoreCase));
-  });
-
-RootCommand.AddArgument(TargetArgument);
-RootCommand.AddOption(NoBuildOption);
-
-RootCommand.SetHandler((ToTrain, NoBuild) =>
+var AssemblyArgument = new Argument<FileInfo>
 {
-  if (!NoBuild)
-    Process.Start("dotnet", ["build", ToTrain.FullName]).WaitForExit();
-  else
-    Console.WriteLine("Skipping build.");
+  Name = "assembly",
+  Description = "The .net assembly to train",
+  Arity = ArgumentArity.ExactlyOne
+};
+  
+AssemblyArgument.AddValidator(R =>
+{
+  var File = R.GetValueOrDefault<FileInfo?>();
 
-  Console.WriteLine("");
+  if (File is null)
+    R.ErrorMessage = "The assembly argument is required";
+  else if (!File.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
+    R.ErrorMessage = "The specified assembly must be a .net assembly (with an extension '.dll')";
+  else if (!File.Exists)
+    R.ErrorMessage = "The specified assembly does not exist";
+});
 
+RootCommand.AddArgument(AssemblyArgument);
+
+RootCommand.SetHandler(ToTrain =>
+{
   Console.WriteLine($"Training {ToTrain.FullName}:");
-}, TargetArgument, NoBuildOption);
+  var Assembly = System.Reflection.Assembly.LoadFrom(ToTrain.FullName);
+  var Parser = new AssemblyParser();
+
+  var Model = Parser.Parse(Assembly);
+  Console.WriteLine(Model.Query(new Scanner()));
+}, AssemblyArgument);
 
 Environment.ExitCode = RootCommand.Invoke(args);
 
-static FileInfo ResolveDirectoryToFile(DirectoryInfo Directory, ArgumentResult Result)
+class Scanner : ScenariosModelNodeVisitor<string>
 {
-  var Options = Directory.GetFiles("*.sln").Concat(Directory.GetFiles("*.csproj"));
-  FileInfo? Inferred = null;
-  if (!Options.Any())
-    Result.ErrorMessage = "No solution or project files found in that directory";
-  else if (Options.Take(2).Count() > 1)
-    Result.ErrorMessage =
-      $"Found too many candidate files:{string.Join("", Options.Select(O => Environment.NewLine + "  - " + O.FullName))}";
-  else
-    Inferred = Options.Single();
+  string Scan(Action<IndentedTextWriter> Describe, IEnumerable<ScenariosModelNode> ChildNodes)
+  {
+    using StringWriter Core = new();
+    using IndentedTextWriter Writer = new IndentedTextWriter(Core, "  ");
 
-  return Inferred!;
-}
+    Describe(Writer);
 
-FileSystemInfo GetFileSystemObjectToTrain(ArgumentResult ArgumentResult)
-{
-  if (!ArgumentResult.Tokens.Any())
-    return new DirectoryInfo(Directory.GetCurrentDirectory());
+    Writer.Indent++;
 
-  var Path = ArgumentResult.Tokens.Single().Value;
+    foreach (var Child in ChildNodes) 
+      Writer.Write(Child.Query(this));
 
-  if (Directory.Exists(Path))
-    return new DirectoryInfo(Path);
+    return Core.ToString();
+  }
 
-  return new FileInfo(Path);
+  public string Visit(ScenariosModel Model)
+  {
+    return Scan(W => W.WriteLine("model:"), Model.ChildNodes);
+  }
+
+  public string Visit(DirectoryNode Directory)
+  {
+    return Scan(W => W.WriteLine($"directory: {Directory.Name}"), Directory.ChildNodes);
+  }
+
+  public string Visit(CurriculumNode Curriculum)
+  {
+    return Scan(W => W.WriteLine($"curriculum: {Curriculum.Name}"), Curriculum.ChildNodes);
+  }
+
+  public string Visit(CapabilityNode Capability)
+  {
+    return Scan(W => W.WriteLine($"capability: {Capability.Name}"), Capability.ChildNodes);
+  }
+
+  public string Visit(MindPlaceNode MindPlace)
+  {
+    return Scan(W => W.WriteLine($"mind place: {MindPlace.Name}"), MindPlace.ChildNodes);
+  }
+
+  public string Visit(BehaviorNode Behavior)
+  {
+    return Scan(W => W.WriteLine($"behavior: {Behavior.Name}"), Behavior.ChildNodes);
+  }
+
+  public string Visit(CurriculumPhaseNode CurriculumPhase)
+  {
+    return Scan(W => W.WriteLine($"curriculum phase: {CurriculumPhase.Name}"), CurriculumPhase.ChildNodes);
+  }
 }
