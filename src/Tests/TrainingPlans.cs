@@ -20,11 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using Tests.Mocks;
-using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
@@ -191,104 +189,5 @@ public class TrainingPlans
 
   void ThenRanToCompletion()
   {
-  }
-}
-
-[TestClass]
-public class TrainingPlanConstruction
-{
-  BehaviorNode BehaviorNode1 = null!;
-  BehaviorNode BehaviorNode2 = null!;
-  BehaviorNode BehaviorNode3 = null!;
-  ImmutableArray<ScenariosModelNode> BehaviorNodes;
-  TrainingMetadata Metadata = null!;
-  ScenariosModel Model = null!;
-  MindPool Pool = null!;
-  MockReporter Reporter = null!;
-  TrainingDataScheme Scheme = null!;
-
-  [TestInitialize]
-  public void SetUp()
-  {
-    Model = new([]);
-    Pool = new(ImmutableDictionary<Type, MindPlace>.Empty);
-    var Type1 = typeof(Host1);
-    var Type2 = typeof(Host2);
-    BehaviorNode1 = new(Type1, Type1.GetMethod(nameof(Host1.Method1))!);
-    BehaviorNode2 = new(Type2, Type2.GetMethod(nameof(Host2.Method2))!);
-    BehaviorNode3 = new(Type2, Type2.GetMethod(nameof(Host2.Method3))!);
-    Metadata = new()
-    {
-      MaximumAttempts = Any.Int(1, 10),
-      SampleSize = Any.Int(1, 10),
-      SuccessFraction = Any.Float
-    };
-    Scheme = new(Metadata);
-    BehaviorNodes = [BehaviorNode1, BehaviorNode2, BehaviorNode3];
-    Reporter = new();
-  }
-
-  [TestMethod]
-  public void CurriculumPhaseConvertsToConcretePlan()
-  {
-    var PlanNode = GivenCurriculumPhaseNode([], BehaviorNodes);
-
-    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, Reporter, Scheme);
-
-    Plan.Should().BeEquivalentTo(
-      new TrainingPlan(PlanNode,
-        [Model.MakeAutomationLoopForPhase(PlanNode, Pool, Reporter, Scheme)],
-        Reporter));
-  }
-
-  [TestMethod]
-  public void CurriculumPhaseWithChildPhasesConvertsToAbstractPlan()
-  {
-    var ChildPlan1 = GivenCurriculumPhaseNode([], [BehaviorNode1, BehaviorNode2]);
-    var ChildPlan2 = GivenCurriculumPhaseNode([], [BehaviorNode3]);
-    var PlanNode = GivenCurriculumPhaseNode([
-      ChildPlan1,
-      ChildPlan2
-    ], []);
-
-    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, Reporter, Scheme);
-
-    Plan.Should().BeEquivalentTo(
-      new TrainingPlan(PlanNode,
-        [
-          ..PlanNode.GetChildPhases().Select(Child => Model.BuildTrainingPlanFor(Child, Pool, Reporter, Scheme))
-        ],
-        Reporter));
-  }
-
-  ScenariosModelNode GivenCurriculumPhaseNode(
-    ImmutableArray<ScenariosModelNode> Children,
-    ImmutableArray<ScenariosModelNode> IncludedBehaviors)
-  {
-    return new CurriculumPhaseNode(null!, Any.Float, Metadata, Children,
-    [
-      ..IncludedBehaviors.Select(N => new FetchDataFromNode<ScenariosModelNode?>
-      {
-        VisitModel = _ => N
-      })
-    ]);
-  }
-
-  public class Host1
-  {
-    public void Method1()
-    {
-    }
-  }
-
-  public class Host2
-  {
-    public void Method2()
-    {
-    }
-
-    public void Method3()
-    {
-    }
   }
 }

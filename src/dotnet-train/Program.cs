@@ -55,6 +55,60 @@ RootCommand.SetHandler(ToTrain =>
   var Parser = new AssemblyParser();
 
   var Model = Parser.Parse(Assembly);
+  var CurriculumNodes = Model.Query(new CrawlingVisitor<CurriculumNode>()
+    {
+      VisitCurriculum = C => [C]
+    }
+  );
+
+  //var Scheme = new TrainingDataScheme();
+  //var Reporter = new ConsoleReporter()
+
+  foreach (var Curriculum in CurriculumNodes)
+  {
+    Console.WriteLine($"Training curriculum: {Curriculum.Name}");
+
+
+    var Pool = new MindPool(Model.MindPlaceIndex);
+
+    //var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool,  )
+  }
 }, AssemblyArgument);
 
 Environment.ExitCode = RootCommand.Invoke(args);
+
+class ConsoleReporter(TrainingDataScheme Scheme) : Reporter
+{
+  public void Start()
+  {
+    Task.Run(async () =>
+    {
+      while (true)
+      {
+        await Task.Delay(TimeSpan.FromSeconds(0.5));
+
+        foreach (var Node in Scheme.TrackedNodes)
+        {
+          var State = Scheme.GetConvergenceTrackerFor(Node);
+          var Convergence = State.MeasureConvergence();
+
+          Console.WriteLine($"{Node.Name}: {Convergence:P}");
+        }
+      }
+      // ReSharper disable once FunctionNeverReturns
+    });
+  }
+  public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
+  {
+  }
+
+  public void ReportEnter(ScenariosModelNode Node)
+  {
+    Console.WriteLine($"Enter: {Node.Name}");
+  }
+
+  public void ReportExit(ScenariosModelNode Node)
+  {
+    Console.WriteLine($"Exit: {Node.Name}");
+  }
+}

@@ -30,20 +30,23 @@ public static class ScenariosModelNodeExtensions
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
     MindPool Pool,
-    Reporter Reporter,
-    TrainingDataScheme TrainingDataScheme
-  )
+    Reporter Reporter)
   {
+    var Metadata = PhaseNode.Query(new TargetedVisitor<TrainingMetadata>
+    {
+      VisitCurriculumPhase = Phase => [Phase.TrainingMetadata]
+    }).Single();
+
     var ChildPhases = PhaseNode.GetChildPhases();
     if (ChildPhases.Any())
       return new TrainingPlan(
         PhaseNode,
-        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, Reporter, TrainingDataScheme))],
+        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, Reporter))],
         Reporter);
 
     return new TrainingPlan(
       PhaseNode,
-      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, TrainingDataScheme)],
+      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, new(Metadata))],
       Reporter);
   }
 
@@ -59,23 +62,18 @@ public static class ScenariosModelNodeExtensions
       VisitCurriculumPhase = Phase => Phase.IncludedTrainingScenarioNodeFinders
     });
 
-    var Metadata = PhaseNode.Query(new TargetedVisitor<TrainingMetadata>
-    {
-      VisitCurriculumPhase = Phase => [Phase.TrainingMetadata]
-    }).Single()!;
-
     var Behaviors = IncludedScenariosFinders.Select(This.Query).Where(B => B is not null).OfType<ScenariosModelNode>()
       .ToImmutableArray();
 
     var Pass = This.GetTestPassFor(Pool, Reporter, Behaviors!);
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
-      Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), Metadata.SuccessFraction));
+      Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), TrainingDataScheme.Metadata.SuccessFraction));
 
     var SuccessGate = Nodes.Skip(1).Aggregate(Nodes.First(), Gate.ForAnd);
     return new AutomationLoop(
       Pass,
       Gate.ForAnd(
-        Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, Metadata.MaximumAttempts), SuccessGate),
+        Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, TrainingDataScheme.Metadata.MaximumAttempts), SuccessGate),
         SuccessGate,
         new CompoundIncrementable(TrainingDataScheme.Attempts, TrainingDataScheme.TimesSinceSaved)
     );
