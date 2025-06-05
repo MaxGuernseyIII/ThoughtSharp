@@ -20,98 +20,64 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.CodeDom.Compiler;
 using System.CommandLine;
-using System.Reflection;
 using ThoughtSharp.Scenarios.Model;
 
-var RootCommand = new RootCommand("Train models with ThoughtSharp");
+namespace dotnet_train;
 
-var AssemblyArgument = new Argument<FileInfo>
+class Program
 {
-  Name = "assembly",
-  Description = "The .net assembly to train",
-  Arity = ArgumentArity.ExactlyOne
-};
+  public static async Task Main(string[] Args)
+  {
+    var RootCommand = new RootCommand("Train models with ThoughtSharp");
+
+    var AssemblyArgument = new Argument<FileInfo>
+    {
+      Name = "assembly",
+      Description = "The .net assembly to train",
+      Arity = ArgumentArity.ExactlyOne
+    };
   
-AssemblyArgument.AddValidator(R =>
-{
-  var File = R.GetValueOrDefault<FileInfo?>();
-
-  if (File is null)
-    R.ErrorMessage = "The assembly argument is required";
-  else if (!File.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
-    R.ErrorMessage = "The specified assembly must be a .net assembly (with an extension '.dll')";
-  else if (!File.Exists)
-    R.ErrorMessage = "The specified assembly does not exist";
-});
-
-RootCommand.AddArgument(AssemblyArgument);
-
-RootCommand.SetHandler(ToTrain =>
-{
-  Console.WriteLine($"Training {ToTrain.FullName}:");
-  var Assembly = System.Reflection.Assembly.LoadFrom(ToTrain.FullName);
-  var Parser = new AssemblyParser();
-
-  var Model = Parser.Parse(Assembly);
-  var CurriculumNodes = Model.Query(new CrawlingVisitor<CurriculumNode>()
+    AssemblyArgument.AddValidator(R =>
     {
-      VisitCurriculum = C => [C]
-    }
-  );
+      var File = R.GetValueOrDefault<FileInfo?>();
 
-  foreach (var Curriculum in CurriculumNodes)
-  {
-    Console.WriteLine($"Training curriculum: {Curriculum.Name}");
-
-
-    var Pool = new MindPool(Model.MindPlaceIndex);
-
-    //var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool,  )
-  }
-}, AssemblyArgument);
-
-Environment.ExitCode = RootCommand.Invoke(args);
-
-class ConsoleReporter(TrainingDataScheme Scheme) : Reporter
-{
-  readonly CancellationTokenSource Cancellation = new();
-
-  public void Start()
-  {
-    Task.Run(async () =>
-    {
-      while (!Cancellation.Token.IsCancellationRequested)
-      {
-        await Task.Delay(TimeSpan.FromSeconds(0.5));
-
-        foreach (var Node in Scheme.TrackedNodes)
-        {
-          var State = Scheme.GetConvergenceTrackerFor(Node);
-          var Convergence = State.MeasureConvergence();
-
-          Console.WriteLine($"{Node.Name}: {Convergence:P}");
-        }
-      }
+      if (File is null)
+        R.ErrorMessage = "The assembly argument is required";
+      else if (!File.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase))
+        R.ErrorMessage = "The specified assembly must be a .net assembly (with an extension '.dll')";
+      else if (!File.Exists)
+        R.ErrorMessage = "The specified assembly does not exist";
     });
-  }
-  public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
-  {
-  }
 
-  public void ReportEnter(ScenariosModelNode Node)
-  {
-    Console.WriteLine($"Enter: {Node.Name}");
-  }
+    RootCommand.AddArgument(AssemblyArgument);
 
-  public void ReportExit(ScenariosModelNode Node)
-  {
-    Console.WriteLine($"Exit: {Node.Name}");
-  }
+    RootCommand.SetHandler(async ToTrain =>
+    {
+      Console.WriteLine($"Training {ToTrain.FullName}:");
+      var Assembly = System.Reflection.Assembly.LoadFrom(ToTrain.FullName);
+      var Parser = new AssemblyParser();
 
-  public void Dispose()
-  {
-    Cancellation.Cancel();
+      var Model = Parser.Parse(Assembly);
+      var CurriculumNodes = Model.Query(new CrawlingVisitor<CurriculumNode>()
+        {
+          VisitCurriculum = C => [C]
+        }
+      );
+
+      foreach (var Curriculum in CurriculumNodes)
+      {
+        Console.WriteLine($"Training curriculum: {Curriculum.Name}");
+
+
+        var Pool = new MindPool(Model.MindPlaceIndex);
+        var Scheme = new TrainingDataScheme(new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1});
+
+        var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, S => new ConsoleReporter(S), Scheme);
+        await Plan.Run();
+      }
+    }, AssemblyArgument);
+
+    Environment.ExitCode = await RootCommand.InvokeAsync(Args);
   }
 }

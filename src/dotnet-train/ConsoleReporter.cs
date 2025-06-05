@@ -20,36 +20,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios.Model;
+using ThoughtSharp.Scenarios.Model;
 
-public interface Gate
+namespace dotnet_train;
+
+class ConsoleReporter(TrainingDataScheme Scheme) : Reporter
 {
-  bool IsOpen { get; }
+  readonly CancellationTokenSource Cancellation = new();
 
-  static Gate AlwaysOpen => new AlwaysGate(true);
-
-  static Gate ForConvergenceTrackerAndThreshold(ConvergenceTracker Tracker, double Threshold)
+  public void Start()
   {
-    return new ConvergenceTrackerAndThresholdGate(Tracker, Threshold);
+    Task.Run(async () =>
+    {
+      while (!Cancellation.Token.IsCancellationRequested)
+      {
+        await Task.Delay(TimeSpan.FromSeconds(0.5));
+
+        foreach (var Node in Scheme.TrackedNodes)
+        {
+          var State = Scheme.GetConvergenceTrackerFor(Node);
+          var Convergence = State.MeasureConvergence();
+
+          Console.WriteLine($"{Node.Name}: {Convergence:P}");
+        }
+      }
+    });
+  }
+  public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
+  {
   }
 
-  static Gate ForAnd(Gate LeftGate, Gate RightGate)
+  public void ReportEnter(ScenariosModelNode Node)
   {
-    return new AndGate(LeftGate, RightGate);
+    Console.WriteLine($"Enter: {Node.Name}");
   }
 
-  static Gate ForCounterAndMinimum(HasValue<int> Counter, int Threshold)
+  public void ReportExit(ScenariosModelNode Node)
   {
-    return new CounterAndMinimumGate(Counter, Threshold);
+    Console.WriteLine($"Exit: {Node.Name}");
   }
 
-  static Gate ForCounterAndMaximum(HasValue<int> Counter, int Threshold)
+  public void Dispose()
   {
-    return new CounterAndMaximumGate(Counter, Threshold);
-  }
-
-  static Gate ForOr(Gate LeftGate, Gate RightGate)
-  {
-    return new OrGate(LeftGate, RightGate);
+    Cancellation.Cancel();
   }
 }

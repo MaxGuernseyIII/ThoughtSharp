@@ -27,6 +27,7 @@ static class Queries
   public static ScenariosModelNodeVisitor<IEnumerable<TrainingMetadata>> GetTrainingMetadata { get; } =
     new TargetedVisitor<TrainingMetadata>()
     {
+      VisitCurriculum = C => [new() { MaximumAttempts = 1, SampleSize = 1, SuccessFraction = 1}],
       VisitCurriculumPhase = P => [P.TrainingMetadata]
     };
 }
