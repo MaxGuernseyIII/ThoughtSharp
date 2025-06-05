@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using FluentAssertions;
+using FluentAssertions.Execution;
 using Tests.Mocks;
 using ThoughtSharp.Scenarios.Model;
 
@@ -30,6 +31,7 @@ namespace Tests;
 public class TrainingPlans
 {
   MockNode PlanNode = null!;
+  MockReporter Reporter = null!;
   List<MockRunnable> ActuallyRunJobs = null!;
 
   [TestInitialize]
@@ -37,6 +39,7 @@ public class TrainingPlans
   {
     PlanNode = new();
     ActuallyRunJobs = new();
+    Reporter = new();
   }
 
   [TestMethod]
@@ -89,9 +92,66 @@ public class TrainingPlans
     ThenResultIs(Result, BehaviorRunStatus.Failure);
   }
 
+  [TestMethod]
+  public async Task ReportsStart()
+  {
+    var EnteredNodes = new List<ScenariosModelNode>();
+    Reporter.ReportEnterBehavior = EnteredNodes.Add;
+    var Plan = GivenTrainingPlanForJobs(GivenAnySelfTrackingRunnables(Any.EnumValue<BehaviorRunStatus>()));
+
+    await Plan.Run();
+
+    EnteredNodes.Should().BeEquivalentTo([PlanNode]);
+  }
+
+  [TestMethod]
+  public async Task NeverReportsEntryAfterItemRun()
+  {
+    var Runnable = new MockRunnable
+    {
+      RunBehavior = delegate
+      {
+        Reporter.ReportEnterBehavior = delegate { Assert.Fail("This cannot happen after a sub-job is run."); };
+        return Task.FromResult(new RunResult() { Status = Any.EnumValue<BehaviorRunStatus>() });
+      }
+    };
+    var Plan = GivenTrainingPlanForJobs([Runnable]);
+
+    await Plan.Run();
+
+    ThenRanToCompletion();
+  }
+
+  [TestMethod]
+  public async Task ReportsEnd()
+  {
+    var ExitedNodes = new List<ScenariosModelNode>();
+    Reporter.ReportExitBehavior = ExitedNodes.Add;
+    var Plan = GivenTrainingPlanForJobs(GivenAnySelfTrackingRunnables(Any.EnumValue<BehaviorRunStatus>()));
+
+    await Plan.Run();
+
+    ExitedNodes.Should().BeEquivalentTo([PlanNode]);
+  }
+
+  [TestMethod]
+  public async Task NeverRunsTaskAfterReportingExit()
+  {
+    var Runnable = new MockRunnable();
+    Reporter.ReportExitBehavior = delegate
+    {
+      Runnable.RunBehavior = () => throw new AssertionFailedException("Cannot run tasks after reporting exit.");
+    };
+    var Plan = GivenTrainingPlanForJobs([Runnable]);
+
+    await Plan.Run();
+
+    ThenRanToCompletion();
+  }
+
   TrainingPlan GivenTrainingPlanForJobs(IReadOnlyList<MockRunnable> SubJobs)
   {
-    return new(PlanNode, [..SubJobs]);
+    return new(PlanNode, [..SubJobs], Reporter);
   }
 
   IReadOnlyList<MockRunnable> GivenAnySelfTrackingRunnables(BehaviorRunStatus RunStatus, int Minimum = 1, int Maximum = 4)
@@ -123,5 +183,9 @@ public class TrainingPlans
   static void ThenResultIs(RunResult Result, BehaviorRunStatus Expected)
   {
     Result.Status.Should().Be(Expected);
+  }
+
+  void ThenRanToCompletion()
+  {
   }
 }

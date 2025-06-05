@@ -24,20 +24,29 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public record TrainingPlan(ScenariosModelNode PlanNode, ImmutableArray<Runnable> SubJobs) : Runnable
+public record TrainingPlan(ScenariosModelNode PlanNode, ImmutableArray<Runnable> SubJobs, Reporter Reporter) : Runnable
 {
   public async Task<RunResult> Run()
   {
-    foreach (var SubJob in SubJobs)
-      if ((await SubJob.Run()).Status == BehaviorRunStatus.Failure)
-        return new()
-        {
-          Status = BehaviorRunStatus.Failure
-        };
-
-    return new()
+    try
     {
-      Status = BehaviorRunStatus.Success
-    };
+      Reporter.ReportEnter(PlanNode);
+
+      foreach (var SubJob in SubJobs)
+        if ((await SubJob.Run()).Status == BehaviorRunStatus.Failure)
+          return new()
+          {
+            Status = BehaviorRunStatus.Failure
+          };
+
+      return new()
+      {
+        Status = BehaviorRunStatus.Success
+      };
+    }
+    finally
+    {
+      Reporter.ReportExit(PlanNode);
+    }
   }
 }

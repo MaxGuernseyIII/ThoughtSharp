@@ -4,6 +4,9 @@ namespace Tests.Mocks;
 
 class MockReporter : Reporter
 {
+  public Action<ScenariosModelNode> ReportEnterBehavior = delegate { };
+  public Action<ScenariosModelNode> ReportExitBehavior = delegate { };
+
   public Dictionary<ScenariosModelNode, List<RunResult>> Results = [];
 
   public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
@@ -12,5 +15,15 @@ class MockReporter : Reporter
       Results[Node] = List = new();
 
     List.Add(Result);
+  }
+
+  public void ReportEnter(ScenariosModelNode Node)
+  {
+    ReportEnterBehavior(Node);
+  }
+
+  public void ReportExit(ScenariosModelNode Node)
+  {
+    ReportExitBehavior(Node);
   }
 }
