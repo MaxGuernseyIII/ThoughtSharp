@@ -20,50 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-
 namespace ThoughtSharp.Scenarios.Model;
 
-public record TrainingPlan(
-  ScenariosModelNode PlanNode, 
-  ImmutableArray<Runnable> SubJobs, 
-  Func<TrainingDataScheme, Reporter> MakeReporter,
-  TrainingDataScheme Scheme) : Runnable
+static class Queries
 {
-  public async Task<RunResult> Run()
-  {
-    var Reporter = MakeReporter(null!);
-    try
+  public static ScenariosModelNodeVisitor<IEnumerable<TrainingMetadata>> GetTrainingMetadata { get; } =
+    new TargetedVisitor<TrainingMetadata>()
     {
-      Reporter.ReportEnter(PlanNode);
-
-      foreach (var SubJob in SubJobs)
-        if ((await SubJob.Run()).Status == BehaviorRunStatus.Failure)
-          return new()
-          {
-            Status = BehaviorRunStatus.Failure
-          };
-
-      return new()
-      {
-        Status = BehaviorRunStatus.Success
-      };
-    }
-    finally
-    {
-      Reporter.ReportExit(PlanNode);
-    }
-  }
-
-  public virtual bool Equals(TrainingPlan? Other)
-  {
-    if (Other is null) return false;
-    if (ReferenceEquals(this, Other)) return true;
-    return PlanNode.Equals(Other.PlanNode) && SubJobs.SequenceEqual(Other.SubJobs) && MakeReporter(Scheme).Equals(Other.MakeReporter(Scheme));
-  }
-
-  public override int GetHashCode()
-  {
-    return HashCode.Combine(PlanNode, SubJobs, MakeReporter(Scheme));
-  }
+      VisitCurriculumPhase = P => [P.TrainingMetadata]
+    };
 }

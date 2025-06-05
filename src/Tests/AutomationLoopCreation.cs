@@ -79,11 +79,11 @@ public class AutomationLoopCreation
         TrainingMetadata.SuccessFraction))
       .ToImmutableArray();
     var ConvergenceRule = ConvergenceGates[1..].Aggregate(ConvergenceGates[0], Gate.ForAnd);
-    var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, Scheme);
+    var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, _ => Reporter, Scheme);
 
     Loop.Should().BeEquivalentTo(
       new AutomationLoop(
-        Model.GetTestPassFor(Pool, Reporter, [
+        Model.GetTestPassFor(Pool, _ => Reporter, [
           ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
         ]),
         new AndGate(

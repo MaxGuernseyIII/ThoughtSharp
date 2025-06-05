@@ -93,4 +93,39 @@ public class TrainingDataTracking
     Tracker.Should().NotBeNull();
     Tracker.Should().NotBeSameAs(Scheme.GetConvergenceTrackerFor(new MockNode()));
   }
+
+  [TestMethod]
+  public void CanGetPersistentChildTrackerForCurriculumPhase()
+  {
+    var Node = AnyCurriculumPhaseNode();
+
+    var Actual = Scheme.GetChildScheme(Node);
+
+    Actual.Should().NotBeNull();
+    Actual.Should().BeSameAs(Scheme.GetChildScheme(Node));
+  }
+
+  [TestMethod]
+  public void UsesChildMetadataForChildTrackers()
+  {
+    var Node = AnyCurriculumPhaseNode();
+
+    var Actual = Scheme.GetChildScheme(Node);
+
+    Actual.Metadata.Should().BeSameAs(Node.TrainingMetadata);
+  }
+
+  [TestMethod]
+  public void PersistentChildTrackerDistinctByNode()
+  {
+    var Actual = Scheme.GetChildScheme(AnyCurriculumPhaseNode());
+
+    Actual.Should().NotBeNull();
+    Actual.Should().NotBeSameAs(Scheme.GetChildScheme(AnyCurriculumPhaseNode()));
+  }
+
+  static CurriculumPhaseNode AnyCurriculumPhaseNode()
+  {
+    return new(null!, Any.Float, Any.TrainingMetadata(), [], []);
+  }
 }

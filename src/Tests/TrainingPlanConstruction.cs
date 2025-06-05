@@ -38,6 +38,7 @@ public class TrainingPlanConstruction
   ScenariosModel Model = null!;
   MindPool Pool = null!;
   MockReporter Reporter = null!;
+  TrainingDataScheme Scheme = null!;
 
   [TestInitialize]
   public void SetUp()
@@ -49,14 +50,9 @@ public class TrainingPlanConstruction
     BehaviorNode1 = new(Type1, Type1.GetMethod(nameof(Host1.Method1))!);
     BehaviorNode2 = new(Type2, Type2.GetMethod(nameof(Host2.Method2))!);
     BehaviorNode3 = new(Type2, Type2.GetMethod(nameof(Host2.Method3))!);
-    //Metadata = new()
-    //{
-    //  MaximumAttempts = Any.Int(1, 10),
-    //  SampleSize = Any.Int(1, 10),
-    //  SuccessFraction = Any.Float
-    //};
     BehaviorNodes = [BehaviorNode1, BehaviorNode2, BehaviorNode3];
     Reporter = new();
+    Scheme = new(Any.TrainingMetadata());
   }
 
   [TestMethod]
@@ -64,12 +60,18 @@ public class TrainingPlanConstruction
   {
     var PlanNode = GivenCurriculumPhaseNode([], BehaviorNodes);
 
-    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, Reporter);
+    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, MakeReporter, Scheme);
 
     Plan.Should().BeEquivalentTo(
       new TrainingPlan(PlanNode,
-        [Model.MakeAutomationLoopForPhase(PlanNode, Pool, Reporter, new(PlanNode.TrainingMetadata))],
-        Reporter));
+        [Model.MakeAutomationLoopForPhase(PlanNode, Pool, MakeReporter, new(PlanNode.TrainingMetadata))],
+        MakeReporter,
+        Scheme.GetChildScheme(PlanNode)));
+  }
+
+  MockReporter MakeReporter(TrainingDataScheme Scheme)
+  {
+    return Reporter;
   }
 
   [TestMethod]
@@ -82,14 +84,15 @@ public class TrainingPlanConstruction
       ChildPlan2
     ], []);
 
-    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, Reporter);
+    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, MakeReporter, Scheme);
 
     Plan.Should().BeEquivalentTo(
       new TrainingPlan(PlanNode,
         [
-          ..PlanNode.GetChildPhases().Select(Child => Model.BuildTrainingPlanFor(Child, Pool, Reporter))
+          ..PlanNode.GetChildPhases().Select(Child => Model.BuildTrainingPlanFor(Child, Pool, MakeReporter, Scheme.GetChildScheme(PlanNode)))
         ],
-        Reporter));
+        MakeReporter,
+        Scheme.GetChildScheme(PlanNode)));
   }
 
   CurriculumPhaseNode GivenCurriculumPhaseNode(

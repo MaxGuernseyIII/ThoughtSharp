@@ -30,31 +30,31 @@ public static class ScenariosModelNodeExtensions
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
     MindPool Pool,
-    Reporter Reporter)
+    Func<TrainingDataScheme, Reporter> MakeReporter,
+    TrainingDataScheme ParentScheme)
   {
-    var Metadata = PhaseNode.Query(new TargetedVisitor<TrainingMetadata>
-    {
-      VisitCurriculumPhase = Phase => [Phase.TrainingMetadata]
-    }).Single();
+    var Scheme = ParentScheme.GetChildScheme(PhaseNode);
 
     var ChildPhases = PhaseNode.GetChildPhases();
     if (ChildPhases.Any())
       return new TrainingPlan(
         PhaseNode,
-        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, Reporter))],
-        Reporter);
+        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, MakeReporter, Scheme))],
+        MakeReporter,
+        Scheme);
 
     return new TrainingPlan(
       PhaseNode,
-      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, new(Metadata))],
-      Reporter);
+      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, MakeReporter, Scheme)],
+      MakeReporter,
+      Scheme);
   }
 
   public static Runnable MakeAutomationLoopForPhase(
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
     MindPool Pool,
-    Reporter Reporter,
+    Func<TrainingDataScheme, Reporter> MakeReporter,
     TrainingDataScheme TrainingDataScheme)
   {
     var IncludedScenariosFinders = PhaseNode.Query(new TargetedVisitor<ScenariosModelNodeVisitor<ScenariosModelNode?>>
@@ -65,7 +65,7 @@ public static class ScenariosModelNodeExtensions
     var Behaviors = IncludedScenariosFinders.Select(This.Query).Where(B => B is not null).OfType<ScenariosModelNode>()
       .ToImmutableArray();
 
-    var Pass = This.GetTestPassFor(Pool, Reporter, Behaviors!);
+    var Pass = This.GetTestPassFor(Pool, MakeReporter, Behaviors!);
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
       Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), TrainingDataScheme.Metadata.SuccessFraction));
 
@@ -79,10 +79,10 @@ public static class ScenariosModelNodeExtensions
     );
   }
 
-  public static Runnable GetTestPassFor(this ScenariosModel This, MindPool Pool, Reporter Reporter,
+  public static Runnable GetTestPassFor(this ScenariosModel This, MindPool Pool, Func<TrainingDataScheme, Reporter> MakeReporter,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
-    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, Reporter, null!);
+    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, MakeReporter, null!);
   }
 
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)

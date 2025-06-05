@@ -26,8 +26,11 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public class TrainingDataScheme(TrainingMetadata Metadata)
 {
+  readonly object LockObject = new();
+
   public TrainingMetadata Metadata { get; } = Metadata;
   readonly Dictionary<ScenariosModelNode, ConvergenceTracker> Trackers = [];
+  readonly Dictionary<ScenariosModelNode, TrainingDataScheme> ChildSchemes = [];
 
   public Counter TimesSinceSaved { get; } = new();
   public Counter Attempts { get; } = new();
@@ -36,7 +39,7 @@ public class TrainingDataScheme(TrainingMetadata Metadata)
   {
     get
     {
-      lock (Trackers)
+      lock (LockObject)
       {
         return Trackers.Keys.ToImmutableArray();
       }
@@ -45,7 +48,7 @@ public class TrainingDataScheme(TrainingMetadata Metadata)
 
   public ConvergenceTracker GetConvergenceTrackerFor(ScenariosModelNode Node)
   {
-    lock (Trackers)
+    lock (LockObject)
     {
       if (!Trackers.TryGetValue(Node, out var Result))
         Trackers[Node] = Result = new(Metadata.SampleSize);
@@ -69,5 +72,15 @@ public class TrainingDataScheme(TrainingMetadata Metadata)
   public override int GetHashCode()
   {
     return Metadata.GetHashCode();
+  }
+
+  public TrainingDataScheme GetChildScheme(ScenariosModelNode Node)
+  {
+    lock(LockObject)
+    {
+      if (!ChildSchemes.TryGetValue(Node, out var Result))
+        ChildSchemes[Node] = Result = new(Node.Query(Queries.GetTrainingMetadata).Single());
+      return Result;
+    }
   }
 }

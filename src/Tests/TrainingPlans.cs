@@ -152,7 +152,7 @@ public class TrainingPlans
 
   TrainingPlan GivenTrainingPlanForJobs(IReadOnlyList<MockRunnable> SubJobs)
   {
-    return new(PlanNode, [..SubJobs], Reporter);
+    return new(PlanNode, [..SubJobs], _ => Reporter, new(Any.TrainingMetadata()));
   }
 
   IReadOnlyList<MockRunnable> GivenAnySelfTrackingRunnables(BehaviorRunStatus RunStatus, int Minimum = 1,
