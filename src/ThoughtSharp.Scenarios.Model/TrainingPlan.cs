@@ -49,4 +49,16 @@ public record TrainingPlan(ScenariosModelNode PlanNode, ImmutableArray<Runnable>
       Reporter.ReportExit(PlanNode);
     }
   }
+
+  public virtual bool Equals(TrainingPlan? Other)
+  {
+    if (Other is null) return false;
+    if (ReferenceEquals(this, Other)) return true;
+    return PlanNode.Equals(Other.PlanNode) && SubJobs.SequenceEqual(Other.SubJobs) && Reporter.Equals(Other.Reporter);
+  }
+
+  public override int GetHashCode()
+  {
+    return HashCode.Combine(PlanNode, SubJobs, Reporter);
+  }
 }

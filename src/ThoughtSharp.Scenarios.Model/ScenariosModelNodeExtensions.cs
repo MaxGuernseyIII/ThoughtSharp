@@ -26,6 +26,20 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public static class ScenariosModelNodeExtensions
 {
+  public static Runnable BuildTrainingPlanFor(
+    this ScenariosModel This,
+    ScenariosModelNode PhaseNode,
+    MindPool Pool,
+    Reporter Reporter,
+    TrainingDataScheme TrainingDataScheme
+  )
+  {
+    return new TrainingPlan(
+      PhaseNode,
+      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, TrainingDataScheme)],
+      Reporter);
+  }
+
   public static Runnable MakeAutomationLoopForPhase(
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
