@@ -70,7 +70,6 @@ public class AutomationLoopCreation
         }
       ]);
 
-
     var Scheme = new TrainingDataScheme(TrainingMetadata);
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
     ImmutableArray<ScenariosModelNode> SourceNodes = [CapabilityNode, BehaviorNode3, BehaviorNode1];
