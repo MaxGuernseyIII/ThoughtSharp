@@ -26,7 +26,7 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public static class ScenariosModelNodeExtensions
 {
-  public static AutomationJob MakeAutomationLoopForPhase(
+  public static Runnable MakeAutomationLoopForPhase(
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
     MindPool Pool,

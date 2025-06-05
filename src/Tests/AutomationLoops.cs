@@ -31,7 +31,7 @@ public class AutomationLoops
 {
   MockIncrementable Counter = null!;
   MockGate Gate = null!;
-  AutomationJob Loop = null!;
+  Runnable Loop = null!;
   MockRunnable Pass = null!;
 
   [TestInitialize]

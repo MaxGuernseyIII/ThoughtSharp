@@ -1,12 +1,14 @@
 ﻿namespace ThoughtSharp.Scenarios.Model;
 
 public sealed record AutomationLoop(Runnable Pass, Gate ContinueGate, Incrementable Counter)
-  : AutomationJob
+  : Runnable
 {
-  public async Task Run()
+  public async Task<RunResult> Run()
   {
     while (ContinueGate.IsOpen) 
       await OnePass();
+
+    return new() {Status = BehaviorRunStatus.NotRun};
   }
 
   async Task OnePass()
