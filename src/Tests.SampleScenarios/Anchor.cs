@@ -20,6 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using TorchSharp;
+
 namespace Tests.SampleScenarios;
 
-public class Anchor;
+public class Anchor
+{
+  static readonly Type _ = typeof(torch.Tensor);
+}

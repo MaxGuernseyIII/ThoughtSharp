@@ -54,8 +54,7 @@ class Program
 
     RootCommand.SetHandler(async ToTrain =>
     {
-      Console.WriteLine($"Training {ToTrain.FullName}:");
-      var Assembly = System.Reflection.Assembly.LoadFrom(ToTrain.FullName);
+      var Assembly = new ShapingAssemblyLoadContext(Path.GetDirectoryName(ToTrain.FullName)!).LoadFromAssemblyPath(ToTrain.FullName);
       var Parser = new AssemblyParser();
 
       var Model = Parser.Parse(Assembly);
