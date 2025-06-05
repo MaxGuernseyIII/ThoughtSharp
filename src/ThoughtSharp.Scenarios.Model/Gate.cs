@@ -36,12 +36,12 @@ public interface Gate
     return new AndGate(LeftGate, RightGate);
   }
 
-  static Gate ForCounterAndMinimum(Counter Counter, int Threshold)
+  static Gate ForCounterAndMinimum(HasValue<int> Counter, int Threshold)
   {
     return new CounterAndMinimumGate(Counter, Threshold);
   }
 
-  static Gate ForCounterAndMaximum(Counter Counter, int Threshold)
+  static Gate ForCounterAndMaximum(HasValue<int> Counter, int Threshold)
   {
     return new CounterAndMaximumGate(Counter, Threshold);
   }
