@@ -126,6 +126,31 @@ public class AutomationPasses
     ThenConvergenceIsGreaterThan0For(Node);
   }
 
+  [TestMethod]
+  public async Task CumulativeResultIsPassWhenNothingFails()
+  {
+    var Pass = GivenAutomationPass();
+    foreach (var Step in Steps)
+      Step.Runnable.Result = new() { Status = BehaviorRunStatus.Success };
+
+    var Result = await Pass.Run();
+
+    Result.Should().Be(new RunResult() { Status = BehaviorRunStatus.Success });
+  }
+
+  [TestMethod]
+  public async Task CumulativeResultIsFailureWhenAnythingFails()
+  {
+    var Pass = GivenAutomationPass();
+    foreach (var Step in Steps)
+      Step.Runnable.Result = new() { Status = BehaviorRunStatus.Success };
+    Any.Of(Steps).Runnable.Result = new() {Status = BehaviorRunStatus.Failure};
+
+    var Result = await Pass.Run();
+
+    Result.Should().Be(new RunResult() { Status = BehaviorRunStatus.Failure });
+  }
+
   void ThenConvergenceIsLessThan1For(ScenariosModelNode Node)
   {
     var Tracker = Scheme.GetConvergenceTrackerFor(Node);
