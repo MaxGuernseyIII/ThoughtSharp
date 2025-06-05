@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "dotnet-train": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\..\\..\\.."
+    }
+  }
+}
