@@ -38,7 +38,7 @@ public interface Gate
 
   static Gate ForCounterAndThreshold(Counter Counter, int Threshold)
   {
-    return new CounterAndMaximumGate(Counter, Threshold);
+    return new CounterAndThresholdGate(Counter, Threshold);
   }
 
   static Gate ForOr(Gate LeftGate, Gate RightGate)

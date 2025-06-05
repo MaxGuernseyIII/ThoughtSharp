@@ -29,7 +29,8 @@ public class AssemblyParser
   static readonly TrainingMetadata StandardTrainingMetadata = new()
   {
     SuccessFraction = .95,
-    SampleSize = 1000
+    SampleSize = 1000,
+    MaximumAttempts = 500
   };
 
   public ScenariosModel Parse(Assembly LoadedAssembly)
@@ -66,7 +67,7 @@ public class AssemblyParser
   static ScenariosModelNode ParseType(Type Type, TrainingMetadata ContextTrainingMetadata)
   {
     if (IsCurriculumType(Type))
-      return new CurriculumNode(Type, [..ParseTypes(Type, StandardTrainingMetadata)]);
+      return ParseCurriculumNode(Type, ContextTrainingMetadata);
 
     if (IsCapabilityType(Type))
       return ParseCapabilityType(Type);
@@ -80,12 +81,19 @@ public class AssemblyParser
     return new DirectoryNode(Type.Name, [..ParseTypes(Type, StandardTrainingMetadata)]);
   }
 
+  static ScenariosModelNode ParseCurriculumNode(Type Type, TrainingMetadata ContextTrainingData)
+  {
+    var Metadata = UpdateTrainingMetadataUsingType(Type, ContextTrainingData);
+
+    return new CurriculumNode(Type, [..ParseTypes(Type, Metadata)]);
+  }
+
   static MindPlaceNode ParseMindPlaceType(Type Type)
   {
     var BaseType = Type.BaseType;
     while (BaseType is not null)
     {
-      if (BaseType is { IsGenericType: true } && BaseType.GetGenericTypeDefinition() == typeof(MindPlace<,>))
+      if (BaseType is {IsGenericType: true} && BaseType.GetGenericTypeDefinition() == typeof(MindPlace<,>))
         break;
 
       BaseType = BaseType.BaseType;
@@ -101,22 +109,79 @@ public class AssemblyParser
     List<ScenariosModelNodeVisitor<ScenariosModelNode?>> Finders = [];
 
     foreach (var IncludeAttribute in Type.GetCustomAttributes().OfType<IncludeAttribute>())
-    {
       if (IncludeAttribute.Behaviors is null)
         Finders.Add(new CapabilityFinder(IncludeAttribute.Capability));
       else
         Finders.AddRange(IncludeAttribute.Behaviors.Select(B => new BehaviorFinder(IncludeAttribute.Capability, B)));
-    }
 
-    var Standard = Type.GetCustomAttribute<ConvergenceStandard>();
-
-    var Metadata = Standard is not null ? new()
-    {
-      SuccessFraction = Standard.Fraction,
-      SampleSize = Standard.Of
-    } : ContextTrainingMetadata;
+    var Metadata = UpdateTrainingMetadataUsingType(Type, ContextTrainingMetadata);
 
     return new(Type, PhaseAttribute.Order, Metadata, ParseTypes(Type, Metadata), Finders);
+  }
+
+  static TrainingMetadata UpdateTrainingMetadataUsingType(Type Type, TrainingMetadata Metadata)
+  {
+    var Standard = Type.GetCustomAttribute<ConvergenceStandard>();
+    if (Standard is not null)
+      Metadata = Metadata with
+      {
+        SuccessFraction = Standard.Fraction,
+        SampleSize = Standard.Of
+      };
+
+    var MaxAttempts = Type.GetCustomAttribute<MaximumAttemptsAttribute>();
+    if (MaxAttempts is not null)
+      Metadata = Metadata with
+      {
+        MaximumAttempts = MaxAttempts.Count
+      };
+    return Metadata;
+  }
+
+  static bool IsCurriculumPhaseType(Type Type)
+  {
+    return HasAttribute<PhaseAttribute>(Type);
+  }
+
+  static CapabilityNode ParseCapabilityType(Type Type)
+  {
+    return new(Type,
+    [
+      ..ParseTypes(Type, StandardTrainingMetadata),
+      ..ParseBehaviors(Type)
+    ]);
+  }
+
+  static IEnumerable<ScenariosModelNode> ParseBehaviors(Type Type)
+  {
+    return Type.GetMethods().Where(IsValidBehaviorMethod).Select(T => new BehaviorNode(Type, T));
+  }
+
+  static bool IsValidBehaviorMethod(MethodInfo M)
+  {
+    return M is {IsStatic: false, IsPublic: true} &&
+           (M.ReturnType == typeof(void) || M.ReturnType == typeof(Task)) &&
+           HasAttribute<BehaviorAttribute>(M);
+  }
+
+  static bool IsMindPlaceType(Type Type)
+  {
+    return HasAttribute<MindPlaceAttribute>(Type);
+  }
+
+  static bool IsCapabilityType(Type Type)
+  {
+    return HasAttribute<CapabilityAttribute>(Type);
+  }
+
+  static bool IsCurriculumType(Type Type)
+  {
+    return HasAttribute<CurriculumAttribute>(Type);
+  }
+
+  static bool HasAttribute<T>(MemberInfo Type)
+  {
+    return Type.GetCustomAttributes().Any(A => A is T);
   }
 
   abstract class CrawlerFinder : ScenariosModelNodeVisitor<ScenariosModelNode?>
@@ -158,7 +223,7 @@ public class AssemblyParser
 
     ScenariosModelNode? CrawlChildren(ScenariosModelNode Node)
     {
-      return Node.ChildNodes.Aggregate((ScenariosModelNode?)null,
+      return Node.ChildNodes.Aggregate((ScenariosModelNode?) null,
         (Previous, Current) => Previous ?? Current.Query(this));
     }
   }
@@ -177,51 +242,5 @@ public class AssemblyParser
     {
       return Behavior.HostType == Type && Behavior.Name == BehaviorName ? Behavior : base.Visit(Behavior);
     }
-  }
-
-  static bool IsCurriculumPhaseType(Type Type)
-  {
-    return HasAttribute<PhaseAttribute>(Type);
-  }
-
-  static CapabilityNode ParseCapabilityType(Type Type)
-  {
-    return new(Type, 
-      [
-        ..ParseTypes(Type, StandardTrainingMetadata),
-        ..ParseBehaviors(Type)
-      ]);
-  }
-
-  static IEnumerable<ScenariosModelNode> ParseBehaviors(Type Type)
-  {
-    return Type.GetMethods().Where(IsValidBehaviorMethod).Select(T => new BehaviorNode(Type, T));
-  }
-
-  static bool IsValidBehaviorMethod(MethodInfo M)
-  {
-    return M is {IsStatic: false, IsPublic: true } && 
-           (M.ReturnType == typeof(void) || M.ReturnType == typeof(Task)) && 
-           HasAttribute<BehaviorAttribute>(M);
-  }
-
-  static bool IsMindPlaceType(Type Type)
-  {
-    return HasAttribute<MindPlaceAttribute>(Type);
-  }
-
-  static bool IsCapabilityType(Type Type)
-  {
-    return HasAttribute<CapabilityAttribute>(Type);
-  }
-
-  static bool IsCurriculumType(Type Type)
-  {
-    return HasAttribute<CurriculumAttribute>(Type);
-  }
-
-  static bool HasAttribute<T>(MemberInfo Type)
-  {
-    return Type.GetCustomAttributes().Any(A => A is T);
   }
 }

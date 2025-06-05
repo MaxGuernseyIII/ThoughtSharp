@@ -20,11 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios.Model;
+namespace ThoughtSharp.Scenarios;
 
-public record TrainingMetadata
+[AttributeUsage(AttributeTargets.Class)]
+public class MaximumAttemptsAttribute(int Count) : Attribute
 {
-  public required double SuccessFraction { get; init; }
-  public required int SampleSize { get; init; }
-  public required int MaximumAttempts { get; init; }
+  public int Count { get; } = Count;
 }

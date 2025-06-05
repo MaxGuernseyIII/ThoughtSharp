@@ -264,7 +264,8 @@ public class AssemblyParsing
       new()
       {
         SuccessFraction = .8,
-        SampleSize = 200
+        SampleSize = 200,
+        MaximumAttempts = 5000
       },
       RootNamespace,
       nameof(FizzBuzzTraining),
@@ -282,7 +283,8 @@ public class AssemblyParsing
       new()
       {
         SuccessFraction = .98,
-        SampleSize = 500
+        SampleSize = 500,
+        MaximumAttempts = 10000
       },
       RootNamespace,
       nameof(FizzBuzzTraining),
@@ -301,7 +303,8 @@ public class AssemblyParsing
       new()
       {
         SuccessFraction = .95,
-        SampleSize = 1000
+        SampleSize = 1000,
+        MaximumAttempts = 500
       },
       RootNamespace,
       nameof(CurriculumWithDefaultPhase),

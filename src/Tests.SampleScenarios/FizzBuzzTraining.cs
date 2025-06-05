@@ -185,10 +185,10 @@ public static partial class FizzBuzzTraining
   }
 
   [Curriculum]
+  [MaximumAttempts(5000)]
   public static class FizzBuzzTrainingPlan
   {
     [Phase(1)]
-    [MaximumAttempts(5000)]
     [ConvergenceStandard(Fraction = .8, Of = 200)]
     [Include(typeof(Calculations))]
     public class InitialSteps;
@@ -205,22 +205,25 @@ public static partial class FizzBuzzTraining
       [Phase(2.2)]
       [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)])]
-      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.25)]
+      // TODO: Support weights in training
+      //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.25)]
       public class FocusOnBuzz;
 
       [Phase(2.3)]
       [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.FizzBuzz)])]
-      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
-      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.05)]
+      // TODO: Support weights in training
+      //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
+      //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.05)]
       public class FocusOnFizzBuzz;
 
       [Phase(2.4)]
       [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.WriteValue)])]
-      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
-      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.05)]
-      [Include(typeof(Calculations), Behaviors = [nameof(Calculations.FizzBuzz)], Weight = 0.05)]
+      // TODO: Support weights in training
+      //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
+      //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.05)]
+      //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.FizzBuzz)], Weight = 0.05)]
       public class FocusOnWriting;
     }
 
