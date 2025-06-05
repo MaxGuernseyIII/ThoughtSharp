@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>dotnet_train</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>train</ToolCommandName>
+    <LangVersion>preview</LangVersion>
+    <Authors>Max Guernsey, III</Authors>
+    <PackageId>dotnet-train</PackageId>
+    <Version Condition="'$(PackageVersion)' == ''">0.0.0-dev</Version>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/MaxGuernseyIII/ThoughtSharp</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>dotnet;cli;tool;train;ai;ml;thoughtsharp</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Metadata\README.md" Pack="true" PackagePath="README.md" Link="README.md" />
+  </ItemGroup>
+
+</Project>

@@ -32,6 +32,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThoughtSharp", "ThoughtShar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThoughtSharp.Shaping", "ThoughtSharp.Shaping\ThoughtSharp.Shaping.csproj", "{392EC82B-D52E-4587-AEAA-B5C26382910F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnet-train", "dotnet-train\dotnet-train.csproj", "{56441E9D-7223-4AEB-9168-99F9099E0314}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,6 +80,10 @@ Global
 		{392EC82B-D52E-4587-AEAA-B5C26382910F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{392EC82B-D52E-4587-AEAA-B5C26382910F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{392EC82B-D52E-4587-AEAA-B5C26382910F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56441E9D-7223-4AEB-9168-99F9099E0314}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56441E9D-7223-4AEB-9168-99F9099E0314}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56441E9D-7223-4AEB-9168-99F9099E0314}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56441E9D-7223-4AEB-9168-99F9099E0314}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
