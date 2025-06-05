@@ -21,47 +21,10 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
-using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Scenarios;
-using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
-
-[TestClass]
-public class TrainingDataTracking
-{
-  [TestMethod]
-  public void HasAPersistentTimesSinceSavedCounter()
-  {
-    var Scheme = new TrainingDataScheme();
-
-    var Actual = Scheme.TimesSinceSaved;
-
-    Actual.Should().NotBeNull();
-    Actual.Should().BeSameAs(Scheme.TimesSinceSaved);
-  }
-
-  [TestMethod]
-  public void HasAPersistentAttemptsCounter()
-  {
-    var Scheme = new TrainingDataScheme();
-
-    var Actual = Scheme.Attempts;
-
-    Actual.Should().NotBeNull();
-    Actual.Should().BeSameAs(Scheme.Attempts);
-  }
-
-  [TestMethod]
-  public void AttemptsAndTimesSinceSavedCountersAreDistinct()
-  {
-    var Scheme = new TrainingDataScheme();
-
-    Scheme.Attempts.Should().NotBeSameAs(Scheme.TimesSinceSaved);
-
-  }
-}
 
 [TestClass]
 public class AutomationLoopCreation

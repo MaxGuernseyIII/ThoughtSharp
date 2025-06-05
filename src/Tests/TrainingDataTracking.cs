@@ -20,34 +20,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios.Model;
+using FluentAssertions;
+using ThoughtSharp.Scenarios.Model;
 
-public interface Gate
+namespace Tests;
+
+[TestClass]
+public class TrainingDataTracking
 {
-  bool IsOpen { get; }
-
-  static Gate ForConvergenceTrackerAndThreshold(ConvergenceTracker Tracker, double Threshold)
+  [TestMethod]
+  public void HasAPersistentTimesSinceSavedCounter()
   {
-    return new ConvergenceTrackerAndThresholdGate(Tracker, Threshold);
+    var Scheme = new TrainingDataScheme();
+
+    var Actual = Scheme.TimesSinceSaved;
+
+    Actual.Should().NotBeNull();
+    Actual.Should().BeSameAs(Scheme.TimesSinceSaved);
   }
 
-  static Gate ForAnd(Gate LeftGate, Gate RightGate)
+  [TestMethod]
+  public void HasAPersistentAttemptsCounter()
   {
-    return new AndGate(LeftGate, RightGate);
+    var Scheme = new TrainingDataScheme();
+
+    var Actual = Scheme.Attempts;
+
+    Actual.Should().NotBeNull();
+    Actual.Should().BeSameAs(Scheme.Attempts);
   }
 
-  static Gate ForCounterAndMinimum(Counter Counter, int Threshold)
+  [TestMethod]
+  public void AttemptsAndTimesSinceSavedCountersAreDistinct()
   {
-    return new CounterAndMinimumGate(Counter, Threshold);
-  }
+    var Scheme = new TrainingDataScheme();
 
-  static Gate ForCounterAndMaximum(Counter Counter, int Threshold)
-  {
-    return new CounterAndMaximumGate(Counter, Threshold);
-  }
-
-  static Gate ForOr(Gate LeftGate, Gate RightGate)
-  {
-    return new OrGate(LeftGate, RightGate);
+    Scheme.Attempts.Should().NotBeSameAs(Scheme.TimesSinceSaved);
   }
 }

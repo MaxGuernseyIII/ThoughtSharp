@@ -22,32 +22,7 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public interface Gate
+public sealed record CounterAndMinimumGate(Counter Counter, int Threshold) : Gate
 {
-  bool IsOpen { get; }
-
-  static Gate ForConvergenceTrackerAndThreshold(ConvergenceTracker Tracker, double Threshold)
-  {
-    return new ConvergenceTrackerAndThresholdGate(Tracker, Threshold);
-  }
-
-  static Gate ForAnd(Gate LeftGate, Gate RightGate)
-  {
-    return new AndGate(LeftGate, RightGate);
-  }
-
-  static Gate ForCounterAndMinimum(Counter Counter, int Threshold)
-  {
-    return new CounterAndMinimumGate(Counter, Threshold);
-  }
-
-  static Gate ForCounterAndMaximum(Counter Counter, int Threshold)
-  {
-    return new CounterAndMaximumGate(Counter, Threshold);
-  }
-
-  static Gate ForOr(Gate LeftGate, Gate RightGate)
-  {
-    return new OrGate(LeftGate, RightGate);
-  }
+  public bool IsOpen => Counter.Value >= Threshold;
 }

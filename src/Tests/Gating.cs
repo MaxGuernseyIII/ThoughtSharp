@@ -90,11 +90,11 @@ public class Gating
   }
 
   [TestMethod]
-  public void CounterAndThresholdGateWhenCountIsBelowThreshold()
+  public void CounterAndMinimumGateWhenCountIsBelowThreshold()
   {
     var Threshold = Any.Int(10, 20);
     var Counter = new Counter(Any.Int(0, Threshold - 1));
-    var G = Gate.ForCounterAndThreshold(Counter, Threshold);
+    var G = Gate.ForCounterAndMinimum(Counter, Threshold);
 
     var IsOpen = G.IsOpen;
 
@@ -102,14 +102,38 @@ public class Gating
   }
 
   [TestMethod]
-  public void CounterAndThresholdGateWhenCountIsAtOrAboveThreshold()
+  public void CounterAndMinimumGateWhenCountIsAtOrAboveThreshold()
   {
     var Threshold = Any.Int(10, 20);
     var Counter = new Counter(Any.Int(Threshold, Threshold + 1));
-    var G = Gate.ForCounterAndThreshold(Counter, Threshold);
+    var G = Gate.ForCounterAndMinimum(Counter, Threshold);
 
     var IsOpen = G.IsOpen;
 
     IsOpen.Should().Be(true);
+  }
+
+  [TestMethod]
+  public void CounterAndMaximumGateWhenCounterIsBelowThreshold()
+  {
+    var Threshold = Any.Int(10, 20);
+    var Counter = new Counter(Any.Int(0, Threshold - 1));
+    var G = Gate.ForCounterAndMaximum(Counter, Threshold);
+
+    var IsOpen = G.IsOpen;
+
+    IsOpen.Should().Be(true);
+  }
+
+  [TestMethod]
+  public void CounterAndMaximumGateWhenCounterIsAtOrAboveThreshold()
+  {
+    var Threshold = Any.Int(10, 20);
+    var Counter = new Counter(Any.Int(Threshold, Threshold + 10));
+    var G = Gate.ForCounterAndMaximum(Counter, Threshold);
+
+    var IsOpen = G.IsOpen;
+
+    IsOpen.Should().Be(false);
   }
 }
