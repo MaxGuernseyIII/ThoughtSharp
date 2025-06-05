@@ -89,7 +89,7 @@ static FileInfo ResolveDirectoryToFile(DirectoryInfo Directory, ArgumentResult R
   else
     Inferred = Options.Single();
 
-  return Inferred;
+  return Inferred!;
 }
 
 FileSystemInfo GetFileSystemObjectToTrain(ArgumentResult ArgumentResult)
