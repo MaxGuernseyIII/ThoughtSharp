@@ -1,6 +1,7 @@
 ﻿name: Build and Publish to NuGet
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -39,7 +40,18 @@ jobs:
         run: |
           for pkg in out/*.nupkg; do
             echo "Pushing $pkg"
+
+            pkgname=$(basename "$pkg")
+
+            if [[ "$pkgname" == dotnet-train.*.nupkg ]]; then
+              echo "→ Using CLI tool API key for $pkgname"
+              apikey="${{ secrets.NUGET_DOTNET_TRAIN_API_KEY }}"
+            else
+              echo "→ Using default API key for $pkgname"
+              apikey="${{ secrets.NUGET_API_KEY }}"
+            fi
+
             dotnet nuget push "$pkg" \
               --source https://api.nuget.org/v3/index.json \
-              --api-key ${{ secrets.NUGET_API_KEY }}
+              --api-key "$apikey"
           done
