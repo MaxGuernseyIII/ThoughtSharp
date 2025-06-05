@@ -127,4 +127,16 @@ static class Any
       SuccessFraction = Any.Float
     };
   }
+
+  public static IReadOnlyList<T> ListOf<T>(Func<T> MakeItem, int Minimum, int Maximum)
+  {
+    var Count = Any.Int(Minimum, Maximum);
+    var List = new List<T>();
+    foreach (var _ in Enumerable.Range(0, Count))
+    {
+      List.Add(MakeItem());
+    }
+
+    return List;
+  }
 }

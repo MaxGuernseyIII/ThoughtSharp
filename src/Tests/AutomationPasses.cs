@@ -198,7 +198,7 @@ public class AutomationPasses
     Steps.Should().AllSatisfy(S => S.Runnable.RunCount.Should().Be(1));
   }
 
-  AutomationJob GivenAutomationPass()
+  Runnable GivenAutomationPass()
   {
     return new AutomationPass([..Steps], SaveGate, Saver, Reporter, Scheme);
   }

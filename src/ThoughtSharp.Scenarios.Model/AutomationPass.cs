@@ -8,14 +8,14 @@ public sealed class AutomationPass(
   Saver Saver,
   Reporter Reporter,
   TrainingDataScheme Scheme)
-  : AutomationJob
+  : Runnable
 {
   readonly ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps = Steps;
   readonly Gate SaveGate = SaveGate;
   readonly Saver Saver = Saver;
   readonly Reporter Reporter = Reporter;
 
-  public async Task Run()
+  public async Task<RunResult> Run()
   {
     foreach (var (Node, Runnable) in Steps)
     {
@@ -26,6 +26,11 @@ public sealed class AutomationPass(
 
     if (SaveGate.IsOpen)
       Saver.Save();
+
+    return new()
+    {
+      Status = BehaviorRunStatus.NotRun
+    };
   }
 
   bool Equals(AutomationPass Other)

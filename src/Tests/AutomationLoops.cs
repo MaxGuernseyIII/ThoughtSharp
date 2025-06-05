@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using FluentAssertions;
-using Microsoft.Testing.Platform.Extensions;
 using Tests.Mocks;
 using ThoughtSharp.Scenarios.Model;
 
@@ -30,10 +29,10 @@ namespace Tests;
 [TestClass]
 public class AutomationLoops
 {
-  MockGate Gate = null!;
-  MockAutomationJob Pass = null!;
   MockIncrementable Counter = null!;
+  MockGate Gate = null!;
   AutomationJob Loop = null!;
+  MockRunnable Pass = null!;
 
   [TestInitialize]
   public void SetUp()
@@ -83,9 +82,35 @@ public class AutomationLoops
 
   void GivenGateWillCloseAfterPasses(int Count)
   {
-    foreach (var _ in Enumerable.Range(0, Count)) 
+    foreach (var _ in Enumerable.Range(0, Count))
       Gate.Answers.Enqueue(true);
 
     Gate.Answers.Enqueue(false);
+  }
+}
+
+[TestClass]
+public class TrainingPlans
+{
+  [TestMethod]
+  public async Task RunItemsInOrder()
+  {
+    var Node = new MockNode();
+    var RunJobs = new List<MockAutomationJob>();
+    var SubJobs = Any.ListOf(() => new MockAutomationJob(), 1, 4);
+    foreach (var Job in SubJobs)
+    {
+      Job.RunBehavior = () =>
+      {
+        RunJobs.Add(Job);
+        return Task.CompletedTask;
+      };
+    }
+
+    var Plan = new TrainingPlan(Node, [..SubJobs]);
+
+    await Plan.Run();
+
+    RunJobs.Should().BeEquivalentTo(SubJobs, O => O.WithStrictOrdering());
   }
 }

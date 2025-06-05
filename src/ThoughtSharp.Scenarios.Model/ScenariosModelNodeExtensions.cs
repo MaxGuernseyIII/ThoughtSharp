@@ -59,7 +59,7 @@ public static class ScenariosModelNodeExtensions
     );
   }
 
-  public static AutomationJob GetTestPassFor(this ScenariosModel This, MindPool Pool, Reporter Reporter,
+  public static Runnable GetTestPassFor(this ScenariosModel This, MindPool Pool, Reporter Reporter,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
     return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, Reporter, null!);

@@ -4,11 +4,13 @@ namespace Tests.Mocks;
 
 public class MockAutomationJob : AutomationJob
 {
+  public Func<Task> RunBehavior = () => Task.CompletedTask;
+
   public int RunCount { get; set; }
 
   public Task Run()
   {
     RunCount++;
-    return Task.CompletedTask;
+    return RunBehavior();
   }
 }
