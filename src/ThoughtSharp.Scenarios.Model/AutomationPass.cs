@@ -47,7 +47,7 @@ public sealed class AutomationPass(
       Reporter.ReportRunResult(Node, Result);
       var WasSuccessful = Result.Status == BehaviorRunStatus.Success;
       Scheme.GetConvergenceTrackerFor(Node).RecordResult(WasSuccessful);
-      AnyFailed = Result.Status == BehaviorRunStatus.Failure;
+      AnyFailed = AnyFailed || Result.Status == BehaviorRunStatus.Failure;
     }
 
     if (SaveGate.IsOpen)
