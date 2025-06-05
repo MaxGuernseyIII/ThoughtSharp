@@ -1,6 +1,6 @@
 ﻿namespace ThoughtSharp.Scenarios.Model;
 
-public sealed record AutomationLoop(Runnable Pass, Gate ContinueGate, Incrementable Counter)
+public sealed record AutomationLoop(Runnable Pass, Gate ContinueGate, Gate Success, Incrementable Counter)
   : Runnable
 {
   public async Task<RunResult> Run()

@@ -50,11 +50,12 @@ public static class ScenariosModelNodeExtensions
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
       Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), Metadata.SuccessFraction));
 
+    var SuccessGate = Nodes.Skip(1).Aggregate(Nodes.First(), Gate.ForAnd);
     return new AutomationLoop(
       Pass,
       Gate.ForAnd(
-        Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, Metadata.MaximumAttempts),
-        Nodes.Skip(1).Aggregate(Nodes.First(), Gate.ForAnd)),
+        Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, Metadata.MaximumAttempts), SuccessGate),
+        SuccessGate,
         new CompoundIncrementable(TrainingDataScheme.Attempts, TrainingDataScheme.TimesSinceSaved)
     );
   }

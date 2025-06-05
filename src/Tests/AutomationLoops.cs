@@ -31,6 +31,7 @@ public class AutomationLoops
 {
   MockIncrementable Counter = null!;
   MockGate Gate = null!;
+  MockGate Success = null!;
   Runnable Loop = null!;
   MockRunnable Pass = null!;
 
@@ -38,9 +39,10 @@ public class AutomationLoops
   public void SetUp()
   {
     Gate = new();
+    Success = new();
     Pass = new();
     Counter = new();
-    Loop = new AutomationLoop(Pass, Gate, Counter);
+    Loop = new AutomationLoop(Pass, Gate, Success, Counter);
   }
 
   [TestMethod]
