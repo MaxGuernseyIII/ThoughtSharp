@@ -83,14 +83,20 @@ public class AutomationLoopCreation
 
     Loop.Should().BeEquivalentTo(
       new AutomationLoop(
-        Model.GetTestPassFor(Pool, Scheme, Gate.ForCounterAndMinimum(Scheme.TimesSinceSaved, 100), [
-          ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
-        ]),
+        Model.GetTestPassFor(
+          Pool, 
+          Scheme, 
+          Gate.ForCounterAndMinimum(Scheme.TimesSinceSaved, 100), 
+          new ResetCounterSaver(Pool, Scheme.TimesSinceSaved), 
+          [
+            ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
+          ]),
         new AndGate(
           new CounterAndMaximumGate(Scheme.Attempts, MaximumAttempts),
           Gate.NotGate(ConvergenceRule)),
         ConvergenceRule,
-        new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts)));
+        new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts)),
+      O => O.PreferringRuntimeMemberTypes());
   }
 
   public class T1

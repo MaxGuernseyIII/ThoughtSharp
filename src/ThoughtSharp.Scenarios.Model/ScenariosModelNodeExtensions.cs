@@ -61,7 +61,12 @@ public static class ScenariosModelNodeExtensions
     var Behaviors = IncludedScenariosFinders.Select(This.Query).Where(B => B is not null).OfType<ScenariosModelNode>()
       .ToImmutableArray();
 
-    var Pass = This.GetTestPassFor(Pool, TrainingDataScheme, Gate.ForCounterAndMinimum(TrainingDataScheme.TimesSinceSaved, 100), Behaviors);
+    var Pass = This.GetTestPassFor(
+      Pool, 
+      TrainingDataScheme, 
+      Gate.ForCounterAndMinimum(TrainingDataScheme.TimesSinceSaved, 100), 
+      new ResetCounterSaver(Pool, TrainingDataScheme.TimesSinceSaved), 
+      Behaviors);
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
       Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), TrainingDataScheme.Metadata.SuccessFraction));
 
@@ -80,9 +85,10 @@ public static class ScenariosModelNodeExtensions
     MindPool Pool,
     TrainingDataScheme Scheme,
     Gate SaveGate, 
+    Saver Saver, 
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
-    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], SaveGate, Pool, Scheme);
+    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], SaveGate, Saver, Scheme);
   }
 
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)
