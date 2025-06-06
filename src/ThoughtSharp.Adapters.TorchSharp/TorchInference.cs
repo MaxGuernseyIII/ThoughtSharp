@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System;
 using ThoughtSharp.Runtime;
 using TorchSharp;
 
@@ -69,8 +70,14 @@ public class TorchInference(
     foreach (var (At, Rule) in LossRules)
     {
       var AffectedSlice = TensorForBackPropagation.slice(1, At, At + Rule.Length, 1);
-      CumulativeLoss += Rule.Accept(AffectedSlice, Visitor);
+      var SliceLoss = Rule.Accept(AffectedSlice, Visitor);
+      //Console.WriteLine($"Target: {SliceLoss.device}");
+
+      CumulativeLoss += SliceLoss;
     }
+
+    //Console.WriteLine($"Input: {TensorForBackPropagation.device}");
+    //Console.WriteLine($"Loss: {CumulativeLoss.device}");
 
     Brain.ApplyLoss(CumulativeLoss);
   }

@@ -29,7 +29,7 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 public class TorchBrain(
   Module<TorchInferenceParts, TorchInferenceParts> Model, Device Device) : Brain
 {
-  protected Module<TorchInferenceParts, TorchInferenceParts> Model { get; } = Model;
+  Module<TorchInferenceParts, TorchInferenceParts> Model { get; } = Model;
   Device Device { get; } = Device;
 
   public void Save(string Path)
@@ -43,7 +43,8 @@ public class TorchBrain(
   }
 
   internal TorchInferenceStateNode EmptyState => new();
-  protected optim.Optimizer Optimizer { get; } = optim.Adam(Model.parameters());
+  readonly Lazy<optim.Optimizer> OptimizerLazy = new(() => optim.Adam(Model.parameters()));
+  optim.Optimizer Optimizer => OptimizerLazy.Value;
 
   public void Dispose()
   {
@@ -83,7 +84,66 @@ public class TorchBrain(
   public void ApplyLoss(Tensor Loss)
   {
     Model.zero_grad();
+    //foreach (var (name, param) in Model.named_parameters())
+    //{
+    //  if (param.grad is not null)
+    //    Console.WriteLine($"{name}.grad.device: {param.grad.device}");
+    //}
+
+    //var optimizer = optim.Adam(Model.parameters(), lr: 1e-3);
     Loss.backward();
+    //foreach (var (Name, Param) in Model.named_parameters())
+    //{
+    //  Console.WriteLine($"{Name}: {Param.device}");
+    //}
+
+    //foreach (var (name, param) in Model.named_parameters())
+    //{
+    //  if (param.grad is not null)
+    //  {
+    //    Console.WriteLine($"{name}: param.shape = {param.shape}, grad.shape = {param.grad.shape}, grad.device = {param.grad.device}");
+    //  }
+    //  else
+    //  {
+    //    Console.WriteLine($"{name}: grad is null");
+    //  }
+    //}
+
+    //foreach (var (name, param) in Model.named_parameters())
+    //{
+    //  if (param is null)
+    //  {
+    //    Console.WriteLine($"{name}: param is null");
+    //    continue;
+    //  }
+
+    //  try
+    //  {
+    //    var pShape = string.Join(", ", param.shape);
+    //    var gShape = param.grad is not null ? string.Join(", ", param.grad.shape) : "no grad";
+    //    Console.WriteLine($"{name}: param.shape = [{pShape}], grad.shape = [{gShape}], device = {param.device}");
+    //  }
+    //  catch (Exception ex)
+    //  {
+    //    Console.WriteLine($"{name}: shape check failed — {ex.Message}");
+    //  }
+    //}
+
+    //foreach (var (Name, Param) in Model.named_parameters())
+    //{
+    //  if (Param.grad is not null)
+    //  {
+    //    Console.WriteLine($"{Name}: Param = [{string.Join(", ", Param.shape)}], Grad = [{string.Join(", ", Param.grad.shape)}]");
+    //  }
+    //}
+
+    //optimizer.step();
+
     Optimizer.step();
+  }
+
+  public Tensor GetInt64ScalarTensor(long RuleIndex)
+  {
+    return tensor([RuleIndex], ScalarType.Int64).to(Device);
   }
 }

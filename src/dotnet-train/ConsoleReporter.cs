@@ -31,6 +31,7 @@ class ConsoleReporter : Reporter
   readonly object LockObject = new();
   readonly TrainingDataScheme Scheme;
   readonly Stack<ScenariosModelNode> Path = [];
+  TrainingDataScheme? LastSchemeToPrint;
 
   public ConsoleReporter(TrainingDataScheme Scheme)
   {
@@ -65,7 +66,7 @@ class ConsoleReporter : Reporter
       {
         try
         {
-          await Task.Delay(TimeSpan.FromSeconds(5));
+          await Task.Delay(TimeSpan.FromSeconds(1));
 
           Print();
         }
@@ -83,6 +84,13 @@ class ConsoleReporter : Reporter
     {
       var StringWriter = new StringWriter();
       var SchemeToPrint = Path.Reverse().Aggregate(Scheme, (Current, Node) => Current.GetChildScheme(Node));
+      if (!ReferenceEquals(SchemeToPrint, LastSchemeToPrint))
+        Console.Clear();
+      else
+        Console.SetCursorPosition(0, 0);
+
+      LastSchemeToPrint = SchemeToPrint;
+
       PrintScheme(SchemeToPrint, new(StringWriter));
       Console.WriteLine(StringWriter.ToString());
     }
@@ -90,15 +98,20 @@ class ConsoleReporter : Reporter
 
   void PrintScheme(TrainingDataScheme SchemeToPrint, IndentedTextWriter Writer)
   {
-    Writer.WriteLine($"Phase: {SchemeToPrint.Node?.Name}");
-    Writer.Indent++;
-    Writer.WriteLine($"{SchemeToPrint.Attempts.Value} attempts");
-    Writer.WriteLine($"{SchemeToPrint.TimesSinceSaved.Value} attempts since last save");
-    foreach (var Node in SchemeToPrint.TrackedNodes)
+    if (SchemeToPrint.TrackedNodes.Any())
     {
-      var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
-      var Convergence = State.MeasureConvergence();
-      Writer.WriteLine($"{Node.Name} ({Node.GetType()}): {Convergence:P}");
+      var LabelWidth = SchemeToPrint.TrackedNodes.Select(N => N.Name.Length + 3).Max();
+      var Width = Math.Min(Console.WindowWidth - (10 + LabelWidth), 60);
+
+      Writer.WriteLine($"Phase: {SchemeToPrint.Node?.Name}");
+      Writer.Indent++;
+      foreach (var Node in SchemeToPrint.TrackedNodes)
+      {
+        var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
+        var Convergence = State.MeasureConvergence();
+        var ConvergenceBar = new string('█', (int) (Width * Convergence)).PadRight(Width, '░');
+        Writer.WriteLine($"{Node.Name.PadRight(LabelWidth)} [{ConvergenceBar}]");
+      }
     }
 
     foreach (var SubSchemeNode in SchemeToPrint.SubSchemeNodes)
@@ -106,6 +119,8 @@ class ConsoleReporter : Reporter
       var SubScheme = SchemeToPrint.GetChildScheme(SubSchemeNode);
       PrintScheme(SubScheme, Writer);
     }
+
+    Writer.WriteLine($"{SchemeToPrint.Attempts.Value} attempts, {SchemeToPrint.TimesSinceSaved.Value} attempts since last save               ");
     Writer.Indent--;
   }
 

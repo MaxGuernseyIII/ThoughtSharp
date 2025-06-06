@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Text;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
@@ -35,6 +36,18 @@ public static partial class FizzBuzzTraining
   [MindPlace]
   public class FizzBuzzMindPlace : MindPlace<FizzBuzzMind, TorchBrain>
   {
+    static FizzBuzzMindPlace()
+    {
+      try
+      {
+        torch.InitializeDeviceType(DeviceType.CUDA);
+      }
+      catch
+      {
+
+      }
+    }
+
     public override TorchBrain MakeNewBrain()
     {
       return Builder.Build();
@@ -49,7 +62,7 @@ public static partial class FizzBuzzTraining
             Outer
               .AddGRU(128)
               .AddParallel(P => P
-                .AddLogicPath(16, 4, 8)
+                .AddLogicPath(16, 12)
                 .AddPath(S => S))
           );
       }
@@ -124,12 +137,22 @@ public static partial class FizzBuzzTraining
         return (byte) (Random.Next(byte.MaxValue / Factor) * Factor);
       }
 
+      static readonly Dictionary<int, ImmutableArray<byte>> AvailableByFactors = [];
+
       byte AnyByteNotDivisibleBy(params IEnumerable<int> ExcludedFactors)
       {
-        var Available = Enumerable.Range(0, byte.MaxValue + 1)
-          .Where(Candidate => ExcludedFactors.All(F => Candidate % F != 0)).ToArray();
+        var Key = 1;
+        foreach (var ExcludedFactor in ExcludedFactors) 
+          Key *= ExcludedFactor;
 
-        return (byte) Available[Random.Next(Available.Length)];
+        if (!AvailableByFactors.TryGetValue(Key, out var Available))
+          AvailableByFactors[Key] = Available = [
+            ..Enumerable.Range(0, byte.MaxValue + 1)
+              .Where(Candidate => ExcludedFactors.All(F => Candidate % F != 0))
+              .Select(I => (byte)I)
+          ];
+
+        return Available[Random.Next(Available.Length)];
       }
 
       [Behavior]
