@@ -57,7 +57,7 @@ public static partial class FizzBuzzTraining
               .AddGRU(128)
               .AddParallel(P => P
                 //.AddLogicPath(160, 40, 80)
-                .AddLogicPath(16, 12)
+                .AddLogicPath(16, 4, 8)
                 .AddPath(S => S))
           );
       }
