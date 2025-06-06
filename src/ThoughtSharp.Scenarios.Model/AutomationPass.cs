@@ -36,6 +36,7 @@ public sealed class AutomationPass(
   readonly Gate SaveGate = SaveGate;
   readonly Saver Saver = Saver;
   readonly ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps = Steps;
+  readonly TrainingDataScheme Scheme = Scheme;
 
   public async Task<RunResult> Run()
   {
@@ -66,7 +67,8 @@ public sealed class AutomationPass(
       Steps.SequenceEqual(Other.Steps) &&
       SaveGate.Equals(Other.SaveGate) &&
       Saver.Equals(Other.Saver) &&
-      MakeReporter(Scheme).Equals(Other.MakeReporter(Scheme));
+      MakeReporter(Scheme).Equals(Other.MakeReporter(Scheme)) &&
+      Equals(Scheme, Other.Scheme);
   }
 
   public override bool Equals(object? Obj)

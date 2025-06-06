@@ -256,10 +256,11 @@ public class BehaviorRunning
       ])
     ];
 
-    var Job = Model.GetTestPassFor(Pool, _ => Reporter, Nodes);
+    var Scheme = new TrainingDataScheme(Any.TrainingMetadata());
+    var Job = Model.GetTestPassFor(Pool, _ => Reporter, Scheme, Nodes);
 
     Job.Should().BeEquivalentTo(new AutomationPass([.. Nodes.GetBehaviorRunners(Pool)],
-      new FalseGate(), Pool, _ => Reporter, null!));
+      new FalseGate(), Pool, _ => Reporter, Scheme));
   }
 
   public record Mind1(Brain Brain);

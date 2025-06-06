@@ -26,5 +26,5 @@ namespace Tests.SampleScenarios;
 
 public class Anchor
 {
-  static readonly Type _ = typeof(torch.Tensor);
+  static readonly torch.Tensor T = torch.zeros(0);
 }

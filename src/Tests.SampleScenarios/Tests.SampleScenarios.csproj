@@ -8,6 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="TorchSharp" Version="0.105.0" />
+    <PackageReference Include="TorchSharp-cuda-windows" Version="0.105.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ThoughtSharp.Adapters.TorchSharp\ThoughtSharp.Adapters.TorchSharp.csproj" />
     <ProjectReference Include="..\ThoughtSharp.Generator\ThoughtSharp.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ThoughtSharp.Scenarios\ThoughtSharp.Scenarios.csproj" />

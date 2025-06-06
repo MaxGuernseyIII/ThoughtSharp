@@ -65,7 +65,7 @@ public static class ScenariosModelNodeExtensions
     var Behaviors = IncludedScenariosFinders.Select(This.Query).Where(B => B is not null).OfType<ScenariosModelNode>()
       .ToImmutableArray();
 
-    var Pass = This.GetTestPassFor(Pool, MakeReporter, Behaviors!);
+    var Pass = This.GetTestPassFor(Pool, MakeReporter, TrainingDataScheme, Behaviors!);
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
       Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), TrainingDataScheme.Metadata.SuccessFraction));
 
@@ -80,9 +80,10 @@ public static class ScenariosModelNodeExtensions
   }
 
   public static Runnable GetTestPassFor(this ScenariosModel This, MindPool Pool, Func<TrainingDataScheme, Reporter> MakeReporter,
+    TrainingDataScheme Scheme,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
-    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, MakeReporter, null!);
+    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, MakeReporter, Scheme);
   }
 
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)

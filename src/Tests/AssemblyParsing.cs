@@ -24,12 +24,48 @@ using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
 using FluentAssertions;
+using Tests.Mocks;
 using Tests.SampleScenarios;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
+
+[TestClass]
+public class BehaviorInvocation
+{
+  static readonly string RootNamespace = typeof(Anchor).Namespace!;
+  Assembly LoadedAssembly = null!;
+  ScenariosModel Model = null!;
+
+  [TestInitialize]
+  public void SetUp()
+  {
+    var Path = typeof(Anchor).Assembly.Location;
+    var Context = new ShapingAssemblyLoadContext(Path);
+    LoadedAssembly = Context.LoadFromAssemblyPath(Path);
+    Model = new AssemblyParser().Parse(LoadedAssembly);
+  }
+
+  [TestMethod]
+  public async Task RunTests()
+  {
+    var SingleNode = Model.GetNodeAtEndOfPath(RootNamespace, nameof(IntegrationTestInput),
+      nameof(IntegrationTestInput.Runnables), nameof(IntegrationTestInput.Runnables.WillPass));
+    var TestPass = Model.GetTestPassFor(new(Model.MindPlaceIndex), _ => new MockReporter(), new(Any.TrainingMetadata()), SingleNode);
+
+    var Result = await TestPass.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Success);
+  }
+
+  Type? ReplaceProxyWithLoadedType(Type Proxy)
+  {
+    var Expected = LoadedAssembly.GetType(Proxy.FullName!);
+    return Expected;
+  }
+}
 
 [TestClass]
 public class AssemblyParsing
@@ -54,7 +90,9 @@ public class AssemblyParsing
   public void SetUp()
   {
     Model = null!;
-    LoadedAssembly = typeof(Anchor).Assembly;
+    var Path = typeof(Anchor).Assembly.Location;
+    var Context = new ShapingAssemblyLoadContext(Path);
+    LoadedAssembly = Context.LoadFromAssemblyPath(Path);
   }
 
   [TestMethod]
@@ -525,7 +563,9 @@ public class AssemblyParsing
     where TMind : Mind<TMind>
     where TMindPlace : MindPlace
   {
-    Model.MindPlaceIndex[typeof(TMind)].Should().BeOfType<TMindPlace>();
+    var MindType = ReplaceProxyWithLoadedType(typeof(TMind))!;
+    var MindPlaceType = typeof(TMindPlace);
+    Model.MindPlaceIndex[MindType].Should().BeOfType(ReplaceProxyWithLoadedType(MindPlaceType));
   }
 
   [TestMethod]
@@ -708,8 +748,9 @@ public class AssemblyParsing
     ActualNodes.Should().BeEquivalentTo(ExpectedNodes);
   }
 
-  void ThenMindPlaceTypeIs(Type Expected, params ImmutableArray<string?> Path)
+  void ThenMindPlaceTypeIs(Type ExpectedProxy, params ImmutableArray<string?> Path)
   {
+    var Expected = ReplaceProxyWithLoadedType(ExpectedProxy);
     var MindPlaceNode = GetNodeAtPath(Path);
     var MindType = MindPlaceNode.Query(new FetchDataFromNode<Type>
     {
@@ -718,14 +759,21 @@ public class AssemblyParsing
     MindType.Should().Be(Expected);
   }
 
-  void ThenMindPlaceMindTypeIs(Type Expected, params ImmutableArray<string?> Path)
+  void ThenMindPlaceMindTypeIs(Type ExpectedProxy, params ImmutableArray<string?> Path)
   {
+    var Expected = ReplaceProxyWithLoadedType(ExpectedProxy);
     var MindPlaceNode = GetNodeAtPath(Path);
     var MindType = MindPlaceNode.Query(new FetchDataFromNode<Type>
     {
       VisitMindPlace = MindPlace => MindPlace.MindType
     });
     MindType.Should().Be(Expected);
+  }
+
+  Type? ReplaceProxyWithLoadedType(Type ExpectedProxy)
+  {
+    var Expected = LoadedAssembly.GetType(ExpectedProxy.FullName!);
+    return Expected;
   }
 
   class GetNodeTypeVisitor : ScenariosModelNodeVisitor<NodeType>

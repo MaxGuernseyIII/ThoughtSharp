@@ -83,7 +83,7 @@ public class AutomationLoopCreation
 
     Loop.Should().BeEquivalentTo(
       new AutomationLoop(
-        Model.GetTestPassFor(Pool, _ => Reporter, [
+        Model.GetTestPassFor(Pool, _ => Reporter, Scheme, [
           ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
         ]),
         new AndGate(
