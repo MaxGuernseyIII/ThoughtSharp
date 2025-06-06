@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.CodeDom.Compiler;
 using ThoughtSharp.Scenarios.Model;
 
 namespace dotnet_train;
@@ -62,7 +63,7 @@ class ConsoleReporter : Reporter
     {
       while (!Cancellation.Token.IsCancellationRequested)
       {
-        await Task.Delay(TimeSpan.FromSeconds(0.5));
+        await Task.Delay(TimeSpan.FromSeconds(5));
 
         Print();
       }
@@ -73,14 +74,32 @@ class ConsoleReporter : Reporter
   {
     lock (LockObject)
     {
-      var SchemeToPrint = Path.Reverse().Aggregate(Scheme, (Current, Node) => Current.GetChildScheme(Node));
-      foreach (var Node in SchemeToPrint.TrackedNodes)
-      {
-        var State = Scheme.GetConvergenceTrackerFor(Node);
-        var Convergence = State.MeasureConvergence();
-
-        Console.WriteLine($"{Node.Name}: {Convergence:P}");
-      }
+      var StringWriter = new StringWriter();
+      PrintScheme(Scheme, new(StringWriter));
+      Console.WriteLine(StringWriter.ToString());
     }
+  }
+
+  void PrintScheme(TrainingDataScheme SchemeToPrint, IndentedTextWriter Writer)
+  {
+    foreach (var Node in SchemeToPrint.TrackedNodes)
+    {
+      var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
+      var Convergence = State.MeasureConvergence();
+      Writer.WriteLine($"{Node.Name} ({Node.GetType()}): {Convergence:P}");
+    }
+
+    Writer.Indent++;
+    foreach (var SubSchemeNode in SchemeToPrint.SubSchemeNodes)
+    {
+      var SubScheme = SchemeToPrint.GetChildScheme(SubSchemeNode);
+      PrintScheme(SubScheme, Writer);
+    }
+    Writer.Indent--;
+  }
+
+  public void Stop()
+  {
+    Cancellation.Cancel();
   }
 }

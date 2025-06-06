@@ -91,6 +91,23 @@ public static partial class FizzBuzzTraining
       {
         ContentBuilder.Append("buzz");
       }
+
+      public override string ToString()
+      {
+        return $"surface:<{ContentBuilder}>";
+      }
+
+      public virtual bool Equals(MockActionSurface? Other)
+      {
+        if (Other is null) return false;
+        if (ReferenceEquals(this, Other)) return true;
+        return ContentBuilder.Equals(Other.ContentBuilder);
+      }
+
+      public override int GetHashCode()
+      {
+        return ContentBuilder.GetHashCode();
+      }
     }
 
     [Capability]

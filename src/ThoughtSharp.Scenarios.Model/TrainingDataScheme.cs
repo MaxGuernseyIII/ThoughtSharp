@@ -26,6 +26,7 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public class TrainingDataScheme
 {
+  readonly ScenariosModelNode Node;
   readonly object LockObject = new();
 
   public TrainingMetadata Metadata { get; }
@@ -33,13 +34,14 @@ public class TrainingDataScheme
   readonly Dictionary<ScenariosModelNode, ConvergenceTracker> Trackers = [];
   readonly Dictionary<ScenariosModelNode, TrainingDataScheme> ChildSchemes = [];
 
-  public TrainingDataScheme(TrainingMetadata Metadata, Func<TrainingDataScheme, Reporter> MakeReporter)
+  public TrainingDataScheme(ScenariosModelNode Node, TrainingMetadata Metadata, Func<TrainingDataScheme, Reporter> MakeReporter)
   {
+    this.Node = Node;
     this.Metadata = Metadata;
     Reporter = MakeReporter(this);
   }
 
-  public TrainingDataScheme(TrainingMetadata Metadata, Reporter Reporter) : this(Metadata, _ => Reporter) {}
+  public TrainingDataScheme(TrainingMetadata Metadata, Reporter Reporter) : this(null, Metadata, _ => Reporter) {}
 
   public Counter TimesSinceSaved { get; } = new();
   public Counter Attempts { get; } = new();
@@ -51,6 +53,17 @@ public class TrainingDataScheme
       lock (LockObject)
       {
         return Trackers.Keys.ToImmutableArray();
+      }
+    }
+  }
+
+  public IEnumerable<ScenariosModelNode> SubSchemeNodes
+  {
+    get
+    {
+      lock (LockObject)
+      {
+        return ChildSchemes.Keys;
       }
     }
   }
@@ -88,7 +101,7 @@ public class TrainingDataScheme
     lock(LockObject)
     {
       if (!ChildSchemes.TryGetValue(Node, out var Result))
-        ChildSchemes[Node] = Result = new(Node.Query(Queries.GetTrainingMetadata).Single(), Reporter);
+        ChildSchemes[Node] = Result = new(Node, Node.Query(Queries.GetTrainingMetadata).Single(), _ => Reporter);
       return Result;
     }
   }

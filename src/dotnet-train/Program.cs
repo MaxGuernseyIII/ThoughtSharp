@@ -64,17 +64,17 @@ class Program
         }
       );
 
-      foreach (var Curriculum in CurriculumNodes)
+      foreach (var Curriculum in CurriculumNodes.Where(C => C.Name == "FizzBuzzTrainingPlan"))
       {
         Console.WriteLine($"Training curriculum: {Curriculum.Name}");
 
-
         var Pool = new MindPool(Model.MindPlaceIndex);
-        var Scheme = new TrainingDataScheme(new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1}, S => new ConsoleReporter(S));
+        var Scheme = new TrainingDataScheme(Curriculum, new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1}, S => new ConsoleReporter(S));
         
-
         var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme);
         await Plan.Run();
+
+        //((ConsoleReporter) Scheme.Reporter).Stop();
       }
     }, AssemblyArgument);
 
