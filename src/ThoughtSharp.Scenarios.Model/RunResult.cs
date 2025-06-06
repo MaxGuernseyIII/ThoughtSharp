@@ -26,4 +26,5 @@ public record RunResult
 {
   public required BehaviorRunStatus Status { get; init; }
   public Exception? Exception { get; init; }
+  public string Output { get; init; } = "";
 }

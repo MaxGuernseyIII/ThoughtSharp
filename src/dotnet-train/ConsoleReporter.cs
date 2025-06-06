@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.CodeDom.Compiler;
 using ThoughtSharp.Scenarios.Model;
 
 namespace dotnet_train;
@@ -29,8 +28,9 @@ class ConsoleReporter : Reporter
 {
   readonly CancellationTokenSource Cancellation = new();
   readonly object LockObject = new();
-  readonly TrainingDataScheme Scheme;
+  readonly Dictionary<ScenariosModelNode, RunResult> MostRecentFailures = [];
   readonly Stack<ScenariosModelNode> Path = [];
+  readonly TrainingDataScheme Scheme;
   TrainingDataScheme? LastSchemeToPrint;
 
   public ConsoleReporter(TrainingDataScheme Scheme)
@@ -41,19 +41,29 @@ class ConsoleReporter : Reporter
 
   public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
   {
+    if (Result.Status == BehaviorRunStatus.Failure)
+      lock (LockObject)
+      {
+        MostRecentFailures[Node] = Result;
+      }
   }
 
   public void ReportEnter(ScenariosModelNode Node)
   {
     Console.WriteLine($"Enter: {Node.Name}");
-    lock(LockObject)
+    lock (LockObject)
+    {
       Path.Push(Node);
+    }
   }
 
   public void ReportExit(ScenariosModelNode Node)
   {
     lock (LockObject)
+    {
       Path.Pop();
+    }
+
     Console.WriteLine($"Exit: {Node.Name}");
     Console.WriteLine();
   }
@@ -63,10 +73,9 @@ class ConsoleReporter : Reporter
     Task.Run(async () =>
     {
       while (!Cancellation.Token.IsCancellationRequested)
-      {
         try
         {
-          await Task.Delay(TimeSpan.FromSeconds(1));
+          await Task.Delay(TimeSpan.FromSeconds(5));
 
           Print();
         }
@@ -74,7 +83,6 @@ class ConsoleReporter : Reporter
         {
           Console.WriteLine(Ex);
         }
-      } 
     });
   }
 
@@ -82,50 +90,80 @@ class ConsoleReporter : Reporter
   {
     lock (LockObject)
     {
-      var StringWriter = new StringWriter();
       var SchemeToPrint = Path.Reverse().Aggregate(Scheme, (Current, Node) => Current.GetChildScheme(Node));
-      if (!ReferenceEquals(SchemeToPrint, LastSchemeToPrint))
-        Console.Clear();
-      else
-        Console.SetCursorPosition(0, 0);
+      //if (!ReferenceEquals(SchemeToPrint, LastSchemeToPrint))
+      Console.Clear();
+      //else
+      //Console.SetCursorPosition(0, 0);
+
+      //foreach (var (Node, Result) in Results.Where(R => R.Node is CurriculumPhaseNode)) 
+      //  Console.WriteLine($"{Node.Name}: {Result.Status}");
 
       LastSchemeToPrint = SchemeToPrint;
 
-      PrintScheme(SchemeToPrint, new(StringWriter));
-      Console.WriteLine(StringWriter.ToString());
+      PrintScheme(SchemeToPrint);
     }
   }
 
-  void PrintScheme(TrainingDataScheme SchemeToPrint, IndentedTextWriter Writer)
+  void PrintScheme(TrainingDataScheme SchemeToPrint)
   {
     if (SchemeToPrint.TrackedNodes.Any())
     {
       var LabelWidth = SchemeToPrint.TrackedNodes.Select(N => N.Name.Length + 3).Max();
-      var Width = Math.Min(Console.WindowWidth - (10 + LabelWidth), 60);
+      var BarWidth = Math.Min(Console.WindowWidth - (10 + LabelWidth), 60);
 
-      Writer.WriteLine($"Phase: {SchemeToPrint.Node?.Name}");
-      Writer.Indent++;
+      Console.WriteLine($"Phase: {SchemeToPrint.Node?.Name}");
       foreach (var Node in SchemeToPrint.TrackedNodes)
       {
         var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
         var Convergence = State.MeasureConvergence();
-        var ConvergenceBar = new string('█', (int) (Width * Convergence)).PadRight(Width, '░');
-        Writer.WriteLine($"{Node.Name.PadRight(LabelWidth)} [{ConvergenceBar}]");
+        var ConvergenceBar = new string('█', (int) (BarWidth * Convergence)).PadRight(BarWidth, '░');
+        var ConvergenceThreshold = (int) SchemeToPrint.Metadata.SuccessFraction * BarWidth;
+        var IsConvergent = Convergence >= SchemeToPrint.Metadata.SuccessFraction;
+
+        var BelowThresholdPortion = ConvergenceBar[..ConvergenceThreshold];
+        var AboveThresholdPortion = ConvergenceBar[ConvergenceThreshold..];
+
+        Console.Write($"{Node.Name.PadRight(LabelWidth)} [");
+        Console.ForegroundColor = IsConvergent ? ConsoleColor.Green : ConsoleColor.Red;
+        Console.Write(BelowThresholdPortion);
+        Console.ForegroundColor = IsConvergent ? ConsoleColor.DarkGreen : ConsoleColor.DarkRed;
+        Console.Write(AboveThresholdPortion);
+        Console.ForegroundColor = ConsoleColor.White;
+
+        Console.WriteLine("]");
+        if (MostRecentFailures.TryGetValue(Node, out var RecentResult))
+        {
+          var Content = "";
+          if (RecentResult.Exception is not null)
+            Content = RecentResult.Exception.Message + Environment.NewLine;
+          Content += RecentResult.Output;
+
+          var Lines = Content.Split([Environment.NewLine],
+              StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(Line => Line.Length < Console.WindowWidth ? Line : Line[..(Console.WindowWidth - 4)] + "...")
+            .Take(3);
+          Lines = Lines.Concat(Enumerable.Repeat("", 3 - Lines.Count()));
+
+          foreach (var Line in Lines)
+            Console.WriteLine(Line);
+        }
       }
     }
 
     foreach (var SubSchemeNode in SchemeToPrint.SubSchemeNodes)
     {
       var SubScheme = SchemeToPrint.GetChildScheme(SubSchemeNode);
-      PrintScheme(SubScheme, Writer);
+      PrintScheme(SubScheme);
     }
 
-    Writer.WriteLine($"{SchemeToPrint.Attempts.Value} attempts, {SchemeToPrint.TimesSinceSaved.Value} attempts since last save               ");
-    Writer.Indent--;
+    Console.WriteLine(
+      $"{SchemeToPrint.Attempts.Value} attempts, {SchemeToPrint.TimesSinceSaved.Value} attempts since last save               ");
   }
 
   public void Stop()
   {
     Cancellation.Cancel();
+    Print();
   }
 }

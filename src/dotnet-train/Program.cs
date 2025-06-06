@@ -76,6 +76,8 @@ class Program
         var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme);
         await Plan.Run();
       }
+
+      ((ConsoleReporter)Scheme.Reporter).Stop();
     }, AssemblyArgument);
 
     Environment.ExitCode = await RootCommand.InvokeAsync(Args);

@@ -44,13 +44,7 @@ public static partial class FizzBuzzTraining
       }
       catch
       {
-
       }
-    }
-
-    public override TorchBrain MakeNewBrain()
-    {
-      return Builder.Build();
     }
 
     static BrainBuilder<TorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device> Builder
@@ -62,10 +56,16 @@ public static partial class FizzBuzzTraining
             Outer
               .AddGRU(128)
               .AddParallel(P => P
+                //.AddLogicPath(160, 40, 80)
                 .AddLogicPath(16, 12)
                 .AddPath(S => S))
           );
       }
+    }
+
+    public override TorchBrain MakeNewBrain()
+    {
+      return Builder.Build();
     }
 
     public override void LoadSavedBrain(TorchBrain ToLoad)
@@ -105,16 +105,16 @@ public static partial class FizzBuzzTraining
         ContentBuilder.Append("buzz");
       }
 
-      public override string ToString()
-      {
-        return $"surface:<{ContentBuilder}>";
-      }
-
       public virtual bool Equals(MockActionSurface? Other)
       {
         if (Other is null) return false;
         if (ReferenceEquals(this, Other)) return true;
         return ContentBuilder.Equals(Other.ContentBuilder);
+      }
+
+      public override string ToString()
+      {
+        return $"surface:<{ContentBuilder}>";
       }
 
       public override int GetHashCode()
@@ -129,6 +129,8 @@ public static partial class FizzBuzzTraining
       const int FizzFactor = 3;
       const int BuzzFactor = 5;
       static readonly Random Random = new();
+
+      static readonly Dictionary<FactorsKey, ImmutableArray<byte>> AvailableByFactors = [];
       readonly FizzBuzzHybridReasoning Reasoning = new(Mind);
       readonly MockActionSurface Surface = new();
 
@@ -137,19 +139,16 @@ public static partial class FizzBuzzTraining
         return (byte) (Random.Next(byte.MaxValue / Factor) * Factor);
       }
 
-      static readonly Dictionary<int, ImmutableArray<byte>> AvailableByFactors = [];
-
       byte AnyByteNotDivisibleBy(params IEnumerable<int> ExcludedFactors)
       {
-        var Key = 1;
-        foreach (var ExcludedFactor in ExcludedFactors) 
-          Key *= ExcludedFactor;
+        var Key = new FactorsKey([..ExcludedFactors]);
 
         if (!AvailableByFactors.TryGetValue(Key, out var Available))
-          AvailableByFactors[Key] = Available = [
+          AvailableByFactors[Key] = Available =
+          [
             ..Enumerable.Range(0, byte.MaxValue + 1)
               .Where(Candidate => ExcludedFactors.All(F => Candidate % F != 0))
-              .Select(I => (byte)I)
+              .Select(I => (byte) I)
           ];
 
         return Available[Random.Next(Available.Length)];
@@ -203,6 +202,21 @@ public static partial class FizzBuzzTraining
           S => S.WriteNumber(Input)
         );
       }
+
+      sealed record FactorsKey(ImmutableArray<int> Factors)
+      {
+        public bool Equals(FactorsKey? Other)
+        {
+          if (Other is null) return false;
+          if (ReferenceEquals(this, Other)) return true;
+          return Factors.SequenceEqual(Other.Factors);
+        }
+
+        public override int GetHashCode()
+        {
+          return 0;
+        }
+      }
     }
 
     [Dependency(typeof(Calculations))]
@@ -229,28 +243,26 @@ public static partial class FizzBuzzTraining
   public static class FizzBuzzTrainingPlan
   {
     [Phase(1)]
-    [ConvergenceStandard(Fraction = .8, Of = 200)]
+    [ConvergenceStandard(Fraction = .6, Of = 200)]
     [Include(typeof(Calculations))]
     public class InitialSteps;
 
     [Phase(2)]
+    [MaximumAttempts(20000)]
     [ConvergenceStandard(Fraction = .98, Of = 500)]
     public class FocusedTraining
     {
       [Phase(2.1)]
-      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)])]
       public class FocusOnFizz;
 
       [Phase(2.2)]
-      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)])]
       // TODO: Support weights in training
       //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.25)]
       public class FocusOnBuzz;
 
       [Phase(2.3)]
-      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.FizzBuzz)])]
       // TODO: Support weights in training
       //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
@@ -258,7 +270,6 @@ public static partial class FizzBuzzTraining
       public class FocusOnFizzBuzz;
 
       [Phase(2.4)]
-      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.WriteValue)])]
       // TODO: Support weights in training
       //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]

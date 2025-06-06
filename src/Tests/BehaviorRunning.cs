@@ -32,6 +32,8 @@ namespace Tests;
 [TestClass]
 public class BehaviorRunning
 {
+  static readonly SemaphoreSlim ConsoleLock = new(1, 1);
+  
   [TestInitialize]
   public void SetUp()
   {
@@ -131,6 +133,57 @@ public class BehaviorRunning
     var Result = await Runner.Run();
 
     Result.Status.Should().Be(BehaviorRunStatus.Success);
+  }
+
+  [TestMethod]
+  public async Task CaptureOutput()
+  {
+    await Isolated(async () =>
+    {
+      var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+      var Runner = new BehaviorRunner(Pool, typeof(ConsoleCatchingHost),
+        typeof(ConsoleCatchingHost).GetMethod(nameof(ConsoleCatchingHost.PrintIt))!);
+      var Expected = Any.NormalString;
+      ConsoleCatchingHost.ToPrint = Expected;
+
+      var Result = await Runner.Run();
+
+      Result.Output.Should().Be(Expected);
+    });
+  }
+
+  [TestMethod]
+  public async Task CaptureError()
+  {
+    await Isolated(async () =>
+    {
+      var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+      var Runner = new BehaviorRunner(Pool, typeof(ConsoleCatchingHost),
+        typeof(ConsoleCatchingHost).GetMethod(nameof(ConsoleCatchingHost.PrintItToError))!);
+      var Expected = Any.NormalString;
+      ConsoleCatchingHost.ToPrint = Expected;
+
+      var Result = await Runner.Run();
+
+      Result.Output.Should().Be(Expected);
+    });
+  }
+
+  [TestMethod]
+  public async Task CaptureOutputAndErrorOnException()
+  {
+    await Isolated(async () =>
+    {
+      var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+      var Runner = new BehaviorRunner(Pool, typeof(ConsoleCatchingHost),
+        typeof(ConsoleCatchingHost).GetMethod(nameof(ConsoleCatchingHost.PrintAndFail))!);
+      var Expected = Any.NormalString;
+      ConsoleCatchingHost.ToPrint = Expected;
+
+      var Result = await Runner.Run();
+
+      Result.Output.Should().Be(Expected + Expected);
+    });
   }
 
   [TestMethod]
@@ -263,14 +316,42 @@ public class BehaviorRunning
     Job.Should().BeEquivalentTo(
       new AutomationPass(
         [.. Nodes.GetBehaviorRunners(Pool)],
-        SaveGate, 
-        Pool, 
+        SaveGate,
+        Pool,
         Scheme));
   }
 
   public record Mind1(Brain Brain);
 
   public record Mind2(Brain Brain);
+
+  public class ConsoleCatchingHost
+  {
+    static readonly AsyncLocal<string?> ToPrintContainer = new();
+
+    public static string? ToPrint
+    {
+      get => ToPrintContainer.Value;
+      set => ToPrintContainer.Value = value;
+    }
+
+    public void PrintIt()
+    {
+      Console.Write(ToPrint);
+    }
+
+    public Task PrintItToError()
+    {
+      return Console.Error.WriteAsync(ToPrint);
+    }
+
+    public void PrintAndFail()
+    {
+      Console.Write(ToPrint);
+      Console.Error.WriteAsync(ToPrint);
+      throw new InvalidOperationException("Expected failure");
+    }
+  }
 
   public class MindCatchingHost
   {
@@ -333,5 +414,20 @@ public class BehaviorRunning
   internal class Box<T>
   {
     public T Value { get; set; } = default!;
+  }
+
+  static Task Isolated(Func<Task> ToDo)
+  {
+    return ToDo();
+    //await ConsoleLock.WaitAsync();
+
+    //try
+    //{
+    //  await ToDo();
+    //}
+    //finally
+    //{
+    //  ConsoleLock.Release();
+    //}
   }
 }

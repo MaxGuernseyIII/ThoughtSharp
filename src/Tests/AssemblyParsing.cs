@@ -275,7 +275,7 @@ public class AssemblyParsing
     ThenTrainingMetadataIsAt(
       new()
       {
-        SuccessFraction = .8,
+        SuccessFraction = .6,
         SampleSize = 200,
         MaximumAttempts = 50000
       },
@@ -296,7 +296,7 @@ public class AssemblyParsing
       {
         SuccessFraction = .98,
         SampleSize = 500,
-        MaximumAttempts = 10000
+        MaximumAttempts = 20000
       },
       RootNamespace,
       nameof(FizzBuzzTraining),
