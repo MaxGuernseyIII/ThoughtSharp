@@ -37,7 +37,7 @@ public class AssemblyParser
   {
     Dictionary<string, List<ScenariosModelNode>> RootDirectories = [];
 
-    foreach (var Type in LoadedAssembly.GetExportedTypes())
+    foreach (var Type in LoadedAssembly.GetExportedTypes().Where(T => !T.IsNested))
     {
       if (!IsThoughtSharpTrainingType(Type))
         continue;

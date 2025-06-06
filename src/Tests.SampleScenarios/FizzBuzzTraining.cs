@@ -202,7 +202,7 @@ public static partial class FizzBuzzTraining
   }
 
   [Curriculum]
-  [MaximumAttempts(5000)]
+  [MaximumAttempts(50000)]
   public static class FizzBuzzTrainingPlan
   {
     [Phase(1)]

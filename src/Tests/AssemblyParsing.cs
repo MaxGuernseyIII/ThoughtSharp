@@ -110,6 +110,16 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void DoesNotDuplicateCurriculaAtRoot()
+  {
+    WhenParseAssembly();
+
+    ThenStructureDoesNotContainNode(
+      RootNamespace,
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan));
+  }
+
+  [TestMethod]
   public void FindsCapabilities()
   {
     WhenParseAssembly();
@@ -267,7 +277,7 @@ public class AssemblyParsing
       {
         SuccessFraction = .8,
         SampleSize = 200,
-        MaximumAttempts = 5000
+        MaximumAttempts = 50000
       },
       RootNamespace,
       nameof(FizzBuzzTraining),

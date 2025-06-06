@@ -54,6 +54,7 @@ class Program
 
     RootCommand.SetHandler(async ToTrain =>
     {
+      Directory.SetCurrentDirectory(Path.GetDirectoryName(ToTrain.FullName)!);
       var Assembly = new ShapingAssemblyLoadContext(ToTrain.FullName).LoadFromAssemblyPath(ToTrain.FullName);
       var Parser = new AssemblyParser();
 
@@ -74,8 +75,6 @@ class Program
 
         var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme);
         await Plan.Run();
-
-        //((ConsoleReporter) Scheme.Reporter).Stop();
       }
     }, AssemblyArgument);
 
