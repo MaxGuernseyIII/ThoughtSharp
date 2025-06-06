@@ -228,20 +228,3 @@ public class AutomationPasses
     return new AutomationPass([..Steps], SaveGate, Saver, Scheme);
   }
 }
-
-//[TestClass]
-//public class AutomationPassConstruction
-//{
-//  class HostType
-//  {
-//    public void Method(){}
-//  }
-//  [TestMethod]
-//  public void BuildFromSingleNode()
-//  {
-//    var Kit = new MockModelKit();
-//    var Node = new BehaviorNode(typeof(HostType), typeof(HostType).GetMethod(nameof(HostType.Method))!);
-
-//    var Pass = Kit.CreateAutomationPassFrom(Node);
-//  }
-//}

@@ -63,10 +63,17 @@ class ConsoleReporter : Reporter
     {
       while (!Cancellation.Token.IsCancellationRequested)
       {
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        try
+        {
+          await Task.Delay(TimeSpan.FromSeconds(5));
 
-        Print();
-      }
+          Print();
+        }
+        catch (Exception Ex)
+        {
+          Console.WriteLine(Ex);
+        }
+      } 
     });
   }
 
@@ -75,13 +82,18 @@ class ConsoleReporter : Reporter
     lock (LockObject)
     {
       var StringWriter = new StringWriter();
-      PrintScheme(Scheme, new(StringWriter));
+      var SchemeToPrint = Path.Reverse().Aggregate(Scheme, (Current, Node) => Current.GetChildScheme(Node));
+      PrintScheme(SchemeToPrint, new(StringWriter));
       Console.WriteLine(StringWriter.ToString());
     }
   }
 
   void PrintScheme(TrainingDataScheme SchemeToPrint, IndentedTextWriter Writer)
   {
+    Writer.WriteLine($"Phase: {SchemeToPrint.Node?.Name}");
+    Writer.Indent++;
+    Writer.WriteLine($"{SchemeToPrint.Attempts.Value} attempts");
+    Writer.WriteLine($"{SchemeToPrint.TimesSinceSaved.Value} attempts since last save");
     foreach (var Node in SchemeToPrint.TrackedNodes)
     {
       var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
@@ -89,7 +101,6 @@ class ConsoleReporter : Reporter
       Writer.WriteLine($"{Node.Name} ({Node.GetType()}): {Convergence:P}");
     }
 
-    Writer.Indent++;
     foreach (var SubSchemeNode in SchemeToPrint.SubSchemeNodes)
     {
       var SubScheme = SchemeToPrint.GetChildScheme(SubSchemeNode);

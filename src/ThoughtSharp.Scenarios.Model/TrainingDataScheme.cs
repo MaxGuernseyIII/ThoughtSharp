@@ -26,7 +26,7 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public class TrainingDataScheme
 {
-  readonly ScenariosModelNode Node;
+  public readonly ScenariosModelNode Node;
   readonly object LockObject = new();
 
   public TrainingMetadata Metadata { get; }
@@ -39,6 +39,14 @@ public class TrainingDataScheme
     this.Node = Node;
     this.Metadata = Metadata;
     Reporter = MakeReporter(this);
+    try
+    {
+      Console.WriteLine($"New scheme for: {Node?.Name}");
+    }
+    catch
+    {
+
+    }
   }
 
   public TrainingDataScheme(TrainingMetadata Metadata, Reporter Reporter) : this(null, Metadata, _ => Reporter) {}

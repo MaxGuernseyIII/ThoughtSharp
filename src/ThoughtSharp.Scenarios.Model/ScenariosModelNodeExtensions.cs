@@ -75,7 +75,9 @@ public static class ScenariosModelNodeExtensions
     );
   }
 
-  public static Runnable GetTestPassFor(this ScenariosModel This, MindPool Pool,
+  public static Runnable GetTestPassFor(
+    this ScenariosModel This, 
+    MindPool Pool,
     TrainingDataScheme Scheme,
     Gate SaveGate, 
     params ImmutableArray<ScenariosModelNode> Nodes)
