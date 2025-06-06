@@ -30,7 +30,6 @@ public static class ScenariosModelNodeExtensions
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
     MindPool Pool,
-    Func<TrainingDataScheme, Reporter> MakeReporter,
     TrainingDataScheme ParentScheme)
   {
     var Scheme = ParentScheme.GetChildScheme(PhaseNode);
@@ -39,14 +38,12 @@ public static class ScenariosModelNodeExtensions
     if (ChildPhases.Any())
       return new TrainingPlan(
         PhaseNode,
-        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, MakeReporter, Scheme))],
-        MakeReporter,
+        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, Scheme))],
         Scheme);
 
     return new TrainingPlan(
       PhaseNode,
-      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, MakeReporter, Scheme)],
-      MakeReporter,
+      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Scheme)],
       Scheme);
   }
 
@@ -54,7 +51,6 @@ public static class ScenariosModelNodeExtensions
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
     MindPool Pool,
-    Func<TrainingDataScheme, Reporter> MakeReporter,
     TrainingDataScheme TrainingDataScheme)
   {
     var IncludedScenariosFinders = PhaseNode.Query(new TargetedVisitor<ScenariosModelNodeVisitor<ScenariosModelNode?>>
@@ -65,7 +61,7 @@ public static class ScenariosModelNodeExtensions
     var Behaviors = IncludedScenariosFinders.Select(This.Query).Where(B => B is not null).OfType<ScenariosModelNode>()
       .ToImmutableArray();
 
-    var Pass = This.GetTestPassFor(Pool, MakeReporter, TrainingDataScheme, Behaviors!);
+    var Pass = This.GetTestPassFor(Pool, TrainingDataScheme, Behaviors!);
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
       Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), TrainingDataScheme.Metadata.SuccessFraction));
 
@@ -79,11 +75,11 @@ public static class ScenariosModelNodeExtensions
     );
   }
 
-  public static Runnable GetTestPassFor(this ScenariosModel This, MindPool Pool, Func<TrainingDataScheme, Reporter> MakeReporter,
+  public static Runnable GetTestPassFor(this ScenariosModel This, MindPool Pool,
     TrainingDataScheme Scheme,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
-    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, MakeReporter, Scheme);
+    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, Scheme);
   }
 
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)

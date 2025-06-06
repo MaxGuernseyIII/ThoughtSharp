@@ -24,9 +24,16 @@ using ThoughtSharp.Scenarios.Model;
 
 namespace dotnet_train;
 
-class ConsoleReporter(TrainingDataScheme Scheme) : Reporter
+class ConsoleReporter : Reporter
 {
   readonly CancellationTokenSource Cancellation = new();
+  readonly TrainingDataScheme Scheme;
+
+  public ConsoleReporter(TrainingDataScheme Scheme)
+  {
+    this.Scheme = Scheme;
+    Start();
+  }
 
   public void Start()
   {
@@ -36,16 +43,22 @@ class ConsoleReporter(TrainingDataScheme Scheme) : Reporter
       {
         await Task.Delay(TimeSpan.FromSeconds(0.5));
 
-        foreach (var Node in Scheme.TrackedNodes)
-        {
-          var State = Scheme.GetConvergenceTrackerFor(Node);
-          var Convergence = State.MeasureConvergence();
-
-          Console.WriteLine($"{Node.Name}: {Convergence:P}");
-        }
+        Print();
       }
     });
   }
+
+  void Print()
+  {
+    foreach (var Node in Scheme.TrackedNodes)
+    {
+      var State = Scheme.GetConvergenceTrackerFor(Node);
+      var Convergence = State.MeasureConvergence();
+
+      Console.WriteLine($"{Node.Name}: {Convergence:P}");
+    }
+  }
+
   public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
   {
   }
@@ -62,6 +75,7 @@ class ConsoleReporter(TrainingDataScheme Scheme) : Reporter
 
   public void Dispose()
   {
+    Print();
     Cancellation.Cancel();
   }
 }

@@ -54,7 +54,7 @@ class Program
 
     RootCommand.SetHandler(async ToTrain =>
     {
-      var Assembly = new ShapingAssemblyLoadContext(Path.GetDirectoryName(ToTrain.FullName)!).LoadFromAssemblyPath(ToTrain.FullName);
+      var Assembly = new ShapingAssemblyLoadContext(ToTrain.FullName).LoadFromAssemblyPath(ToTrain.FullName);
       var Parser = new AssemblyParser();
 
       var Model = Parser.Parse(Assembly);
@@ -70,9 +70,9 @@ class Program
 
 
         var Pool = new MindPool(Model.MindPlaceIndex);
-        var Scheme = new TrainingDataScheme(new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1});
+        var Scheme = new TrainingDataScheme(new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1}, S => new ConsoleReporter(S));
 
-        var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, S => new ConsoleReporter(S), Scheme);
+        var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme);
         await Plan.Run();
       }
     }, AssemblyArgument);

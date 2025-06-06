@@ -24,13 +24,22 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class TrainingDataScheme(TrainingMetadata Metadata)
+public class TrainingDataScheme
 {
   readonly object LockObject = new();
 
-  public TrainingMetadata Metadata { get; } = Metadata;
+  public TrainingMetadata Metadata { get; }
+  public Reporter Reporter { get; }
   readonly Dictionary<ScenariosModelNode, ConvergenceTracker> Trackers = [];
   readonly Dictionary<ScenariosModelNode, TrainingDataScheme> ChildSchemes = [];
+
+  public TrainingDataScheme(TrainingMetadata Metadata, Func<TrainingDataScheme, Reporter> MakeReporter)
+  {
+    this.Metadata = Metadata;
+    Reporter = MakeReporter(this);
+  }
+
+  public TrainingDataScheme(TrainingMetadata Metadata, Reporter Reporter) : this(Metadata, _ => Reporter) {}
 
   public Counter TimesSinceSaved { get; } = new();
   public Counter Attempts { get; } = new();
@@ -58,7 +67,7 @@ public class TrainingDataScheme(TrainingMetadata Metadata)
 
   protected bool Equals(TrainingDataScheme Other)
   {
-    return Metadata.Equals(Other.Metadata);
+    return Metadata.Equals(Other.Metadata) && Equals(Reporter, Other.Reporter);
   }
 
   public override bool Equals(object? Obj)
@@ -79,7 +88,7 @@ public class TrainingDataScheme(TrainingMetadata Metadata)
     lock(LockObject)
     {
       if (!ChildSchemes.TryGetValue(Node, out var Result))
-        ChildSchemes[Node] = Result = new(Node.Query(Queries.GetTrainingMetadata).Single());
+        ChildSchemes[Node] = Result = new(Node.Query(Queries.GetTrainingMetadata).Single(), Reporter);
       return Result;
     }
   }

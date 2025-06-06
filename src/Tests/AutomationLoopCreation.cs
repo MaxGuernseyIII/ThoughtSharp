@@ -70,7 +70,7 @@ public class AutomationLoopCreation
         }
       ]);
 
-    var Scheme = new TrainingDataScheme(TrainingMetadata);
+    var Scheme = new TrainingDataScheme(TrainingMetadata, Reporter);
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
     ImmutableArray<ScenariosModelNode> SourceNodes = [CapabilityNode, BehaviorNode3, BehaviorNode1];
     var ConvergenceGates = SourceNodes.GetBehaviorRunners(Pool)
@@ -79,11 +79,11 @@ public class AutomationLoopCreation
         TrainingMetadata.SuccessFraction))
       .ToImmutableArray();
     var ConvergenceRule = ConvergenceGates.Aggregate(Gate.AlwaysOpen, Gate.ForAnd);
-    var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, _ => Reporter, Scheme);
+    var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, Scheme);
 
     Loop.Should().BeEquivalentTo(
       new AutomationLoop(
-        Model.GetTestPassFor(Pool, _ => Reporter, Scheme, [
+        Model.GetTestPassFor(Pool, Scheme, [
           ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
         ]),
         new AndGate(

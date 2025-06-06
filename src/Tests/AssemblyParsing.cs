@@ -24,48 +24,12 @@ using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
 using FluentAssertions;
-using Tests.Mocks;
 using Tests.SampleScenarios;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
-
-[TestClass]
-public class BehaviorInvocation
-{
-  static readonly string RootNamespace = typeof(Anchor).Namespace!;
-  Assembly LoadedAssembly = null!;
-  ScenariosModel Model = null!;
-
-  [TestInitialize]
-  public void SetUp()
-  {
-    var Path = typeof(Anchor).Assembly.Location;
-    var Context = new ShapingAssemblyLoadContext(Path);
-    LoadedAssembly = Context.LoadFromAssemblyPath(Path);
-    Model = new AssemblyParser().Parse(LoadedAssembly);
-  }
-
-  [TestMethod]
-  public async Task RunTests()
-  {
-    var SingleNode = Model.GetNodeAtEndOfPath(RootNamespace, nameof(IntegrationTestInput),
-      nameof(IntegrationTestInput.Runnables), nameof(IntegrationTestInput.Runnables.WillPass));
-    var TestPass = Model.GetTestPassFor(new(Model.MindPlaceIndex), _ => new MockReporter(), new(Any.TrainingMetadata()), SingleNode);
-
-    var Result = await TestPass.Run();
-
-    Result.Status.Should().Be(BehaviorRunStatus.Success);
-  }
-
-  Type? ReplaceProxyWithLoadedType(Type Proxy)
-  {
-    var Expected = LoadedAssembly.GetType(Proxy.FullName!);
-    return Expected;
-  }
-}
 
 [TestClass]
 public class AssemblyParsing

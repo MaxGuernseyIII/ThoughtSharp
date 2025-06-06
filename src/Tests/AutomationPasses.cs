@@ -45,7 +45,7 @@ public class AutomationPasses
     Saver = new();
     Reporter = new();
     Metadata = Any.TrainingMetadata();
-    Scheme = new(Metadata);
+    Scheme = new(Metadata, Reporter);
   }
 
   [TestMethod]
@@ -225,7 +225,7 @@ public class AutomationPasses
 
   Runnable GivenAutomationPass()
   {
-    return new AutomationPass([..Steps], SaveGate, Saver, _ => Reporter, Scheme);
+    return new AutomationPass([..Steps], SaveGate, Saver, Scheme);
   }
 }
 

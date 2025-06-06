@@ -27,15 +27,13 @@ namespace ThoughtSharp.Scenarios.Model;
 public record TrainingPlan(
   ScenariosModelNode PlanNode, 
   ImmutableArray<Runnable> SubJobs, 
-  Func<TrainingDataScheme, Reporter> MakeReporter,
   TrainingDataScheme Scheme) : Runnable
 {
   public async Task<RunResult> Run()
   {
-    var Reporter = MakeReporter(null!);
     try
     {
-      Reporter.ReportEnter(PlanNode);
+      Scheme.Reporter.ReportEnter(PlanNode);
 
       foreach (var SubJob in SubJobs)
         if ((await SubJob.Run()).Status == BehaviorRunStatus.Failure)
@@ -51,7 +49,7 @@ public record TrainingPlan(
     }
     finally
     {
-      Reporter.ReportExit(PlanNode);
+      Scheme.Reporter.ReportExit(PlanNode);
     }
   }
 
@@ -59,11 +57,11 @@ public record TrainingPlan(
   {
     if (Other is null) return false;
     if (ReferenceEquals(this, Other)) return true;
-    return PlanNode.Equals(Other.PlanNode) && SubJobs.SequenceEqual(Other.SubJobs) && MakeReporter(Scheme).Equals(Other.MakeReporter(Scheme));
+    return PlanNode.Equals(Other.PlanNode) && SubJobs.SequenceEqual(Other.SubJobs) && Equals(Scheme, Other.Scheme);
   }
 
   public override int GetHashCode()
   {
-    return HashCode.Combine(PlanNode, SubJobs, MakeReporter(Scheme));
+    return HashCode.Combine(PlanNode, SubJobs);
   }
 }

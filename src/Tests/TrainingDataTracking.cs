@@ -36,7 +36,7 @@ public class TrainingDataTracking
   public void SetUp()
   {
     Metadata = Any.TrainingMetadata();
-    Scheme = new(Metadata);
+    Scheme = new(Metadata, new MockReporter());
   }
 
   [TestMethod]

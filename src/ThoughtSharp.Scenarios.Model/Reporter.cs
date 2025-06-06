@@ -1,6 +1,6 @@
 ﻿namespace ThoughtSharp.Scenarios.Model;
 
-public interface Reporter : IDisposable
+public interface Reporter
 {
   void ReportRunResult(ScenariosModelNode Node, RunResult Result);
   void ReportEnter(ScenariosModelNode Node);

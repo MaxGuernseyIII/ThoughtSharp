@@ -28,11 +28,9 @@ public sealed class AutomationPass(
   ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps,
   Gate SaveGate,
   Saver Saver,
-  Func<TrainingDataScheme, Reporter> MakeReporter,
   TrainingDataScheme Scheme)
   : Runnable
 {
-  readonly Func<TrainingDataScheme, Reporter> MakeReporter = MakeReporter;
   readonly Gate SaveGate = SaveGate;
   readonly Saver Saver = Saver;
   readonly ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps = Steps;
@@ -40,13 +38,12 @@ public sealed class AutomationPass(
 
   public async Task<RunResult> Run()
   {
-    var Reporter = MakeReporter(Scheme);
     var AnyFailed = false;
 
     foreach (var (Node, Runnable) in Steps)
     {
       var Result = await Runnable.Run();
-      Reporter.ReportRunResult(Node, Result);
+      Scheme.Reporter.ReportRunResult(Node, Result);
       var WasSuccessful = Result.Status == BehaviorRunStatus.Success;
       Scheme.GetConvergenceTrackerFor(Node).RecordResult(WasSuccessful);
       AnyFailed = AnyFailed || Result.Status == BehaviorRunStatus.Failure;
@@ -67,7 +64,6 @@ public sealed class AutomationPass(
       Steps.SequenceEqual(Other.Steps) &&
       SaveGate.Equals(Other.SaveGate) &&
       Saver.Equals(Other.Saver) &&
-      MakeReporter(Scheme).Equals(Other.MakeReporter(Scheme)) &&
       Equals(Scheme, Other.Scheme);
   }
 
@@ -78,6 +74,6 @@ public sealed class AutomationPass(
 
   public override int GetHashCode()
   {
-    return Steps.OfType<object>().Concat([SaveGate, Saver, MakeReporter]).Aggregate(0, HashCode.Combine);
+    return Steps.OfType<object>().Concat([SaveGate, Saver, Scheme]).Aggregate(0, HashCode.Combine);
   }
 }
