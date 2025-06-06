@@ -51,7 +51,7 @@ public class BehaviorInvocation
   {
     var SingleNode = Model.GetNodeAtEndOfPath(RootNamespace, nameof(IntegrationTestInput),
       nameof(IntegrationTestInput.Runnables), nameof(IntegrationTestInput.Runnables.WillPass));
-    var TestPass = Model.GetTestPassFor(new(Model.MindPlaceIndex), new(Any.TrainingMetadata(), new MockReporter()), SingleNode);
+    var TestPass = Model.GetTestPassFor(new(Model.MindPlaceIndex), new(Any.TrainingMetadata(), new MockReporter()), new FalseGate(), SingleNode);
 
     var Result = await TestPass.Run();
 

@@ -37,6 +37,6 @@ public class AccumulatedUseAssertionContext<TSurface>(AccumulatedUseFeedback<TSu
     foreach (var Expectation in Expectations)
       Expectation(Configured);
 
-    //Surface.ShouldBe(Configured);
+    Surface.ShouldBe(Configured);
   }
 }

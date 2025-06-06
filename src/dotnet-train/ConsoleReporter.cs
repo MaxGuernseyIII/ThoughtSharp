@@ -27,7 +27,9 @@ namespace dotnet_train;
 class ConsoleReporter : Reporter
 {
   readonly CancellationTokenSource Cancellation = new();
+  readonly object LockObject = new();
   readonly TrainingDataScheme Scheme;
+  readonly Stack<ScenariosModelNode> Path = [];
 
   public ConsoleReporter(TrainingDataScheme Scheme)
   {
@@ -35,7 +37,26 @@ class ConsoleReporter : Reporter
     Start();
   }
 
-  public void Start()
+  public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
+  {
+  }
+
+  public void ReportEnter(ScenariosModelNode Node)
+  {
+    Console.WriteLine($"Enter: {Node.Name}");
+    lock(LockObject)
+      Path.Push(Node);
+  }
+
+  public void ReportExit(ScenariosModelNode Node)
+  {
+    lock (LockObject)
+      Path.Pop();
+    Console.WriteLine($"Exit: {Node.Name}");
+    Console.WriteLine();
+  }
+
+  void Start()
   {
     Task.Run(async () =>
     {
@@ -50,32 +71,16 @@ class ConsoleReporter : Reporter
 
   void Print()
   {
-    foreach (var Node in Scheme.TrackedNodes)
+    lock (LockObject)
     {
-      var State = Scheme.GetConvergenceTrackerFor(Node);
-      var Convergence = State.MeasureConvergence();
+      var SchemeToPrint = Path.Reverse().Aggregate(Scheme, (Current, Node) => Current.GetChildScheme(Node));
+      foreach (var Node in SchemeToPrint.TrackedNodes)
+      {
+        var State = Scheme.GetConvergenceTrackerFor(Node);
+        var Convergence = State.MeasureConvergence();
 
-      Console.WriteLine($"{Node.Name}: {Convergence:P}");
+        Console.WriteLine($"{Node.Name}: {Convergence:P}");
+      }
     }
-  }
-
-  public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
-  {
-  }
-
-  public void ReportEnter(ScenariosModelNode Node)
-  {
-    Console.WriteLine($"Enter: {Node.Name}");
-  }
-
-  public void ReportExit(ScenariosModelNode Node)
-  {
-    Console.WriteLine($"Exit: {Node.Name}");
-  }
-
-  public void Dispose()
-  {
-    Print();
-    Cancellation.Cancel();
   }
 }

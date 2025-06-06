@@ -257,7 +257,7 @@ public class BehaviorRunning
     ];
 
     var Scheme = new TrainingDataScheme(Any.TrainingMetadata(), Reporter);
-    var Job = Model.GetTestPassFor(Pool, Scheme, Nodes);
+    var Job = Model.GetTestPassFor(Pool, Scheme, new FalseGate(), Nodes);
 
     Job.Should().BeEquivalentTo(new AutomationPass([.. Nodes.GetBehaviorRunners(Pool)],
       new FalseGate(), Pool, Scheme));
