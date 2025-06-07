@@ -25,4 +25,10 @@
     <None Include="Metadata\README.md" Pack="true" PackagePath="README.md" Link="README.md" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="buildTransitive\ThoughtSharp.Common.props" Pack="true" PackagePath="buildTransitive\">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
