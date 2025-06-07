@@ -25,4 +25,4 @@ using dotnet_train;
 
 var RootCommand = Commands.GetCommand();
 
-Environment.ExitCode = await RootCommand.InvokeAsync(args);
+Environment.ExitCode = await RootCommand.InvokeAsync(["train", ..args]);

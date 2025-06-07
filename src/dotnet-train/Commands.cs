@@ -28,7 +28,10 @@ static class Commands
 {
   static RootCommand GetRootCommand()
   {
-    return new("Train models with ThoughtSharp for a single .NET project. Defaults to the current directory.");
+    return new()
+    {
+      Name = "dotnet"
+    };
   }
 
   static Argument<FileInfo> GetProjectArgument()
@@ -80,7 +83,8 @@ static class Commands
 
   public static RootCommand GetCommand()
   {
-    var C = GetRootCommand();
+    var Root = GetRootCommand();
+    var C = GetTrainCommand(Root);
     var ProjectArgument = GetProjectArgument();
     var NoBuildOption = GetNoBuildOption();
     var ExtraArgumentsOption = GetExtraArgumentsOption();
@@ -91,6 +95,15 @@ static class Commands
     C.SetHandler(DotnetTrain.Handle, new TargetAssemblyResolutionRequestBinder(
       ProjectArgument, NoBuildOption, ExtraArgumentsOption));
 
-    return C;
+    return Root;
+  }
+
+  static Command GetTrainCommand(RootCommand Root)
+  {
+    var Command = new Command("train",
+      "Train models with ThoughtSharp for a single .NET project. Defaults to the current directory.");
+    Root.AddCommand(Command);
+
+    return Command;
   }
 }
