@@ -40,12 +40,14 @@ public static class ScenariosModelNodeExtensions
       return new TrainingPlan(
         PhaseNode,
         [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, Scheme, Reporter))],
-        Scheme);
+        Scheme,
+        Reporter);
 
     return new TrainingPlan(
       PhaseNode,
       [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Scheme, Reporter)],
-      Scheme);
+      Scheme,
+      Reporter);
   }
 
   public static Runnable MakeAutomationLoopForPhase(

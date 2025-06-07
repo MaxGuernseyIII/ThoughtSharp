@@ -27,13 +27,14 @@ namespace ThoughtSharp.Scenarios.Model;
 public record TrainingPlan(
   ScenariosModelNode PlanNode, 
   ImmutableArray<Runnable> SubJobs, 
-  TrainingDataScheme Scheme) : Runnable
+  TrainingDataScheme Scheme,
+  Reporter Reporter) : Runnable
 {
   public async Task<RunResult> Run()
   {
     try
     {
-      Scheme.Reporter.ReportEnter(PlanNode);
+      Reporter.ReportEnter(PlanNode);
 
       foreach (var SubJob in SubJobs)
         if ((await SubJob.Run()).Status == BehaviorRunStatus.Failure)
@@ -49,7 +50,7 @@ public record TrainingPlan(
     }
     finally
     {
-      Scheme.Reporter.ReportExit(PlanNode);
+      Reporter.ReportExit(PlanNode);
     }
   }
 

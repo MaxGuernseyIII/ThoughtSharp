@@ -44,7 +44,7 @@ public sealed class AutomationPass(
     foreach (var (Node, Runnable) in Steps)
     {
       var Result = await Runnable.Run();
-      Scheme.Reporter.ReportRunResult(Node, Result);
+      Reporter.ReportRunResult(Node, Result);
       var WasSuccessful = Result.Status == BehaviorRunStatus.Success;
       Scheme.GetConvergenceTrackerFor(Node).RecordResult(WasSuccessful);
       AnyFailed = AnyFailed || Result.Status == BehaviorRunStatus.Failure;

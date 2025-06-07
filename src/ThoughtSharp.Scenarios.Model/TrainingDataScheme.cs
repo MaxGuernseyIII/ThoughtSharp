@@ -25,23 +25,13 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class TrainingDataScheme
+public class TrainingDataScheme(ScenariosModelNode Node, TrainingMetadata Metadata)
 {
-  public readonly ScenariosModelNode Node;
+  public readonly ScenariosModelNode Node = Node;
 
-  public TrainingMetadata Metadata { get; }
-  public Reporter Reporter { get; }
+  public TrainingMetadata Metadata { get; } = Metadata;
   readonly ConcurrentDictionary<ScenariosModelNode, ConvergenceTracker> Trackers = [];
   readonly ConcurrentDictionary<ScenariosModelNode, TrainingDataScheme> ChildSchemes = [];
-
-  public TrainingDataScheme(ScenariosModelNode Node, TrainingMetadata Metadata, Func<TrainingDataScheme, Reporter> MakeReporter)
-  {
-    this.Node = Node;
-    this.Metadata = Metadata;
-    Reporter = MakeReporter(this);
-  }
-
-  public TrainingDataScheme(ScenariosModelNode Node, TrainingMetadata Metadata, Reporter Reporter) : this(Node, Metadata, _ => Reporter) {}
 
   public Counter TimesSinceSaved { get; } = new();
   public Counter Attempts { get; } = new();
@@ -57,7 +47,7 @@ public class TrainingDataScheme
 
   protected bool Equals(TrainingDataScheme Other)
   {
-    return Metadata.Equals(Other.Metadata) && Equals(Reporter, Other.Reporter);
+    return Metadata.Equals(Other.Metadata);
   }
 
   public override bool Equals(object? Obj)
@@ -73,5 +63,5 @@ public class TrainingDataScheme
     return Metadata.GetHashCode();
   }
 
-  public TrainingDataScheme GetChildScheme(ScenariosModelNode Node) => ChildSchemes.GetOrAdd(Node, _ => new(Node, Node.Query(Queries.GetTrainingMetadata).Single(), _ => Reporter));
+  public TrainingDataScheme GetChildScheme(ScenariosModelNode Node) => ChildSchemes.GetOrAdd(Node, _ => new(Node, Node.Query(Queries.GetTrainingMetadata).Single()));
 }

@@ -54,7 +54,7 @@ public class TrainingPlanConstruction
     BehaviorNodes = [BehaviorNode1, BehaviorNode2, BehaviorNode3];
     Reporter = new();
     SchemeNode = new();
-    Scheme = new(SchemeNode, Any.TrainingMetadata(), Reporter);
+    Scheme = new((ScenariosModelNode) SchemeNode, Any.TrainingMetadata());
   }
 
   [TestMethod]
@@ -66,8 +66,9 @@ public class TrainingPlanConstruction
 
     Plan.Should().BeEquivalentTo(
       new TrainingPlan(PlanNode,
-        [Model.MakeAutomationLoopForPhase(PlanNode, Pool, new(SchemeNode, PlanNode.TrainingMetadata, Reporter), Reporter)],
-        Scheme.GetChildScheme(PlanNode)));
+        [Model.MakeAutomationLoopForPhase(PlanNode, Pool, new((ScenariosModelNode) SchemeNode, PlanNode.TrainingMetadata), Reporter)],
+        Scheme.GetChildScheme(PlanNode),
+        Reporter));
   }
 
   [TestMethod]
@@ -87,7 +88,8 @@ public class TrainingPlanConstruction
         [
           ..PlanNode.GetChildPhases().Select(Child => Model.BuildTrainingPlanFor(Child, Pool, Scheme.GetChildScheme(PlanNode), Reporter))
         ],
-        Scheme.GetChildScheme(PlanNode)));
+        Scheme.GetChildScheme(PlanNode),
+        Reporter));
   }
 
   CurriculumPhaseNode GivenCurriculumPhaseNode(

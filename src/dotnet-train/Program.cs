@@ -65,19 +65,19 @@ class Program
         }
       );
 
-      var Scheme = new TrainingDataScheme(Model, new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1}, S => new ConsoleReporter(S));
-
+      var Scheme = new TrainingDataScheme(Model, new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1});
+      var ConsoleReporter = new ConsoleReporter(Scheme);
       foreach (var Curriculum in CurriculumNodes.Where(C => C.Name == "FizzBuzzTrainingPlan"))
       {
         Console.WriteLine($"Training curriculum: {Curriculum.Name}");
 
         var Pool = new MindPool(Model.MindPlaceIndex);
 
-        var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme, new ConsoleReporter(Scheme));
+        var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme, ConsoleReporter);
         await Plan.Run();
       }
 
-      ((ConsoleReporter)Scheme.Reporter).Stop();
+      ConsoleReporter.Stop();
     }, AssemblyArgument);
 
     Environment.ExitCode = await RootCommand.InvokeAsync(Args);
