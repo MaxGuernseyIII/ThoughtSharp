@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using System.Text;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
@@ -220,21 +219,6 @@ public static partial class FizzBuzzTraining
         Assert.That(Result).ProducedCallsOn(Surface,
           S => S.WriteNumber(Input)
         );
-      }
-
-      sealed record FactorsKey(ImmutableArray<int> Factors)
-      {
-        public bool Equals(FactorsKey? Other)
-        {
-          if (Other is null) return false;
-          if (ReferenceEquals(this, Other)) return true;
-          return Factors.SequenceEqual(Other.Factors);
-        }
-
-        public override int GetHashCode()
-        {
-          return 0;
-        }
       }
     }
 

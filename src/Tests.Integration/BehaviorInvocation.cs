@@ -38,9 +38,9 @@ public class BehaviorInvocation
   public void SetUp()
   {
     var AbsoluteAssemblyPath = Path.GetFullPath(typeof(Anchor).Assembly.Location);
-    var ProjectRoot = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(AbsoluteAssemblyPath)!, @"..\..\..\"));
+    var ProjectRoot = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(AbsoluteAssemblyPath)!, @"../../..\"));
     var Relative = AbsoluteAssemblyPath[ProjectRoot.Length..];
-    var LoadedAssemblyPath = Path.GetFullPath(Path.Combine(ProjectRoot, @"..\Tests.SampleScenarios", Relative));
+    var LoadedAssemblyPath = Path.GetFullPath(Path.Combine(ProjectRoot, @"../Tests.SampleScenarios", Relative));
     var Context = new ShapingAssemblyLoadContext(LoadedAssemblyPath);
     LoadedAssembly = Context.LoadFromAssemblyPath(LoadedAssemblyPath);
     Model = new AssemblyParser().Parse(LoadedAssembly);
@@ -52,7 +52,7 @@ public class BehaviorInvocation
     var SingleNode = Model.GetNodeAtEndOfPath(RootNamespace, nameof(IntegrationTestInput),
       nameof(IntegrationTestInput.Runnables), nameof(IntegrationTestInput.Runnables.WillPass));
     MindPool Pool = new(Model.MindPlaceIndex);
-    var TestPass = Model.GetTestPassFor(Pool, new((ScenariosModelNode) null!, Any.TrainingMetadata()), new FalseGate(), Pool, new MockReporter(), SingleNode);
+    var TestPass = Model.GetTestPassFor(Pool, new(null!, Any.TrainingMetadata()), new FalseGate(), Pool, new MockReporter(), SingleNode);
 
     var Result = await TestPass.Run();
 
