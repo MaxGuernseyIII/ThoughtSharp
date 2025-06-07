@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Concurrent;
 using ThoughtSharp.Scenarios.Model;
 
 namespace dotnet_train;
@@ -27,9 +28,8 @@ namespace dotnet_train;
 class ConsoleReporter : Reporter
 {
   readonly CancellationTokenSource Cancellation = new();
-  readonly object LockObject = new();
-  readonly Dictionary<ScenariosModelNode, RunResult> MostRecentFailures = [];
-  readonly Stack<ScenariosModelNode> Path = [];
+  readonly ConcurrentDictionary<ScenariosModelNode, RunResult> MostRecentFailures = [];
+  readonly ConcurrentStack<ScenariosModelNode> Path = [];
   readonly TrainingDataScheme Scheme;
   TrainingDataScheme? LastSchemeToPrint;
 
@@ -41,28 +41,19 @@ class ConsoleReporter : Reporter
 
   public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
   {
-    if (Result.Status == BehaviorRunStatus.Failure)
-      lock (LockObject)
-      {
-        MostRecentFailures[Node] = Result;
-      }
+    if (Result.Status == BehaviorRunStatus.Failure) 
+      MostRecentFailures[Node] = Result;
   }
 
   public void ReportEnter(ScenariosModelNode Node)
   {
     Console.WriteLine($"Enter: {Node.Name}");
-    lock (LockObject)
-    {
-      Path.Push(Node);
-    }
+    Path.Push(Node);
   }
 
   public void ReportExit(ScenariosModelNode Node)
   {
-    lock (LockObject)
-    {
-      Path.Pop();
-    }
+    Path.TryPop(out _);
 
     Console.WriteLine($"Exit: {Node.Name}");
     Console.WriteLine();
@@ -88,21 +79,18 @@ class ConsoleReporter : Reporter
 
   void Print()
   {
-    lock (LockObject)
-    {
-      var SchemeToPrint = Path.Reverse().Aggregate(Scheme, (Current, Node) => Current.GetChildScheme(Node));
-      //if (!ReferenceEquals(SchemeToPrint, LastSchemeToPrint))
-      Console.Clear();
-      //else
-      //Console.SetCursorPosition(0, 0);
+    var SchemeToPrint = Path.Reverse().Aggregate(Scheme, (Current, Node) => Current.GetChildScheme(Node));
+    //if (!ReferenceEquals(SchemeToPrint, LastSchemeToPrint))
+    Console.Clear();
+    //else
+    //Console.SetCursorPosition(0, 0);
 
-      //foreach (var (Node, Result) in Results.Where(R => R.Node is CurriculumPhaseNode)) 
-      //  Console.WriteLine($"{Node.Name}: {Result.Status}");
+    //foreach (var (Node, Result) in Results.Where(R => R.Node is CurriculumPhaseNode)) 
+    //  Console.WriteLine($"{Node.Name}: {Result.Status}");
 
-      LastSchemeToPrint = SchemeToPrint;
+    LastSchemeToPrint = SchemeToPrint;
 
-      PrintScheme(SchemeToPrint);
-    }
+    PrintScheme(SchemeToPrint);
   }
 
   void PrintScheme(TrainingDataScheme SchemeToPrint)

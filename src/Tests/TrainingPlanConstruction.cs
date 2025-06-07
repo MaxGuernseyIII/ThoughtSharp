@@ -39,6 +39,7 @@ public class TrainingPlanConstruction
   MindPool Pool = null!;
   MockReporter Reporter = null!;
   TrainingDataScheme Scheme = null!;
+  MockNode SchemeNode;
 
   [TestInitialize]
   public void SetUp()
@@ -52,7 +53,8 @@ public class TrainingPlanConstruction
     BehaviorNode3 = new(Type2, Type2.GetMethod(nameof(Host2.Method3))!);
     BehaviorNodes = [BehaviorNode1, BehaviorNode2, BehaviorNode3];
     Reporter = new();
-    Scheme = new(Any.TrainingMetadata(), Reporter);
+    SchemeNode = new();
+    Scheme = new(SchemeNode, Any.TrainingMetadata(), Reporter);
   }
 
   [TestMethod]
@@ -64,7 +66,7 @@ public class TrainingPlanConstruction
 
     Plan.Should().BeEquivalentTo(
       new TrainingPlan(PlanNode,
-        [Model.MakeAutomationLoopForPhase(PlanNode, Pool, new(PlanNode.TrainingMetadata, Reporter))],
+        [Model.MakeAutomationLoopForPhase(PlanNode, Pool, new(SchemeNode, PlanNode.TrainingMetadata, Reporter))],
         Scheme.GetChildScheme(PlanNode)));
   }
 

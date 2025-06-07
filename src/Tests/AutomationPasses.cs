@@ -45,7 +45,7 @@ public class AutomationPasses
     Saver = new();
     Reporter = new();
     Metadata = Any.TrainingMetadata();
-    Scheme = new(Metadata, Reporter);
+    Scheme = new(new MockNode(), Metadata, Reporter);
   }
 
   [TestMethod]

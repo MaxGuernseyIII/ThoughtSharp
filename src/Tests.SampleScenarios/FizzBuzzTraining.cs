@@ -33,6 +33,36 @@ namespace Tests.SampleScenarios;
 
 public static partial class FizzBuzzTraining
 {
+  static Func<byte, bool> IsDivisibleBy(int Denominator)
+  {
+    return B => B % Denominator == 0;
+  }
+
+  static Func<byte, bool> IsNotDivisibleBy(int Denominator)
+  {
+    return B => B % Denominator != 0;
+  }
+
+  static class TrainingData
+  {
+    static readonly Random Core = new();
+
+    public static IEnumerable<byte> Byte
+    {
+      get
+      {
+        var Buffer = new byte[1];
+
+        while (true)
+        {
+          Core.NextBytes(Buffer);
+          yield return Buffer[0];
+        }
+        // ReSharper disable once IteratorNeverReturns
+      }
+    }
+  }
+
   [MindPlace]
   public class FizzBuzzMindPlace : MindPlace<FizzBuzzMind, TorchBrain>
   {
@@ -157,7 +187,10 @@ public static partial class FizzBuzzTraining
       [Behavior]
       public void Fizz()
       {
-        var Input = AnyByteDivisibleBy(FizzFactor);
+        var Input = TrainingData.Byte
+          .Where(IsDivisibleBy(FizzFactor))
+          .Where(IsNotDivisibleBy(BuzzFactor))
+          .First();
 
         var Result = Reasoning.CalculateStepValue(Input, Surface);
 
@@ -169,7 +202,10 @@ public static partial class FizzBuzzTraining
       [Behavior]
       public void Buzz()
       {
-        var Input = AnyByteDivisibleBy(BuzzFactor);
+        var Input = TrainingData.Byte
+          .Where(IsDivisibleBy(BuzzFactor))
+          .Where(IsNotDivisibleBy(FizzFactor))
+          .First();
 
         var Result = Reasoning.CalculateStepValue(Input, Surface);
 
@@ -181,7 +217,9 @@ public static partial class FizzBuzzTraining
       [Behavior]
       public void FizzBuzz()
       {
-        var Input = AnyByteDivisibleBy(FizzFactor * BuzzFactor);
+        var Input = TrainingData.Byte
+          .Where(IsDivisibleBy(BuzzFactor * FizzFactor))
+          .First();
 
         var Result = Reasoning.CalculateStepValue(Input, Surface);
 
@@ -194,7 +232,10 @@ public static partial class FizzBuzzTraining
       [Behavior]
       public void WriteValue()
       {
-        var Input = AnyByteNotDivisibleBy(FizzFactor, BuzzFactor);
+        var Input = TrainingData.Byte
+          .Where(IsNotDivisibleBy(BuzzFactor))
+          .Where(IsNotDivisibleBy(FizzFactor))
+          .First();
 
         var Result = Reasoning.CalculateStepValue(Input, Surface);
 

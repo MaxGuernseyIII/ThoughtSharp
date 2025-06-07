@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios.Model;
@@ -27,63 +28,31 @@ namespace ThoughtSharp.Scenarios.Model;
 public class TrainingDataScheme
 {
   public readonly ScenariosModelNode Node;
-  readonly object LockObject = new();
 
   public TrainingMetadata Metadata { get; }
   public Reporter Reporter { get; }
-  readonly Dictionary<ScenariosModelNode, ConvergenceTracker> Trackers = [];
-  readonly Dictionary<ScenariosModelNode, TrainingDataScheme> ChildSchemes = [];
+  readonly ConcurrentDictionary<ScenariosModelNode, ConvergenceTracker> Trackers = [];
+  readonly ConcurrentDictionary<ScenariosModelNode, TrainingDataScheme> ChildSchemes = [];
 
   public TrainingDataScheme(ScenariosModelNode Node, TrainingMetadata Metadata, Func<TrainingDataScheme, Reporter> MakeReporter)
   {
     this.Node = Node;
     this.Metadata = Metadata;
     Reporter = MakeReporter(this);
-    try
-    {
-      Console.WriteLine($"New scheme for: {Node?.Name}");
-    }
-    catch
-    {
-
-    }
   }
 
-  public TrainingDataScheme(TrainingMetadata Metadata, Reporter Reporter) : this(null, Metadata, _ => Reporter) {}
+  public TrainingDataScheme(ScenariosModelNode Node, TrainingMetadata Metadata, Reporter Reporter) : this(Node, Metadata, _ => Reporter) {}
 
   public Counter TimesSinceSaved { get; } = new();
   public Counter Attempts { get; } = new();
 
-  public IEnumerable<ScenariosModelNode> TrackedNodes
-  {
-    get
-    {
-      lock (LockObject)
-      {
-        return Trackers.Keys.ToImmutableArray();
-      }
-    }
-  }
+  public IEnumerable<ScenariosModelNode> TrackedNodes => Trackers.Keys.ToImmutableArray();
 
-  public IEnumerable<ScenariosModelNode> SubSchemeNodes
-  {
-    get
-    {
-      lock (LockObject)
-      {
-        return ChildSchemes.Keys;
-      }
-    }
-  }
+  public IEnumerable<ScenariosModelNode> SubSchemeNodes => ChildSchemes.Keys;
 
   public ConvergenceTracker GetConvergenceTrackerFor(ScenariosModelNode Node)
   {
-    lock (LockObject)
-    {
-      if (!Trackers.TryGetValue(Node, out var Result))
-        Trackers[Node] = Result = new(Metadata.SampleSize);
-      return Result;
-    }
+    return Trackers.GetOrAdd(Node, _ => new(Metadata.SampleSize));
   }
 
   protected bool Equals(TrainingDataScheme Other)
@@ -104,13 +73,5 @@ public class TrainingDataScheme
     return Metadata.GetHashCode();
   }
 
-  public TrainingDataScheme GetChildScheme(ScenariosModelNode Node)
-  {
-    lock(LockObject)
-    {
-      if (!ChildSchemes.TryGetValue(Node, out var Result))
-        ChildSchemes[Node] = Result = new(Node, Node.Query(Queries.GetTrainingMetadata).Single(), _ => Reporter);
-      return Result;
-    }
-  }
+  public TrainingDataScheme GetChildScheme(ScenariosModelNode Node) => ChildSchemes.GetOrAdd(Node, _ => new(Node, Node.Query(Queries.GetTrainingMetadata).Single(), _ => Reporter));
 }

@@ -70,7 +70,8 @@ public class AutomationLoopCreation
         }
       ]);
 
-    var Scheme = new TrainingDataScheme(TrainingMetadata, Reporter);
+    var SchemeNode = new MockNode();
+    var Scheme = new TrainingDataScheme(SchemeNode, TrainingMetadata, Reporter);
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
     ImmutableArray<ScenariosModelNode> SourceNodes = [CapabilityNode, BehaviorNode3, BehaviorNode1];
     var ConvergenceGates = SourceNodes.GetBehaviorRunners(Pool)

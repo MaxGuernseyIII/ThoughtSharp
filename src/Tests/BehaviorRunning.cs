@@ -309,7 +309,7 @@ public class BehaviorRunning
       ])
     ];
     var SaveGate = new MockGate();
-    var Scheme = new TrainingDataScheme(Any.TrainingMetadata(), Reporter);
+    var Scheme = new TrainingDataScheme(new MockNode(), Any.TrainingMetadata(), Reporter);
 
     var Job = Model.GetTestPassFor(Pool, Scheme, SaveGate, Pool, Nodes);
 
