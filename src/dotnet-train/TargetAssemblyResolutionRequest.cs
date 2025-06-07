@@ -20,9 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.CommandLine;
-using dotnet_train;
+using System.Collections.Immutable;
 
-var RootCommand = Commands.GetCommand();
+namespace dotnet_train;
 
-Environment.ExitCode = await RootCommand.InvokeAsync(["train", ..args]);
+record TargetAssemblyResolutionRequest
+{
+  public required FileInfo ProjectPath { get; set; }
+  public required bool NoBuild { get; set; }
+  public required ImmutableArray<string> ExtraArguments { get; set; }
+}

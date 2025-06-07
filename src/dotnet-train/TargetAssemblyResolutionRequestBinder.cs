@@ -21,8 +21,22 @@
 // SOFTWARE.
 
 using System.CommandLine;
-using dotnet_train;
+using System.CommandLine.Binding;
 
-var RootCommand = Commands.GetCommand();
+namespace dotnet_train;
 
-Environment.ExitCode = await RootCommand.InvokeAsync(["train", ..args]);
+class TargetAssemblyResolutionRequestBinder(
+  Argument<FileInfo> ProjectPath,
+  Option<bool> NoBuild,
+  Option<string[]?> ExtraArguments) : BinderBase<TargetAssemblyResolutionRequest>
+{
+  protected override TargetAssemblyResolutionRequest GetBoundValue(BindingContext BindingContext)
+  {
+    return new()
+    {
+      ProjectPath = BindingContext.ParseResult.GetValueForArgument(ProjectPath),
+      NoBuild = BindingContext.ParseResult.GetValueForOption(NoBuild),
+      ExtraArguments = [..(BindingContext.ParseResult.GetValueForOption(ExtraArguments) ?? [])]
+    };
+  }
+}
