@@ -31,6 +31,7 @@ class ConsoleReporter : Reporter
   readonly ConcurrentDictionary<ScenariosModelNode, RunResult> MostRecentFailures = [];
   readonly ConcurrentStack<ScenariosModelNode> Path = [];
   readonly TrainingDataScheme Scheme;
+  readonly TextWriter Writer = Console.Out;
   TrainingDataScheme? LastSchemeToPrint;
 
   public ConsoleReporter(TrainingDataScheme Scheme)
@@ -47,7 +48,7 @@ class ConsoleReporter : Reporter
 
   public void ReportEnter(ScenariosModelNode Node)
   {
-    Console.WriteLine($"Enter: {Node.Name}");
+    Writer.WriteLine($"Enter: {Node.Name}");
     Path.Push(Node);
   }
 
@@ -55,8 +56,8 @@ class ConsoleReporter : Reporter
   {
     Path.TryPop(out _);
 
-    Console.WriteLine($"Exit: {Node.Name}");
-    Console.WriteLine();
+    Writer.WriteLine($"Exit: {Node.Name}");
+    Writer.WriteLine();
   }
 
   void Start()
@@ -66,13 +67,13 @@ class ConsoleReporter : Reporter
       while (!Cancellation.Token.IsCancellationRequested)
         try
         {
-          await Task.Delay(TimeSpan.FromSeconds(5));
+          await Task.Delay(TimeSpan.FromSeconds(.2));
 
           Print();
         }
         catch (Exception Ex)
         {
-          Console.WriteLine(Ex);
+          Writer.WriteLine(Ex);
         }
     });
   }
@@ -80,14 +81,10 @@ class ConsoleReporter : Reporter
   void Print()
   {
     var SchemeToPrint = Path.Reverse().Aggregate(Scheme, (Current, Node) => Current.GetChildScheme(Node));
-    //if (!ReferenceEquals(SchemeToPrint, LastSchemeToPrint))
-    Console.Clear();
-    //else
-    //Console.SetCursorPosition(0, 0);
-
-    //foreach (var (Node, Result) in Results.Where(R => R.Node is CurriculumPhaseNode)) 
-    //  Console.WriteLine($"{Node.Name}: {Result.Status}");
-
+    if (!ReferenceEquals(SchemeToPrint, LastSchemeToPrint))
+      Console.Clear();
+    else
+      Console.SetCursorPosition(0, 0);
     LastSchemeToPrint = SchemeToPrint;
 
     PrintScheme(SchemeToPrint);
@@ -100,26 +97,28 @@ class ConsoleReporter : Reporter
       var LabelWidth = SchemeToPrint.TrackedNodes.Select(N => N.Name.Length + 3).Max();
       var BarWidth = Math.Min(Console.WindowWidth - (10 + LabelWidth), 60);
 
-      Console.WriteLine($"Phase: {SchemeToPrint.Node?.Name}");
+      Writer.WriteLine($"Phase: {SchemeToPrint.Node?.Name}");
       foreach (var Node in SchemeToPrint.TrackedNodes)
       {
         var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
         var Convergence = State.MeasureConvergence();
         var ConvergenceBar = new string('█', (int) (BarWidth * Convergence)).PadRight(BarWidth, '░');
-        var ConvergenceThreshold = (int) SchemeToPrint.Metadata.SuccessFraction * BarWidth;
+        var ConvergenceThreshold = (int) (SchemeToPrint.Metadata.SuccessFraction * BarWidth);
         var IsConvergent = Convergence >= SchemeToPrint.Metadata.SuccessFraction;
 
         var BelowThresholdPortion = ConvergenceBar[..ConvergenceThreshold];
         var AboveThresholdPortion = ConvergenceBar[ConvergenceThreshold..];
 
-        Console.Write($"{Node.Name.PadRight(LabelWidth)} [");
-        Console.ForegroundColor = IsConvergent ? ConsoleColor.Green : ConsoleColor.Red;
-        Console.Write(BelowThresholdPortion);
-        Console.ForegroundColor = IsConvergent ? ConsoleColor.DarkGreen : ConsoleColor.DarkRed;
-        Console.Write(AboveThresholdPortion);
+        ClearLine();
+
+        Writer.Write($"{Node.Name.PadRight(LabelWidth)} [");
+        Console.ForegroundColor = IsConvergent ? ConsoleColor.Green : ConsoleColor.DarkRed;
+        Writer.Write(BelowThresholdPortion);
+        Console.ForegroundColor = IsConvergent ? ConsoleColor.DarkGreen : ConsoleColor.Red;
+        Writer.Write(AboveThresholdPortion);
         Console.ForegroundColor = ConsoleColor.White;
 
-        Console.WriteLine("]");
+        Writer.WriteLine($"] ({Convergence:P})");
         if (MostRecentFailures.TryGetValue(Node, out var RecentResult))
         {
           var Content = "";
@@ -134,7 +133,10 @@ class ConsoleReporter : Reporter
           Lines = Lines.Concat(Enumerable.Repeat("", 3 - Lines.Count()));
 
           foreach (var Line in Lines)
-            Console.WriteLine(Line);
+          {
+            ClearLine();
+            Writer.WriteLine(Line);
+          }
         }
       }
     }
@@ -145,8 +147,17 @@ class ConsoleReporter : Reporter
       PrintScheme(SubScheme);
     }
 
-    Console.WriteLine(
+    Writer.WriteLine(
       $"{SchemeToPrint.Attempts.Value} attempts, {SchemeToPrint.TimesSinceSaved.Value} attempts since last save               ");
+  }
+
+  void ClearLine()
+  {
+    var Blank = new string(' ', Console.BufferWidth);
+    var Top = Console.CursorTop;
+    Console.SetCursorPosition(0, Top);
+    Writer.Write(Blank);
+    Console.SetCursorPosition(0, Top);
   }
 
   public void Stop()

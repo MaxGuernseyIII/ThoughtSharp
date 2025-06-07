@@ -158,31 +158,9 @@ public static partial class FizzBuzzTraining
     {
       const int FizzFactor = 3;
       const int BuzzFactor = 5;
-      static readonly Random Random = new();
 
-      static readonly Dictionary<FactorsKey, ImmutableArray<byte>> AvailableByFactors = [];
       readonly FizzBuzzHybridReasoning Reasoning = new(Mind);
       readonly MockActionSurface Surface = new();
-
-      byte AnyByteDivisibleBy(int Factor)
-      {
-        return (byte) (Random.Next(byte.MaxValue / Factor) * Factor);
-      }
-
-      byte AnyByteNotDivisibleBy(params IEnumerable<int> ExcludedFactors)
-      {
-        var Key = new FactorsKey([..ExcludedFactors]);
-
-        if (!AvailableByFactors.TryGetValue(Key, out var Available))
-          AvailableByFactors[Key] = Available =
-          [
-            ..Enumerable.Range(0, byte.MaxValue + 1)
-              .Where(Candidate => ExcludedFactors.All(F => Candidate % F != 0))
-              .Select(I => (byte) I)
-          ];
-
-        return Available[Random.Next(Available.Length)];
-      }
 
       [Behavior]
       public void Fizz()
@@ -270,7 +248,7 @@ public static partial class FizzBuzzTraining
       readonly FizzBuzzHybridReasoning Reasoning = new(Mind);
 
       [Behavior]
-      public void RequireFullFizzBuzzSolution()
+      public void FullFizzBuzz()
       {
         var Result = Reasoning.DoFullFizzBuzz();
 
@@ -311,6 +289,7 @@ public static partial class FizzBuzzTraining
       public class FocusOnFizzBuzz;
 
       [Phase(2.4)]
+      [ConvergenceStandard(Fraction = .98, Of = 2000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.WriteValue)])]
       // TODO: Support weights in training
       //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
@@ -320,6 +299,11 @@ public static partial class FizzBuzzTraining
     }
 
     [Phase(3)]
+    [ConvergenceStandard(Fraction = 1, Of = 1000)]
+    [Include(typeof(Calculations))]
+    public class AllOperationsMustWork;
+
+    [Phase(4)]
     [ConvergenceStandard(Fraction = 1, Of = 50)]
     [Include(typeof(Calculations))]
     [Include(typeof(Solution))]
