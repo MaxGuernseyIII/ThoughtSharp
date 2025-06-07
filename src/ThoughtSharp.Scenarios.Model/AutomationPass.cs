@@ -28,7 +28,8 @@ public sealed class AutomationPass(
   ImmutableArray<(ScenariosModelNode Node, Runnable Runnable)> Steps,
   Gate SaveGate,
   Saver Saver,
-  TrainingDataScheme Scheme)
+  TrainingDataScheme Scheme,
+  Reporter Reporter)
   : Runnable
 {
   readonly Gate SaveGate = SaveGate;

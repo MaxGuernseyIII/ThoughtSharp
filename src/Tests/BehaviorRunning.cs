@@ -311,14 +311,15 @@ public class BehaviorRunning
     var SaveGate = new MockGate();
     var Scheme = new TrainingDataScheme(new MockNode(), Any.TrainingMetadata(), Reporter);
 
-    var Job = Model.GetTestPassFor(Pool, Scheme, SaveGate, Pool, Nodes);
+    var Job = Model.GetTestPassFor(Pool, Scheme, SaveGate, Pool, Reporter, Nodes);
 
     Job.Should().BeEquivalentTo(
       new AutomationPass(
         [.. Nodes.GetBehaviorRunners(Pool)],
         SaveGate,
         Pool,
-        Scheme));
+        Scheme,
+        Reporter));
   }
 
   public record Mind1(Brain Brain);

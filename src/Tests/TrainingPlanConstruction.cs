@@ -62,11 +62,11 @@ public class TrainingPlanConstruction
   {
     var PlanNode = GivenCurriculumPhaseNode([], BehaviorNodes);
 
-    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, Scheme);
+    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, Scheme, Reporter);
 
     Plan.Should().BeEquivalentTo(
       new TrainingPlan(PlanNode,
-        [Model.MakeAutomationLoopForPhase(PlanNode, Pool, new(SchemeNode, PlanNode.TrainingMetadata, Reporter))],
+        [Model.MakeAutomationLoopForPhase(PlanNode, Pool, new(SchemeNode, PlanNode.TrainingMetadata, Reporter), Reporter)],
         Scheme.GetChildScheme(PlanNode)));
   }
 
@@ -80,12 +80,12 @@ public class TrainingPlanConstruction
       ChildPlan2
     ], []);
 
-    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, Scheme);
+    var Plan = Model.BuildTrainingPlanFor(PlanNode, Pool, Scheme, Reporter);
 
     Plan.Should().BeEquivalentTo(
       new TrainingPlan(PlanNode,
         [
-          ..PlanNode.GetChildPhases().Select(Child => Model.BuildTrainingPlanFor(Child, Pool, Scheme.GetChildScheme(PlanNode)))
+          ..PlanNode.GetChildPhases().Select(Child => Model.BuildTrainingPlanFor(Child, Pool, Scheme.GetChildScheme(PlanNode), Reporter))
         ],
         Scheme.GetChildScheme(PlanNode)));
   }

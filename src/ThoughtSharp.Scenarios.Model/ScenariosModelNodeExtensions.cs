@@ -30,7 +30,8 @@ public static class ScenariosModelNodeExtensions
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
     MindPool Pool,
-    TrainingDataScheme ParentScheme)
+    TrainingDataScheme ParentScheme,
+    Reporter Reporter)
   {
     var Scheme = ParentScheme.GetChildScheme(PhaseNode);
 
@@ -38,12 +39,12 @@ public static class ScenariosModelNodeExtensions
     if (ChildPhases.Any())
       return new TrainingPlan(
         PhaseNode,
-        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, Scheme))],
+        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, Scheme, Reporter))],
         Scheme);
 
     return new TrainingPlan(
       PhaseNode,
-      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Scheme)],
+      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Scheme, Reporter)],
       Scheme);
   }
 
@@ -51,7 +52,8 @@ public static class ScenariosModelNodeExtensions
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
     MindPool Pool,
-    TrainingDataScheme TrainingDataScheme)
+    TrainingDataScheme TrainingDataScheme,
+    Reporter Reporter)
   {
     var IncludedScenariosFinders = PhaseNode.Query(new TargetedVisitor<ScenariosModelNodeVisitor<ScenariosModelNode?>>
     {
@@ -66,6 +68,7 @@ public static class ScenariosModelNodeExtensions
       TrainingDataScheme, 
       Gate.ForCounterAndMinimum(TrainingDataScheme.TimesSinceSaved, 100), 
       new ResetCounterSaver(Pool, TrainingDataScheme.TimesSinceSaved), 
+      Reporter,
       Behaviors);
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
       Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), TrainingDataScheme.Metadata.SuccessFraction));
@@ -86,9 +89,10 @@ public static class ScenariosModelNodeExtensions
     TrainingDataScheme Scheme,
     Gate SaveGate, 
     Saver Saver, 
+    Reporter Reporter,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
-    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], SaveGate, Saver, Scheme);
+    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], SaveGate, Saver, Scheme, Reporter);
   }
 
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)

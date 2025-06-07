@@ -225,6 +225,6 @@ public class AutomationPasses
 
   Runnable GivenAutomationPass()
   {
-    return new AutomationPass([..Steps], SaveGate, Saver, Scheme);
+    return new AutomationPass([..Steps], SaveGate, Saver, Scheme, Reporter);
   }
 }

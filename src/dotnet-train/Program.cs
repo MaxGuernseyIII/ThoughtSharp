@@ -73,7 +73,7 @@ class Program
 
         var Pool = new MindPool(Model.MindPlaceIndex);
 
-        var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme);
+        var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme, new ConsoleReporter(Scheme));
         await Plan.Run();
       }
 

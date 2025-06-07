@@ -80,7 +80,7 @@ public class AutomationLoopCreation
         TrainingMetadata.SuccessFraction))
       .ToImmutableArray();
     var ConvergenceRule = ConvergenceGates.Aggregate(Gate.AlwaysOpen, Gate.ForAnd);
-    var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, Scheme);
+    var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, Scheme, Reporter);
 
     Loop.Should().BeEquivalentTo(
       new AutomationLoop(
@@ -89,6 +89,7 @@ public class AutomationLoopCreation
           Scheme, 
           Gate.ForCounterAndMinimum(Scheme.TimesSinceSaved, 100), 
           new ResetCounterSaver(Pool, Scheme.TimesSinceSaved), 
+          Reporter,
           [
             ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
           ]),
