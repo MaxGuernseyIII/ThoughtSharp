@@ -20,21 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-
 namespace ThoughtSharp.Scenarios;
 
-public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TResultFeedback, TResultFeedback> Subject)
-{
-  public void Is(TResultFeedback Expected)
-  {
-    Is(Expected, (E, A)=> A.ShouldBe(E));
-  }
-
-  public void Is(TResultFeedback Expected, Assertion<TResultFeedback> Equivocator)
-  {
-    Subject.FeedbackSink.TrainWith(Expected);
-
-    Equivocator(Expected, Subject.Payload);
-  }
-}
+public delegate void Assertion<in T>(T Expected, T Actual);

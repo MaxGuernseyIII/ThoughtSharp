@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2025-2025 Hexagon Software LLC
+// Copyright (c) 2024-2024 Producore LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,21 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
+using ThoughtSharp.Scenarios;
 
-namespace ThoughtSharp.Scenarios;
+namespace SimpleDemo.Arithmetic.Specifications;
 
-public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TResultFeedback, TResultFeedback> Subject)
+[Capability]
+public class LineCapability(AlgebraMind Mind)
 {
-  public void Is(TResultFeedback Expected)
-  {
-    Is(Expected, (E, A)=> A.ShouldBe(E));
-  }
+  static Random R = new();
 
-  public void Is(TResultFeedback Expected, Assertion<TResultFeedback> Equivocator)
+  [Behavior]
+  public void ProperlyFitsDataToLine()
   {
-    Subject.FeedbackSink.TrainWith(Expected);
+    var M = R.NextSingle() * 200 - 100;
+    var B = R.NextSingle() * 200 - 100;
+    var X = R.NextSingle() * 200 - 100;
 
-    Equivocator(Expected, Subject.Payload);
+    var Result = Mind.ComputeYEqualsMTimesXPlusB(M, B, X);
+
+    Assert.That(Result).Has(R => R.Payload);
   }
 }

@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2025-2025 Hexagon Software LLC
+// Copyright (c) 2024-2024 Producore LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,21 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.ComponentModel.DataAnnotations;
 using ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Scenarios;
+namespace SimpleDemo.Arithmetic;
 
-public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TResultFeedback, TResultFeedback> Subject)
+[CognitiveData]
+public partial class SingleVariableComputation
 {
-  public void Is(TResultFeedback Expected)
-  {
-    Is(Expected, (E, A)=> A.ShouldBe(E));
-  }
-
-  public void Is(TResultFeedback Expected, Assertion<TResultFeedback> Equivocator)
-  {
-    Subject.FeedbackSink.TrainWith(Expected);
-
-    Equivocator(Expected, Subject.Payload);
-  }
+  [Range(-20000, 20000)]
+  public float Y { get; set; }
 }

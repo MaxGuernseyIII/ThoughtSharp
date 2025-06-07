@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ThoughtSharp.Adapters.TorchSharp" Version="2025.6.7.31" />
+    <PackageReference Include="ThoughtSharp.Shaping" Version="2025.6.7.31" />
+    <PackageReference Include="TorchSharp-cpu" Version="0.105.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SimpleDemo.Arithmetic\SimpleDemo.Arithmetic.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -3,7 +3,25 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleDemo.Arithmetic", "SimpleDemo.Arithmetic\SimpleDemo.Arithmetic.csproj", "{664CFE27-8E4C-4A99-A08B-4D3E2E7AAFE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleDemo.Arithmetic.Specifications", "SimpleDemo.Arithmetic.Specifications\SimpleDemo.Arithmetic.Specifications.csproj", "{3750B660-2396-43A8-8DE1-ED0A55237AF0}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{664CFE27-8E4C-4A99-A08B-4D3E2E7AAFE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{664CFE27-8E4C-4A99-A08B-4D3E2E7AAFE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{664CFE27-8E4C-4A99-A08B-4D3E2E7AAFE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{664CFE27-8E4C-4A99-A08B-4D3E2E7AAFE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3750B660-2396-43A8-8DE1-ED0A55237AF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3750B660-2396-43A8-8DE1-ED0A55237AF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3750B660-2396-43A8-8DE1-ED0A55237AF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3750B660-2396-43A8-8DE1-ED0A55237AF0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection

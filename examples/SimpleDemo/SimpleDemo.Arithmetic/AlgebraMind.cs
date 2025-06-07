@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2025-2025 Hexagon Software LLC
+// Copyright (c) 2024-2024 Producore LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios;
+using System.ComponentModel.DataAnnotations;
+using ThoughtSharp.Runtime;
 
-public delegate void Comparison<in T>(T Expected, T Actual);
+namespace SimpleDemo.Arithmetic;
+
+[Mind]
+public partial class AlgebraMind
+{
+  [Make]
+  public partial CognitiveResult<SingleVariableComputation, SingleVariableComputation> ComputeYEqualsMTimesXPlusB(
+    [Range(-100, 100)] float M, [Range(-100, 100)] float B, [Range(-100, 100)] float X);
+}
