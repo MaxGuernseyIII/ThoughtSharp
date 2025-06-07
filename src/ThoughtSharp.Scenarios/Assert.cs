@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Numerics;
 using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
@@ -42,8 +43,11 @@ public static class Assert
     if (!Equals(Actual, Expected))
       throw new AssertionFailedException($"Expected {Expected} but found {Actual}");
   }
-}
 
-class AssertionFailedException(string Message) : Exception(Message)
-{
+  internal static void ShouldBeApproximately<T>(this T Actual, T Expected, T Epsilon)
+    where T : IFloatingPoint<T>
+  {
+    if (Expected < Actual - Epsilon || Expected > Actual + Epsilon)
+      throw new AssertionFailedException($"Expected {Expected}±{Epsilon} but found {Actual}");
+  }
 }
