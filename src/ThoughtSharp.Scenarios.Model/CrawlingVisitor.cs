@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-class CrawlingVisitor<T> : ScenariosModelNodeVisitor<IEnumerable<T>>
+public class CrawlingVisitor<T> : ScenariosModelNodeVisitor<IEnumerable<T>>
 {
   public CrawlingVisitor()
   {

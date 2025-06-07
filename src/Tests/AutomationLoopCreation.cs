@@ -70,8 +70,8 @@ public class AutomationLoopCreation
         }
       ]);
 
-
-    var Scheme = new TrainingDataScheme(TrainingMetadata);
+    var SchemeNode = new MockNode();
+    var Scheme = new TrainingDataScheme((ScenariosModelNode) SchemeNode, TrainingMetadata);
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
     ImmutableArray<ScenariosModelNode> SourceNodes = [CapabilityNode, BehaviorNode3, BehaviorNode1];
     var ConvergenceGates = SourceNodes.GetBehaviorRunners(Pool)
@@ -79,18 +79,26 @@ public class AutomationLoopCreation
       .Select(N => Gate.ForConvergenceTrackerAndThreshold(Scheme.GetConvergenceTrackerFor(N),
         TrainingMetadata.SuccessFraction))
       .ToImmutableArray();
-    var ConvergenceRule = ConvergenceGates[1..].Aggregate(ConvergenceGates[0], Gate.ForAnd);
-    var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, Reporter, Scheme);
+    var ConvergenceRule = ConvergenceGates.Aggregate(Gate.AlwaysOpen, Gate.ForAnd);
+    var Loop = Model.MakeAutomationLoopForPhase(PhaseNode, Pool, Scheme, Reporter);
 
     Loop.Should().BeEquivalentTo(
       new AutomationLoop(
-        Model.GetTestPassFor(Pool, Reporter, [
-          ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
-        ]),
+        Model.GetTestPassFor(
+          Pool, 
+          Scheme, 
+          Gate.ForCounterAndMinimum(Scheme.TimesSinceSaved, 100), 
+          new ResetCounterSaver(Pool, Scheme.TimesSinceSaved), 
+          Reporter,
+          [
+            ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
+          ]),
         new AndGate(
           new CounterAndMaximumGate(Scheme.Attempts, MaximumAttempts),
-          ConvergenceRule),
-        new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts)));
+          Gate.NotGate(ConvergenceRule)),
+        ConvergenceRule,
+        new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts)),
+      O => O.PreferringRuntimeMemberTypes());
   }
 
   public class T1

@@ -45,7 +45,7 @@ public class AutomationPasses
     Saver = new();
     Reporter = new();
     Metadata = Any.TrainingMetadata();
-    Scheme = new(Metadata);
+    Scheme = new((ScenariosModelNode) new MockNode(), Metadata);
   }
 
   [TestMethod]
@@ -126,6 +126,31 @@ public class AutomationPasses
     ThenConvergenceIsGreaterThan0For(Node);
   }
 
+  [TestMethod]
+  public async Task CumulativeResultIsPassWhenNothingFails()
+  {
+    var Pass = GivenAutomationPass();
+    foreach (var Step in Steps)
+      Step.Runnable.Result = new() { Status = BehaviorRunStatus.Success };
+
+    var Result = await Pass.Run();
+
+    Result.Should().Be(new RunResult() { Status = BehaviorRunStatus.Success });
+  }
+
+  [TestMethod]
+  public async Task CumulativeResultIsFailureWhenAnythingFails()
+  {
+    var Pass = GivenAutomationPass();
+    foreach (var Step in Steps)
+      Step.Runnable.Result = new() { Status = BehaviorRunStatus.Success };
+    Any.Of(Steps).Runnable.Result = new() {Status = BehaviorRunStatus.Failure};
+
+    var Result = await Pass.Run();
+
+    Result.Should().Be(new RunResult() { Status = BehaviorRunStatus.Failure });
+  }
+
   void ThenConvergenceIsLessThan1For(ScenariosModelNode Node)
   {
     var Tracker = Scheme.GetConvergenceTrackerFor(Node);
@@ -198,25 +223,8 @@ public class AutomationPasses
     Steps.Should().AllSatisfy(S => S.Runnable.RunCount.Should().Be(1));
   }
 
-  AutomationJob GivenAutomationPass()
+  Runnable GivenAutomationPass()
   {
-    return new AutomationPass([..Steps], SaveGate, Saver, Reporter, Scheme);
+    return new AutomationPass([..Steps], SaveGate, Saver, Scheme, Reporter);
   }
 }
-
-//[TestClass]
-//public class AutomationPassConstruction
-//{
-//  class HostType
-//  {
-//    public void Method(){}
-//  }
-//  [TestMethod]
-//  public void BuildFromSingleNode()
-//  {
-//    var Kit = new MockModelKit();
-//    var Node = new BehaviorNode(typeof(HostType), typeof(HostType).GetMethod(nameof(HostType.Method))!);
-
-//    var Pass = Kit.CreateAutomationPassFrom(Node);
-//  }
-//}

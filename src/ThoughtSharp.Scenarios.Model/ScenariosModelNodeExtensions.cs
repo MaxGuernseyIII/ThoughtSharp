@@ -26,43 +26,75 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public static class ScenariosModelNodeExtensions
 {
-  public static AutomationJob MakeAutomationLoopForPhase(
+  public static Runnable BuildTrainingPlanFor(
     this ScenariosModel This,
     ScenariosModelNode PhaseNode,
     MindPool Pool,
-    Reporter Reporter,
-    TrainingDataScheme TrainingDataScheme)
+    TrainingDataScheme ParentScheme,
+    Reporter Reporter)
+  {
+    var Scheme = ParentScheme.GetChildScheme(PhaseNode);
+
+    var ChildPhases = PhaseNode.GetChildPhases();
+    if (ChildPhases.Any())
+      return new TrainingPlan(
+        PhaseNode,
+        [..ChildPhases.Select(P => This.BuildTrainingPlanFor(P, Pool, Scheme, Reporter))],
+        Scheme,
+        Reporter);
+
+    return new TrainingPlan(
+      PhaseNode,
+      [This.MakeAutomationLoopForPhase(PhaseNode, Pool, Scheme, Reporter)],
+      Scheme,
+      Reporter);
+  }
+
+  public static Runnable MakeAutomationLoopForPhase(
+    this ScenariosModel This,
+    ScenariosModelNode PhaseNode,
+    MindPool Pool,
+    TrainingDataScheme TrainingDataScheme,
+    Reporter Reporter)
   {
     var IncludedScenariosFinders = PhaseNode.Query(new TargetedVisitor<ScenariosModelNodeVisitor<ScenariosModelNode?>>
     {
       VisitCurriculumPhase = Phase => Phase.IncludedTrainingScenarioNodeFinders
     });
 
-    var Metadata = PhaseNode.Query(new TargetedVisitor<TrainingMetadata>
-    {
-      VisitCurriculumPhase = Phase => [Phase.TrainingMetadata]
-    }).Single()!;
-
     var Behaviors = IncludedScenariosFinders.Select(This.Query).Where(B => B is not null).OfType<ScenariosModelNode>()
       .ToImmutableArray();
 
-    var Pass = This.GetTestPassFor(Pool, Reporter, Behaviors!);
+    var Pass = This.GetTestPassFor(
+      Pool, 
+      TrainingDataScheme, 
+      Gate.ForCounterAndMinimum(TrainingDataScheme.TimesSinceSaved, 100), 
+      new ResetCounterSaver(Pool, TrainingDataScheme.TimesSinceSaved), 
+      Reporter,
+      Behaviors);
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
-      Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), Metadata.SuccessFraction));
+      Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), TrainingDataScheme.Metadata.SuccessFraction));
 
+    var SuccessGate = Nodes.Aggregate(Gate.AlwaysOpen, Gate.ForAnd);
     return new AutomationLoop(
       Pass,
       Gate.ForAnd(
-        Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, Metadata.MaximumAttempts),
-        Nodes.Skip(1).Aggregate(Nodes.First(), Gate.ForAnd)),
+        Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, TrainingDataScheme.Metadata.MaximumAttempts), Gate.NotGate(SuccessGate)),
+        SuccessGate,
         new CompoundIncrementable(TrainingDataScheme.Attempts, TrainingDataScheme.TimesSinceSaved)
     );
   }
 
-  public static AutomationJob GetTestPassFor(this ScenariosModel This, MindPool Pool, Reporter Reporter,
+  public static Runnable GetTestPassFor(
+    this ScenariosModel This, 
+    MindPool Pool,
+    TrainingDataScheme Scheme,
+    Gate SaveGate, 
+    Saver Saver, 
+    Reporter Reporter,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
-    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], new FalseGate(), Pool, Reporter, null!);
+    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], SaveGate, Saver, Scheme, Reporter);
   }
 
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)

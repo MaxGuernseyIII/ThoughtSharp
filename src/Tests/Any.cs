@@ -37,6 +37,7 @@ static class Any
   public static bool Bool => Core.Next(2) == 1;
 
   public static float PositiveOrNegativeFloat => Core.NextSingle() * 2 - 1;
+  public static string? NormalString => Guid.NewGuid().ToString("n");
 
   public static int Int(int Boundary1, int Boundary2)
   {
@@ -126,5 +127,17 @@ static class Any
       SampleSize = Any.Int(1, 10),
       SuccessFraction = Any.Float
     };
+  }
+
+  public static IReadOnlyList<T> ListOf<T>(Func<T> MakeItem, int Minimum, int Maximum)
+  {
+    var Count = Any.Int(Minimum, Maximum);
+    var List = new List<T>();
+    foreach (var _ in Enumerable.Range(0, Count))
+    {
+      List.Add(MakeItem());
+    }
+
+    return List;
   }
 }

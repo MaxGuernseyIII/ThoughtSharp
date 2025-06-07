@@ -26,6 +26,8 @@ public interface Gate
 {
   bool IsOpen { get; }
 
+  static Gate AlwaysOpen => new AlwaysGate(true);
+
   static Gate ForConvergenceTrackerAndThreshold(ConvergenceTracker Tracker, double Threshold)
   {
     return new ConvergenceTrackerAndThresholdGate(Tracker, Threshold);
@@ -49,5 +51,10 @@ public interface Gate
   static Gate ForOr(Gate LeftGate, Gate RightGate)
   {
     return new OrGate(LeftGate, RightGate);
+  }
+
+  static Gate NotGate(Gate Underlying)
+  {
+    return new NotGate(Underlying);
   }
 }

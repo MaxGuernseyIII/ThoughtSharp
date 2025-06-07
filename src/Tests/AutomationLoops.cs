@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using FluentAssertions;
-using Microsoft.Testing.Platform.Extensions;
 using Tests.Mocks;
 using ThoughtSharp.Scenarios.Model;
 
@@ -30,18 +29,20 @@ namespace Tests;
 [TestClass]
 public class AutomationLoops
 {
-  MockGate Gate = null!;
-  MockAutomationJob Pass = null!;
   MockIncrementable Counter = null!;
-  AutomationJob Loop = null!;
+  MockGate Gate = null!;
+  MockGate Success = null!;
+  Runnable Loop = null!;
+  MockRunnable Pass = null!;
 
   [TestInitialize]
   public void SetUp()
   {
     Gate = new();
+    Success = new(Any.Bool);
     Pass = new();
     Counter = new();
-    Loop = new AutomationLoop(Pass, Gate, Counter);
+    Loop = new AutomationLoop(Pass, Gate, Success, Counter);
   }
 
   [TestMethod]
@@ -66,6 +67,50 @@ public class AutomationLoops
     ThenIncrementableShouldBe(PassCount);
   }
 
+  [TestMethod]
+  public async Task ReportsSuccessBasedOnGate()
+  {
+    GivenGateWillCloseAfterPasses(1);
+    GivenSuccessGateIsOpen();
+
+    var Result = await WhenRunAutomationLoop();
+
+    ThenResultShouldBeSuccess(Result);
+  }
+
+  [TestMethod]
+  public async Task ReportsFailureBasedOnGate()
+  {
+    GivenGateWillCloseAfterPasses(1);
+    GivenSuccessGateIsClosed();
+
+    var Result = await WhenRunAutomationLoop();
+
+    ThenResultShouldBeFailure(Result);
+  }
+
+  static void ThenResultShouldBeSuccess(RunResult Result)
+  {
+    Result.Should().Be(new RunResult() {Status = BehaviorRunStatus.Success});
+  }
+
+  static void ThenResultShouldBeFailure(RunResult Result)
+  {
+    Result.Should().Be(new RunResult() {Status = BehaviorRunStatus.Failure});
+  }
+
+  void GivenSuccessGateIsOpen()
+  {
+    Success.Answers.Clear();
+    Success.Answers.Enqueue(true);
+  }
+
+  void GivenSuccessGateIsClosed()
+  {
+    Success.Answers.Clear();
+    Success.Answers.Enqueue(false);
+  }
+
   void ThenIncrementableShouldBe(int PassCount)
   {
     Counter.Count.Should().Be(PassCount);
@@ -76,14 +121,14 @@ public class AutomationLoops
     Pass.RunCount.Should().Be(PassCount);
   }
 
-  Task WhenRunAutomationLoop()
+  Task<RunResult> WhenRunAutomationLoop()
   {
     return Loop.Run();
   }
 
   void GivenGateWillCloseAfterPasses(int Count)
   {
-    foreach (var _ in Enumerable.Range(0, Count)) 
+    foreach (var _ in Enumerable.Range(0, Count))
       Gate.Answers.Enqueue(true);
 
     Gate.Answers.Enqueue(false);

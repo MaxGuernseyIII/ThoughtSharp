@@ -1,0 +1,23 @@
+<Project Sdk="MSTest.Sdk/3.9.1">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <UseVSTest>true</UseVSTest>
+    <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="8.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tests.SampleScenarios\Tests.SampleScenarios.csproj" />
+    <ProjectReference Include="..\ThoughtSharp.Scenarios.Model\ThoughtSharp.Scenarios.Model.csproj" />
+  </ItemGroup>
+
+</Project>

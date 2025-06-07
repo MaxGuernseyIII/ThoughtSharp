@@ -177,3 +177,9 @@ public class MindPooling
 
   public record MockMind3(Brain Brain);
 }
+
+[TestClass]
+public class MindPoolCreation
+{
+
+}

@@ -42,6 +42,8 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     torch.nn.init.kaiming_uniform_(Unwrapped.weight);
     torch.nn.init.zeros_(Unwrapped.bias);
 
+    //Console.WriteLine($"Created linear with input features {InputFeatures} and output features {OutputFeatures}.");
+
     return new StatePassThroughModule(Unwrapped);
   }
 
@@ -58,7 +60,7 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
 
   public TorchBrain CreateBrain(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Model, torch.Device Device)
   {
-    return MakeBrain(Model, Device);
+    return MakeBrain(Model.to(Device), Device);
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateParallel(params IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children)
@@ -68,7 +70,9 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(int InputFeatures, int OutputFeatures, torch.Device Device)
   {
-    return new AdditionalDimensionForSubModule(new DoubleTensorToTorchInferencePartsAdapter(torch.nn.GRU(InputFeatures, OutputFeatures), OutputFeatures, Device));
+    var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures);
+    var Adapter = new DoubleTensorToTorchInferencePartsAdapter(Underlying, OutputFeatures, Device);  
+    return new AdditionalDimensionForSubModule(Adapter);
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateReLU()

@@ -43,7 +43,7 @@ class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
 
   public Tensor Visit(CrossEntropyLossRule Rule, Tensor Prediction)
   {
-    var Target = tensor([Rule.Index], ScalarType.Int64);
+    var Target = Brain.GetInt64ScalarTensor(Rule.Index);
     return nn.functional.cross_entropy(Prediction, Target);
   }
 

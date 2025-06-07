@@ -4,7 +4,7 @@ namespace Tests.Mocks;
 
 class MockNode : ScenariosModelNode
 {
-  public string Name => throw new NotImplementedException();
+  public string Name { get; set; } = "";
 
   public IEnumerable<ScenariosModelNode> ChildNodes => throw new NotImplementedException();
 

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "dotnet-train": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\..\\..\\..\\Tests.SampleScenarios\\bin\\Debug\\net8.0\\Tests.SampleScenarios.dll"
+    }
+  }
+}

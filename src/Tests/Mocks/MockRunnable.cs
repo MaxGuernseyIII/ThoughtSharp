@@ -4,10 +4,15 @@ namespace Tests.Mocks;
 
 class MockRunnable : Runnable
 {
-  public RunResult Result = new()
+  public Func<Task<RunResult>> RunBehavior = () => Task.FromResult(new RunResult() {Status = BehaviorRunStatus.NotRun});
+
+  public RunResult Result
   {
-    Status = BehaviorRunStatus.NotRun
-  };
+    set
+    {
+      RunBehavior = () => Task.FromResult(value);
+    }
+  }
 
   public int RunCount { get; set; }
 
@@ -15,6 +20,6 @@ class MockRunnable : Runnable
   {
     RunCount++;
 
-    return Task.FromResult(Result);
+    return RunBehavior();
   }
 }

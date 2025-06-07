@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Text;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
@@ -32,12 +33,48 @@ namespace Tests.SampleScenarios;
 
 public static partial class FizzBuzzTraining
 {
+  static Func<byte, bool> IsDivisibleBy(int Denominator)
+  {
+    return B => B % Denominator == 0;
+  }
+
+  static Func<byte, bool> IsNotDivisibleBy(int Denominator)
+  {
+    return B => B % Denominator != 0;
+  }
+
+  static class TrainingData
+  {
+    static readonly Random Core = new();
+
+    public static IEnumerable<byte> Byte
+    {
+      get
+      {
+        var Buffer = new byte[1];
+
+        while (true)
+        {
+          Core.NextBytes(Buffer);
+          yield return Buffer[0];
+        }
+        // ReSharper disable once IteratorNeverReturns
+      }
+    }
+  }
+
   [MindPlace]
   public class FizzBuzzMindPlace : MindPlace<FizzBuzzMind, TorchBrain>
   {
-    public override TorchBrain MakeNewBrain()
+    static FizzBuzzMindPlace()
     {
-      return Builder.Build();
+      try
+      {
+        torch.InitializeDeviceType(DeviceType.CUDA);
+      }
+      catch
+      {
+      }
     }
 
     static BrainBuilder<TorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device> Builder
@@ -49,10 +86,16 @@ public static partial class FizzBuzzTraining
             Outer
               .AddGRU(128)
               .AddParallel(P => P
+                //.AddLogicPath(160, 40, 80)
                 .AddLogicPath(16, 4, 8)
                 .AddPath(S => S))
           );
       }
+    }
+
+    public override TorchBrain MakeNewBrain()
+    {
+      return Builder.Build();
     }
 
     public override void LoadSavedBrain(TorchBrain ToLoad)
@@ -91,6 +134,23 @@ public static partial class FizzBuzzTraining
       {
         ContentBuilder.Append("buzz");
       }
+
+      public virtual bool Equals(MockActionSurface? Other)
+      {
+        if (Other is null) return false;
+        if (ReferenceEquals(this, Other)) return true;
+        return ContentBuilder.Equals(Other.ContentBuilder);
+      }
+
+      public override string ToString()
+      {
+        return $"surface:<{ContentBuilder}>";
+      }
+
+      public override int GetHashCode()
+      {
+        return ContentBuilder.GetHashCode();
+      }
     }
 
     [Capability]
@@ -98,27 +158,17 @@ public static partial class FizzBuzzTraining
     {
       const int FizzFactor = 3;
       const int BuzzFactor = 5;
-      static readonly Random Random = new();
+
       readonly FizzBuzzHybridReasoning Reasoning = new(Mind);
       readonly MockActionSurface Surface = new();
-
-      byte AnyByteDivisibleBy(int Factor)
-      {
-        return (byte) (Random.Next(byte.MaxValue / Factor) * Factor);
-      }
-
-      byte AnyByteNotDivisibleBy(params IEnumerable<int> ExcludedFactors)
-      {
-        var Available = Enumerable.Range(0, byte.MaxValue + 1)
-          .Where(Candidate => ExcludedFactors.All(F => Candidate % F != 0)).ToArray();
-
-        return (byte) Available[Random.Next(Available.Length)];
-      }
 
       [Behavior]
       public void Fizz()
       {
-        var Input = AnyByteDivisibleBy(FizzFactor);
+        var Input = TrainingData.Byte
+          .Where(IsDivisibleBy(FizzFactor))
+          .Where(IsNotDivisibleBy(BuzzFactor))
+          .First();
 
         var Result = Reasoning.CalculateStepValue(Input, Surface);
 
@@ -130,7 +180,10 @@ public static partial class FizzBuzzTraining
       [Behavior]
       public void Buzz()
       {
-        var Input = AnyByteDivisibleBy(BuzzFactor);
+        var Input = TrainingData.Byte
+          .Where(IsDivisibleBy(BuzzFactor))
+          .Where(IsNotDivisibleBy(FizzFactor))
+          .First();
 
         var Result = Reasoning.CalculateStepValue(Input, Surface);
 
@@ -142,7 +195,9 @@ public static partial class FizzBuzzTraining
       [Behavior]
       public void FizzBuzz()
       {
-        var Input = AnyByteDivisibleBy(FizzFactor * BuzzFactor);
+        var Input = TrainingData.Byte
+          .Where(IsDivisibleBy(BuzzFactor * FizzFactor))
+          .First();
 
         var Result = Reasoning.CalculateStepValue(Input, Surface);
 
@@ -155,13 +210,31 @@ public static partial class FizzBuzzTraining
       [Behavior]
       public void WriteValue()
       {
-        var Input = AnyByteNotDivisibleBy(FizzFactor, BuzzFactor);
+        var Input = TrainingData.Byte
+          .Where(IsNotDivisibleBy(BuzzFactor))
+          .Where(IsNotDivisibleBy(FizzFactor))
+          .First();
 
         var Result = Reasoning.CalculateStepValue(Input, Surface);
 
         Assert.That(Result).ProducedCallsOn(Surface,
           S => S.WriteNumber(Input)
         );
+      }
+
+      sealed record FactorsKey(ImmutableArray<int> Factors)
+      {
+        public bool Equals(FactorsKey? Other)
+        {
+          if (Other is null) return false;
+          if (ReferenceEquals(this, Other)) return true;
+          return Factors.SequenceEqual(Other.Factors);
+        }
+
+        public override int GetHashCode()
+        {
+          return 0;
+        }
       }
     }
 
@@ -175,7 +248,7 @@ public static partial class FizzBuzzTraining
       readonly FizzBuzzHybridReasoning Reasoning = new(Mind);
 
       [Behavior]
-      public void RequireFullFizzBuzzSolution()
+      public void FullFizzBuzz()
       {
         var Result = Reasoning.DoFullFizzBuzz();
 
@@ -185,32 +258,30 @@ public static partial class FizzBuzzTraining
   }
 
   [Curriculum]
-  [MaximumAttempts(5000)]
+  [MaximumAttempts(50000)]
   public static class FizzBuzzTrainingPlan
   {
     [Phase(1)]
-    [ConvergenceStandard(Fraction = .8, Of = 200)]
+    [ConvergenceStandard(Fraction = .6, Of = 200)]
     [Include(typeof(Calculations))]
     public class InitialSteps;
 
     [Phase(2)]
+    [MaximumAttempts(20000)]
     [ConvergenceStandard(Fraction = .98, Of = 500)]
     public class FocusedTraining
     {
       [Phase(2.1)]
-      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)])]
       public class FocusOnFizz;
 
       [Phase(2.2)]
-      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)])]
       // TODO: Support weights in training
       //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Fizz)], Weight = 0.25)]
       public class FocusOnBuzz;
 
       [Phase(2.3)]
-      [MaximumAttempts(10000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.FizzBuzz)])]
       // TODO: Support weights in training
       //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
@@ -218,7 +289,7 @@ public static partial class FizzBuzzTraining
       public class FocusOnFizzBuzz;
 
       [Phase(2.4)]
-      [MaximumAttempts(10000)]
+      [ConvergenceStandard(Fraction = .98, Of = 2000)]
       [Include(typeof(Calculations), Behaviors = [nameof(Calculations.WriteValue)])]
       // TODO: Support weights in training
       //[Include(typeof(Calculations), Behaviors = [nameof(Calculations.Buzz)], Weight = 0.05)]
@@ -228,6 +299,11 @@ public static partial class FizzBuzzTraining
     }
 
     [Phase(3)]
+    [ConvergenceStandard(Fraction = 1, Of = 1000)]
+    [Include(typeof(Calculations))]
+    public class AllOperationsMustWork;
+
+    [Phase(4)]
     [ConvergenceStandard(Fraction = 1, Of = 50)]
     [Include(typeof(Calculations))]
     [Include(typeof(Solution))]

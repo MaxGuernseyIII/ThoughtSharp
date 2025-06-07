@@ -20,37 +20,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Globalization;
 using System.Reflection;
 
 namespace ThoughtSharp.Scenarios.Model;
 
 public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMethod) : Runnable
 {
+
   public async Task<RunResult> Run()
   {
     var Constructor = HostType.GetConstructors().Single();
     var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
     var Instance = Constructor.Invoke(Minds);
+    var OldOutput = Console.Out;
+    var OldError = Console.Error;
+    var OutputCapture = new StringWriter();
+    Console.SetOut(OutputCapture);
+    Console.SetError(OutputCapture);
 
     try
     {
-      var Result = BehaviorMethod.Invoke(Instance, []);
+      var Result = BehaviorMethod.Invoke(Instance, BindingFlags.DoNotWrapExceptions, null, [], CultureInfo.CurrentCulture);
       if (Result is Task T)
         await T;
     }
     catch (Exception Exception)
     {
-      var Unwrapped = Exception is TargetInvocationException ? Exception.InnerException : Exception;
       return new()
       {
         Status = BehaviorRunStatus.Failure,
-        Exception = Unwrapped
+        Exception = Exception,
+        Output = OutputCapture.ToString()
       };
+    }
+    finally
+    {
+      Console.SetOut(OldOutput);
+      Console.SetError(OldError);
     }
 
     return new()
     {
-      Status = BehaviorRunStatus.Success
+      Status = BehaviorRunStatus.Success,
+      Output = OutputCapture.ToString()
     };
   }
 }

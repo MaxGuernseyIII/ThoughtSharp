@@ -36,4 +36,14 @@ public static class Assert
   {
     return new(Subject);
   }
+
+  internal static void ShouldBe<T>(this T Actual, T Expected)
+  {
+    if (!Equals(Actual, Expected))
+      throw new AssertionFailedException($"Expected {Expected} but found {Actual}");
+  }
+}
+
+class AssertionFailedException(string Message) : Exception(Message)
+{
 }
