@@ -38,17 +38,21 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     this.Factory = Factory;
     Input = new VirtualConstructor(InputFeatures);
     Constructor = new AdaptOutputConstructor(Factory,
-      new SequenceConstructor(this, new VirtualConstructor(InputFeatures)), OutputFeatures);
+      new SequenceConstructor(this, new VirtualConstructor(InputFeatures)), OutputFeatures, true);
     Device = this.Factory.GetDefaultOptimumDevice();
   }
+
 
   TDevice Device { get; init; }
 
   ModelConstructor Constructor { get; init; }
+  bool FinalBias { get; init; } = true;
+
   public int InputFeatures { get; init; }
   public int OutputFeatures { get; init; }
 
   public string CompactDescriptiveText => Constructor.CompactDescriptiveText;
+
 
   public TBrain Build()
   {
@@ -56,19 +60,20 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   }
 
   public BrainBuilder<TBrain, TModel, TDevice> UsingSequence(
-    Func<SequenceConstructor, SequenceConstructor> TransformSequenceBuilder)
+    Func<SequenceConstructor, SequenceConstructor> TransformSequenceBuilder,
+    bool WithFinalBias = true)
   {
     return this with
     {
-      Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(this, Input)), OutputFeatures)
+      Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(this, Input)), OutputFeatures, WithFinalBias)
     };
   }
 
-  public BrainBuilder<TBrain, TModel, TDevice> UsingParallel(Func<ParallelConstructor, ParallelConstructor> Transform)
+  public BrainBuilder<TBrain, TModel, TDevice> UsingParallel(Func<ParallelConstructor, ParallelConstructor> Transform, bool WithFinalBias = true)
   {
     return this with
     {
-      Constructor = new AdaptOutputConstructor(Factory, Transform(new(this, Input)), OutputFeatures)
+      Constructor = new AdaptOutputConstructor(Factory, Transform(new(this, Input)), OutputFeatures, WithFinalBias)
     };
   }
 
@@ -247,7 +252,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   sealed record AdaptOutputConstructor(
     BrainFactory<TBrain, TModel, TDevice> Factory,
     ModelConstructor CoreConstructor,
-    int OutputFeatures) : ModelConstructor
+    int OutputFeatures,
+    bool WithBias) : ModelConstructor
   {
     public string CompactDescriptiveText => CoreConstructor.CompactDescriptiveText;
 
@@ -255,7 +261,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return Factory.CreateSequence(
         CoreConstructor.Build(),
-        Factory.CreateLinear(CoreConstructor.OutputFeatures, OutputFeatures, true));
+        Factory.CreateLinear(CoreConstructor.OutputFeatures, OutputFeatures, WithBias));
     }
   }
 

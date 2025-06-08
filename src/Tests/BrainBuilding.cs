@@ -61,6 +61,14 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void SequenceWithoutFinalBias()
+  {
+    var Actual = BrainBuilder.UsingSequence(S => S, WithFinalBias:false).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures, Factory.GetDefaultOptimumDevice(), [], false);
+  }
+
+  [TestMethod]
   public void UsingCPU()
   {
     var Actual = BrainBuilder.UsingCPU().Build();
@@ -190,7 +198,7 @@ public class BrainBuilding
   }
 
   [TestMethod]
-  public void UsingPath()
+  public void UsingParallel()
   {
     var Builder = BrainBuilder.UsingParallel(Parallel => Parallel
       .AddPath(Sequence => Sequence.AddLinear(5))
@@ -210,6 +218,33 @@ public class BrainBuilding
               Factory.CreateLinear(10, 4)
             )),
           Factory.CreateLinear(9, OutputFeatures)
+        ),
+        Factory.GetDefaultOptimumDevice()
+      ));
+  }
+
+  [TestMethod]
+  public void UsingParallelWithoutBias()
+  {
+    var Builder = BrainBuilder.UsingParallel(Parallel => Parallel
+      .AddPath(Sequence => Sequence.AddLinear(5))
+      .AddPath(Sequence => Sequence.AddLinear(10).AddLinear(4)),
+      WithFinalBias:false
+    );
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(
+      Factory.CreateBrain(
+        Factory.CreateSequence(
+          Factory.CreateParallel(
+            Factory.CreateSequence(
+              Factory.CreateLinear(InputFeatures, 5)),
+            Factory.CreateSequence(
+              Factory.CreateLinear(InputFeatures, 10),
+              Factory.CreateLinear(10, 4)
+            )),
+          Factory.CreateLinear(9, OutputFeatures, false)
         ),
         Factory.GetDefaultOptimumDevice()
       ));
@@ -324,8 +359,14 @@ public class BrainBuilding
     ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2), Factory.CreateSiLU(), Factory.CreateLinear(2, 1));
   }
 
-  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device,
+  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device, 
     params IEnumerable<MockBuiltModel> ExpectedModels)
+  {
+    ShouldBeAdaptedContainerFor(Actual, Features, Device, ExpectedModels, true);
+  }
+
+  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device, IEnumerable<MockBuiltModel> ExpectedModels,
+    bool WithBias)
   {
     Actual.Should().Be(
       Factory.CreateBrain(
@@ -333,7 +374,7 @@ public class BrainBuilding
           Factory.CreateSequence(
             ExpectedModels
           ),
-          Factory.CreateLinear(Features, OutputFeatures)),
+          Factory.CreateLinear(Features, OutputFeatures, WithBias)),
         Device));
   }
 
