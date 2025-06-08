@@ -33,8 +33,8 @@ partial class FizzBuzzInput
   public static CognitiveDataCodec<byte> ValueCodec { get; } = 
     new CompositeCodec<byte>(
       new BitwiseOneHotNumberCodec<byte>(),
-      new NormalizeNumberCodec<byte,float>(
-        byte.MinValue, byte.MaxValue, new RoundingCodec<float>(new CopyFloatCodec())));
+      new NumberToFloatingPointCodec<byte,float>(new NormalizingCodec<float>(
+        new RoundingCodec<float>(new CopyFloatCodec()), byte.MinValue, byte.MaxValue)));
 }
 
 [Mind]
