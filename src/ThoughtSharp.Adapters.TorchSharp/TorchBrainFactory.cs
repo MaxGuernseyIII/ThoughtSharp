@@ -36,13 +36,11 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     this.MakeBrain = MakeBrain;
   }
 
-  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLinear(int InputFeatures, int OutputFeatures)
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLinear(int InputFeatures, int OutputFeatures, bool WithBias)
   {
-    var Unwrapped = torch.nn.Linear(InputFeatures, OutputFeatures);
+    var Unwrapped = torch.nn.Linear(InputFeatures, OutputFeatures, hasBias:WithBias);
     torch.nn.init.kaiming_uniform_(Unwrapped.weight);
     torch.nn.init.zeros_(Unwrapped.bias);
-
-    //Console.WriteLine($"Created linear with input features {InputFeatures} and output features {OutputFeatures}.");
 
     return new StatePassThroughModule(Unwrapped);
   }

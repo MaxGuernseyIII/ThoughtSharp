@@ -125,14 +125,14 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       ]);
     }
 
-    public SequenceConstructor AddLinear(int Features)
+    public SequenceConstructor AddLinear(int Features, bool WithBias = true)
     {
       return this with
       {
         Constructors =
         [
           ..Constructors,
-          new LinearConstructor(Host.Factory, Tail, Features)
+          new LinearConstructor(Host.Factory, Tail, Features, WithBias)
         ]
       };
     }
@@ -201,13 +201,14 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   sealed record LinearConstructor(
     BrainFactory<TBrain, TModel, TDevice> BrainFactory,
     ModelConstructor Predecessor,
-    int OutputFeatures) : ModelConstructor
+    int OutputFeatures,
+    bool WithBias) : ModelConstructor
   {
     public string CompactDescriptiveText => $"x{OutputFeatures}";
 
     TModel ModelConstructor.Build()
     {
-      return BrainFactory.CreateLinear(Predecessor.OutputFeatures, OutputFeatures);
+      return BrainFactory.CreateLinear(Predecessor.OutputFeatures, OutputFeatures, WithBias);
     }
   }
 
@@ -254,7 +255,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return Factory.CreateSequence(
         CoreConstructor.Build(),
-        Factory.CreateLinear(CoreConstructor.OutputFeatures, OutputFeatures));
+        Factory.CreateLinear(CoreConstructor.OutputFeatures, OutputFeatures, true));
     }
   }
 

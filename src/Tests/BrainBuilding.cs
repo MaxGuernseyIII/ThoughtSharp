@@ -283,6 +283,24 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void AddLinear()
+  {
+    var Count = Any.Int();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(Count)).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, Count, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, Count, WithBias:true));
+  }
+
+  [TestMethod]
+  public void AddLinearWithoutBias()
+  {
+    var Count = Any.Int();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(Count, WithBias:false)).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, Count, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, Count, WithBias:false));
+  }
+
+  [TestMethod]
   public void AddTanh()
   {
     var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(2).AddTanh().AddLinear(1)).Build();
@@ -359,12 +377,12 @@ public class BrainBuilding
   {
     var LayerCount = Any.Int(AtLeast, 4);
     var LayerFeatureCounts = new List<int>();
-    foreach (var I in Enumerable.Range(0, LayerCount))
+    foreach (var __ in Enumerable.Range(0, LayerCount))
       LayerFeatureCounts.Add(Any.Int(1, 1000));
     return LayerFeatureCounts;
   }
 
-  record MockDevice;
+  public record MockDevice;
 
   sealed record MockCPUDevice : MockDevice;
 
@@ -374,11 +392,11 @@ public class BrainBuilding
 
   sealed record MockSiLU : MockBuiltModel;
 
-  class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel, MockDevice>
+  public class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel, MockDevice>
   {
-    public MockBuiltModel CreateLinear(int InputFeatures, int OutputFeatures)
+    public MockBuiltModel CreateLinear(int InputFeatures, int OutputFeatures, bool HasBias)
     {
-      return new MockLinear(InputFeatures, OutputFeatures);
+      return new MockLinear(InputFeatures, OutputFeatures, HasBias);
     }
 
     public MockBuiltModel CreateTanh()
@@ -435,7 +453,7 @@ public class BrainBuilding
 
     record MockGRU(int InputFeatures, int OutputFeatures, MockDevice Device) : MockBuiltModel;
 
-    record MockLinear(int InputFeatures, int OutputFeatures) : MockBuiltModel;
+    record MockLinear(int InputFeatures, int OutputFeatures, bool HasBias) : MockBuiltModel;
 
     record MockTanh : MockBuiltModel;
 
@@ -470,9 +488,9 @@ public class BrainBuilding
     }
   }
 
-  record MockBuiltModel;
+  public record MockBuiltModel;
 
-  record MockBuiltBrain(MockBuiltModel Model, MockDevice Device) : Brain
+  public record MockBuiltBrain(MockBuiltModel Model, MockDevice Device) : Brain
   {
     public void Dispose()
     {
@@ -483,5 +501,14 @@ public class BrainBuilding
       Assert.Fail();
       return null!;
     }
+  }
+}
+
+file static class MockBrainFactoryExtensions
+{
+  public static BrainBuilding.MockBuiltModel CreateLinear(this BrainFactory<BrainBuilding.MockBuiltBrain, BrainBuilding.MockBuiltModel, BrainBuilding.MockDevice> Factory,
+    int InputParameters, int OutputParameters)
+  {
+    return Factory.CreateLinear(InputParameters, OutputParameters, true);
   }
 }

@@ -10,7 +10,7 @@ public interface BrainFactory<
   TModel CreateSequence(params IEnumerable<TModel> Children);
   TModel CreateParallel(params IEnumerable<TModel> Children);
 
-  TModel CreateLinear(int InputFeatures, int OutputFeatures);
+  TModel CreateLinear(int InputFeatures, int OutputFeatures, bool WithBias);
   TModel CreateGRU(int InputFeatures, int OutputFeatures, TDevice Device);
 
   TModel CreateTanh();
