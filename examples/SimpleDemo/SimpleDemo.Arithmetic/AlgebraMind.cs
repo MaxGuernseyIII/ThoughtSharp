@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.ComponentModel.DataAnnotations;
 using ThoughtSharp.Runtime;
 
 namespace SimpleDemo.Arithmetic;
@@ -30,5 +29,5 @@ public partial class AlgebraMind
 {
   [Make]
   public partial CognitiveResult<SingleVariableComputation, SingleVariableComputation> ComputePointOnLine(
-    [Range(0, 1)] float M, [Range(0, 1)] float B, [Range(0, 1)] float X);
+    float M, float B, float X);
 }
