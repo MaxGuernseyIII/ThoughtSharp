@@ -22,4 +22,4 @@
 
 namespace ThoughtSharp.Scenarios;
 
-public delegate void Assertion<in T>(T Expected, T Actual);
+public delegate void Assertion<in T>(T Actual, T Expected);

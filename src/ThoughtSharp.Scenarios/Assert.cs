@@ -21,10 +21,12 @@
 // SOFTWARE.
 
 using System.Numerics;
+using JetBrains.Annotations;
 using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers, Reason = "Public API")]
 public static class Assert
 {
   public static AccumulatedUseAssertionContext<TSurface> That<TSurface>(AccumulatedUseFeedback<TSurface> Subject)
@@ -38,13 +40,13 @@ public static class Assert
     return new(Subject);
   }
 
-  internal static void ShouldBe<T>(this T Actual, T Expected)
+  public static void ShouldBe<T>(this T Actual, T Expected)
   {
     if (!Equals(Actual, Expected))
       throw new AssertionFailedException($"Expected {Expected} but found {Actual}");
   }
 
-  internal static void ShouldBeApproximately<T>(this T Actual, T Expected, T Epsilon)
+  public static void ShouldBeApproximately<T>(this T Actual, T Expected, T Epsilon)
     where T : IFloatingPoint<T>
   {
     if (Expected < Actual - Epsilon || Expected > Actual + Epsilon)

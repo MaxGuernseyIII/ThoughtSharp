@@ -20,22 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
+using JetBrains.Annotations;
 
 namespace ThoughtSharp.Scenarios;
 
-public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TResultFeedback, TResultFeedback> Subject)
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers, Reason = "Public API")]
+public class ObjectComparison<TObject>(TObject Expected, TObject Actual)
 {
-  public void Is(TResultFeedback Expected)
+  public ObjectComparison<TObject> Expect<TObjectPart>(Func<TObject, TObjectPart> GetPart,
+    Assertion<TObjectPart> Assert)
   {
-    Is(Expected, C => C.ExpectEqual(D => D));
-  }
+    var ExpectedPart = GetPart(Expected);
+    var ActualPart = GetPart(Actual);
 
-  public void Is(TResultFeedback Expected, Action<ObjectComparison<TResultFeedback>> Assertion)
-  {
-    Subject.FeedbackSink.TrainWith(Expected);
+    Assert(ActualPart, ExpectedPart);
 
-    var Comparison = new ObjectComparison<TResultFeedback>(Expected, Subject.Payload);
-    Assertion(Comparison);
+    return this;
   }
 }

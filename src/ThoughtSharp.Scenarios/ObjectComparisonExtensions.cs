@@ -20,22 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
+using System.Numerics;
+using JetBrains.Annotations;
 
 namespace ThoughtSharp.Scenarios;
 
-public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TResultFeedback, TResultFeedback> Subject)
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers, Reason = "Public API")]
+public static class ObjectComparisonExtensions
 {
-  public void Is(TResultFeedback Expected)
+  public static ObjectComparison<TObject> ExpectEqual<TObject, TObjectPart>(
+    this ObjectComparison<TObject> Comparison,
+    Func<TObject, TObjectPart> GetPart)
   {
-    Is(Expected, C => C.ExpectEqual(D => D));
+    return Comparison.Expect(GetPart, Assert.ShouldBe);
   }
 
-  public void Is(TResultFeedback Expected, Action<ObjectComparison<TResultFeedback>> Assertion)
+  public static ObjectComparison<TObject> ExpectApproximatelyEqual<TObject, TObjectPart>(
+    this ObjectComparison<TObject> Comparison,
+    Func<TObject, TObjectPart> GetPart,
+    TObjectPart Epsilon)
+    where TObjectPart : IFloatingPoint<TObjectPart>
   {
-    Subject.FeedbackSink.TrainWith(Expected);
-
-    var Comparison = new ObjectComparison<TResultFeedback>(Expected, Subject.Payload);
-    Assertion(Comparison);
+    return Comparison.Expect(GetPart, (Actual, Expected) => Actual.ShouldBeApproximately(Expected, Epsilon));
   }
 }
