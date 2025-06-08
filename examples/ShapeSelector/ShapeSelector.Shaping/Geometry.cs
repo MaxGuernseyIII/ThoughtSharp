@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.Numerics;
+using System.Text;
 using ShapeSelector.Cognition;
 
 namespace ShapeSelector.Shaping;
@@ -29,20 +30,13 @@ static class Geometry
 {
   static readonly Random Random = new();
 
-  static float RandomScale => Random.NextSingle() * 100f;
-  static Vector2 RandomVector => new(RandomScale, RandomScale);
-
-  static Matrix3x2 RandomTransform => CreateTransform(RandomVector, RandomRadians, RandomScale, RandomVector);
+  static Matrix3x2 RandomTransform => CreateTransform(RandomRadians);
 
   static float RandomRadians => Random.NextSingle() * MathF.PI * 2;
 
-  static Matrix3x2 CreateTransform(Vector2 Center, float RotationRadians, float Scale, Vector2 Translation)
+  static Matrix3x2 CreateTransform(float RotationRadians)
   {
-    return
-      Matrix3x2.CreateTranslation(-Center) *
-      Matrix3x2.CreateRotation(RotationRadians) *
-      Matrix3x2.CreateScale(Scale) *
-      Matrix3x2.CreateTranslation(Translation);
+    return Matrix3x2.CreateRotation(RotationRadians);
   }
 
   static IEnumerable<Point> AddNoise(IEnumerable<Point> Points, float Radius)
@@ -247,5 +241,42 @@ static class Geometry
   public static IEnumerable<Point> GetSimplified(IEnumerable<Point> MakeShapePoints)
   {
     return NormalizePointsArraySize(MakeShapePoints);
+  }
+
+  public static string ShapeToSvg(Shape Shape, int Width = 200, int Height = 200, bool ClosePath = false)
+  {
+    var Sb = new StringBuilder();
+
+    Sb.AppendLine($"<svg width=\"{Width}\" height=\"{Height}\" viewBox=\"-1.1 -1.1 2.2 2.2\" xmlns=\"http://www.w3.org/2000/svg\">");
+    Sb.AppendLine("  <g stroke=\"black\" stroke-width=\"0.01\" fill=\"none\">");
+
+    var ActivePoints = Shape.Points.Where(P => P.IsHot).ToList();
+    if (ActivePoints.Count == 0)
+    {
+      Sb.AppendLine("    <!-- No active points to render -->");
+    }
+    else
+    {
+      Sb.Append("    <path d=\"");
+
+      for (int I = 0; I < ActivePoints.Count; I++)
+      {
+        var P = ActivePoints[I];
+        if (I == 0)
+          Sb.Append($"M {P.X.ToString("F4")} {P.Y.ToString("F4")} ");
+        else
+          Sb.Append($"L {P.X.ToString("F4")} {P.Y.ToString("F4")} ");
+      }
+
+      if (ClosePath)
+        Sb.Append("Z");
+
+      Sb.Append("\" />\n");
+    }
+
+    Sb.AppendLine("  </g>");
+    Sb.AppendLine("</svg>");
+
+    return Sb.ToString();
   }
 }

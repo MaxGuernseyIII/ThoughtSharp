@@ -29,8 +29,8 @@ namespace ShapeSelector.Shaping;
 [Curriculum]
 public class LearnToClassifyShapes
 {
-  [MaximumAttempts(100000)]
-  [ConvergenceStandard(Fraction = .90, Of = 200)]
+  [MaximumAttempts(20000)]
+  [ConvergenceStandard(Fraction = .90, Of = 100)]
   [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
   [Phase(1)]
   public class LearnBasicDistinctions
@@ -41,7 +41,7 @@ public class LearnToClassifyShapes
       typeof(Distinctions),
       Behaviors =
       [
-        nameof(Distinctions.Line_Rectangle),
+        nameof(Distinctions.Line_Rectangle)
       ])]
     public class IdentifyLine;
 
@@ -66,6 +66,19 @@ public class LearnToClassifyShapes
         nameof(Distinctions.Rectangle_Circle)
       ])]
     public class DistinguishBetweenCircleAndRectangle;
+
+    [MaximumAttempts(100000)]
+    [ConvergenceStandard(Fraction = .99, Of = 500)]
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+    [Phase(1.031)]
+    [Include(
+      typeof(Distinctions),
+      Behaviors =
+      [
+        nameof(Distinctions.Circle_Rectangle),
+        nameof(Distinctions.Rectangle_Circle)
+      ])]
+    public class HyperTrainCircleAndRectangle;
 
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
     [Phase(1.04)]
@@ -99,5 +112,22 @@ public class LearnToClassifyShapes
         nameof(Distinctions.Circle_Irregular)
       ])]
     public class DistinguishBetweenIrregularAndCircle;
+
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+    [Phase(1.07)]
+    [Include(
+      typeof(Distinctions),
+      Behaviors =
+      [
+        nameof(Distinctions.Irregular_Plus),
+        nameof(Distinctions.Plus_Irregular)
+      ])]
+    public class DistinguishBetweenIrregularAndPlus;
   }
+
+  [MaximumAttempts(20000)]
+  [ConvergenceStandard(Fraction = .95, Of = 500)]
+  [Phase(2)]
+  [Include(typeof(Distinctions))]
+  public class AllDistinctionsToConfidence;
 }

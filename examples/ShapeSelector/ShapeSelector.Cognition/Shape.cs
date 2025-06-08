@@ -44,7 +44,7 @@ public partial class Shape
     var MaxY = HotPoints.Select(P => P.Y).Max();
     var ScaleX = MaxX - MinX;
     var ScaleY = MaxY - MinY;
-    var Scale = 1 / MathF.Max(ScaleX, ScaleY);
+    var Scale = 2 / MathF.Max(ScaleX, ScaleY);
     var CenterX = (MinX + MaxX) / 2;
     var CenterY = (MinY + MaxY) / 2;
 
@@ -57,8 +57,8 @@ public partial class Shape
       [
         ..HotPoints.Select(P => P with
         {
-          X = (P.X - CenterX) * Scale + .5f,
-          Y = (P.Y - CenterY) * Scale + .5f
+          X = (P.X - CenterX) * Scale,
+          Y = (P.Y - CenterY) * Scale
         }),
         ..ColdPoints.Select(_ => new Point())
       ]

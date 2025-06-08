@@ -22,7 +22,6 @@
 
 using JetBrains.Annotations;
 using ShapeSelector.Cognition;
-using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 using static ShapeSelector.Shaping.ShapeType;
 using static ShapeSelector.Shaping.TestData;
@@ -57,20 +56,42 @@ public class Distinctions(ShapeClassifyingMind Mind)
   public void Circle_Rectangle()
   {
     var Category = GetCategory(Circle, Rectangle);
+    var Shape = SampleCircle;
 
-    var Result = Mind.ChooseHandlerFor(SampleCircle, Category);
+    var Result = Mind.ChooseHandlerFor(Shape, Category);
 
-    Assert.That(Result).Is(CircleHandler);
+    try
+    {
+      Assert.That(Result).Is(CircleHandler);
+    }
+    catch
+    {
+      var Svg = Geometry.ShapeToSvg(Shape);
+      File.WriteAllText("circle.svg", Svg);
+      Console.WriteLine("circle.svg saved");
+      throw;
+    }
   }
 
   [Behavior]
   public void Rectangle_Circle()
   {
     var Category = GetCategory(Rectangle, Circle);
+    var Shape = SampleRectangle;
 
-    var Result = Mind.ChooseHandlerFor(SampleRectangle, Category);
+    var Result = Mind.ChooseHandlerFor(Shape, Category);
 
-    Assert.That(Result).Is(RectangleHandler);
+    try
+    {
+      Assert.That(Result).Is(RectangleHandler);
+    }
+    catch
+    {
+      var Svg = Geometry.ShapeToSvg(Shape);
+      File.WriteAllText("rectangle.svg", Svg);
+      Console.WriteLine("rectangle.svg saved");
+      throw;
+    }
   }
 
   [Behavior]
@@ -131,5 +152,25 @@ public class Distinctions(ShapeClassifyingMind Mind)
     var Result = Mind.ChooseHandlerFor(SampleCircle, Category);
 
     Assert.That(Result).Is(CircleHandler);
+  }
+
+  [Behavior]
+  public void Irregular_Plus()
+  {
+    var Category = GetCategory(Irregular, Plus);
+
+    var Result = Mind.ChooseHandlerFor(SampleIrregular, Category);
+
+    Assert.That(Result).Is(IrregularHandler);
+  }
+
+  [Behavior]
+  public void Plus_Irregular()
+  {
+    var Category = GetCategory(Plus, Irregular);
+
+    var Result = Mind.ChooseHandlerFor(SamplePlus, Category);
+
+    Assert.That(Result).Is(PlusHandler);
   }
 }

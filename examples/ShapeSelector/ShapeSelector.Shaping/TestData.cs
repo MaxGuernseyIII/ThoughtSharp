@@ -47,7 +47,7 @@ static class TestData
     Constraints =
     {
       MaximumVertices = 2,
-      MinimumVertices = 2
+      MinimumVertices = 2,
     }
   };
 
@@ -73,7 +73,10 @@ static class TestData
       MinimumVertices = 4,
       MinimumSymmetricalAxes = 2,
       MinimumVertexAngle = MathF.PI / 2 * .95f,
-      MaximumVertexAngle = MathF.PI / 2 * 1.05f
+      MaximumVertexAngle = MathF.PI / 2 * 1.05f,
+      HasMaximumSymmetricalAxes = true,
+      MaximumSymmetricalAxes = 4,
+      MaximumRadialSymmetry = .4f
     }
   };
 
@@ -114,7 +117,8 @@ static class TestData
     Constraints =
     {
       MaximumVertices = 0,
-      MinimumSymmetricalAxes = 8
+      MinimumSymmetricalAxes = 8,
+      MinimumRadialSymmetry = .90f
     }
   };
 
@@ -136,7 +140,8 @@ static class TestData
     },
     Constraints =
     {
-      MinimumSymmetricalAxes = 3
+      MinimumSymmetricalAxes = 3,
+      MaximumRadialSymmetry = .85f
     }
   };
 
@@ -184,23 +189,16 @@ static class TestData
     {
       MinimumSymmetricalAxes = 2,
       MinimumVertexAngle = MathF.PI / 2 * .95f,
-      MaximumVertexAngle = MathF.PI / 2 * 1.05f
+      MaximumVertexAngle = MathF.PI / 2 * 1.05f,
+      MaximumRadialSymmetry = .35f,
+      HasMaximumSymmetricalAxes = true,
+      MaximumSymmetricalAxes = 4
     }
   };
 
   public static readonly ShapeHandler PlusHandler = new PlusHandler();
 
-  public static readonly ShapeHandlerCategory AllOptionsCategory = new(
-    [
-      GetOptionFor(Line),
-      GetOptionFor(Rectangle),
-      GetOptionFor(Star),
-      GetOptionFor(Plus),
-      GetOptionFor(Circle),
-      GetOptionFor(Arc),
-      GetOptionFor(Irregular)
-    ]
-  );
+  public static ShapeHandlerCategory AllOptionsCategory => GetCategory([..Enum.GetValues<ShapeType>()]);
 
   static readonly Random Random = new();
 

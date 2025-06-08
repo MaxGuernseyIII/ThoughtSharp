@@ -28,6 +28,6 @@ namespace ShapeSelector.Cognition;
 public partial record Point
 {
   public bool IsHot { get; set; }
-  public float X { get; set; } = .5f;
-  public float Y { get; set; } = .5f;
+  public float X { get; set; }
+  public float Y { get; set; }
 }

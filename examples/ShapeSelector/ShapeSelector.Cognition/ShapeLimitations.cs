@@ -33,7 +33,19 @@ public partial class ShapeLimitations
   [CognitiveDataBounds<byte>(0, Shape.PointCount)]
   public byte MaximumVertices { get; set; } = Shape.PointCount;
 
-  [CognitiveDataBounds<byte>(0, 8)] public byte MinimumSymmetricalAxes { get; set; }
+  [CognitiveDataBounds<byte>(0, 8)]
+  public byte MinimumSymmetricalAxes { get; set; } = 0;
+
+  public bool HasMaximumSymmetricalAxes { get; set; } = false;
+
+  [CognitiveDataBounds<byte>(0, 8)]
+  public byte MaximumSymmetricalAxes { get; set; } = 8;
+
+  [CognitiveDataBounds<float>(0, 1)]
+  public float MinimumRadialSymmetry { get; set; } = 0f;
+
+  [CognitiveDataBounds<float>(0, 1)]
+  public float MaximumRadialSymmetry { get; set; } = 1f;
 
   [CognitiveDataBounds<float>(0, MathF.PI * 2)]
   public float MinimumVertexAngle { get; set; }
