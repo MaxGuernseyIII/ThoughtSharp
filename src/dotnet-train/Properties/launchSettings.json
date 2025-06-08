@@ -15,6 +15,10 @@
     "dotnet train example project": {
       "commandName": "Project",
       "commandLineArgs": "..\\..\\..\\..\\..\\examples\\SimpleDemo\\SimpleDemo.Arithmetic.Specifications\\"
+    },
+    "no arguments from samples folder": {
+      "commandName": "Project",
+      "workingDirectory": "E:\\repos\\ThoughtSharp\\src\\Tests.SampleScenarios"
     }
   }
 }

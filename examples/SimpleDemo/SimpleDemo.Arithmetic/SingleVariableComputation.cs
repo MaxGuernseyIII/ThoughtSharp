@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.ComponentModel.DataAnnotations;
 using ThoughtSharp.Runtime;
 
 namespace SimpleDemo.Arithmetic;
@@ -28,6 +27,5 @@ namespace SimpleDemo.Arithmetic;
 [CognitiveData]
 public partial class SingleVariableComputation
 {
-  [Range(-20000, 20000)]
   public float Y { get; set; }
 }

@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.CommandLine;
+using System.CommandLine.Parsing;
 
 namespace dotnet_train;
 
@@ -37,38 +38,38 @@ static class Commands
   static Argument<FileInfo> GetProjectArgument()
   {
     var ProjectArgument = new Argument<FileInfo>(
-      "project", A =>
-      {
-        var ProjectPath = A.Tokens.FirstOrDefault()?.Value ?? ".";
-
-        if (File.Exists(ProjectPath))
-          return new(ProjectPath);
-
-        if (!Directory.Exists(ProjectPath))
-          return Error($"Could not locate the project file for '{ProjectPath}'");
-
-        var ProjectFilePaths = Directory.GetFiles(ProjectPath, "*.csproj");
-
-        if (ProjectFilePaths.Length < 1)
-          return Error($"No project files found in '{ProjectPath}'");
-
-        if (ProjectFilePaths.Length > 1)
-          return Error($"Too many project files found in '{ProjectPath}':{Environment.NewLine}{string.Join(Environment.NewLine,
-            ProjectFilePaths.Select(P => $"  - {P}"))}");
-
-        return new(ProjectFilePaths[0]);
-
-        FileInfo Error(string Message)
-        {
-          A.ErrorMessage = Message;
-          return null!;
-        }
-      }, true, "The project file or folder to train.")
+      "project", A => ParseProjectArgumentString(A.Tokens.FirstOrDefault()?.Value ?? ".", A), true, "The project file or folder to train.")
     {
       Arity = ArgumentArity.ZeroOrOne
     };
-    ProjectArgument.SetDefaultValue(".");
+    ProjectArgument.SetDefaultValueFactory(A => ParseProjectArgumentString(".", A));
     return ProjectArgument;
+  }
+
+  static FileInfo ParseProjectArgumentString(string ProjectPath, ArgumentResult A)
+  {
+    if (File.Exists(ProjectPath))
+      return new(ProjectPath);
+
+    if (!Directory.Exists(ProjectPath))
+      return Error($"Could not locate the project file for '{ProjectPath}'");
+
+    var ProjectFilePaths = Directory.GetFiles(ProjectPath, "*.csproj");
+
+    if (ProjectFilePaths.Length < 1)
+      return Error($"No project files found in '{ProjectPath}'");
+
+    if (ProjectFilePaths.Length > 1)
+      return Error($"Too many project files found in '{ProjectPath}':{Environment.NewLine}{string.Join(Environment.NewLine,
+        ProjectFilePaths.Select(P => $"  - {P}"))}");
+
+    return new(ProjectFilePaths[0]);
+
+    FileInfo Error(string Message)
+    {
+      A.ErrorMessage = Message;
+      return null!;
+    }
   }
 
   static Option<bool> GetNoBuildOption()
