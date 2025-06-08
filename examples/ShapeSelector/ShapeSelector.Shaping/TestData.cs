@@ -234,7 +234,8 @@ static class TestData
       Plus => new(PlusHandler, PlusHandlerDescriptor),
       Star => new(StarHandler, StarHandlerDescriptor),
       Arc => new(ArcHandler, ArcHandlerDescriptor),
-      Irregular => new(IrregularHandler, IrregularHandlerDescriptor)
+      Irregular => new(IrregularHandler, IrregularHandlerDescriptor),
+      _ => throw new ArgumentOutOfRangeException(nameof(Type), Type, null)
     };
   }
 

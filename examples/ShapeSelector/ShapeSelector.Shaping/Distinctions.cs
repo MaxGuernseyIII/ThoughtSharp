@@ -55,6 +55,7 @@ public class Distinctions(ShapeClassifyingMind Mind)
 
     Assert.That(Result).Is(RectangleOption.Payload);
   }
+
   [Behavior]
   public void Circle_Rectangle()
   {
@@ -77,5 +78,29 @@ public class Distinctions(ShapeClassifyingMind Mind)
     var Result = Mind.ChooseHandlerFor(RectangleShape, Category);
 
     Assert.That(Result).Is(RectangleOption.Payload);
+  }
+
+  [Behavior]
+  public void Star_Plus()
+  {
+    var StarShape = SampleStar;
+    var StarOption = GetOptionFor(Star);
+    var Category = GetCategory(StarOption, GetOptionFor(Plus));
+
+    var Result = Mind.ChooseHandlerFor(StarShape, Category);
+
+    Assert.That(Result).Is(StarOption.Payload);
+  }
+
+  [Behavior]
+  public void Plus_Star()
+  {
+    var PlusShape = SamplePlus;
+    var PlusOption = GetOptionFor(Plus);
+    var Category = GetCategory(PlusOption, GetOptionFor(Star));
+
+    var Result = Mind.ChooseHandlerFor(PlusShape, Category);
+
+    Assert.That(Result).Is(PlusOption.Payload);
   }
 }
