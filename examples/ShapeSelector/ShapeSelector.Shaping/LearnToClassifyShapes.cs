@@ -77,5 +77,16 @@ public class LearnToClassifyShapes
         nameof(Distinctions.Plus_Star)
       ])]
     public class DistinguishBetweenStarAndPlus;
+
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+    [Phase(1.05)]
+    [Include(
+      typeof(Distinctions),
+      Behaviors =
+      [
+        nameof(Distinctions.Arc_Circle),
+        nameof(Distinctions.Circle_Arc)
+      ])]
+    public class DistinguishBetweenArcAndCircle;
   }
 }

@@ -74,6 +74,26 @@ public class Distinctions(ShapeClassifyingMind Mind)
   }
 
   [Behavior]
+  public void Circle_Arc()
+  {
+    var Category = GetCategory(Circle, Arc);
+
+    var Result = Mind.ChooseHandlerFor(SampleCircle, Category);
+
+    Assert.That(Result).Is(CircleHandler);
+  }
+
+  [Behavior]
+  public void Arc_Circle()
+  {
+    var Category = GetCategory(Arc, Circle);
+
+    var Result = Mind.ChooseHandlerFor(SampleArc, Category);
+
+    Assert.That(Result).Is(ArcHandler);
+  }
+
+  [Behavior]
   public void Star_Plus()
   {
     var Category = GetCategory(Star, Plus);
