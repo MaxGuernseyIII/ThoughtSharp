@@ -31,7 +31,7 @@ namespace SimpleDemo.Arithmetic.Specifications;
 public class ArithmeticCurriculum
 {
   [Phase(1)]
-  [ConvergenceStandard(Fraction = .997, Of=1000)]
+  [ConvergenceStandard(Fraction = .997, Of=3000)]
   [Include(typeof(LineCapability))]
   public class LineTraining;
 }

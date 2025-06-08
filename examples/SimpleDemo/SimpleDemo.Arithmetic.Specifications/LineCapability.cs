@@ -36,7 +36,7 @@ public class LineCapability(AlgebraMind Mind)
   {
     var M = R.NextSingle() * .5f;
     var B = R.NextSingle() * .5f;
-    var X = R.NextSingle();
+    var X = R.NextSingle() * .5f;
 
     var Result = Mind.ComputePointOnLine(M, B, X);
 
