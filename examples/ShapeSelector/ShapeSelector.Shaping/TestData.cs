@@ -264,4 +264,10 @@ static class TestData
   {
     return new(RandomizeOrderOf(Options));
   }
+
+  public static ShapeHandlerCategory GetCategory(
+    params ImmutableArray<ShapeType> ShapeTypes)
+  {
+    return GetCategory([..ShapeTypes.Select(GetOptionFor)]);
+  }
 }

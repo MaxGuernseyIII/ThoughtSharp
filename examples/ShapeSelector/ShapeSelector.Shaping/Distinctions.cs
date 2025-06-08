@@ -22,6 +22,7 @@
 
 using JetBrains.Annotations;
 using ShapeSelector.Cognition;
+using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 using static ShapeSelector.Shaping.ShapeType;
 using static ShapeSelector.Shaping.TestData;
@@ -35,72 +36,60 @@ public class Distinctions(ShapeClassifyingMind Mind)
   [Behavior]
   public void Line_Rectangle()
   {
-    var LineShape = SampleLine;
-    var LineOption = GetOptionFor(Line);
-    var Category = GetCategory(LineOption, GetOptionFor(Rectangle));
+    var Category = GetCategory(Line, Rectangle);
 
-    var Result = Mind.ChooseHandlerFor(LineShape, Category);
+    var Result = Mind.ChooseHandlerFor(SampleLine, Category);
 
-    Assert.That(Result).Is(LineOption.Payload);
+    Assert.That(Result).Is(LineHandler);
   }
 
   [Behavior]
   public void Rectangle_Line()
   {
-    var RectangleShape = SampleRectangle;
-    var RectangleOption = GetOptionFor(Rectangle);
-    var Category = GetCategory(RectangleOption, GetOptionFor(Line));
+    var Category = GetCategory(Rectangle, Line);
 
-    var Result = Mind.ChooseHandlerFor(RectangleShape, Category);
+    var Result = Mind.ChooseHandlerFor(SampleRectangle, Category);
 
-    Assert.That(Result).Is(RectangleOption.Payload);
+    Assert.That(Result).Is(RectangleHandler);
   }
 
   [Behavior]
   public void Circle_Rectangle()
   {
-    var CircleShape = SampleCircle;
-    var CircleOption = GetOptionFor(Circle);
-    var Category = GetCategory(CircleOption, GetOptionFor(Rectangle));
+    var Category = GetCategory(Circle, Rectangle);
 
-    var Result = Mind.ChooseHandlerFor(CircleShape, Category);
+    var Result = Mind.ChooseHandlerFor(SampleCircle, Category);
 
-    Assert.That(Result).Is(CircleOption.Payload);
+    Assert.That(Result).Is(CircleHandler);
   }
 
   [Behavior]
   public void Rectangle_Circle()
   {
-    var RectangleShape = SampleRectangle;
-    var RectangleOption = GetOptionFor(Rectangle);
-    var Category = GetCategory(RectangleOption, GetOptionFor(Circle));
+    var Category = GetCategory(Rectangle, Circle);
 
-    var Result = Mind.ChooseHandlerFor(RectangleShape, Category);
+    var Result = Mind.ChooseHandlerFor(SampleRectangle, Category);
 
-    Assert.That(Result).Is(RectangleOption.Payload);
+    Assert.That(Result).Is(RectangleHandler);
   }
 
   [Behavior]
   public void Star_Plus()
   {
-    var StarShape = SampleStar;
-    var StarOption = GetOptionFor(Star);
-    var Category = GetCategory(StarOption, GetOptionFor(Plus));
+    var Category = GetCategory(Star, Plus);
 
-    var Result = Mind.ChooseHandlerFor(StarShape, Category);
+    var Result = Mind.ChooseHandlerFor(SampleStar, Category);
 
-    Assert.That(Result).Is(StarOption.Payload);
+    Assert.That(Result).Is(StarHandler);
   }
 
   [Behavior]
   public void Plus_Star()
   {
-    var PlusShape = SamplePlus;
-    var PlusOption = GetOptionFor(Plus);
-    var Category = GetCategory(PlusOption, GetOptionFor(Star));
+    var Category = GetCategory(Plus, Star);
 
-    var Result = Mind.ChooseHandlerFor(PlusShape, Category);
+    var Result = Mind.ChooseHandlerFor(SamplePlus, Category);
 
-    Assert.That(Result).Is(PlusOption.Payload);
+    Assert.That(Result).Is(PlusHandler);
   }
 }
