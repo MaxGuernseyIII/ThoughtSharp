@@ -73,7 +73,10 @@ static class DotnetTrain
         "-noLogo",
         "--",
         ..Request.ExtraArguments
-      ]).ExecuteAsync();
+      ])
+      .WithStandardOutputPipe(PipeTarget.ToStream(Console.OpenStandardOutput()))
+      .WithStandardErrorPipe(PipeTarget.ToStream(Console.OpenStandardError()))
+      .ExecuteAsync();
   }
 
   static async Task<string?> GetTargetPath(TargetAssemblyResolutionRequest Request)
