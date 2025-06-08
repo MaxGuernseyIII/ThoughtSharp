@@ -24,6 +24,7 @@ using JetBrains.Annotations;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
+using TorchSharp;
 
 namespace SimpleDemo.Arithmetic.Specifications;
 
@@ -31,16 +32,30 @@ namespace SimpleDemo.Arithmetic.Specifications;
 [UsedImplicitly]
 public class AlgebraMindPlace : MindPlace<AlgebraMind, TorchBrain>
 {
+  static BrainBuilder<TorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device> Builder
+  {
+    get
+    {
+      return TorchBrainBuilder.For<AlgebraMind>()
+        .UsingSequence(S => S
+            .AddLinear(16)
+          //.AddMathLayers(8, 4, 2)
+        );
+    }
+  }
+
   public override TorchBrain MakeNewBrain()
   {
-    return TorchBrainBuilder.For<AlgebraMind>().UsingSequence(S => S.AddMathLayers(8, 4, 2)).Build();
+    return Builder.Build();
   }
 
   public override void LoadSavedBrain(TorchBrain ToLoad)
   {
+    ToLoad.Load($"algebra-{Builder.CompactDescriptiveText}.pt");
   }
 
   public override void SaveBrain(TorchBrain ToSave)
   {
+    ToSave.Save($"algebra-{Builder.CompactDescriptiveText}.pt");
   }
 }
