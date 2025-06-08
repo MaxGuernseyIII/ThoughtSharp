@@ -20,10 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using JetBrains.Annotations;
 using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
 
+[PublicAPI]
 public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TResultFeedback, TResultFeedback> Subject)
 {
   public void Is(TResultFeedback Expected)

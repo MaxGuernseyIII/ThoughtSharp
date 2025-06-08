@@ -30,6 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ThoughtSharp.Adapters.TorchSharp\ThoughtSharp.Adapters.TorchSharp.csproj" />
     <ProjectReference Include="..\ThoughtSharp.Scenarios.Model\ThoughtSharp.Scenarios.Model.csproj" />
   </ItemGroup>
 

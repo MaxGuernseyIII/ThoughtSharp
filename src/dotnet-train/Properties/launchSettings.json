@@ -14,7 +14,7 @@
     },
     "dotnet train example project": {
       "commandName": "Project",
-      "commandLineArgs": "..\\..\\..\\..\\..\\examples\\SimpleDemo\\SimpleDemo.Arithmetic.Specifications\\"
+      "commandLineArgs": "..\\..\\..\\..\\..\\examples\\SimpleDemo\\SimpleDemo.Arithmetic.Specifications\\ --no-build"
     }
   }
 }

@@ -30,5 +30,5 @@ public partial class AlgebraMind
 {
   [Make]
   public partial CognitiveResult<SingleVariableComputation, SingleVariableComputation> ComputePointOnLine(
-    [Range(-100, 100)] float M, [Range(-100, 100)] float B, [Range(-100, 100)] float X);
+    [Range(0, 1)] float M, [Range(0, 1)] float B, [Range(0, 1)] float X);
 }

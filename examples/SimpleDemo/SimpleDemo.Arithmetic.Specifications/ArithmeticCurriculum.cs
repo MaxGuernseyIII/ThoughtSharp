@@ -26,6 +26,7 @@ using ThoughtSharp.Scenarios;
 namespace SimpleDemo.Arithmetic.Specifications;
 
 [Curriculum]
+[MaximumAttempts(500000)]
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class ArithmeticCurriculum
 {

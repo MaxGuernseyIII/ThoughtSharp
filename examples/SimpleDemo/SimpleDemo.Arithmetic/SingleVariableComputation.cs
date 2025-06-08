@@ -28,6 +28,6 @@ namespace SimpleDemo.Arithmetic;
 [CognitiveData]
 public partial class SingleVariableComputation
 {
-  [Range(-20000, 20000)]
+  [Range(0, 2)]
   public float Y { get; set; }
 }

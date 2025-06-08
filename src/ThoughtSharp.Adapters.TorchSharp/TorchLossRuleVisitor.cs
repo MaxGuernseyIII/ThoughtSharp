@@ -37,7 +37,7 @@ class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
   {
     var Target = Brain.ConvertFloatsToTensor(Rule.Target);
     return nn.functional.mse_loss(Prediction
-      .sigmoid()
+      //.sigmoid()
       , Target) * 10;
   }
 
@@ -51,7 +51,7 @@ class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
   {
     var Target = Brain.ConvertFloatsToTensor(Rule.Target);
     return nn.functional.huber_loss(Prediction
-      .sigmoid()
+      //.sigmoid()
       , Target) * 10;
   }
 }

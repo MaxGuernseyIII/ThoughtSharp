@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Immutable;
+using System.Reflection;
 using System.Runtime.Loader;
 using ThoughtSharp.Runtime;
 
@@ -10,10 +11,16 @@ public class ShapingAssemblyLoadContext(string DependencyPath) : AssemblyLoadCon
   protected override Assembly? Load(AssemblyName AssemblyName)
   {
     var Name = AssemblyName.Name;
-    if (
-      Name == typeof(CurriculumAttribute).Assembly.GetName().Name ||
-      Name == typeof(MindAttribute).Assembly.GetName().Name)
-      return null;
+
+    ImmutableArray<Assembly> InterfaceAssemblies =
+    [
+      typeof(CurriculumAttribute).Assembly,
+      typeof(MindAttribute).Assembly
+    ];
+
+    var InterfaceAssembly = InterfaceAssemblies.FirstOrDefault(A => A.GetName().Name == Name);
+    if (InterfaceAssembly is not null)
+      return InterfaceAssembly;
 
     //Console.WriteLine($"Attempting to resolve: {AssemblyName.FullName}");
     var Path = Resolver.ResolveAssemblyToPath(AssemblyName);

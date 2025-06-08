@@ -49,7 +49,7 @@ static class DotnetTrain
 
     var Scheme = new TrainingDataScheme(Model, new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1});
     var ConsoleReporter = new ConsoleReporter(Scheme);
-    foreach (var Curriculum in CurriculumNodes.Where(C => C.Name == "FizzBuzzTrainingPlan"))
+    foreach (var Curriculum in CurriculumNodes)
     {
       Console.WriteLine($"Training curriculum: {Curriculum.Name}");
 

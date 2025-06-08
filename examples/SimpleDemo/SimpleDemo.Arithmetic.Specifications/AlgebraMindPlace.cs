@@ -1,6 +1,6 @@
 ﻿// MIT License
 // 
-// Copyright (c) 2025-2025 Hexagon Software LLC
+// Copyright (c) 2024-2024 Producore LLC
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,21 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using JetBrains.Annotations;
+using ThoughtSharp.Adapters.TorchSharp;
+using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 
-namespace Tests.SampleScenarios;
+namespace SimpleDemo.Arithmetic.Specifications;
 
-public class ArbitraryDirectory
+[MindPlace]
+[UsedImplicitly]
+public class AlgebraMindPlace : MindPlace<AlgebraMind, TorchBrain>
 {
-  [Capability]
-  public class ArbitraryCapability
+  public override TorchBrain MakeNewBrain()
   {
-    [Capability]
-    public class ArbitrarySubCapability1;
-
-    [Capability]
-    public class ArbitrarySubCapability2;
+    return TorchBrainBuilder.For<AlgebraMind>().UsingSequence(S => S.AddMathLayers(8, 4, 2)).Build();
   }
 
-  public class EmptyClass;
+  public override void LoadSavedBrain(TorchBrain ToLoad)
+  {
+  }
+
+  public override void SaveBrain(TorchBrain ToSave)
+  {
+  }
 }
