@@ -236,7 +236,7 @@ public static partial class FizzBuzzTraining
       {
         var Result = Reasoning.DoFullFizzBuzz();
 
-        Assert.That(Result).Is(ExpectedFinalOutput);
+        Result.ShouldBe(ExpectedFinalOutput);
       }
     }
   }
@@ -324,17 +324,17 @@ public static partial class FizzBuzzTraining
 
   public class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
   {
-    public CognitiveResult<string, string> DoFullFizzBuzz()
+    public string DoFullFizzBuzz()
     {
       var Terminal = new ProductionTerminal();
 
       for (byte I = 1; I <= 100; ++I)
       {
         var Sink = CalculateStepValue(I, Terminal);
-        Terminal.Flush(Sink);
+        Terminal.Flush();
       }
 
-      return Terminal.Result;
+      return Terminal.Result.Trim();
     }
 
     public AccumulatedUseFeedback<FizzBuzzTerminal> CalculateStepValue(byte Input, FizzBuzzTerminal Terminal)
@@ -344,17 +344,9 @@ public static partial class FizzBuzzTraining
 
     class ProductionTerminal : FizzBuzzTerminal
     {
-      StringBuilder CurrentContentBuilder = new();
+      readonly StringBuilder CurrentContentBuilder = new();
 
-      public IncrementalCognitiveResult<string, string, string, IEnumerable<Action<FizzBuzzTerminal>>> Result
-      {
-        get;
-        private set;
-      } =
-        new(
-          Parts => string.Join(" ", Parts),
-          Whole => Whole.Split(" ").Select(TransformToken)
-        );
+      public string Result => CurrentContentBuilder.ToString();
 
       public void WriteNumber(byte ToWrite)
       {
@@ -392,10 +384,9 @@ public static partial class FizzBuzzTraining
         }
       }
 
-      public void Flush(FeedbackSink<IEnumerable<Action<FizzBuzzTerminal>>> FeedbackSink)
+      public void Flush()
       {
-        Result = Result.Add(CognitiveResult.From(CurrentContentBuilder.ToString(), FeedbackSink));
-        CurrentContentBuilder = new();
+        CurrentContentBuilder.Append(" ");
       }
     }
   }

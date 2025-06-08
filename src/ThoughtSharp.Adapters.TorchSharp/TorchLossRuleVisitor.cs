@@ -36,9 +36,7 @@ class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
   public Tensor Visit(MeanSquareErrorLossRule Rule, Tensor Prediction)
   {
     var Target = Brain.ConvertFloatsToTensor(Rule.Target);
-    return nn.functional.mse_loss(Prediction
-      .sigmoid()
-      , Target) * 10;
+    return nn.functional.mse_loss(Prediction, Target);
   }
 
   public Tensor Visit(CrossEntropyLossRule Rule, Tensor Prediction)
@@ -50,8 +48,6 @@ class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
   public Tensor Visit(HuberLossRule Rule, Tensor Prediction)
   {
     var Target = Brain.ConvertFloatsToTensor(Rule.Target);
-    return nn.functional.huber_loss(Prediction
-      .sigmoid()
-      , Target) * 10;
+    return nn.functional.huber_loss(Prediction, Target);
   }
 }

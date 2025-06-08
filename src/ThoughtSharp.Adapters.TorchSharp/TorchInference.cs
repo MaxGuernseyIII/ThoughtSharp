@@ -42,8 +42,8 @@ public class TorchInference(
     {
       var Result = ProductOutputTensor.squeeze(0).to(torch.CPU).data<float>().ToArray();
 
-      foreach (var I in Enumerable.Range(0, Result.Length))
-        Result[I] = Sigmoid(Result[I]);
+      //foreach (var I in Enumerable.Range(0, Result.Length))
+      //  Result[I] = Sigmoid(Result[I]);
 
       return Result;
     }
