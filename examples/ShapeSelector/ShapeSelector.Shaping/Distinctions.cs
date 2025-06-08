@@ -112,4 +112,24 @@ public class Distinctions(ShapeClassifyingMind Mind)
 
     Assert.That(Result).Is(PlusHandler);
   }
+
+  [Behavior]
+  public void Irregular_Circle()
+  {
+    var Category = GetCategory(Irregular, Circle);
+
+    var Result = Mind.ChooseHandlerFor(SampleIrregular, Category);
+
+    Assert.That(Result).Is(IrregularHandler);
+  }
+
+  [Behavior]
+  public void Circle_Irregular()
+  {
+    var Category = GetCategory(Circle, Irregular);
+
+    var Result = Mind.ChooseHandlerFor(SampleCircle, Category);
+
+    Assert.That(Result).Is(CircleHandler);
+  }
 }

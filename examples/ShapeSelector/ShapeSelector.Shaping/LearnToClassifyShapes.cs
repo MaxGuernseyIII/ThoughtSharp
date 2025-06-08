@@ -88,5 +88,16 @@ public class LearnToClassifyShapes
         nameof(Distinctions.Circle_Arc)
       ])]
     public class DistinguishBetweenArcAndCircle;
+
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+    [Phase(1.06)]
+    [Include(
+      typeof(Distinctions),
+      Behaviors =
+      [
+        nameof(Distinctions.Irregular_Circle),
+        nameof(Distinctions.Circle_Irregular)
+      ])]
+    public class DistinguishBetweenIrregularAndCircle;
   }
 }
