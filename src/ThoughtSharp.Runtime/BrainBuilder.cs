@@ -48,6 +48,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   public int InputFeatures { get; init; }
   public int OutputFeatures { get; init; }
 
+  public string CompactDescriptiveText => Constructor.CompactDescriptiveText;
+
   public TBrain Build()
   {
     return Factory.CreateBrain(Constructor.Build(), Device);
@@ -97,6 +99,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
   public sealed record SequenceConstructor : ModelConstructor
   {
+    readonly ImmutableArray<ModelConstructor> Predecessors;
+
     public SequenceConstructor(BrainBuilder<TBrain, TModel, TDevice> Host,
       ModelConstructor Predecessor)
     {
@@ -107,12 +111,11 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
 
     ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
+    public BrainBuilder<TBrain, TModel, TDevice> Host { get; init; }
 
     public int OutputFeatures => Tail.OutputFeatures;
 
     public string CompactDescriptiveText => string.Join("", Constructors.Select(C => C.CompactDescriptiveText));
-    public BrainBuilder<TBrain, TModel, TDevice> Host { get; init; }
-    readonly ImmutableArray<ModelConstructor> Predecessors;
 
     TModel ModelConstructor.Build()
     {
@@ -178,6 +181,18 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
         [
           ..Constructors,
           new ReLUConstructor(Host.Factory, Tail)
+        ]
+      };
+    }
+
+    public SequenceConstructor AddSiLU()
+    {
+      return this with
+      {
+        Constructors =
+        [
+          ..Constructors,
+          new SiLUConstructor(Host.Factory, Tail)
         ]
       };
     }
@@ -282,5 +297,15 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     }
   }
 
-  public string CompactDescriptiveText => Constructor.CompactDescriptiveText;
+  sealed record SiLUConstructor(BrainFactory<TBrain, TModel, TDevice> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
+  {
+    public int OutputFeatures => Predecessor.OutputFeatures;
+
+    public string CompactDescriptiveText => "[s]";
+
+    public TModel Build()
+    {
+      return BrainFactory.CreateSiLU();
+    }
+  }
 }

@@ -298,6 +298,14 @@ public class BrainBuilding
     ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2), Factory.CreateReLU(), Factory.CreateLinear(2, 1));
   }
 
+  [TestMethod]
+  public void AddSiLU()
+  {
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(2).AddSiLU().AddLinear(1)).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2), Factory.CreateSiLU(), Factory.CreateLinear(2, 1));
+  }
+
   void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device,
     params IEnumerable<MockBuiltModel> ExpectedModels)
   {
@@ -364,6 +372,8 @@ public class BrainBuilding
 
   sealed record MockDefaultOptimalDevice : MockDevice;
 
+  sealed record MockSiLU : MockBuiltModel;
+
   class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel, MockDevice>
   {
     public MockBuiltModel CreateLinear(int InputFeatures, int OutputFeatures)
@@ -399,6 +409,11 @@ public class BrainBuilding
     public MockBuiltModel CreateReLU()
     {
       return new MockReLU();
+    }
+
+    public MockBuiltModel CreateSiLU()
+    {
+      return new MockSiLU();
     }
 
     public MockDevice GetDefaultOptimumDevice()

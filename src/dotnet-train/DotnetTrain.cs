@@ -59,7 +59,7 @@ static class DotnetTrain
       await Plan.Run();
     }
 
-    ConsoleReporter.Stop();
+    await ConsoleReporter.Stop();
   }
 
   static async Task Build(TargetAssemblyResolutionRequest Request)

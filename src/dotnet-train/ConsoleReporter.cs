@@ -33,11 +33,12 @@ class ConsoleReporter : Reporter
   readonly TrainingDataScheme Scheme;
   readonly TextWriter Writer = Console.Out;
   TrainingDataScheme? LastSchemeToPrint;
+  readonly Task PrintTask;
 
   public ConsoleReporter(TrainingDataScheme Scheme)
   {
     this.Scheme = Scheme;
-    Start();
+    PrintTask = Start();
   }
 
   public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
@@ -60,9 +61,9 @@ class ConsoleReporter : Reporter
     Writer.WriteLine();
   }
 
-  void Start()
+  Task Start()
   {
-    Task.Run(async () =>
+    return Task.Run(async () =>
     {
       while (!Cancellation.Token.IsCancellationRequested)
         try
@@ -160,9 +161,10 @@ class ConsoleReporter : Reporter
     Console.SetCursorPosition(0, Top);
   }
 
-  public void Stop()
+  public async Task Stop()
   {
-    Cancellation.Cancel();
+    await Cancellation.CancelAsync();
+    await PrintTask;
     Print();
   }
 }

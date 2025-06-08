@@ -80,6 +80,11 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     return new StatePassThroughModule(torch.nn.ReLU());
   }
 
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateSiLU()
+  {
+    return new StatePassThroughModule(torch.nn.SiLU());
+  }
+
   public torch.Device GetDefaultOptimumDevice()
   {
     return torch.cuda.is_available() ? GetCUDADevice() : GetCPUDevice();
