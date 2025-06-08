@@ -20,21 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using ThoughtSharp.Adapters.TorchSharp;
+using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 
 namespace Tests.SampleScenarios;
 
-public class ArbitraryDirectory
+[MindPlace]
+public class RootMindPlace : MindPlace<RootMindPlaceMind, TorchBrain>
 {
-  [Capability]
-  public class ArbitraryCapability
+  public override TorchBrain MakeNewBrain()
   {
-    [Capability]
-    public class ArbitrarySubCapability1;
-
-    [Capability]
-    public class ArbitrarySubCapability2;
+    return TorchBrainBuilder.For<RootMindPlaceMind>().Build();
   }
 
-  public class EmptyClass;
+  public override void LoadSavedBrain(TorchBrain ToLoad)
+  {
+  }
+
+  public override void SaveBrain(TorchBrain ToSave)
+  {
+  }
 }
+
+[Mind]
+public partial class RootMindPlaceMind;

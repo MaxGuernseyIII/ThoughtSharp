@@ -34,14 +34,14 @@ public class LineCapability(AlgebraMind Mind)
   [Behavior]
   public void ProperlyFitsDataToLine()
   {
-    var M = R.NextSingle() * 200 - 100;
-    var B = R.NextSingle() * 200 - 100;
-    var X = R.NextSingle() * 200 - 100;
+    var M = R.NextSingle() * .5f;
+    var B = R.NextSingle() * .5f;
+    var X = R.NextSingle();
 
     var Result = Mind.ComputePointOnLine(M, B, X);
 
     Assert.That(Result).Is(
-      new() { Y = M * X + B },
-      C => C.ExpectApproximatelyEqual(R => R.Y, 0.1f));
+      new() {Y = M * X + B},
+      C => C.ExpectApproximatelyEqual(R => R.Y, 0.01f));
   }
 }

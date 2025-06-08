@@ -19,6 +19,11 @@
     "no arguments from samples folder": {
       "commandName": "Project",
       "workingDirectory": "E:\\repos\\ThoughtSharp\\src\\Tests.SampleScenarios"
+    },
+    "no arguments from SimpleDemo folder": {
+      "commandName": "Project",
+      "commandLineArgs": ".",
+      "workingDirectory": "E:\\repos\\ThoughtSharp\\examples\\SimpleDemo\\SimpleDemo.Arithmetic.Specifications"
     }
   }
 }

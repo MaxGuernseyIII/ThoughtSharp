@@ -54,14 +54,14 @@ public class AssemblyParser
     ]);
   }
 
-  bool IsThoughtSharpTrainingType(Type Type)
+  static bool IsThoughtSharpTrainingType(Type Type)
   {
-    return IsCurriculumType(Type) || IsCapabilityType(Type) || Type.GetNestedTypes().Any(IsThoughtSharpTrainingType);
+    return IsCurriculumPhaseType(Type) || IsMindPlaceType(Type) || IsCurriculumType(Type) || IsCapabilityType(Type) || Type.GetNestedTypes().Any(IsThoughtSharpTrainingType);
   }
 
   static IEnumerable<ScenariosModelNode> ParseTypes(Type Type, TrainingMetadata DefaultTrainingMetadata)
   {
-    return Type.GetNestedTypes().Select(T => ParseType(T, DefaultTrainingMetadata));
+    return Type.GetNestedTypes().Where(IsThoughtSharpTrainingType).Select(T => ParseType(T, DefaultTrainingMetadata));
   }
 
   static ScenariosModelNode ParseType(Type Type, TrainingMetadata ContextTrainingMetadata)

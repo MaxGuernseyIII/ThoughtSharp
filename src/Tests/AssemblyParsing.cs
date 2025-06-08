@@ -99,6 +99,16 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void FindsRootMindPlaces()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsMindPlace(
+      RootNamespace,
+      nameof(RootMindPlace));
+  }
+
+  [TestMethod]
   public void FindsCurricula()
   {
     WhenParseAssembly();
@@ -117,6 +127,17 @@ public class AssemblyParsing
     ThenStructureDoesNotContainNode(
       RootNamespace,
       nameof(FizzBuzzTraining.FizzBuzzTrainingPlan));
+  }
+
+  [TestMethod]
+  public void DoesNotCreateEmptyNestedDirectories()
+  {
+    WhenParseAssembly();
+
+    ThenStructureDoesNotContainNode(
+      RootNamespace,
+      nameof(ArbitraryDirectory),
+      nameof(ArbitraryDirectory.EmptyClass));
   }
 
   [TestMethod]
