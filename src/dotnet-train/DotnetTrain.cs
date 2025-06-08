@@ -49,7 +49,7 @@ static class DotnetTrain
 
     var Scheme = new TrainingDataScheme(Model, new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1});
     var ConsoleReporter = new ConsoleReporter(Scheme);
-    foreach (var Curriculum in CurriculumNodes.Where(C => C.Name == "FizzBuzzTrainingPlan"))
+    foreach (var Curriculum in CurriculumNodes)
     {
       Console.WriteLine($"Training curriculum: {Curriculum.Name}");
 
@@ -74,6 +74,7 @@ static class DotnetTrain
         "--",
         ..Request.ExtraArguments
       ])
+      .WithStandardInputPipe(PipeSource.FromStream(Console.OpenStandardInput()))
       .WithStandardOutputPipe(PipeTarget.ToStream(Console.OpenStandardOutput()))
       .WithStandardErrorPipe(PipeTarget.ToStream(Console.OpenStandardError()))
       .ExecuteAsync();
