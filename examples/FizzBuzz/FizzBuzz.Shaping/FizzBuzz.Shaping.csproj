@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ThoughtSharp.Adapters.TorchSharp" Version="2025.6.8.45" />
+    <PackageReference Include="ThoughtSharp.Shaping" Version="2025.6.8.45" />
+    <PackageReference Include="TorchSharp-cpu" Version="0.105.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FizzBuzz.Cognition\FizzBuzz.Cognition.csproj" />
+  </ItemGroup>
+
+</Project>
