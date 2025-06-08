@@ -29,6 +29,7 @@ namespace SimpleDemo.Arithmetic.Specifications;
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class LineCapability(AlgebraMind Mind)
 {
+  const float Scale = AlgebraMind.MaximumOutput - AlgebraMind.MinimumOutput;
   static readonly Random R = new();
 
   [Behavior]
@@ -42,6 +43,6 @@ public class LineCapability(AlgebraMind Mind)
 
     Assert.That(Result).Is(
       new() {Y = M * X + B},
-      C => C.ExpectApproximatelyEqual(R => R.Y, 0.01f));
+      C => C.ExpectApproximatelyEqual(R => R.Y, 0.01f * Scale));
   }
 }

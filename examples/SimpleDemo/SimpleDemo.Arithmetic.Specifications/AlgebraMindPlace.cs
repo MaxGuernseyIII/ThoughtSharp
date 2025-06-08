@@ -37,9 +37,10 @@ public class AlgebraMindPlace : MindPlace<AlgebraMind, TorchBrain>
     get
     {
       return TorchBrainBuilder.For<AlgebraMind>()
-        .UsingSequence(S => S
-            .AddLinear(16)
-          //.AddMathLayers(8, 4, 2)
+        .UsingSequence(
+          S => S
+            .AddLinear(10)
+            .AddSiLU()
         );
     }
   }

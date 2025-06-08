@@ -17,6 +17,7 @@
     <ProjectReference Include="..\ThoughtSharp.Adapters.TorchSharp\ThoughtSharp.Adapters.TorchSharp.csproj" />
     <ProjectReference Include="..\ThoughtSharp.Runtime\ThoughtSharp.Runtime.csproj" />
     <ProjectReference Include="..\ThoughtSharp.Generator\ThoughtSharp.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\ThoughtSharp.Scenarios.Model\ThoughtSharp.Scenarios.Model.csproj" />
   </ItemGroup>
 
 </Project>

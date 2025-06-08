@@ -27,5 +27,6 @@ namespace SimpleDemo.Arithmetic;
 [CognitiveData]
 public partial class SingleVariableComputation
 {
+  [CognitiveDataBounds<float>(AlgebraMind.MinimumOutput, AlgebraMind.MaximumOutput)]
   public float Y { get; set; }
 }

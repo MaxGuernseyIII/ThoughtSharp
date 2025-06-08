@@ -26,12 +26,18 @@ using static TorchSharp.torch;
 namespace ThoughtSharp.Adapters.TorchSharp;
 
 // ReSharper disable once UnusedMember.Global
-public class TorchBrainBuilder
+public static class TorchBrainBuilder
 {
   public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device>
     For<TMind>()
     where TMind : Mind<TMind>
   {
-    return new(TorchBrainFactory.Instance, TMind.InputLength, TMind.OutputLength);
+    return For(TMind.InputLength, TMind.OutputLength);
+  }
+
+  public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device> 
+    For(int InputFeatures, int OutputFeatures)
+  {
+    return new(TorchBrainFactory.Instance, InputFeatures, OutputFeatures);
   }
 }

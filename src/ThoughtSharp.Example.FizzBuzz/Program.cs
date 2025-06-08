@@ -28,7 +28,10 @@ using System.Numerics;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Example.FizzBuzz;
 using ThoughtSharp.Runtime;
+using ThoughtSharp.Scenarios.Model;
+using TorchSharp;
 using static Disposition;
+using static TorchSharp.torch;
 
 Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal;
 
@@ -36,7 +39,80 @@ Console.WriteLine("Training...");
 const int TotalTrainingPasses = 1000000;
 const int ReportEvery = 1000;
 
-DoFizzBuzz();
+//DoFizzBuzz();
+DoYEqualsMTimesXPlusBRaw();
+
+void DoYEqualsMTimesXPlusB()
+{
+  var R = new Random();
+  var Brain = TorchBrainBuilder.For(3, 1).UsingSequence(S => S.AddLinear(10).AddTanh()).Build();
+
+  var Convergence = new ConvergenceTracker(1000);
+
+  foreach (var I in Enumerable.Range(0, 1000000))
+  {
+    var M = R.NextSingle() * 200 - 100;
+    var X = R.NextSingle() * 200 - 100;
+    var B = R.NextSingle() * 200 - 100;
+
+    var Inference = Brain.MakeInference([X, M, B]);
+    var Y = Inference.Result[0];
+    var ExpectedY = M * X + B;
+
+    var Success = MathF.Abs(Y - ExpectedY) < 0.01f;
+    Convergence.RecordResult(Success);
+
+    if (I % 1000 == 0)
+      Console.WriteLine($"At iteration {I}, convergence = {Convergence.MeasureConvergence():P}");
+    Inference.Train((0, new MeanSquareErrorLossRule([ExpectedY])));
+  }
+}
+
+void DoYEqualsMTimesXPlusBRaw()
+{
+  var R = new Random();
+  var Model =
+    nn.Sequential(
+      nn.Linear(3, 10),
+      //nn.Tanh(),
+      //nn.SiLU(),
+      nn.Linear(10, 1)
+    );
+  var Optimizer = optim.Adam(Model.parameters());
+
+  var Convergence = new ConvergenceTracker(1000);
+
+  const float Min = -10f;
+  const float Max = 10f;
+  const float Scale = Max - Min;
+
+  foreach (var I in Enumerable.Range(0, 1000000))
+  {
+    var M = R.NextSingle() * Scale + Min;
+    var X = R.NextSingle() * Scale + Min;
+    var B = R.NextSingle() * Scale + Min;
+
+    var InputTensor = tensor([M, X, B]).unsqueeze(0);
+    var OutputTensor = Model.forward(InputTensor);
+    var OutputArray = OutputTensor.detach().squeeze(0).data<float>().ToArray();
+   
+    var ExpectedY = M * X + B;
+    var Y = OutputArray[0];
+
+    var Success = MathF.Abs(Y - ExpectedY) < Scale * 0.01f;
+    Convergence.RecordResult(Success);
+    var Target = tensor([ExpectedY]).unsqueeze(0);
+
+    var Loss = nn.functional.mse_loss(OutputTensor, Target);
+
+    Model.zero_grad();
+    Loss.backward();
+    Optimizer.step();
+
+    if (I % 1000 == 0)
+      Console.WriteLine($"At iteration {I}, convergence = {Convergence.MeasureConvergence():P}");
+  }
+}
 //DoChooseShape();
 
 //void DoForcedTraining()

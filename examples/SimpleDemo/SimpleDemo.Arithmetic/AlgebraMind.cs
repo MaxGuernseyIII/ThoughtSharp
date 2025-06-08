@@ -27,7 +27,22 @@ namespace SimpleDemo.Arithmetic;
 [Mind]
 public partial class AlgebraMind
 {
+  // assumed to always be <= 0 in other calcs
+  public const float MinimumInput = -1000f;
+
+  // assumed to always be >= 0 in other calcs
+  public const float MaximumInput = 1000f;
+
+
+  public const float MinimumOutput = MinimumInput * MaximumInput + MinimumInput;
+  public const float MaximumOutput = MaximumInput * MaximumInput + MaximumInput;
+
   [Make]
   public partial CognitiveResult<SingleVariableComputation, SingleVariableComputation> ComputePointOnLine(
-    float M, float B, float X);
+    [CognitiveDataBounds<float>(MinimumInput, MaximumInput)]
+    float M, 
+    [CognitiveDataBounds<float>(MinimumInput, MaximumInput)]
+    float B,
+    [CognitiveDataBounds<float>(MinimumInput, MaximumInput)]
+    float X);
 }
