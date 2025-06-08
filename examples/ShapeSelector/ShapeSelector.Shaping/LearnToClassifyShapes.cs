@@ -65,10 +65,10 @@ public class LearnToClassifyShapes
         nameof(Distinctions.Circle_Rectangle),
         nameof(Distinctions.Rectangle_Circle)
       ])]
-    public class DistinguishCircleRectangleAndLine;
+    public class DistinguishBetweenCircleAndRectangle;
 
     [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
-    [Phase(1.03)]
+    [Phase(1.04)]
     [Include(
       typeof(Distinctions),
       Behaviors =
@@ -76,6 +76,6 @@ public class LearnToClassifyShapes
         nameof(Distinctions.Star_Plus),
         nameof(Distinctions.Plus_Star)
       ])]
-    public class DistinguishStarRectangleAndPlus;
+    public class DistinguishBetweenStarAndPlus;
   }
 }
