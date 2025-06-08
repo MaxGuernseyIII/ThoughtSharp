@@ -7,8 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ThoughtSharp.Adapters.TorchSharp" Version="2025.6.7.31" />
-    <PackageReference Include="ThoughtSharp.Shaping" Version="2025.6.7.31" />
+    <PackageReference Include="ThoughtSharp.Adapters.TorchSharp" Version="2025.6.8.35" />
+    <PackageReference Include="ThoughtSharp.Scenarios" Version="2025.6.8.35" />
+    <PackageReference Include="ThoughtSharp.Shaping" Version="2025.6.8.35" />
     <PackageReference Include="TorchSharp-cpu" Version="0.105.0" />
   </ItemGroup>
 

@@ -20,15 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.ComponentModel.DataAnnotations;
-using ThoughtSharp.Runtime;
+using JetBrains.Annotations;
+using ThoughtSharp.Scenarios;
 
-namespace SimpleDemo.Arithmetic;
+namespace SimpleDemo.Arithmetic.Specifications;
 
-[Mind]
-public partial class AlgebraMind
+[Curriculum]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+public class ArithmeticCurriculum
 {
-  [Make]
-  public partial CognitiveResult<SingleVariableComputation, SingleVariableComputation> ComputePointOnLine(
-    [Range(-100, 100)] float M, [Range(-100, 100)] float B, [Range(-100, 100)] float X);
+  [Phase(1)]
+  [ConvergenceStandard(Fraction = .997, Of=1000)]
+  [Include(typeof(LineCapability))]
+  public class LineTraining;
 }

@@ -20,14 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using JetBrains.Annotations;
 using ThoughtSharp.Scenarios;
 
 namespace SimpleDemo.Arithmetic.Specifications;
 
 [Capability]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class LineCapability(AlgebraMind Mind)
 {
-  static Random R = new();
+  static readonly Random R = new();
 
   [Behavior]
   public void ProperlyFitsDataToLine()
@@ -36,8 +38,10 @@ public class LineCapability(AlgebraMind Mind)
     var B = R.NextSingle() * 200 - 100;
     var X = R.NextSingle() * 200 - 100;
 
-    var Result = Mind.ComputeYEqualsMTimesXPlusB(M, B, X);
+    var Result = Mind.ComputePointOnLine(M, B, X);
 
-    Assert.That(Result).Has(R => R.Payload);
+    Assert.That(Result).Is(
+      new() { Y = M * X + B },
+      C => C.ExpectApproximatelyEqual(R => R.Y, 0.1f));
   }
 }
