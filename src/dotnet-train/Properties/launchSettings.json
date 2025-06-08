@@ -11,6 +11,10 @@
     "dotnet train project": {
       "commandName": "Project",
       "commandLineArgs": "..\\..\\..\\..\\Tests.SampleScenarios\\"
+    },
+    "dotnet train example project": {
+      "commandName": "Project",
+      "commandLineArgs": "..\\..\\..\\..\\..\\examples\\SimpleDemo\\SimpleDemo.Arithmetic.Specifications\\"
     }
   }
 }

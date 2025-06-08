@@ -26,9 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="buildTransitive\ThoughtSharp.Common.props" Pack="true" PackagePath="buildTransitive\">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
+    <None Update="buildTransitive\ThoughtSharp.Common.props" Pack="true" PackagePath="buildTransitive\ThoughtSharp.Common.props" />
   </ItemGroup>
 
 </Project>
