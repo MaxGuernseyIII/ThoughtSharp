@@ -40,7 +40,7 @@ const int TotalTrainingPasses = 1000000;
 const int ReportEvery = 1000;
 
 //DoFizzBuzz();
-DoYEqualsMTimesXPlusBRaw();
+DoChooseShape();
 
 void DoYEqualsMTimesXPlusB()
 {
@@ -905,7 +905,7 @@ class RectangleHandler : ShapeHandler
 {
   public void Handle()
   {
-    Console.WriteLine("It's a square. I'll draw on it.");
+    Console.WriteLine("It's a rectangle. I'll draw on it.");
   }
 }
 
