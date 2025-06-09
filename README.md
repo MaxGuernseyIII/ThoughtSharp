@@ -1,7 +1,8 @@
 # ThoughtSharp
+![ThoughtSharp badge](https://img.shields.io/nuget/dt/ThoughtSharp.svg) 
 
-ThoughtSharp is a library to support the development of hybrid-reasoning algorithms. It currently natively supports
-a TorchSharp backend.
+ThoughtSharp is a library to support the development of hybrid-reasoning algorithms and object-oriented systems.
+It currently natively supports a TorchSharp backend.
 
 ThoughtSharp provides an abstraction layer over neural network reasoning. It supports the following:
  * The `use` operation - let AI decide how to use an object in a particular situation
@@ -9,142 +10,121 @@ ThoughtSharp provides an abstraction layer over neural network reasoning. It sup
  * The `make` operation - let AI generate a data structure for you
  * Marshalling and unmarshalling of `cognitive data` to and from tensors
 
-Below is an example of an interface that a FizzBuzz solution could use in ThoughtSharp.
+## Why ThoughtSharp?
 
-```CSharp
-[Mind]
-partial class FizzBuzzMind
-{
-  [Use]
-  public partial Thought<bool, UseFeedback<FizzBuzzTerminal>> WriteForNumber(
-    FizzBuzzTerminal Surface, byte Number);
-}
+ThoughtSharp allows you to integrate neural networks into ordinary coding relatively seamlessly.
 
-[CognitiveActions]
-public partial interface FizzBuzzTerminal
-{
-  void WriteNumber([Categorical]byte ToWrite);
-  void Fizz();
-  void Buzz();
-}
+As an example, let's say you want to integrate a neural network into a solution for the classic
+[FizzBuzz](https://en.wikipedia.org/wiki/Fizz_buzz) problem.
+
+The reason you would want to use ThoughtSharp in such a case is that it allows you to make the neural network
+look like "just another object", up to and including letting the neural originate calls to other objects.
+
+## Overview of Use
+
+An implementation of ThoughtSharp has four basic kinds of code
+1. Minds - the interface between a neural network and OO logic
+1. Data types - the structured data that is consumed and produced by a mind
+1. Training scenarios - TDD-inspired declarations about how minds should function
+1. Hybrid reasoning - Your code that uses or is used by a mind
+
+Currently, there are code generators and/or interpreters that support a declarative approach to the first three.
+
+## Examples
+
+There are multiple detailed examples in the `/examples` subdirectory of this repo:
+
+* [/examples/SimpleDemo](https://github.com/MaxGuernseyIII/ThoughtSharp/tree/master/examples/SimpleDemo)
+
+  Use the `make` verb to calculate `y=mx+B`.
+* [/examples/FizzBuzz](https://github.com/MaxGuernseyIII/ThoughtSharp/tree/master/examples/FizzBuzz)
+
+  A hybrid-reasoning solution to the FizzBuzz problem solved with the `use` verb.
+* [/examples/ShapeSelector](https://github.com/MaxGuernseyIII/ThoughtSharp/tree/master/examples/ShapeSelector)
+
+  Pick one out of an arbitrarily-large selection of objects with the `choose` verb.
+
+## Getting Started
+
+Before you start working with ThoughtSharp, you'll need the `dotnet-train` package. This, obviously, only
+needs to be done one time per machine whenever you want to install or upgrade.
+```ps1
+dotnet tool install -g dotnet-train
 ```
 
-Then, to use that, you can create a hybrid reasoning class:
+Once you've done that, you will need to set up two projects:
+1. The hybrd-reasoning project
+   - Must have a package reference to `ThoughtSharp`
+1. The training project
+   - Must have a package reference to `ThoughtSharp.Shaping`
+   - Must have an adapter for a neural network (currently `ThoughtSharp.Adapters.TorchSharp`)
+   - Must have a reference to the runtimes for TorchSharp (*e.g.*, `TorchSharp-cpu`)
 
-```CSharp
-class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
-{
-  public string DoFizzBuzz(byte Start, byte End)
-  {
-    var Terminal = new StringBuilderFizzBuzzTerminal();
+It's always easier to say it in code...
 
-    foreach (var I in Enumerable.Range(Start, End - Start + 1))
-      WriteForOneNumber(Terminal, (byte) I);
+```ps1
+# create a new sample solution
+dotnet new sln
 
-    return Terminal.Content.ToString();
-  }
+# make the hybrid-reasoning project
+mkdir MyCoolHybridReasoning
+pushd MyCoolHybridReasoning
+dotnet new classlib
+dotnet add package ThoughtSharp
+popd
 
-  public Thought<AccumulatedUseFeedback<FizzBuzzTerminal>> WriteForOneNumber(
-    FizzBuzzTerminal Terminal, byte Input)
-  {
-    return Mind.Use(M => M.WriteForNumber(Terminal, new() {Value = Input}));
-  }
-}
+# make the training project
+mkdir MyCoolHybridReasoning.Scenarios
+pushd MyCoolHybridReasoning.Scenarios
+dotnet new classlib
+dotnet add reference ../MyCoolHybridReasoning
+dotnet add package ThoughtSharp.Shaping
+dotnet add package ThoughtSharp.Adapters.TorchSharp
+dotnet add package TorchSharp-cpu
+popd
+
+# add the projects to the solution
+dotnet sln add MyCoolHybridReasoning
+dotnet sln add MyCoolHybridReasoning.Scenarios
 ```
 
-If you decide that you want more control, you can do things like change the codec used to pass in the parameter.
-For instance, the following code makes sure the each bit of the byte is encoded into a one-hot array **and** the
-scalar value is normalized to [0..1].
+You're now ready to start defining behaviors and implementing your hybrid-reasoning code.
 
-```CSharp
-[CognitiveData]
-partial class FizzBuzzInput
-{
-  public byte Value { get; set; }
+When you're ready to train a model, you can accomplish this with the `dotnet train` command.
 
-  public static CognitiveDataCodec<byte> ValueCodec { get; } = 
-    new CompositeCodec<byte>(
-      new BitwiseOneHotNumberCodec<byte>(),
-      new NormalizeNumberCodec<byte,float>(
-        byte.MinValue, byte.MaxValue, new RoundingCodec<float>(new CopyFloatCodec())));
-}
-
-[Mind]
-partial class FizzBuzzMind
-{
-  [Use]
-  public partial Thought<bool, UseFeedback<FizzBuzzTerminal>> WriteForNumber(
-    FizzBuzzTerminal Surface, FizzBuzzInput InputData);
-}
+```ps1
+dotnet train MyCoolHybridReasoning.Scenarios
 ```
 
-Building the network is also something that has been abstracted to the point of being a little easier:
+...or...
 
-```CSharp
-var BrainBuilder = TorchBrainBuilder.ForTraining<FizzBuzzMind>()
-  .UsingSequence(Outer =>
-    Outer
-      .AddGRU(128)
-      .AddParallel(P => P
-        .AddLogicPath(16, 4, 8)
-        .AddPath(S => S))
-  );
-
-var Mind = new FizzBuzzMind(BrainBuilder.Build());
+```ps1
+pushd MyCoolHybridReasoning.Scenarios
+dotnet train
+popd
 ```
 
-Once you have an instance of the appropriate `Mind`, and you've wrapped it in whatever hybrid logic class(es)
-you need, you can invoke it to get both the product (which I suppose ML experts call the "Prediction") and an
-object that can be used to train the network.
+## Current State
 
-```CSharp
-var T = HybridReasoning.WriteForOneNumber(Terminal, (byte) Input);
-```
+This framework is in development. The main parts of its interface are pretty stable,
+but there are pieces of functionality I haven't added, yet.
 
-In the above example, `T` is an instance of type `Thought<List<UseFeedback<FizzBuzzTerminal>>>`. That is "a
-thought with a feedback object that is a list of feedback objects for individual `use`s of the `FizzBuzzTerminal`
-action surface".
+## NuGet Packages
 
-Each of those feedback objects for the `use` operation represents one decision the AI made about
-how to use the `FizzBuzzTerminal` it was given. Those feedback objects can be used to train the underlying neural
-network. For instance, for the number `15`, you would tell the network this:
+There are several NuGet packages. This is a summary of the ones most people use:
 
-```
-// Tell it what calls should have been made, and in what order
-T.Feedback.UseShouldHaveBeen(
-  M => M.Fizz(),
-  M => M.Buzz());
-```
+| Package | Purpose |
+|:--|:--|
+| `ThoughtSharp` | A "rollup" dependency for hybrid-reasoning code. |
+| `ThoughtSharp.Shaping` | A "rollup" dependency for test/training code. |
+| `ThoughtSharp.Adapters.TorchSharp` | Adapts [TorchSharp](https://github.com/dotnet/TorchSharp) for use as the backing neural network technology |
+| `dotnet-train` | Supplies the `dotnet train` command used to train neural networks |
 
-In other words, the first call to the `use` operation should have called `Fizz()` and requested another call. The
-second call to the `use` operation should have called `Buzz()` and indicated that no more calls wee required.
-
-There are similar semantically-structured feedback options for `choose` operations and `make` operations.
-
-```CSharp
-// feedback on the selection from a set of options
-T.Feedback.SelectionShouldHaveBeen(Expected);
-
-// feedback on the make operation
-T.Feedback.ResultShouldHaveBeen(new() {Area = Expected});
-```
-
-# Current State
-
-This framework is in development. I haven't even published it on NuGet, yet. The interface might change radically
-between now and when I do.
-
-The following major changes are **definitely** going to happen:
- * A major overhaul of the thought/reasoning/feedback structure, which is currently not as connected and automatic
-   as I'd like.
- * A restructuring of how continous lines of reasoning (inferences based on other inferences) are managed.
- * Creation of of the training apparatus, and probably major revision thereof at least once.
-
-# Licensing
+## Licensing
 
 ThoughtSharp is offered under the [MIT License](LICENSE.txt).
 
-# Where it Came From
+## Where it Came From
 
 ThoughtSharp was born from, literally, a dream. As I was drifting off to sleep, one night,
 I thought "Wouldn't it be great if there was an AI-first programming language".

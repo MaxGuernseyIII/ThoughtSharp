@@ -20,27 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
+using System.Text;
 
 namespace FizzBuzz.Cognition;
 
-public class FizzBuzzHybridReasoning(FizzBuzzMind Mind)
+class ProductionFizzBuzzTerminal : FizzBuzzTerminal
 {
-  public string DoFullFizzBuzz()
+  readonly StringBuilder CurrentContentBuilder = new();
+
+  public string Result => CurrentContentBuilder.ToString();
+
+  public void WriteNumber(byte ToWrite)
   {
-    var Terminal = new ProductionFizzBuzzTerminal();
-
-    for (byte I = 1; I <= 100; ++I)
-    {
-      CalculateStepValue(I, Terminal);
-      Terminal.Flush();
-    }
-
-    return Terminal.Result.Trim();
+    CurrentContentBuilder.Append(ToWrite);
   }
 
-  public AccumulatedUseFeedback<FizzBuzzTerminal> CalculateStepValue(byte Input, FizzBuzzTerminal Terminal)
+  public void Fizz()
   {
-    return Mind.Use(M => M.WriteForNumber(Terminal, new() { Value = Input }));
+    CurrentContentBuilder.Append("fizz");
+  }
+
+  public void Buzz()
+  {
+    CurrentContentBuilder.Append("buzz");
+  }
+
+  public void Flush()
+  {
+    CurrentContentBuilder.Append(" ");
   }
 }
