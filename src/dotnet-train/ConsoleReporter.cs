@@ -130,15 +130,20 @@ class ConsoleReporter : Reporter
   }
 
   readonly ScenarioNameVisitor GetScenarioName = new();
+  int LastLineCount = 0;
 
   void PrintScheme(TrainingDataScheme SchemeToPrint)
   {
+    var LineCount = 0;
     if (SchemeToPrint.TrackedNodes.Any())
     {
       var LabelWidth = SchemeToPrint.TrackedNodes.Select(N => N.Query(GetScenarioName).Length + 3).Max();
-      var BarWidth = Math.Min(Console.WindowWidth - (10 + LabelWidth), 60);
+      var EmptyLabel = new string(' ', LabelWidth);
+      var RemainingWidth = Console.WindowWidth - (10 + LabelWidth);
+      var BarWidth = Math.Min(RemainingWidth, 60);
 
       Writer.WriteLine($"Phase: {SchemeToPrint.Node.Name}");
+      LineCount++;
       foreach (var Node in SchemeToPrint.TrackedNodes)
       {
         var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
@@ -160,6 +165,7 @@ class ConsoleReporter : Reporter
         Console.ForegroundColor = ConsoleColor.White;
 
         Writer.WriteLine($"] ({Convergence:P})");
+        LineCount++;
         if (!IsConvergent && MostRecentFailures.TryGetValue(Node, out var RecentResult))
         {
           var Content = "";
@@ -171,14 +177,22 @@ class ConsoleReporter : Reporter
               StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(Line => Line.Length < Console.WindowWidth ? Line : Line[..(Console.WindowWidth - 4)] + "...")
             .Take(3);
-          Lines = Lines.Concat(Enumerable.Repeat("", 3 - Lines.Count()));
 
           foreach (var Line in Lines)
           {
             ClearLine();
-            Writer.WriteLine(Line);
+            Writer.WriteLine($"{EmptyLabel}{Line[..Math.Min(RemainingWidth, Line.Length)]}");
+            LineCount++;
           }
         }
+
+        foreach (var _ in Enumerable.Range(0, Math.Max(0, LastLineCount - LineCount)))
+        {
+          ClearLine();
+          Writer.WriteLine();
+        }
+
+        LastLineCount = LineCount;
       }
     }
 
