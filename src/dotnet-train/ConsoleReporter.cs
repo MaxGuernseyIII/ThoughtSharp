@@ -160,7 +160,7 @@ class ConsoleReporter : Reporter
         Console.ForegroundColor = ConsoleColor.White;
 
         Writer.WriteLine($"] ({Convergence:P})");
-        if (MostRecentFailures.TryGetValue(Node, out var RecentResult))
+        if (!IsConvergent && MostRecentFailures.TryGetValue(Node, out var RecentResult))
         {
           var Content = "";
           if (RecentResult.Exception is not null)
