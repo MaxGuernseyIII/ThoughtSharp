@@ -215,6 +215,18 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void FindsInheritedBehaviors()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(DirectoryContainingCapabilityWithInheritedBehaviors),
+      nameof(DirectoryContainingCapabilityWithInheritedBehaviors.CapabilityWithInheritedBehavior),
+      nameof(ContainsInheritableBehavior.Behavior1));
+  }
+
+  [TestMethod]
   public void FindsCurriculumPhases()
   {
     WhenParseAssembly();
@@ -287,6 +299,27 @@ public class AssemblyParsing
         ]
       ]);
   }
+
+  // TODO: Decide if including a directory is important.
+  //
+  //[TestMethod]
+  //public void IncludesCapabilitiesInDirectories()
+  //{
+  //  WhenParseAssembly();
+
+  //  ThenIncludedNodesForPhaseIs(
+  //    [
+  //      RootNamespace,
+  //      nameof(UsesInheritedBehaviors),
+  //      nameof(UsesInheritedBehaviors.IncludesInheritorOfBehavior)
+  //    ],
+  //    [
+  //      [
+  //        RootNamespace,
+  //        nameof(DirectoryContainingCapabilityWithInheritedBehaviors)
+  //      ]
+  //    ]);
+  //}
 
   [TestMethod]
   public void GetsPhaseMetadata()

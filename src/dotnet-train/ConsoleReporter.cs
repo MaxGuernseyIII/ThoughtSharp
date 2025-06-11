@@ -27,6 +27,44 @@ namespace dotnet_train;
 
 class ConsoleReporter : Reporter
 {
+  class ScenarioNameVisitor : ScenariosModelNodeVisitor<string>
+  {
+    public string Visit(ScenariosModel Model)
+    {
+      return Model.Name;
+    }
+
+    public string Visit(DirectoryNode Directory)
+    {
+      return Directory.Name;
+    }
+
+    public string Visit(CurriculumNode Curriculum)
+    {
+      return Curriculum.Name;
+    }
+
+    public string Visit(CapabilityNode Capability)
+    {
+      return Capability.Name;
+    }
+
+    public string Visit(MindPlaceNode MindPlace)
+    {
+      return MindPlace.Name;
+    }
+
+    public string Visit(BehaviorNode Behavior)
+    {
+      return $"{Behavior.HostType.Name}.{Behavior.Name}";
+    }
+
+    public string Visit(CurriculumPhaseNode CurriculumPhase)
+    {
+      return CurriculumPhase.Name;
+    }
+  }
+
   readonly CancellationTokenSource Cancellation = new();
   readonly ConcurrentDictionary<ScenariosModelNode, RunResult> MostRecentFailures = [];
   readonly ConcurrentStack<ScenariosModelNode> Path = [];
@@ -91,14 +129,16 @@ class ConsoleReporter : Reporter
     PrintScheme(SchemeToPrint);
   }
 
+  readonly ScenarioNameVisitor GetScenarioName = new();
+
   void PrintScheme(TrainingDataScheme SchemeToPrint)
   {
     if (SchemeToPrint.TrackedNodes.Any())
     {
-      var LabelWidth = SchemeToPrint.TrackedNodes.Select(N => N.Name.Length + 3).Max();
+      var LabelWidth = SchemeToPrint.TrackedNodes.Select(N => N.Query(GetScenarioName).Length + 3).Max();
       var BarWidth = Math.Min(Console.WindowWidth - (10 + LabelWidth), 60);
 
-      Writer.WriteLine($"Phase: {SchemeToPrint.Node?.Name}");
+      Writer.WriteLine($"Phase: {SchemeToPrint.Node.Name}");
       foreach (var Node in SchemeToPrint.TrackedNodes)
       {
         var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
@@ -112,7 +152,7 @@ class ConsoleReporter : Reporter
 
         ClearLine();
 
-        Writer.Write($"{Node.Name.PadRight(LabelWidth)} [");
+        Writer.Write($"{Node.Query(GetScenarioName).PadRight(LabelWidth)} [");
         Console.ForegroundColor = IsConvergent ? ConsoleColor.Green : ConsoleColor.DarkRed;
         Writer.Write(BelowThresholdPortion);
         Console.ForegroundColor = IsConvergent ? ConsoleColor.DarkGreen : ConsoleColor.Red;
@@ -148,8 +188,9 @@ class ConsoleReporter : Reporter
       PrintScheme(SubScheme);
     }
 
+    ClearLine();
     Writer.WriteLine(
-      $"{SchemeToPrint.Attempts.Value} attempts, {SchemeToPrint.TimesSinceSaved.Value} attempts since last save               ");
+      $"{SchemeToPrint.Attempts.Value} attempts, {SchemeToPrint.TimesSinceSaved.Value} attempts since last save");
   }
 
   void ClearLine()
