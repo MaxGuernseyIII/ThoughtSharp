@@ -135,6 +135,13 @@ class ConsoleReporter : Reporter
   void PrintScheme(TrainingDataScheme SchemeToPrint)
   {
     var LineCount = 0;
+
+    void WriteLine(string ToWrite)
+    {
+      Writer.WriteLine(ToWrite);
+      LineCount++;
+    }
+
     if (SchemeToPrint.TrackedNodes.Any())
     {
       var LabelWidth = SchemeToPrint.TrackedNodes.Select(N => N.Query(GetScenarioName).Length + 3).Max();
@@ -142,8 +149,7 @@ class ConsoleReporter : Reporter
       var RemainingWidth = Console.WindowWidth - (10 + LabelWidth);
       var BarWidth = Math.Min(RemainingWidth, 60);
 
-      Writer.WriteLine($"Phase: {SchemeToPrint.Node.Name}");
-      LineCount++;
+      WriteLine($"Phase: {SchemeToPrint.Node.Name}");
       foreach (var Node in SchemeToPrint.TrackedNodes)
       {
         var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
@@ -164,8 +170,7 @@ class ConsoleReporter : Reporter
         Writer.Write(AboveThresholdPortion);
         Console.ForegroundColor = ConsoleColor.White;
 
-        Writer.WriteLine($"] ({Convergence:P})");
-        LineCount++;
+        WriteLine($"] ({Convergence:P})");
         if (!IsConvergent && MostRecentFailures.TryGetValue(Node, out var RecentResult))
         {
           var Content = "";
@@ -181,18 +186,9 @@ class ConsoleReporter : Reporter
           foreach (var Line in Lines)
           {
             ClearLine();
-            Writer.WriteLine($"{EmptyLabel}{Line[..Math.Min(RemainingWidth, Line.Length)]}");
-            LineCount++;
+            WriteLine($"{EmptyLabel}  {Line[..Math.Min(RemainingWidth, Line.Length)]}");
           }
         }
-
-        foreach (var _ in Enumerable.Range(0, Math.Max(0, LastLineCount - LineCount)))
-        {
-          ClearLine();
-          Writer.WriteLine();
-        }
-
-        LastLineCount = LineCount;
       }
     }
 
@@ -203,8 +199,16 @@ class ConsoleReporter : Reporter
     }
 
     ClearLine();
-    Writer.WriteLine(
+    WriteLine(
       $"{SchemeToPrint.Attempts.Value} attempts, {SchemeToPrint.TimesSinceSaved.Value} attempts since last save");
+
+    foreach (var _ in Enumerable.Range(0, Math.Max(0, LastLineCount - LineCount)))
+    {
+      ClearLine();
+      Writer.WriteLine();
+    }
+
+    LastLineCount = LineCount;
   }
 
   void ClearLine()

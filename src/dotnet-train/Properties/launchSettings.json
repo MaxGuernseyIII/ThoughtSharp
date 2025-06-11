@@ -24,6 +24,10 @@
       "commandName": "Project",
       "commandLineArgs": ".",
       "workingDirectory": "E:\\repos\\ThoughtSharp\\examples\\SimpleDemo\\SimpleDemo.Arithmetic.Specifications"
+    },
+    "Axiom": {
+      "commandName": "Project",
+      "workingDirectory": "E:\\repos\\producore\\Axiom\\Axiom.Shaping"
     }
   }
 }
