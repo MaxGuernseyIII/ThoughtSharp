@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using ThoughtSharp.Scenarios.Model;
 
 namespace dotnet_train;
@@ -144,13 +145,14 @@ class ConsoleReporter : Reporter
 
     if (SchemeToPrint.TrackedNodes.Any())
     {
-      var LabelWidth = SchemeToPrint.TrackedNodes.Select(N => N.Query(GetScenarioName).Length + 3).Max();
+      var NodeNames = SchemeToPrint.TrackedNodes.Select(N => (Node: N, Name: N.Query(GetScenarioName))).OrderBy(Pair => Pair.Name).ToImmutableArray();
+      var LabelWidth = NodeNames.Select(Pair => Pair.Name.Length + 3).Max();
       var EmptyLabel = new string(' ', LabelWidth);
       var RemainingWidth = Console.WindowWidth - (10 + LabelWidth);
       var BarWidth = Math.Min(RemainingWidth, 60);
 
       WriteLine($"Phase: {SchemeToPrint.Node.Name}");
-      foreach (var Node in SchemeToPrint.TrackedNodes)
+      foreach (var (Node, Name) in NodeNames)
       {
         var State = SchemeToPrint.GetConvergenceTrackerFor(Node);
         var Convergence = State.MeasureConvergence();
@@ -163,7 +165,7 @@ class ConsoleReporter : Reporter
 
         ClearLine();
 
-        Writer.Write($"{Node.Query(GetScenarioName).PadRight(LabelWidth)} [");
+        Writer.Write($"{Name.PadRight(LabelWidth)} [");
         Console.ForegroundColor = IsConvergent ? ConsoleColor.Green : ConsoleColor.DarkRed;
         Writer.Write(BelowThresholdPortion);
         Console.ForegroundColor = IsConvergent ? ConsoleColor.DarkGreen : ConsoleColor.Red;
