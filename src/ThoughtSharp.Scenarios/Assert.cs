@@ -71,13 +71,13 @@ public static class Assert
     where T : IComparisonOperators<T, T, bool>
   {
     if (Actual < Expected)
-      throw new AssertionFailedException($"Expected >{Expected} but found {Actual}");
+      throw new AssertionFailedException($"Expected >={Expected} but found {Actual}");
   }
 
   public static void ShouldBeLessThanOrEqualTo<T>(this T Actual, T Expected)
     where T : IComparisonOperators<T, T, bool>
   {
     if (Actual > Expected)
-      throw new AssertionFailedException($"Expected <{Expected} but found {Actual}");
+      throw new AssertionFailedException($"Expected <={Expected} but found {Actual}");
   }
 }
