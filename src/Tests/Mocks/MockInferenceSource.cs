@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 
+using System.Collections.Immutable;
 using FluentAssertions;
 using ThoughtSharp.Runtime;
 
@@ -40,20 +41,24 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     };
   }
 
-  public Func<TInput, Inference> MakeInferenceFunc;
+  public Func<ImmutableArray<TInput>, Inference> MakeInferenceFunc;
   public List<MockInference<TInput, TOutput>> MockInferences = [];
 
   public Inference MakeInference(float[][] Parameters)
   {
-    Parameters[0].Length.Should().Be(TInput.Length);
-    var Input = TInput.UnmarshalFrom(Parameters[0]);
+    var Inputs = Parameters.Select(StepInput =>
+    {
+      StepInput.Length.Should().Be(TInput.Length);
+      var Input = TInput.UnmarshalFrom(StepInput);
+      return Input;
+    }).ToImmutableArray();
 
-    var Result = MakeInferenceFunc(Input);
+    var Result = MakeInferenceFunc(Inputs);
 
     return Result;
   }
 
-  public MockInference<TInput, TOutput> SetOutputForOnlyInput(TInput ExpectedInput, TOutput StipulatedOutput)
+  public MockInference<TInput, TOutput> SetOutputForOnlyInput(ImmutableArray<TInput> ExpectedInput, TOutput StipulatedOutput)
   {
     var ResultInference = new MockInference<TInput, TOutput>(StipulatedOutput);
 
@@ -65,17 +70,5 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     };
 
     return ResultInference;
-  }
-
-  public MockInference<TInput, TOutput> SetChainedOutputsForInputs(
-    IReadOnlyList<(TInput ExpectedInput, TOutput StipulatedOutput)> Sequence)
-  {
-    var Source = this;
-    MockInference<TInput, TOutput> Last = null!;
-
-    foreach (var (Input, Output) in Sequence) 
-      Source = Last = Source.SetOutputForOnlyInput(Input, Output);
-
-    return Last;
   }
 }

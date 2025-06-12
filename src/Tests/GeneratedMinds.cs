@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
@@ -43,26 +44,29 @@ public partial class GeneratedMinds
     {
       R1 = Any.Float
     };
-    Brain.SetOutputForOnlyInput(new()
-    {
-      OperationCode = 1,
-      Parameters =
-      {
-        MakeSimpleOutput =
+    Brain.SetOutputForOnlyInput([
+        new()
         {
-          Simple1 = InputToMakeCall
+          OperationCode = 1,
+          Parameters =
+          {
+            MakeSimpleOutput =
+            {
+              Simple1 = InputToMakeCall
+            }
+          }
         }
-      }
-    }, new()
-    {
-      Parameters =
+      ],
+      new()
       {
-        MakeSimpleOutput =
+        Parameters =
         {
-          Value = ExpectedOutput
+          MakeSimpleOutput =
+          {
+            Value = ExpectedOutput
+          }
         }
-      }
-    });
+      });
 
     var Actual = Mind.MakeSimpleOutput(InputToMakeCall).Payload;
 
@@ -325,8 +329,10 @@ public partial class GeneratedMinds
       new List<(CognitiveOption<MockSelectable, MockDescriptor> Left, CognitiveOption<MockSelectable, MockDescriptor>
         Right, MockInference<StatelessMind.Input, StatelessMind.Output> Inference)>();
 
-    Brain.MakeInferenceFunc = Input =>
+    Brain.MakeInferenceFunc = Inputs =>
     {
+      Inputs.Length.Should().Be(1);
+      var Input = Inputs.Single();
       var Cat = Input.Parameters.ChooseItems.Category;
       var Output = new StatelessMind.Output
       {
@@ -387,8 +393,10 @@ public partial class GeneratedMinds
 
     Result.Should().BeSameAs(Selected.Payload);
 
-    Inference MakeInferenceFunction(StatelessMind.Input Input)
+    Inference MakeInferenceFunction(ImmutableArray<StatelessMind.Input> Inputs)
     {
+      Inputs.Length.Should().Be(1);
+      var Input = Inputs.Single();
       Input.OperationCode.Should().Be(4);
       Input.Parameters.ChooseItems.ArgumentA.Should().Be(ArgumentA);
       Input.Parameters.ChooseItems.Argument2.Should().Be(Argument2);
@@ -443,7 +451,7 @@ public partial class GeneratedMinds
         }
       }
     };
-    Brain.SetOutputForOnlyInput(ExpectedInput, StipulatedOutput);
+    Brain.SetOutputForOnlyInput([ExpectedInput], StipulatedOutput);
     var Thought = new StatelessMind(Brain).SynchronousUseSomeInterface(Surface,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument1,
       ExpectedInput.Parameters.SynchronousUseSomeInterface.Argument2);
@@ -488,7 +496,7 @@ public partial class GeneratedMinds
         }
       }
     };
-    Brain.SetOutputForOnlyInput(ExpectedInput, StipulatedOutput);
+    Brain.SetOutputForOnlyInput([ExpectedInput], StipulatedOutput);
     var Thought = await new StatelessMind(Brain).AsynchronousUseSomeInterface(Surface,
       ExpectedInput.Parameters.AsynchronousUseSomeInterface.Argument1,
       ExpectedInput.Parameters.AsynchronousUseSomeInterface.Argument2);
@@ -582,10 +590,11 @@ public partial class GeneratedMinds
       int Argument2);
 
     [Use]
-    public partial Task<CognitiveResult<bool, AsyncUseFeedbackMethod<AsynchronousActionSurface>>> AsynchronousUseSomeInterface(
-      AsynchronousActionSurface Surface,
-      int Argument1,
-      int Argument2);
+    public partial Task<CognitiveResult<bool, AsyncUseFeedbackMethod<AsynchronousActionSurface>>>
+      AsynchronousUseSomeInterface(
+        AsynchronousActionSurface Surface,
+        int Argument1,
+        int Argument2);
 
     [Choose]
     public partial CognitiveResult<MockSelectable, MockSelectable> ChooseItems(MockCategory Category,
