@@ -305,7 +305,7 @@ static class MindRenderer
     W.WriteLine("var InputBuffer = new float[Input.Length];");
     W.WriteLine("InputObject.MarshalTo(InputBuffer);");
     W.WriteLine();
-    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(InputBuffer);");
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([InputBuffer]);");
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
   }

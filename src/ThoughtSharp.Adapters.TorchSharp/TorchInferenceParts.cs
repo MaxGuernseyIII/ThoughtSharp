@@ -28,24 +28,4 @@ public record TorchInferenceParts
 {
   public required TorchInferenceStateNode State { get; set; }
   public required torch.Tensor Payload { get; set; }
-
-  public TorchInferenceParts UnSqueeze()
-  {
-    return new()
-    {
-      Payload = Payload.unsqueeze(0),
-      State = State.UnSqueeze()
-    };
-  }
-
-  public TorchInferenceParts Squeeze()
-  {
-    var Result = new TorchInferenceParts()
-    {
-      Payload = Payload.squeeze(0),
-      State = State.Squeeze()
-    };
-
-    return Result;
-  }
 }

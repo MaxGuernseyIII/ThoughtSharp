@@ -46,11 +46,14 @@ public class DoubleTensorToTorchInferencePartsAdapter : torch.nn.Module<TorchInf
   {
     //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.State!.shape)}");
 
-    var Output = Underlying.forward(Input.Payload, Input.State.State.FirstOrDefault() ?? torch.zeros(new long[] { 1, 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
+    var InputTensor = Input.Payload;
+    var InputTensorWithBatchNumber = InputTensor.unsqueeze(1);
+
+    var Output = Underlying.forward(InputTensorWithBatchNumber, Input.State.State.FirstOrDefault() ?? torch.zeros(new long[] { 1, 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
 
     return new()
     {
-      Payload = Output.Payload,
+      Payload = Output.Payload[-1],
       State = new(Output.State)
     };
   }

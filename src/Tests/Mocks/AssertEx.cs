@@ -20,29 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using TorchSharp;
+using JsonDiffPatchDotNet;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
+namespace Tests.Mocks;
 
-public sealed class AdditionalDimensionForSubModule : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
+public static class AssertEx
 {
-  readonly torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Underlying;
-
-  public AdditionalDimensionForSubModule(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Underlying,
-    string Name = "_unnamed") : base(Name)
+  public static void AssertJsonDiff<T>(T Expected, T Actual)
   {
-    this.Underlying = Underlying;
+    var Settings = new JsonSerializerSettings
+    {
+      Formatting = Formatting.Indented,
+      ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
+      {
+        IgnoreSerializableAttribute = true
+      }
+    };
 
-    RegisterComponents();
-  }
+    var ExpectedJ = JToken.FromObject(Expected!, JsonSerializer.Create(Settings));
+    var ActualJ = JToken.FromObject(Actual!, JsonSerializer.Create(Settings));
 
-  public override TorchInferenceParts forward(TorchInferenceParts Input)
-  {
-    var NewInput = Input.UnSqueeze();
-    var Next = Underlying.forward(NewInput);
+    var DiffPatch = new JsonDiffPatch();
+    var Patch = DiffPatch.Diff(ExpectedJ, ActualJ);
 
-    var Result = Next.Squeeze();
-
-    return Result;
+    if (Patch != null)
+    {
+      Console.WriteLine("❌ Objects differ:");
+      Console.WriteLine(Patch.ToString(Formatting.Indented));
+      Assert.Fail("Objects differ. See diff above.");
+    }
   }
 }

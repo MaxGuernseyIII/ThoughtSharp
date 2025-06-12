@@ -29,14 +29,14 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 public class TorchInference(
   TorchBrain Brain,
   TorchInference? Predecessor,
-  float[] OriginalParameters,
+  float[][] OriginalBatches,
   TorchInferenceStateNode StateOutput,
   torch.Tensor ProductOutputTensor) : Inference
 {
   internal TorchInferenceStateNode StateOutput { get; } = StateOutput;
   internal torch.Tensor ProductOutputTensor { get; } = ProductOutputTensor;
 
-  public ReadOnlySpan<float> Result => ProductOutputTensor.squeeze(0).to(torch.CPU).data<float>().ToArray();
+  public ReadOnlySpan<float> Result => ProductOutputTensor[ProductOutputTensor.shape[0] - 1].to(torch.CPU).data<float>().ToArray();
 
   protected TorchBrain Brain { get; } = Brain;
 
@@ -75,11 +75,11 @@ public class TorchInference(
   {
     var StateTensor = Predecessor?.Replay().State ?? Brain.EmptyState;
 
-    return Brain.Forward(OriginalParameters, StateTensor);
+    return Brain.Forward(OriginalBatches, StateTensor);
   }
 
-  public Inference MakeInference(float[] Parameters)
+  public Inference MakeInference(float[][] Batches)
   {
-    return Brain.ExecuteInference(this, StateOutput, Parameters);
+    return Brain.ExecuteInference(this, StateOutput, Batches);
   }
 }
