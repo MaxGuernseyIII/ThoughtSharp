@@ -26,11 +26,11 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 
 public class DoubleTensorToTorchInferencePartsAdapter : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  readonly torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor Payload, torch.Tensor State)> Underlying;
+  readonly torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor DetailedOutput, torch.Tensor FinalState)> Underlying;
   readonly int OutputFeatures;
   readonly torch.Device Device;
 
-  public DoubleTensorToTorchInferencePartsAdapter(torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor Payload, torch.Tensor State)> Underlying,
+  public DoubleTensorToTorchInferencePartsAdapter(torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor DetailedOutput, torch.Tensor FinalState)> Underlying,
     int OutputFeatures,
     torch.Device Device,
     string Name = "_unnamed") : base(Name)
@@ -53,8 +53,8 @@ public class DoubleTensorToTorchInferencePartsAdapter : torch.nn.Module<TorchInf
 
     return new()
     {
-      Payload = Output.Payload[-1],
-      State = new(Output.State)
+      Payload = Output.FinalState[-1],
+      State = new(Output.FinalState)
     };
   }
 }
