@@ -140,4 +140,6 @@ static class Any
 
     return List;
   }
+
+  public static char Char => (char)Any.Int(0, char.MaxValue);
 }

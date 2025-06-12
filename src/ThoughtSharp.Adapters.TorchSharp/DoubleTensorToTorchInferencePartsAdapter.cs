@@ -44,8 +44,6 @@ public class DoubleTensorToTorchInferencePartsAdapter : torch.nn.Module<TorchInf
 
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.State!.shape)}");
-
     var InputTensor = Input.Payload;
     var InputTensorWithBatchNumber = InputTensor.unsqueeze(1);
 

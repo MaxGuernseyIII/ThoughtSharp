@@ -62,6 +62,7 @@ class MindModelBuilder
     MakeOperations = [];
     UseOperations = [];
     ChooseOperations = [];
+    TellOperations = [];
   }
 
   public TypeAddress TypeName { get; }
@@ -73,6 +74,7 @@ class MindModelBuilder
   List<MindMakeOperationModel> MakeOperations { get; }
   List<MindUseOperationModel> UseOperations { get; }
   List<MindChooseOperationModel> ChooseOperations { get; }
+  List<MindTellOperationModel> TellOperations { get; }
 
   public static MindModelBuilder Create(TypeAddress TypeName)
   {
@@ -87,7 +89,7 @@ class MindModelBuilder
     AssociatedDataTypes.Add(OutputBuilder.Build());
     AssociatedDataTypes.Add(OutputParametersBuilder.Build());
 
-    return new(TypeName, [..MakeOperations], [.. UseOperations], [..ChooseOperations]);
+    return new(TypeName, [..MakeOperations], [.. UseOperations], [..ChooseOperations], [.. TellOperations]);
   }
 
   void UpdateOperationCode()
@@ -190,6 +192,29 @@ class MindModelBuilder
     {
       return Parameter.Type.HasAttribute(CognitiveAttributeNames.CategoryAttributeName);
     }
+  }
+
+  public void AddTellMethodFor(IMethodSymbol TellMethod)
+  {
+    var ThisInputBuilder = new CognitiveDataClassBuilder(GetInputParametersClassName(TellMethod))
+    {
+      IsPublic = true,
+      ExplicitConstructor = true
+    };
+
+    var Parameter = TellMethod.Parameters[0];
+    var NamedParameterType = (INamedTypeSymbol) Parameter.Type;
+    var AllPossibleInterfaces = NamedParameterType.AllInterfaces.Concat([NamedParameterType]);
+    var Enumerable = AllPossibleInterfaces.First(E => E.IsIEnumerableOf(T => T.HasAttribute(CognitiveAttributeNames.DataAttributeName)));
+    var ItemType = Enumerable.TypeArguments[0].GetFullPath();
+
+    ThisInputBuilder.AddCompilerDefinedSubDataParameter(Parameter.Name, ItemType);
+
+    InputParametersBuilder.AddCompilerDefinedSubDataParameter(TellMethod.Name, ThisInputBuilder);
+
+    AssociatedDataTypes.Add(ThisInputBuilder.Build());
+
+    TellOperations.Add(new(TellMethod.Name, Parameter.Name, Parameter.Type.GetFullPath(), ItemType));
   }
 
   TypeAddress GetInputParametersClassName(ISymbol S)

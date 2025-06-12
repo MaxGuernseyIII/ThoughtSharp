@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
@@ -79,7 +78,8 @@ public static class TypeSymbolExtensions
     return Type.SpecialType == SpecialType.System_Boolean;
   }
 
-  public static bool IsGenericOf(this ITypeSymbol Type, string Name, params Func<ITypeSymbol, bool>[] ArgumentConstraints)
+  public static bool IsGenericOf(this ITypeSymbol Type, string Name,
+    params Func<ITypeSymbol, bool>[] ArgumentConstraints)
   {
     if (Type is not INamedTypeSymbol Named)
       return false;
@@ -96,6 +96,38 @@ public static class TypeSymbolExtensions
         return false;
 
     return true;
+  }
+
+  public static bool ImplementsIEnumerableOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> ArgumentConstraint)
+  {
+    if (Type is not INamedTypeSymbol NamedType)
+      return false;
+
+    return Type.AllInterfaces.Concat([NamedType]).Any(T => T.IsIEnumerableOf(ArgumentConstraint));
+  }
+
+  public static bool IsIEnumerableOf(this INamedTypeSymbol T, Func<ITypeSymbol, bool> ArgumentConstraint)
+  {
+    return T.HasTypeNameWithoutGenericArguments("System.Collections.Generic.IEnumerable") &&
+           T.TypeArguments.Length == 1 && ArgumentConstraint(T.TypeArguments[0]);
+  }
+
+  public static bool ImplementsCognitiveDataOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> DataTypeConstraint)
+  {
+    if (Type is not INamedTypeSymbol NamedType)
+      return false;
+    var CandidateInterfaces = Type.AllInterfaces.Concat([NamedType]);
+
+    return CandidateInterfaces.Any(T => T.IsCognitiveDataOf(DataTypeConstraint));
+  }
+
+  public static bool IsCognitiveDataOf(this ITypeSymbol T, Func<ITypeSymbol, bool> DataTypeConstraint)
+  {
+    if (T is not INamedTypeSymbol Type)
+      return false;
+
+    return T.HasTypeNameWithoutGenericArguments("ThoughtSharp.CognitiveData") && Type.TypeArguments.Length == 1 &&
+           DataTypeConstraint(Type.TypeArguments[0]);
   }
 
   public static bool HasTypeNameWithoutGenericArguments(this ITypeSymbol Type, string Expected)
@@ -118,9 +150,11 @@ public static class TypeSymbolExtensions
 
     var ActionSurfaceType = ActionSurfaceTypes.Single();
 
-    return Type.IsGenericOf("ThoughtSharp.Runtime.CognitiveResult", IsBooleanType, T => 
-      T.IsGenericOf("ThoughtSharp.Runtime.UseFeedbackMethod", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())) ||
-      T.IsGenericOf("ThoughtSharp.Runtime.AsyncUseFeedbackMethod", Inner => IsType(Inner, ActionSurfaceType.GetFullPath())));
+    return Type.IsGenericOf("ThoughtSharp.Runtime.CognitiveResult", IsBooleanType, T =>
+      T.IsGenericOf("ThoughtSharp.Runtime.UseFeedbackMethod",
+        Inner => IsType(Inner, ActionSurfaceType.GetFullPath())) ||
+      T.IsGenericOf("ThoughtSharp.Runtime.AsyncUseFeedbackMethod",
+        Inner => IsType(Inner, ActionSurfaceType.GetFullPath())));
   }
 
   public static bool IsTaskOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> PayloadRequirement)

@@ -65,7 +65,7 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     MakeInferenceFunc = ActualInput =>
     {
       AssertEx.AssertJsonDiff(ExpectedInput, ActualInput);
-      
+
       return ResultInference;
     };
 

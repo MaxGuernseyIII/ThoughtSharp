@@ -48,9 +48,31 @@ static class MindModelFactory
         MindModelBuilder.AddUseMethodFor(UseMethod);
       else if (TryGetChooseMethod(Member, out var ChooseMethod))
         MindModelBuilder.AddChooseMethodFor(ChooseMethod);
+      else if (TryGetTellMethod(Member, out var TellMethod))
+        MindModelBuilder.AddTellMethodFor(TellMethod);
 
     var Result = MindModelBuilder.Build();
     return (Result, MindModelBuilder.AssociatedDataTypes);
+  }
+
+  static bool TryGetTellMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Result)
+  {
+    if (S is IMethodSymbol
+        {
+          IsPartialDefinition: true, IsStatic: false, DeclaredAccessibility: Accessibility.Public,
+          ReturnType.SpecialType: SpecialType.System_Void
+        } M &&
+        M.HasAttribute(CognitiveAttributeNames.TellAttributeName) &&
+        M.Parameters.Length == 1 &&
+        M.Parameters[0].Type.ImplementsIEnumerableOf(T => T.HasAttribute(CognitiveAttributeNames.DataAttributeName))
+       )
+    {
+      Result = M;
+      return true;
+    }
+
+    Result = null;
+    return false;
   }
 
   static bool TryGetUseMethod(ISymbol S, [NotNullWhen(true)] out IMethodSymbol? Result)

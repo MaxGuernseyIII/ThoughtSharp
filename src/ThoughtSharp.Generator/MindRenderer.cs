@@ -84,6 +84,34 @@ static class MindRenderer
 
     foreach (var ChooseOperation in M.ChooseOperations)
       RenderChooseMethod(W, M, ChooseOperation, OperationCode++);
+
+    foreach (var TellOperation in M.TellOperations) 
+      RenderTellMethod(W, M, TellOperation, OperationCode++);
+  }
+
+  static void RenderTellMethod(IndentedTextWriter W, MindModel M, MindTellOperationModel TellOperation, ushort OpCode)
+  {
+    using (W.DeclareWithBlock(
+             $"public partial void {TellOperation.Name}({TellOperation.ParameterTypeName} {TellOperation.ParameterName})"))
+    {
+      W.WriteLine("var InputBuffers = new System.Collections.Generic.List<float[]>();");
+      using (W.DeclareWithBlock($"foreach (var Item in {TellOperation.ParameterName})"))
+      {
+        W.WriteLine("var InputObject = new Input();");
+        W.WriteLine($"InputObject.OperationCode = {OpCode.ToLiteralExpression()};");
+
+        W.WriteLine($"InputObject.Parameters.{TellOperation.Name}.{TellOperation.ParameterName} = Item;");
+
+        W.WriteLine("var InputBuffer = new float[Input.Length];");
+        W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+        W.WriteLine("InputBuffers.Add(InputBuffer);");
+      }
+
+      W.WriteLine();
+      W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(InputBuffers.ToArray());");
+      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+      W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
+    }
   }
 
   //static void RenderDisposeMembers(IndentedTextWriter W)

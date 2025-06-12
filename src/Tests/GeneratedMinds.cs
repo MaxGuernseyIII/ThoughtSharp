@@ -373,6 +373,69 @@ public partial class GeneratedMinds
       Item.Inference.ShouldNotHaveBeenTrained();
   }
 
+  [TestMethod]
+  public void TellMindSequence()
+  {
+    var Brain = new MockBrain<CanBeTold.Input, CanBeTold.Output>();
+    var Mind = new CanBeTold(Brain);
+
+    ImmutableArray<Token> Tokens =
+    [
+      new() {C1 = Any.Char, C2 = Any.Char},
+      new() {C1 = Any.Char, C2 = Any.Char}
+    ];
+
+    Brain.SetOutputForOnlyInput(
+      [
+        new()
+        {
+          OperationCode = 0,
+          Parameters =
+          {
+            Tell =
+            {
+              Tokens = Tokens[0]
+            }
+          }
+        },
+        new()
+        {
+          OperationCode = 0,
+          Parameters =
+          {
+            Tell =
+            {
+              Tokens = Tokens[1]
+            }
+          }
+        }
+      ],
+      new());
+
+    Mind.Tell(Tokens);
+  }
+
+  [TestMethod]
+  public void TellOnlyMakesOneInferenceNoMatterHowManyItemsAreGiven()
+  {
+    var Brain = new MockBrain<CanBeTold.Input, CanBeTold.Output>();
+    var Mind = new CanBeTold(Brain);
+
+    ImmutableArray<Token> Tokens = [..Any.ListOf(() => new Token() { C1 = Any.Char, C2 = Any.Char }, 1, 5)];
+
+    var CallCount = 0;
+
+    Brain.MakeInferenceFunc = delegate
+    {
+      CallCount++;
+      return new MockInference<CanBeTold.Input, CanBeTold.Output>(new());
+    };
+
+    Mind.Tell(Tokens);
+
+    CallCount.Should().Be(1);
+  }
+
   static CognitiveOption<MockSelectable, MockDescriptor> AnyMockOption()
   {
     return new(new(), new() {P1 = Any.Float, P2 = Any.Float});
@@ -595,6 +658,20 @@ public partial class GeneratedMinds
     public partial CognitiveResult<MockSelectable, MockSelectable> ChooseItems(MockCategory Category,
       float ArgumentA, float Argument2,
       float AThirdArg);
+  }
+
+  [Mind]
+  public partial class CanBeTold
+  {
+    [Tell]
+    public partial void Tell(IEnumerable<Token> Tokens);
+  }
+
+  [CognitiveData]
+  public partial class Token
+  {
+    public char C1;
+    public char C2;
   }
 
   class MockSelectable;
