@@ -8,6 +8,7 @@ ThoughtSharp provides an abstraction layer over neural network reasoning. It sup
  * The `use` operation - let AI decide how to use an object in a particular situation
  * The `choose` operation - let AI choose one out of an arbitrarily large number of options for you
  * The `make` operation - let AI generate a data structure for you
+ * The `tell` operation - feed arbitrarily large amounts of data into the neural network in a single batch operation
  * Marshalling and unmarshalling of `cognitive data` to and from tensors
 
 ## Why ThoughtSharp?
