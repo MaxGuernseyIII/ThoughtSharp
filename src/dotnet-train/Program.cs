@@ -25,4 +25,14 @@ using dotnet_train;
 
 var RootCommand = Commands.GetCommand();
 
+var StartTime = DateTime.Now;
+
 Environment.ExitCode = await RootCommand.InvokeAsync(["train", ..args]);
+
+var EndTime = DateTime.Now;
+
+var Elapsed = EndTime - StartTime;
+
+Console.WriteLine();
+Console.WriteLine($"Training took {Elapsed}");
+Console.WriteLine();
