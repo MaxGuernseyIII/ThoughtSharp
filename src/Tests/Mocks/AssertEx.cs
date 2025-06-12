@@ -20,12 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using TorchSharp;
+using JsonDiffPatchDotNet;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
+namespace Tests.Mocks;
 
-public record TorchInferenceParts
+public static class AssertEx
 {
-  public required TorchInferenceStateNode State { get; set; }
-  public required torch.Tensor Payload { get; set; }
+  public static void AssertJsonDiff<T>(T Expected, T Actual)
+  {
+    var Settings = new JsonSerializerSettings
+    {
+      Formatting = Formatting.Indented,
+      ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
+      {
+        IgnoreSerializableAttribute = true
+      }
+    };
+
+    var ExpectedJ = JToken.FromObject(Expected!, JsonSerializer.Create(Settings));
+    var ActualJ = JToken.FromObject(Actual!, JsonSerializer.Create(Settings));
+
+    var DiffPatch = new JsonDiffPatch();
+    var Patch = DiffPatch.Diff(ExpectedJ, ActualJ);
+
+    if (Patch != null)
+    {
+      Console.WriteLine("❌ Objects differ:");
+      Console.WriteLine(Patch.ToString(Formatting.Indented));
+      Assert.Fail("Objects differ. See diff above.");
+    }
+  }
 }

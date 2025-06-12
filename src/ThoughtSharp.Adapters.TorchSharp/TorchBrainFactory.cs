@@ -70,7 +70,7 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
   {
     var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures);
     var Adapter = new DoubleTensorToTorchInferencePartsAdapter(Underlying, OutputFeatures, Device);  
-    return new AdditionalDimensionForSubModule(Adapter);
+    return Adapter;
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateReLU()

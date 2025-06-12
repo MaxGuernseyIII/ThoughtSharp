@@ -26,10 +26,12 @@ class MindModel(
   TypeAddress TypeName,
   IReadOnlyList<MindMakeOperationModel> MakeOperations,
   IReadOnlyList<MindUseOperationModel> UseOperations,
-  IReadOnlyList<MindChooseOperationModel> ChooseOperations)
+  IReadOnlyList<MindChooseOperationModel> ChooseOperations,
+  IReadOnlyList<MindTellOperationModel> TellOperations)
 {
   public TypeAddress TypeName { get; } = TypeName;
   public IReadOnlyList<MindMakeOperationModel> MakeOperations { get; } = MakeOperations;
   public IReadOnlyList<MindUseOperationModel> UseOperations { get; } = UseOperations;
   public IReadOnlyList<MindChooseOperationModel> ChooseOperations { get; } = ChooseOperations;
+  public IReadOnlyList<MindTellOperationModel> TellOperations { get; } = TellOperations;
 }

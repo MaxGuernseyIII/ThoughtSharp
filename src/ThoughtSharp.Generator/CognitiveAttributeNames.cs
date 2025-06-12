@@ -35,6 +35,7 @@ static class CognitiveAttributeNames
   public const string MindAttributeName = "MindAttribute";
   public const string UseAttributeName = "UseAttribute";
   public const string ChooseAttributeName = "ChooseAttribute";
+  public const string TellAttributeName = "TellAttribute";
   public const string MakeAttributeName = "MakeAttribute";
   public const string DataCountAttributeName = "CognitiveDataCountAttribute";
   public const string DataLengthAttributeName = "CognitiveDataLengthAttribute";

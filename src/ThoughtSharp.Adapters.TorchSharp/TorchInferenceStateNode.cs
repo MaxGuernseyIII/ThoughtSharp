@@ -29,18 +29,6 @@ public record TorchInferenceStateNode(params IEnumerable<torch.Tensor> State) : 
   public TorchInferenceStateNode? Left { get; init; }
   public TorchInferenceStateNode? Right { get; init; }
 
-  public TorchInferenceStateNode UnSqueeze() => new(State.Select(S => S.unsqueeze(0)))
-  {
-    Left = Left?.UnSqueeze(),
-    Right = Right?.UnSqueeze()
-  };
-
-  public TorchInferenceStateNode Squeeze() => new(State.Select(S => S.squeeze(0)))
-  {
-    Left = Left?.Squeeze(),
-    Right = Right?.Squeeze()
-  };
-
   public void Dispose()
   {
     Left?.Dispose();

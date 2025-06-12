@@ -26,11 +26,11 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 
 public class DoubleTensorToTorchInferencePartsAdapter : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  readonly torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor Payload, torch.Tensor State)> Underlying;
+  readonly torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor DetailedOutput, torch.Tensor FinalState)> Underlying;
   readonly int OutputFeatures;
   readonly torch.Device Device;
 
-  public DoubleTensorToTorchInferencePartsAdapter(torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor Payload, torch.Tensor State)> Underlying,
+  public DoubleTensorToTorchInferencePartsAdapter(torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor DetailedOutput, torch.Tensor FinalState)> Underlying,
     int OutputFeatures,
     torch.Device Device,
     string Name = "_unnamed") : base(Name)
@@ -44,14 +44,15 @@ public class DoubleTensorToTorchInferencePartsAdapter : torch.nn.Module<TorchInf
 
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    //Console.WriteLine($"Input: {string.Join(", ", Input.Payload.shape)}, State: {string.Join(", ", Input.State.State!.shape)}");
+    var InputTensor = Input.Payload;
+    var InputTensorWithBatchNumber = InputTensor.unsqueeze(1);
 
-    var Output = Underlying.forward(Input.Payload, Input.State.State.FirstOrDefault() ?? torch.zeros(new long[] { 1, 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
+    var Output = Underlying.forward(InputTensorWithBatchNumber, Input.State.State.FirstOrDefault() ?? torch.zeros(new long[] { 1, 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
 
     return new()
     {
-      Payload = Output.Payload,
-      State = new(Output.State)
+      Payload = Output.FinalState[-1],
+      State = new(Output.FinalState)
     };
   }
 }

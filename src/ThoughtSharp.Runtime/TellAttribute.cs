@@ -20,12 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using TorchSharp;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
-
-public record TorchInferenceParts
-{
-  public required TorchInferenceStateNode State { get; set; }
-  public required torch.Tensor Payload { get; set; }
-}
+[AttributeUsage(AttributeTargets.Method)]
+public class TellAttribute : Attribute;

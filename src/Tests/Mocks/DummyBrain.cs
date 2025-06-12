@@ -31,7 +31,7 @@ class DummyBrain : Brain
     throw new NotImplementedException();
   }
 
-  public Inference MakeInference(float[] Parameters)
+  public Inference MakeInference(float[][] Parameters)
   {
     throw new NotImplementedException();
   }

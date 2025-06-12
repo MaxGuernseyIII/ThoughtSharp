@@ -21,10 +21,8 @@
 // SOFTWARE.
 
 
+using System.Collections.Immutable;
 using FluentAssertions;
-using JsonDiffPatchDotNet;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
@@ -43,70 +41,34 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     };
   }
 
-  public Func<TInput, Inference> MakeInferenceFunc;
+  public Func<ImmutableArray<TInput>, Inference> MakeInferenceFunc;
   public List<MockInference<TInput, TOutput>> MockInferences = [];
 
-  public Inference MakeInference(float[] Parameters)
+  public Inference MakeInference(float[][] Parameters)
   {
-    Parameters.Length.Should().Be(TInput.Length);
-    var Input = TInput.UnmarshalFrom(Parameters);
+    var Inputs = Parameters.Select(StepInput =>
+    {
+      StepInput.Length.Should().Be(TInput.Length);
+      var Input = TInput.UnmarshalFrom(StepInput);
+      return Input;
+    }).ToImmutableArray();
 
-    var Result = MakeInferenceFunc(Input);
+    var Result = MakeInferenceFunc(Inputs);
 
     return Result;
   }
 
-  public MockInference<TInput, TOutput> SetOutputForOnlyInput(TInput ExpectedInput, TOutput StipulatedOutput)
+  public MockInference<TInput, TOutput> SetOutputForOnlyInput(ImmutableArray<TInput> ExpectedInput, TOutput StipulatedOutput)
   {
     var ResultInference = new MockInference<TInput, TOutput>(StipulatedOutput);
 
     MakeInferenceFunc = ActualInput =>
     {
       AssertEx.AssertJsonDiff(ExpectedInput, ActualInput);
-      
+
       return ResultInference;
     };
 
     return ResultInference;
-  }
-
-  public MockInference<TInput, TOutput> SetChainedOutputsForInputs(
-    IReadOnlyList<(TInput ExpectedInput, TOutput StipulatedOutput)> Sequence)
-  {
-    var Source = this;
-    MockInference<TInput, TOutput> Last = null!;
-
-    foreach (var (Input, Output) in Sequence) 
-      Source = Last = Source.SetOutputForOnlyInput(Input, Output);
-
-    return Last;
-  }
-}
-
-public static class AssertEx
-{
-  public static void AssertJsonDiff<T>(T Expected, T Actual)
-  {
-    var Settings = new JsonSerializerSettings
-    {
-      Formatting = Formatting.Indented,
-      ContractResolver = new Newtonsoft.Json.Serialization.DefaultContractResolver
-      {
-        IgnoreSerializableAttribute = true
-      }
-    };
-
-    var ExpectedJ = JToken.FromObject(Expected!, JsonSerializer.Create(Settings));
-    var ActualJ = JToken.FromObject(Actual!, JsonSerializer.Create(Settings));
-
-    var DiffPatch = new JsonDiffPatch();
-    var Patch = DiffPatch.Diff(ExpectedJ, ActualJ);
-
-    if (Patch != null)
-    {
-      Console.WriteLine("❌ Objects differ:");
-      Console.WriteLine(Patch.ToString(Formatting.Indented));
-      Assert.Fail("Objects differ. See diff above.");
-    }
   }
 }

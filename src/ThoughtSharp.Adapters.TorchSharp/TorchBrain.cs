@@ -52,33 +52,39 @@ public class TorchBrain(
     Optimizer.Dispose();
   }
 
-  internal Tensor ConvertFloatsToTensor(float[] Parameters)
+  internal Tensor ConvertFloatsToTensor(float[][] Batches)
   {
-    return tensor(Parameters, ScalarType.Float32).unsqueeze(0).to(Device);
+    var TensorShaped = new float[Batches.Length, Batches.Max(B => B.Length)];
+
+    foreach (var BatchNumber in Enumerable.Range(0, TensorShaped.GetLength(0)))
+    foreach (var FeatureNumber in Enumerable.Range(0, Batches[BatchNumber].Length))
+      TensorShaped[BatchNumber, FeatureNumber] = Batches[BatchNumber][FeatureNumber];
+
+    return tensor(TensorShaped, ScalarType.Float32).to(Device);
   }
 
-  internal TorchInferenceParts Forward(float[] Parameters, TorchInferenceStateNode State)
+  internal TorchInferenceParts Forward(float[][] Batches, TorchInferenceStateNode State)
   {
     return Model.forward(new()
     {
-      Payload = ConvertFloatsToTensor(Parameters),
+      Payload = ConvertFloatsToTensor(Batches),
       State = State
     });
   }
 
-  public virtual Inference MakeInference(float[] Parameters)
+  public virtual Inference MakeInference(float[][] Batches)
   {
-    return ExecuteInference(null, EmptyState, Parameters);
+    return ExecuteInference(null, EmptyState, Batches);
   }
 
   internal Inference ExecuteInference(
     TorchInference? Predecessor,
     TorchInferenceStateNode StateInputTensor,
-    float[] Parameters)
+    float[][] Batches)
   {
-    var Tensors = Forward(Parameters, StateInputTensor);
+    var Tensors = Forward(Batches, StateInputTensor);
 
-    return new TorchInference(this, Predecessor, Parameters, Tensors.State, Tensors.Payload);
+    return new TorchInference(this, Predecessor, Batches, Tensors.State, Tensors.Payload);
   }
 
   public void ApplyLoss(Tensor Loss)

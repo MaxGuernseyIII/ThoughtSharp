@@ -55,7 +55,7 @@ void DoYEqualsMTimesXPlusB()
     var X = R.NextSingle() * 200 - 100;
     var B = R.NextSingle() * 200 - 100;
 
-    var Inference = Brain.MakeInference([X, M, B]);
+    var Inference = Brain.MakeInference([[X, M, B]]);
     var Y = Inference.Result[0];
     var ExpectedY = M * X + B;
 
@@ -92,16 +92,16 @@ void DoYEqualsMTimesXPlusBRaw()
     var X = R.NextSingle() * Scale + Min;
     var B = R.NextSingle() * Scale + Min;
 
-    var InputTensor = tensor([M, X, B]).unsqueeze(0);
+    var InputTensor = tensor([M, X, B]);
     var OutputTensor = Model.forward(InputTensor);
-    var OutputArray = OutputTensor.detach().squeeze(0).data<float>().ToArray();
+    var OutputArray = OutputTensor.detach().data<float>().ToArray();
    
     var ExpectedY = M * X + B;
     var Y = OutputArray[0];
 
     var Success = MathF.Abs(Y - ExpectedY) < Scale * 0.01f;
     Convergence.RecordResult(Success);
-    var Target = tensor([ExpectedY]).unsqueeze(0);
+    var Target = tensor([ExpectedY]);
 
     var Loss = nn.functional.mse_loss(OutputTensor, Target);
 

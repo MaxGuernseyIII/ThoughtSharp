@@ -20,12 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using TorchSharp;
+using JetBrains.Annotations;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
+namespace ThoughtSharp.Runtime.Codecs;
 
-public record TorchInferenceParts
+[PublicAPI]
+public class PackTokenCodec(string ValidCharacters, int MaximumLength) : CognitiveDataCodec<string>
 {
-  public required TorchInferenceStateNode State { get; set; }
-  public required torch.Tensor Payload { get; set; }
+  public void EncodeTo(string ObjectToEncode, Span<float> Target)
+  {
+    foreach (var I in Enumerable.Range(0, Math.Min(ObjectToEncode.Length, MaximumLength)))
+    {
+      var Base = LogitsPerCharacter * I;
+      var Index = ValidCharacters.IndexOf(ObjectToEncode[I]) + 1;
+      foreach (var Offset in Enumerable.Range(0, LogitsPerCharacter))
+        Target[Base + Offset] = ((Index >> Offset) & 1) == 1 ? 1f : -1f;
+    }
+  }
+
+  public void WriteLossRulesFor(string Target, LossRuleWriter Writer)
+  {
+    throw new NotSupportedException("This is an input-only codec");
+  }
+
+  public string DecodeFrom(ReadOnlySpan<float> Source)
+  {
+    throw new NotSupportedException("This is an input-only codec");
+  }
+
+  public int Length => MaximumLength * LogitsPerCharacter;
+
+  int LogitsPerCharacter { get; } = (int)Math.Ceiling(Math.Log2(ValidCharacters.Length + 1));
 }

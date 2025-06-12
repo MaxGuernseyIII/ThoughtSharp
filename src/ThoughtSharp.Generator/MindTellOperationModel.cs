@@ -20,29 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using TorchSharp;
+namespace ThoughtSharp.Generator;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
-
-public sealed class AdditionalDimensionForSubModule : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
+class MindTellOperationModel(
+  string Name,
+  string ParameterName,
+  string ParameterTypeName,
+  string ItemTypeName)
 {
-  readonly torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Underlying;
-
-  public AdditionalDimensionForSubModule(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Underlying,
-    string Name = "_unnamed") : base(Name)
-  {
-    this.Underlying = Underlying;
-
-    RegisterComponents();
-  }
-
-  public override TorchInferenceParts forward(TorchInferenceParts Input)
-  {
-    var NewInput = Input.UnSqueeze();
-    var Next = Underlying.forward(NewInput);
-
-    var Result = Next.Squeeze();
-
-    return Result;
-  }
+  public string Name { get; } = Name;
+  public string ParameterName { get; } = ParameterName;
+  public string ParameterTypeName { get; } = ParameterTypeName;
 }

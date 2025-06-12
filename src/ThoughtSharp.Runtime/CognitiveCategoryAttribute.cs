@@ -20,11 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using JetBrains.Annotations;
+
 namespace ThoughtSharp.Runtime;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public class CognitiveCategoryAttribute<TPayload, TDescriptor>(int BatchSize) : Attribute
-  where TDescriptor : CognitiveData<TDescriptor>
-{
-  public int BatchSize { get; } = BatchSize;
-}
+public class CognitiveCategoryAttribute<
+  [UsedImplicitly]
+  TPayload, 
+  TDescriptor>(int BatchSize) : Attribute
+  where TDescriptor : CognitiveData<TDescriptor>;
