@@ -45,7 +45,7 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
 
   public Inference MakeInference(float[][] Parameters)
   {
-    Parameters.Length.Should().Be(TInput.Length);
+    Parameters[0].Length.Should().Be(TInput.Length);
     var Input = TInput.UnmarshalFrom(Parameters[0]);
 
     var Result = MakeInferenceFunc(Input);
