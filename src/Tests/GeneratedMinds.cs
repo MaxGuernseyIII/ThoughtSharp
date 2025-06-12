@@ -504,11 +504,6 @@ public partial class GeneratedMinds
     return More;
   }
 
-  class Capture<T>
-  {
-    public T? Captured { get; set; }
-  }
-
   class MockSynchronousSurface : SynchronousActionSurface
   {
     public float? SomeData;
