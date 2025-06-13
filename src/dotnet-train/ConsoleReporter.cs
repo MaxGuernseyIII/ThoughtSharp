@@ -182,6 +182,8 @@ class ConsoleReporter : Reporter
             .Select(Line => Line.Length < RemainingWidth ? Line : Line[..(RemainingWidth - 4)] + "...")
             .Take(3);
 
+          Lines = [..Lines, ..Enumerable.Repeat("", 3 - Lines.Count())];
+
           foreach (var Line in Lines)
           {
             ClearLine();
