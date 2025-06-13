@@ -28,6 +28,11 @@
     "Axiom": {
       "commandName": "Project",
       "workingDirectory": "E:\\repos\\producore\\Axiom\\Axiom.Shaping"
+    },
+    "pick one curriculum": {
+      "commandName": "Project",
+      "commandLineArgs": "--curricula LearnToPickMaximum",
+      "workingDirectory": "E:\\repos\\ThoughtSharp\\src\\Tests.SampleScenarios"
     }
   }
 }

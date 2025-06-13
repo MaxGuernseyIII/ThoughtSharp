@@ -28,10 +28,14 @@ namespace dotnet_train;
 
 static class DotnetTrain
 {
-  public static async Task Handle(TargetAssemblyResolutionRequest Request)
+  public static async Task Handle(TargetAssemblyResolutionRequest Request, string[]? CurriculaConstraint)
   {
     if (!Request.NoBuild)
       await Build(Request);
+
+    Predicate<CurriculumNode?> SelectNode = CurriculaConstraint is not null
+      ? N => CurriculaConstraint.Any(C => N?.Name == C)
+      : delegate { return true; };
 
     var TargetPath = await GetTargetPath(Request);
     if (TargetPath is null)
@@ -51,6 +55,9 @@ static class DotnetTrain
     var ConsoleReporter = new ConsoleReporter(Scheme);
     foreach (var Curriculum in CurriculumNodes)
     {
+      if (!SelectNode(Curriculum))
+        continue;
+
       Console.WriteLine($"Training curriculum: {Curriculum.Name}");
 
       var Pool = new MindPool(Model.MindPlaceIndex);
