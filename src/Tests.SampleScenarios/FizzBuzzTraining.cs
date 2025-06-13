@@ -83,7 +83,7 @@ public static partial class FizzBuzzTraining
         return TorchBrainBuilder.For<FizzBuzzMind>()
           .UsingSequence(Outer =>
             Outer
-              .AddGRU(128)
+              .AddTimeAware(A => A.AddGRU(128))
               .AddParallel(P => P
                 //.AddLogicPath(160, 40, 80)
                 .AddLogicPath(16, 4, 8)

@@ -290,18 +290,6 @@ public class BrainBuilding
       ).Model);
   }
 
-  [TestMethod]
-  public void AddGRU()
-  {
-    var Features = Any.Int(1, 1000);
-    var Device = UpdateBrainBuilderToAnyDevice();
-
-    var Actual = BrainBuilder.UsingSequence(S => S.AddGRU(Features)).Build();
-
-    var Expected = Factory.CreateGRU(InputFeatures, Features, 1, Device);
-    ShouldBeAdaptedContainerFor(Actual, Features, Device, Expected);
-  }
-
   MockDevice UpdateBrainBuilderToAnyDevice()
   {
     switch (Any.Int(0, 2))
@@ -367,14 +355,31 @@ public class BrainBuilding
   [TestMethod]
   public void AddTimeAwareWithGRU()
   {
+    var Device = UpdateBrainBuilderToAnyDevice();
     var GRUFeatures = Any.Int(100, 200);
     var GRULayers = Any.Int(1, 3);
     var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.AddGRU(GRUFeatures, GRULayers))).Build();
 
     ShouldBeAdaptedContainerFor(Actual, GRUFeatures,
-      Factory.GetDefaultOptimumDevice(),
+      Device,
       Factory.CreateTimeAware([
-          Factory.CreateGRU(InputFeatures, GRUFeatures, GRULayers, Factory.GetDefaultOptimumDevice())
+          Factory.CreateGRU(InputFeatures, GRUFeatures, GRULayers, Device)
+        ],
+        Factory.CreateLatestTimeStepInStatePooling()));
+  }
+
+  [TestMethod]
+  public void AddTimeAwareWithGRUWithDefaultLayers()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+    var GRUFeatures = Any.Int(100, 200);
+    var GRULayers = Any.Int(1, 3);
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.AddGRU(GRUFeatures))).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, GRUFeatures,
+      Device,
+      Factory.CreateTimeAware([
+          Factory.CreateGRU(InputFeatures, GRUFeatures, 1, Device)
         ],
         Factory.CreateLatestTimeStepInStatePooling()));
   }

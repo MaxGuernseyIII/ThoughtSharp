@@ -35,7 +35,7 @@ public partial class CountOnes
   {
     public override TorchBrain MakeNewBrain()
     {
-      return TorchBrainBuilder.For<CounterMind>().UsingSequence(S => S.AddGRU(16).AddLinear(16)).Build();
+      return TorchBrainBuilder.For<CounterMind>().UsingSequence(S => S.AddTimeAware(A => A.AddGRU(16)).AddLinear(16)).Build();
     }
 
     public override void LoadSavedBrain(TorchBrain ToLoad)

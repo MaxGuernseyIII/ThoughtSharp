@@ -154,18 +154,6 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       };
     }
 
-    public SequenceConstructor AddGRU(int Features)
-    {
-      return this with
-      {
-        Constructors =
-        [
-          ..Constructors,
-          new GRUConstructor(Host, Tail, Features, 1)
-        ]
-      };
-    }
-
     public SequenceConstructor AddTanh()
     {
       return this with
@@ -217,8 +205,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
   public record TimeAwareConstructor : ModelConstructor
   {
-    BrainBuilder<TBrain, TModel, TDevice> Host { get; init; }
-    ModelConstructor? Pooling { get; init; } = null;
+    BrainBuilder<TBrain, TModel, TDevice> Host { get; }
+    ModelConstructor? Pooling { get; init; }
     ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
     ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
 
@@ -228,9 +216,9 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       Predecessors = [Predecessor];
     }
 
-    ImmutableArray<ModelConstructor> Predecessors { get; init; }
+    ImmutableArray<ModelConstructor> Predecessors { get; }
 
-    public TimeAwareConstructor AddGRU(int Features, int Layers)
+    public TimeAwareConstructor AddGRU(int Features, int Layers = 0)
     {
       var NewTail = new GRUConstructor(Host, Tail, Features, Layers);
       return this with
