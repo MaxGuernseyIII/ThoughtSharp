@@ -218,7 +218,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     ImmutableArray<ModelConstructor> Predecessors { get; }
 
-    public TimeAwareConstructor AddGRU(int Features, int Layers = 0)
+    public TimeAwareConstructor AddGRU(int Features, int Layers = 1)
     {
       var NewTail = new GRUConstructor(Host, Tail, Features, Layers);
       return this with

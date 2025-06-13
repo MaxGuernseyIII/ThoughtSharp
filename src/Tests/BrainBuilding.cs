@@ -373,7 +373,6 @@ public class BrainBuilding
   {
     var Device = UpdateBrainBuilderToAnyDevice();
     var GRUFeatures = Any.Int(100, 200);
-    var GRULayers = Any.Int(1, 3);
     var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.AddGRU(GRUFeatures))).Build();
 
     ShouldBeAdaptedContainerFor(Actual, GRUFeatures,
@@ -485,7 +484,7 @@ public class BrainBuilding
 
     public MockBuiltModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, MockDevice Device)
     {
-      return new MockGRU(InputFeatures, OutputFeatures, Device);
+      return new MockGRU(InputFeatures, OutputFeatures, GRULayers, Device);
     }
 
     public MockBuiltModel CreateReLU()
@@ -544,7 +543,7 @@ public class BrainBuilding
 
     record MockReLU : MockBuiltModel;
 
-    record MockGRU(int InputFeatures, int OutputFeatures, MockDevice Device) : MockBuiltModel;
+    record MockGRU(int InputFeatures, int OutputFeatures, int Layers, MockDevice Device) : MockBuiltModel;
 
     record MockLinear(int InputFeatures, int OutputFeatures, bool HasBias) : MockBuiltModel;
 
