@@ -38,21 +38,19 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateTimeAware(IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children, torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Pooling)
   {
-    throw new NotImplementedException();
+    return new TimeAwareModule([..Children], Pooling);
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLinear(int InputFeatures, int OutputFeatures, bool WithBias)
   {
     var Unwrapped = torch.nn.Linear(InputFeatures, OutputFeatures, hasBias:WithBias);
-    //torch.nn.init.kaiming_uniform_(Unwrapped.weight);
-    //torch.nn.init.zeros_(Unwrapped.bias);
 
     return new StatePassThroughModule(Unwrapped);
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateAttentionPooling(int InputFeatures)
   {
-    throw new NotImplementedException();
+    return new AttentionPooling(InputFeatures);
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateTanh()
@@ -83,18 +81,18 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     torch.Device Device)
   {
     var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures, GRULayers);
-    var Adapter = new DoubleTensorToTorchInferencePartsAdapter(Underlying, OutputFeatures, Device);  
+    var Adapter = new GRUAdapter(Underlying, OutputFeatures, GRULayers, Device);  
     return Adapter;
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLatestTimeStepInStatePooling()
   {
-    throw new NotImplementedException();
+    return new LatestTimeStepInStatePooling();
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateMeanOverTimeStepsPooling()
   {
-    throw new NotImplementedException();
+    return new MeanOverTimeStepsPooling();
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateReLU()

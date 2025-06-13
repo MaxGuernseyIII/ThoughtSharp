@@ -24,16 +24,13 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public record TorchInferenceStateNode(params IEnumerable<torch.Tensor> Value) : IDisposable
+class LatestTimeStepInStatePooling(string Name = "") : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
 {
-  public TorchInferenceStateNode? Left { get; init; }
-  public TorchInferenceStateNode? Right { get; init; }
-
-  public void Dispose()
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    Left?.Dispose();
-    Right?.Dispose();
-    foreach (var Tensor in Value) 
-      Tensor.Dispose();
+    return Input with
+    {
+      Payload = Input.State.Value.First()[-1]
+    };
   }
 }

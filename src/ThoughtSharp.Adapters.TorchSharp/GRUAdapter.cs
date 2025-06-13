@@ -24,16 +24,37 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public record TorchInferenceStateNode(params IEnumerable<torch.Tensor> Value) : IDisposable
+public class GRUAdapter : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  public TorchInferenceStateNode? Left { get; init; }
-  public TorchInferenceStateNode? Right { get; init; }
+  readonly torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor Payload, torch.Tensor State)> Underlying;
+  readonly int OutputFeatures;
+  readonly int GRULayers;
+  readonly torch.Device Device;
 
-  public void Dispose()
+  public GRUAdapter(torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor Payload, torch.Tensor State)> Underlying,
+    int OutputFeatures,
+    int GRULayers,
+    torch.Device Device,
+    string Name = "_unnamed") : base(Name)
   {
-    Left?.Dispose();
-    Right?.Dispose();
-    foreach (var Tensor in Value) 
-      Tensor.Dispose();
+    this.Underlying = Underlying;
+    this.OutputFeatures = OutputFeatures;
+    this.GRULayers = GRULayers;
+    this.Device = Device;
+    // ReSharper disable once VirtualMemberCallInConstructor
+    RegisterComponents();
+  }
+
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    var InputTensor = Input.Payload;
+
+    var Output = Underlying.forward(InputTensor, Input.State.Value.FirstOrDefault() ?? torch.zeros(new long[] { GRULayers, 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
+
+    return new()
+    {
+      Payload = Output.Payload,
+      State = new(Output.State)
+    };
   }
 }

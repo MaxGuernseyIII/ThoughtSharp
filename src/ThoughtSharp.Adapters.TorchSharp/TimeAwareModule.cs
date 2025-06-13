@@ -20,20 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public record TorchInferenceStateNode(params IEnumerable<torch.Tensor> Value) : IDisposable
+sealed class TimeAwareModule : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  public TorchInferenceStateNode? Left { get; init; }
-  public TorchInferenceStateNode? Right { get; init; }
+  readonly ImmutableArray<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Submodules;
+  readonly torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Pooling;
 
-  public void Dispose()
+  public TimeAwareModule(
+    ImmutableArray<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Submodules, 
+    torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Pooling, 
+    string Name = "_unnamed") : base(Name)
   {
-    Left?.Dispose();
-    Right?.Dispose();
-    foreach (var Tensor in Value) 
-      Tensor.Dispose();
+    this.Submodules = Submodules;
+    this.Pooling = Pooling;
+    var I = 0;
+    foreach (var Module in Submodules) 
+      register_module($"Submodules{I++}", Module);
+
+    RegisterComponents();
+  }
+
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    var WithTimeSteps = Input with
+    {
+      Payload = Input.Payload.unsqueeze(1)
+    };
+
+    var Transformed = Submodules.Aggregate(WithTimeSteps,
+      (Previous, Module) => Module.forward(Previous));
+
+    return Pooling.forward(Transformed);
   }
 }
