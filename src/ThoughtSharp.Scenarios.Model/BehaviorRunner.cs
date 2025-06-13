@@ -46,6 +46,7 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
         await T;
     }
     catch (Exception Exception)
+      when (Exception is not FatalErrorException)
     {
       return new()
       {

@@ -22,10 +22,12 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
+using FluentAssertions.Specialized;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
+using Assert = ThoughtSharp.Scenarios.Assert;
 
 namespace Tests;
 
@@ -202,6 +204,74 @@ public class BehaviorRunning
   }
 
   [TestMethod]
+  public async Task FatalError()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(FatalErrorHost),
+      typeof(FatalErrorHost).GetMethod(nameof(FatalErrorHost.ThrowFatal))!);
+
+    (await Runner.Invoking(R => R.Run()).Should()
+      .ThrowAsync<FatalErrorException>())
+      .WithMessage(FatalErrorHost.ErrorMessage);
+  }
+
+  [TestMethod]
+  public async Task FatalErrorAsync()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(FatalErrorHost),
+      typeof(FatalErrorHost).GetMethod(nameof(FatalErrorHost.ThrowFatalAsync))!);
+
+    (await Runner.Invoking(R => R.Run()).Should()
+      .ThrowAsync<FatalErrorException>())
+      .WithMessage(FatalErrorHost.ErrorMessage);
+  }
+
+  [TestMethod]
+  public async Task CriticalFailure()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(FatalErrorHost),
+      typeof(FatalErrorHost).GetMethod(nameof(FatalErrorHost.CriticalFailure))!);
+
+    (await Runner.Invoking(R => R.Run()).Should()
+      .ThrowAsync<FatalErrorException>())
+      .WithMessage($"Critical condition not met: {FatalErrorHost.CriticalCondition}");
+  }
+
+  [TestMethod]
+  public async Task CriticalFailureAsync()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(FatalErrorHost),
+      typeof(FatalErrorHost).GetMethod(nameof(FatalErrorHost.CriticalFailureAsync))!);
+
+    (await Runner.Invoking(R => R.Run()).Should()
+        .ThrowAsync<FatalErrorException>())
+      .WithMessage($"Critical condition not met: {FatalErrorHost.CriticalCondition}");
+  }
+
+  [TestMethod]
+  public async Task CriticalSuccess()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(FatalErrorHost),
+      typeof(FatalErrorHost).GetMethod(nameof(FatalErrorHost.CriticalSuccess))!);
+
+    await Runner.Invoking(R => R.Run()).Should().NotThrowAsync<FatalErrorException>();
+  }
+
+  [TestMethod]
+  public async Task CriticalSuccessAsync()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(FatalErrorHost),
+      typeof(FatalErrorHost).GetMethod(nameof(FatalErrorHost.CriticalSuccessAsync))!);
+
+    await Runner.Invoking(R => R.Run()).Should().NotThrowAsync<FatalErrorException>();
+  }
+
+  [TestMethod]
   public void GetRunnerFromNode()
   {
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
@@ -354,6 +424,45 @@ public class BehaviorRunning
     }
   }
 
+  public class FatalErrorHost
+  {
+    public const string ErrorMessage = "Something critical to the training infrastructure has failed.";
+    public const string CriticalCondition = "condition X";
+
+    public void ThrowFatal()
+    {
+      Assert.Fatal(ErrorMessage);
+    }
+
+    public Task ThrowFatalAsync()
+    {
+      Assert.Fatal(ErrorMessage);
+      return Task.CompletedTask;
+    }
+
+    public void CriticalSuccess()
+    {
+      Assert.Critical(true, CriticalCondition);
+    }
+
+    public Task CriticalSuccessAsync()
+    {
+      Assert.Critical(true, CriticalCondition);
+      return Task.CompletedTask;
+    }
+
+    public void CriticalFailure()
+    {
+      Assert.Critical(false, CriticalCondition);
+    }
+
+    public Task CriticalFailureAsync()
+    {
+      Assert.Critical(false, CriticalCondition);
+      return Task.CompletedTask;
+    }
+  }
+
   public class MindCatchingHost
   {
     static readonly AsyncLocal<Box<MindCatchingHost?>> LastInstanceContainer = new();
@@ -420,15 +529,5 @@ public class BehaviorRunning
   static Task Isolated(Func<Task> ToDo)
   {
     return ToDo();
-    //await ConsoleLock.WaitAsync();
-
-    //try
-    //{
-    //  await ToDo();
-    //}
-    //finally
-    //{
-    //  ConsoleLock.Release();
-    //}
   }
 }

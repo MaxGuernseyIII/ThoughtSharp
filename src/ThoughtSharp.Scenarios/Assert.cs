@@ -80,4 +80,15 @@ public static class Assert
     if (Actual > Expected)
       throw new AssertionFailedException($"Expected <={Expected} but found {Actual}");
   }
+
+  public static void Fatal(string Message)
+  {
+    throw new FatalErrorException(Message);
+  }
+
+  public static void Critical(bool ActualCondition, string ConditionDescription)
+  {
+    if (!ActualCondition)
+      Fatal($"Critical condition not met: {ConditionDescription}");
+  }
 }
