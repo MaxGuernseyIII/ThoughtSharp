@@ -240,6 +240,31 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return Host.Factory.CreateTimeAware(Constructors.Select(C => C.Build()), Pooling.Build());
     }
+
+    public TimeAwareConstructor AddAttention(int Heads, int FeaturesPerHead)
+    {
+      var NewTail = new AttentionConstructor(Host, Tail.OutputFeatures, Heads, FeaturesPerHead);
+      return this with
+      {
+        Pooling = new AttentionPoolingConstructor(Host, NewTail),
+        Constructors = [
+          ..Constructors,
+          NewTail
+          ]
+      };
+    }
+
+    class AttentionPoolingConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor) : ModelConstructor
+    {
+      public int OutputFeatures => Predecessor.OutputFeatures;
+
+      public string CompactDescriptiveText => "";
+
+      public TModel Build()
+      {
+        return Host.Factory.CreateAttentionPooling(Predecessor.OutputFeatures);
+      }
+    }
   }
 
   sealed record LinearConstructor(
@@ -297,6 +322,22 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     public TModel Build()
     {
       return Host.Factory.CreateMeanOverTimeStepsPooling();
+    }
+  }
+
+  class AttentionConstructor(
+    BrainBuilder<TBrain, TModel, TDevice> Host,
+    int InputFeatures,
+    int Heads,
+    int FeaturesPerHead) : ModelConstructor
+  {
+    public int OutputFeatures => Heads * FeaturesPerHead;
+
+    public string CompactDescriptiveText => $"a{Heads}-{FeaturesPerHead}";
+
+    public TModel Build()
+    {
+      return Host.Factory.CreateMultiHeadedAttention(InputFeatures, Heads, FeaturesPerHead);
     }
   }
 

@@ -364,6 +364,21 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void TimeAwareWithAttention()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+    var Heads = Any.Int(2, 4);
+    var FeaturesPerHead = Any.Int(2, 4);
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.AddAttention(Heads, FeaturesPerHead))).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, Heads * FeaturesPerHead,
+      Device,
+      Factory.CreateTimeAware([
+        Factory.CreateMultiHeadedAttention(InputFeatures, Heads, FeaturesPerHead)
+      ], Factory.CreateAttentionPooling(Heads * FeaturesPerHead)));
+  }
+
+  [TestMethod]
   public void AddTimeAwareWithGRU()
   {
     var Device = UpdateBrainBuilderToAnyDevice();
@@ -498,6 +513,11 @@ public class BrainBuilding
       return new MockGRU(InputFeatures, OutputFeatures, GRULayers, Device);
     }
 
+    public MockBuiltModel CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead)
+    {
+      return new MockMultiHeadedAttention(InputFeatures, Heads, FeaturesPerHead);
+    }
+
     public MockBuiltModel CreateReLU()
     {
       return new MockReLU();
@@ -553,6 +573,8 @@ public class BrainBuilding
     sealed record MockSiLU : MockBuiltModel;
 
     record MockReLU : MockBuiltModel;
+
+    sealed record MockMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead) : MockBuiltModel;
 
     record MockGRU(int InputFeatures, int OutputFeatures, int Layers, MockDevice Device) : MockBuiltModel;
 

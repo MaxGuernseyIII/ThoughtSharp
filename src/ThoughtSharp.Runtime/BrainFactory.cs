@@ -13,6 +13,7 @@ public interface BrainFactory<
 
   TModel CreateLinear(int InputFeatures, int OutputFeatures, bool WithBias);
   TModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, TDevice Device);
+  TModel CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead);
 
   TModel CreateLatestTimeStepInStatePooling();
   TModel CreateMeanOverTimeStepsPooling();
