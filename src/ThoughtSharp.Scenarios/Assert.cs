@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using JetBrains.Annotations;
 using ThoughtSharp.Runtime;
@@ -81,14 +82,27 @@ public static class Assert
       throw new AssertionFailedException($"Expected <={Expected} but found {Actual}");
   }
 
-  public static void Fatal(string Message)
+  /// <summary>
+  /// Terminates training or test execution.
+  /// </summary>
+  /// <param name="Message">The message to be given as the reason for termination</param>
+  /// <returns>An exception you can use in a throw clause for clean code-termination analysis</returns>
+  /// <exception cref="FatalErrorException">This is always thrown</exception>
+  [DoesNotReturn]
+  public static FatalErrorException Fatal(string Message)
   {
     throw new FatalErrorException(Message);
   }
 
-  public static void Critical(bool ActualCondition, string ConditionDescription)
+  /// <summary>
+  /// Terminates the training or test execution if a condition is not met.
+  /// </summary>
+  /// <param name="ActualCondition">The condition that must be met</param>
+  /// <param name="ConditionDescription">A description of the condition that must be met</param>
+  /// <exception cref="FatalErrorException">Thrown when condition is not met</exception>
+  public static void Critical([DoesNotReturnIf(false)] bool ActualCondition, string ConditionDescription)
   {
     if (!ActualCondition)
-      Fatal($"Critical condition not met: {ConditionDescription}");
+      throw Fatal($"Critical condition not met: {ConditionDescription}");
   }
 }
