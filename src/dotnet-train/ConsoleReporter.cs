@@ -131,16 +131,13 @@ class ConsoleReporter : Reporter
   }
 
   readonly ScenarioNameVisitor GetScenarioName = new();
-  int LastLineCount = 0;
+  int LastLineCount;
 
   void PrintScheme(TrainingDataScheme SchemeToPrint)
   {
-    var LineCount = 0;
-
     void WriteLine(string ToWrite)
     {
       Writer.WriteLine(ToWrite);
-      LineCount++;
     }
 
     if (SchemeToPrint.TrackedNodes.Any())
@@ -182,7 +179,7 @@ class ConsoleReporter : Reporter
 
           var Lines = Content.Split([Environment.NewLine],
               StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(Line => Line.Length < Console.WindowWidth ? Line : Line[..(Console.WindowWidth - 4)] + "...")
+            .Select(Line => Line.Length < RemainingWidth ? Line : Line[..(RemainingWidth - 4)] + "...")
             .Take(3);
 
           foreach (var Line in Lines)
@@ -203,6 +200,8 @@ class ConsoleReporter : Reporter
     ClearLine();
     WriteLine(
       $"{SchemeToPrint.Attempts.Value} attempts, {SchemeToPrint.TimesSinceSaved.Value} attempts since last save");
+
+    var LineCount = Console.GetCursorPosition().Top;
 
     foreach (var _ in Enumerable.Range(0, Math.Max(0, LastLineCount - LineCount)))
     {
