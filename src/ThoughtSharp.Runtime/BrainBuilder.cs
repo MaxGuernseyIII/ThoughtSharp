@@ -206,7 +206,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   public record TimeAwareConstructor : ModelConstructor
   {
     BrainBuilder<TBrain, TModel, TDevice> Host { get; }
-    ModelConstructor? Pooling { get; init; }
+    ModelConstructor Pooling { get; init; }
     ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
     ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
 
@@ -214,6 +214,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       this.Host = Host;
       Predecessors = [Predecessor];
+      Pooling = new MeanOverTimeStepsPoolingConstructor(Host, Tail);
     }
 
     ImmutableArray<ModelConstructor> Predecessors { get; }
@@ -237,7 +238,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public TModel Build()
     {
-      return Host.Factory.CreateTimeAware(Constructors.Select(C => C.Build()), Pooling!.Build());
+      return Host.Factory.CreateTimeAware(Constructors.Select(C => C.Build()), Pooling.Build());
     }
   }
 
@@ -284,6 +285,18 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     public TModel Build()
     {
       throw new NotSupportedException("This is a placeholder on top of which other models should be built.");
+    }
+  }
+
+  class MeanOverTimeStepsPoolingConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor) : ModelConstructor
+  {
+    public int OutputFeatures => Predecessor.OutputFeatures;
+
+    public string CompactDescriptiveText => "";
+
+    public TModel Build()
+    {
+      return Host.Factory.CreateMeanOverTimeStepsPooling();
     }
   }
 

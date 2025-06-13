@@ -353,6 +353,17 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void AddEmptyTimeAware()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A)).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures,
+      Device,
+      Factory.CreateTimeAware([], Factory.CreateMeanOverTimeStepsPooling()));
+  }
+
+  [TestMethod]
   public void AddTimeAwareWithGRU()
   {
     var Device = UpdateBrainBuilderToAnyDevice();
