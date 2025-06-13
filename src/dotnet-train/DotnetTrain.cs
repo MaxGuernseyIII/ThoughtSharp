@@ -33,7 +33,7 @@ static class DotnetTrain
     if (!Request.NoBuild)
       await Build(Request);
 
-    Predicate<CurriculumNode?> SelectNode = CurriculaConstraint is not null
+    Predicate<CurriculumNode?> SelectNode = CurriculaConstraint is not null and not { Length: 0}
       ? N => CurriculaConstraint.Any(C => N?.Name == C)
       : delegate { return true; };
 
