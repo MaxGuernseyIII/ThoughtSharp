@@ -22,17 +22,14 @@
 
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace ThoughtSharp.Scenarios.Model;
 
 public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMethod) : Runnable
 {
-
   public async Task<RunResult> Run()
   {
-    var Constructor = HostType.GetConstructors().Single();
-    var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
-    var Instance = Constructor.Invoke(Minds);
     var OldOutput = Console.Out;
     var OldError = Console.Error;
     var OutputCapture = new StringWriter();
@@ -41,17 +38,27 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
 
     try
     {
-      var Result = BehaviorMethod.Invoke(Instance, BindingFlags.DoNotWrapExceptions, null, [], CultureInfo.CurrentCulture);
+      var Constructor = HostType.GetConstructors().Single();
+      var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
+      var Instance = Constructor.Invoke(Minds);
+      var Result = BehaviorMethod.Invoke(Instance, []);
       if (Result is Task T)
         await T;
     }
     catch (Exception Exception)
-      when (Exception is not FatalErrorException)
     {
+      var ProcessedException = Exception;
+
+      while (ProcessedException is TargetInvocationException or TypeInitializationException) 
+        ProcessedException = ProcessedException.InnerException;
+
+      if (ProcessedException is FatalErrorException)
+        ExceptionDispatchInfo.Throw(ProcessedException);
+
       return new()
       {
         Status = BehaviorRunStatus.Failure,
-        Exception = Exception,
+        Exception = ProcessedException,
         Output = OutputCapture.ToString()
       };
     }

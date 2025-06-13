@@ -204,6 +204,30 @@ public class BehaviorRunning
   }
 
   [TestMethod]
+  public async Task FatalErrorInInitializer()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(CannotInitializeHost),
+      typeof(CannotInitializeHost).GetMethod(nameof(CannotInitializeHost.Action))!);
+
+    (await Runner.Invoking(R => R.Run()).Should()
+      .ThrowAsync<FatalErrorException>())
+      .WithMessage(CannotInitializeHost.ErrorMessage);
+  }
+
+  [TestMethod]
+  public async Task FatalErrorInConstructor()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(CannotInstantiateHost),
+      typeof(CannotInstantiateHost).GetMethod(nameof(CannotInstantiateHost.Action))!);
+
+    (await Runner.Invoking(R => R.Run()).Should()
+      .ThrowAsync<FatalErrorException>())
+      .WithMessage(CannotInstantiateHost.ErrorMessage);
+  }
+
+  [TestMethod]
   public async Task FatalError()
   {
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
@@ -421,6 +445,36 @@ public class BehaviorRunning
       Console.Write(ToPrint);
       Console.Error.WriteAsync(ToPrint);
       throw new InvalidOperationException("Expected failure");
+    }
+  }
+
+  public class CannotInitializeHost
+  {
+    public const string ErrorMessage = "condition Y";
+
+    static CannotInitializeHost()
+    {
+      Assert.Fatal(ErrorMessage);
+    }
+
+    public void Action()
+    {
+
+    }
+  }
+
+  public class CannotInstantiateHost
+  {
+    public const string ErrorMessage = "condition Z";
+
+    public CannotInstantiateHost()
+    {
+      Assert.Fatal(ErrorMessage);
+    }
+
+    public void Action()
+    {
+
     }
   }
 
