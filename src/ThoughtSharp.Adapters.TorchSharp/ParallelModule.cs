@@ -40,8 +40,8 @@ public sealed class ParallelModule : torch.nn.Module<TorchInferenceParts, TorchI
 
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var LeftOutput = Left.forward(Input with { State = Input.State.Left! });
-    var RightOutput = Right.forward(Input with{ State = Input.State.Right! });
+    var LeftOutput = Left.forward(Input with { State = Input.State.Left });
+    var RightOutput = Right.forward(Input with{ State = Input.State.Right });
 
     //Console.WriteLine($"Left path output: [{string.Join(", ", LeftOutput.Payload.shape)}]");
     //Console.WriteLine($"Right path output: [{string.Join(", ", RightOutput.Payload.shape)}]");

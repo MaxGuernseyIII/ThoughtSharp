@@ -63,7 +63,7 @@ public class TorchBrain(
     return tensor(TensorShaped, ScalarType.Float32).to(Device);
   }
 
-  internal TorchInferenceParts Forward(float[][] Batches, TorchInferenceStateNode State)
+  internal TorchInferenceParts Forward(float[][] Batches, TorchInferenceStateNode? State)
   {
     return Model.forward(new()
     {
@@ -79,7 +79,7 @@ public class TorchBrain(
 
   internal Inference ExecuteInference(
     TorchInference? Predecessor,
-    TorchInferenceStateNode StateInputTensor,
+    TorchInferenceStateNode? StateInputTensor,
     float[][] Batches)
   {
     var Tensors = Forward(Batches, StateInputTensor);

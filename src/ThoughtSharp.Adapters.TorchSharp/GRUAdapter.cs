@@ -49,7 +49,7 @@ public class GRUAdapter : torch.nn.Module<TorchInferenceParts, TorchInferencePar
   {
     var InputTensor = Input.Payload;
 
-    var Output = Underlying.forward(InputTensor, Input.State.Value.FirstOrDefault() ?? torch.zeros(new long[] { GRULayers, 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
+    var Output = Underlying.forward(InputTensor, Input.State?.Value.FirstOrDefault() ?? torch.zeros(new long[] { GRULayers, 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
 
     return new()
     {

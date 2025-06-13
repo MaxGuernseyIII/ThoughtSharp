@@ -30,10 +30,10 @@ public class TorchInference(
   TorchBrain Brain,
   TorchInference? Predecessor,
   float[][] OriginalBatches,
-  TorchInferenceStateNode StateOutput,
+  TorchInferenceStateNode? StateOutput,
   torch.Tensor ProductOutputTensor) : Inference
 {
-  internal TorchInferenceStateNode StateOutput { get; } = StateOutput;
+  internal TorchInferenceStateNode? StateOutput { get; } = StateOutput;
   internal torch.Tensor ProductOutputTensor { get; } = ProductOutputTensor;
 
   public ReadOnlySpan<float> Result => ProductOutputTensor[ProductOutputTensor.shape[0] - 1].to(torch.CPU).data<float>().ToArray();
@@ -45,7 +45,7 @@ public class TorchInference(
 
   public void Dispose()
   {
-    StateOutput.Dispose();
+    StateOutput?.Dispose();
     ProductOutputTensor.Dispose();
   }
 

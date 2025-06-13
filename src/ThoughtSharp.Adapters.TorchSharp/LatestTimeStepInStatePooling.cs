@@ -30,7 +30,7 @@ class LatestTimeStepInStatePooling(string Name = "") : torch.nn.Module<TorchInfe
   {
     return Input with
     {
-      Payload = Input.State.Value.First()[-1]
+      Payload = Input.State!.Value.First()[-1]
     };
   }
 }

@@ -26,6 +26,6 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 
 public record TorchInferenceParts
 {
-  public required TorchInferenceStateNode State { get; set; }
+  public required TorchInferenceStateNode? State { get; set; }
   public required torch.Tensor Payload { get; set; }
 }

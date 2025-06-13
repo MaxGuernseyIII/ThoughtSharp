@@ -62,6 +62,11 @@ static class DotnetTrain
 
       var Pool = new MindPool(Model.MindPlaceIndex);
 
+      AppDomain.CurrentDomain.DomainUnload += delegate
+      {
+        Pool.Save();
+      };
+
       var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme, ConsoleReporter);
       await Plan.Run();
     }
