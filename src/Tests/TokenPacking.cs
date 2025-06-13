@@ -39,7 +39,7 @@ public class TokenPacking
     Width = Any.Int(16, 32);
     ValidCharacters = Any.ASCIIString(Any.Int(2, 8));
     Codec = new(ValidCharacters, Width);
-    BitCountPerCharacter = (int) Math.Ceiling(Math.Log2(ValidCharacters.Length));
+    BitCountPerCharacter = (int) Math.Ceiling(Math.Log2(ValidCharacters.Length + 1));
   }
 
   [TestMethod]

@@ -9,9 +9,15 @@ public interface BrainFactory<
 
   TModel CreateSequence(params IEnumerable<TModel> Children);
   TModel CreateParallel(params IEnumerable<TModel> Children);
+  TModel CreateTimeAware(IEnumerable<TModel> Children, TModel Pooling);
 
   TModel CreateLinear(int InputFeatures, int OutputFeatures, bool WithBias);
-  TModel CreateGRU(int InputFeatures, int OutputFeatures, TDevice Device);
+  TModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, TDevice Device);
+  TModel CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead);
+
+  TModel CreateLatestTimeStepInStatePooling();
+  TModel CreateMeanOverTimeStepsPooling();
+  TModel CreateAttentionPooling(int InputFeatures);
 
   TModel CreateTanh();
   TModel CreateReLU();

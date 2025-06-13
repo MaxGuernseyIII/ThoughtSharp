@@ -22,6 +22,7 @@
 
 using ThoughtSharp.Runtime;
 using TorchSharp;
+using TorchSharp.Modules;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
@@ -36,13 +37,21 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     this.MakeBrain = MakeBrain;
   }
 
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateTimeAware(IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children, torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Pooling)
+  {
+    return new TimeAwareModule([..Children], Pooling);
+  }
+
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLinear(int InputFeatures, int OutputFeatures, bool WithBias)
   {
     var Unwrapped = torch.nn.Linear(InputFeatures, OutputFeatures, hasBias:WithBias);
-    //torch.nn.init.kaiming_uniform_(Unwrapped.weight);
-    //torch.nn.init.zeros_(Unwrapped.bias);
 
     return new StatePassThroughModule(Unwrapped);
+  }
+
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateAttentionPooling(int InputFeatures)
+  {
+    return new AttentionPooling(InputFeatures);
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateTanh()
@@ -66,11 +75,30 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     return Children.Skip(1).Aggregate(Children.First(), (Previous, Current) => new ParallelModule(Previous, Current));
   }
 
-  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(int InputFeatures, int OutputFeatures, torch.Device Device)
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(
+    int InputFeatures, 
+    int OutputFeatures,
+    int GRULayers, 
+    torch.Device Device)
   {
-    var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures);
-    var Adapter = new DoubleTensorToTorchInferencePartsAdapter(Underlying, OutputFeatures, Device);  
+    var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures, GRULayers);
+    var Adapter = new GRUAdapter(Underlying, OutputFeatures, GRULayers, Device);  
     return Adapter;
+  }
+
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead)
+  {
+    return new MultiHeadedAttentionAdapter(InputFeatures, Heads, FeaturesPerHead);
+  }
+
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLatestTimeStepInStatePooling()
+  {
+    return new LatestTimeStepInStatePooling();
+  }
+
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateMeanOverTimeStepsPooling()
+  {
+    return new MeanOverTimeStepsPooling();
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateReLU()

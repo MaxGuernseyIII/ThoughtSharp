@@ -24,35 +24,13 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public class DoubleTensorToTorchInferencePartsAdapter : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
+class MeanOverTimeStepsPooling(string Name = "_unnamed") : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
 {
-  readonly torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor DetailedOutput, torch.Tensor FinalState)> Underlying;
-  readonly int OutputFeatures;
-  readonly torch.Device Device;
-
-  public DoubleTensorToTorchInferencePartsAdapter(torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor DetailedOutput, torch.Tensor FinalState)> Underlying,
-    int OutputFeatures,
-    torch.Device Device,
-    string Name = "_unnamed") : base(Name)
-  {
-    this.Underlying = Underlying;
-    this.OutputFeatures = OutputFeatures;
-    this.Device = Device;
-    // ReSharper disable once VirtualMemberCallInConstructor
-    RegisterComponents();
-  }
-
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var InputTensor = Input.Payload;
-    var InputTensorWithBatchNumber = InputTensor.unsqueeze(1);
-
-    var Output = Underlying.forward(InputTensorWithBatchNumber, Input.State.State.FirstOrDefault() ?? torch.zeros(new long[] { 1, 1, OutputFeatures, }, torch.ScalarType.Float32, Device));
-
-    return new()
+    return Input with
     {
-      Payload = Output.FinalState[-1],
-      State = new(Output.FinalState)
+      Payload = Input.Payload.mean([0])
     };
   }
 }

@@ -26,23 +26,6 @@ namespace ThoughtSharp.Generator;
 
 public static class TypeSymbolExtensions
 {
-  //public static bool IsCognitiveData(this ITypeSymbol T)
-  //{
-  //  if (T.GetAttributes().Any(A => A.AttributeClass?.Name == CognitiveAttributeNames.))
-  //    return true;
-
-  //  if (T.Name == "CognitiveData")
-  //    return true;
-
-  //  if (T.BaseType?.IsCognitiveData() ?? false)
-  //    return true;
-
-  //  if (T.AllInterfaces.Any(I => I.IsCognitiveData()))
-  //    return true;
-
-  //  return false;
-  //}
-
   public static string GetFullPath(this ITypeSymbol T)
   {
     if (T.SpecialType == SpecialType.System_Void)
@@ -100,34 +83,13 @@ public static class TypeSymbolExtensions
 
   public static bool ImplementsIEnumerableOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> ArgumentConstraint)
   {
-    if (Type is not INamedTypeSymbol NamedType)
-      return false;
-
-    return Type.AllInterfaces.Concat([NamedType]).Any(T => T.IsIEnumerableOf(ArgumentConstraint));
+    return Type.AllInterfaces.Concat([Type]).OfType<INamedTypeSymbol>().Any(T => T.IsIEnumerableOf(ArgumentConstraint));
   }
 
   public static bool IsIEnumerableOf(this INamedTypeSymbol T, Func<ITypeSymbol, bool> ArgumentConstraint)
   {
     return T.HasTypeNameWithoutGenericArguments("System.Collections.Generic.IEnumerable") &&
            T.TypeArguments.Length == 1 && ArgumentConstraint(T.TypeArguments[0]);
-  }
-
-  public static bool ImplementsCognitiveDataOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> DataTypeConstraint)
-  {
-    if (Type is not INamedTypeSymbol NamedType)
-      return false;
-    var CandidateInterfaces = Type.AllInterfaces.Concat([NamedType]);
-
-    return CandidateInterfaces.Any(T => T.IsCognitiveDataOf(DataTypeConstraint));
-  }
-
-  public static bool IsCognitiveDataOf(this ITypeSymbol T, Func<ITypeSymbol, bool> DataTypeConstraint)
-  {
-    if (T is not INamedTypeSymbol Type)
-      return false;
-
-    return T.HasTypeNameWithoutGenericArguments("ThoughtSharp.CognitiveData") && Type.TypeArguments.Length == 1 &&
-           DataTypeConstraint(Type.TypeArguments[0]);
   }
 
   public static bool HasTypeNameWithoutGenericArguments(this ITypeSymbol Type, string Expected)

@@ -82,6 +82,14 @@ static class Commands
     return new(["--"], "Additional arguments passed through to MSBuild.");
   }
 
+  static Option<string[]?> GetCurriculaConstraintOption()
+  {
+    return new(["--curricula"], "Explicitly-selected curricula")
+    {
+      IsRequired = false
+    };
+  }
+
   public static RootCommand GetCommand()
   {
     var Root = GetRootCommand();
@@ -89,12 +97,14 @@ static class Commands
     var ProjectArgument = GetProjectArgument();
     var NoBuildOption = GetNoBuildOption();
     var ExtraArgumentsOption = GetExtraArgumentsOption();
+    var CurriculaConstraint = GetCurriculaConstraintOption();
     C.AddArgument(ProjectArgument);
     C.AddOption(NoBuildOption);
     C.AddOption(ExtraArgumentsOption);
+    C.AddOption(CurriculaConstraint);
 
     C.SetHandler(DotnetTrain.Handle, new TargetAssemblyResolutionRequestBinder(
-      ProjectArgument, NoBuildOption, ExtraArgumentsOption));
+      ProjectArgument, NoBuildOption, ExtraArgumentsOption), CurriculaConstraint);
 
     return Root;
   }

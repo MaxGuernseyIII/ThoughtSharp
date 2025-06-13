@@ -25,17 +25,37 @@ using Google.Protobuf.WellKnownTypes;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
+using Enum = Google.Protobuf.WellKnownTypes.Enum;
 
 namespace Tests.SampleScenarios;
 
-public partial class CountOnes
+public partial class AttentionExample
 {
+  [Mind]
+  public partial class AttentionMind
+  {
+    [Tell]
+    public partial void LoadNumbers(IEnumerable<NumberBoat> Numbers);
+
+    [Make]
+    public partial CognitiveResult<NumberBoat, NumberBoat> GetHighest();
+  }
+
+  [CognitiveData]
+  public partial class NumberBoat
+  {
+    public float Number;
+  }
+
   [MindPlace]
-  public class CountOnesMindPlace : MindPlace<CounterMind, TorchBrain>
+  public class MindPlace : MindPlace<AttentionMind, TorchBrain>
   {
     public override TorchBrain MakeNewBrain()
     {
-      return TorchBrainBuilder.For<CounterMind>().UsingSequence(S => S.AddTimeAware(A => A.AddGRU(16)).AddLinear(16)).Build();
+      return TorchBrainBuilder.For<AttentionMind>().UsingSequence(S => S.AddTimeAware(A => A
+        .AddAttention(1, 8)
+        .AddGRU(16)
+      )).Build();
     }
 
     public override void LoadSavedBrain(TorchBrain ToLoad)
@@ -47,53 +67,31 @@ public partial class CountOnes
     }
   }
 
-  [MaximumAttempts(50000)]
-  [ConvergenceStandard(Fraction = .95, Of = 50)]
-  [Curriculum]
-  public class Train
-  {
-    [Phase(1)]
-    [Include(typeof(ItCountsTimes))]
-    public class DoIt;
-  }
-
   [Capability]
-  public class ItCountsTimes(CounterMind Mind)
+  public class FindHighest(AttentionMind Mind)
   {
     static readonly Random Source = new();
 
     [Behavior]
-    public void TimeCountCorrect()
+    public void AlwaysFindsHighest()
     {
-      var TestMind = Mind.WithChainedReasoning();
-      var Count = Source.Next(2, 12);
+      var M = Mind.WithChainedReasoning();
+      var Inputs = Enumerable.Range(0, Source.Next(2, 10)).Select(S => new NumberBoat() { Number = Source.NextSingle() }).ToImmutableArray();
+      M.LoadNumbers(Inputs);
 
-      TestMind.TellItHowManyTimes([..Enumerable.Repeat(new Token(), Count)]);
+      var R = M.GetHighest();
 
-      var R = TestMind.GetTimeCount();
-
-      Assert.That(R).Is(new() { Times = Count}, A => A.Expect(I => I.Times, (Actual, Expected) => Actual.ShouldBeApproximately(Expected, .125f)));
+      Assert.That(R).Is(new() { Number = Inputs.Max(B => B.Number)}, C => C.Expect(B => B.Number, (Actual, Expected) => Actual.ShouldBeApproximately(Expected, 0.05f)));
     }
   }
 
-  [Mind]
-  public partial class CounterMind
+  [MaximumAttempts(50000)]
+  [ConvergenceStandard(Fraction = .99, Of = 100)]
+  [Curriculum]
+  public class LearnToPickMaximum
   {
-    [Tell]
-    public partial void TellItHowManyTimes(ImmutableArray<Token> Times);
-
-    [Make]
-    public partial CognitiveResult<Result, Result> GetTimeCount();
-  }
-
-  [CognitiveData]
-  public partial class Token
-  {
-  }
-
-  [CognitiveData]
-  public partial class Result
-  {
-    public float Times;
+    [Phase(1)]
+    [Include(typeof(FindHighest))]
+    public class LearnMaximum;
   }
 }

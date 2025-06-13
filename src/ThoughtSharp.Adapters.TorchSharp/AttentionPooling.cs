@@ -24,16 +24,28 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public record TorchInferenceStateNode(params IEnumerable<torch.Tensor> Value) : IDisposable
+sealed class AttentionPooling : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  public TorchInferenceStateNode? Left { get; init; }
-  public TorchInferenceStateNode? Right { get; init; }
+  readonly torch.nn.Module<torch.Tensor, torch.Tensor> Weighting;
 
-  public void Dispose()
+  public AttentionPooling(int InputFeatures, string Name = "_unnamed") : base(Name)
   {
-    Left?.Dispose();
-    Right?.Dispose();
-    foreach (var Tensor in Value) 
-      Tensor.Dispose();
+    this.InputFeatures = InputFeatures;
+    Weighting = torch.nn.Linear(InputFeatures, 1);
+    RegisterComponents();
+  }
+
+  public int InputFeatures { get; }
+
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    var Scores = Weighting.forward(Input.Payload);
+    var Weights = Scores.softmax(0);
+    var Weighted = Weights * Input.Payload;
+
+    return Input with
+    {
+      Payload = Weighted.sum(0)
+    };
   }
 }

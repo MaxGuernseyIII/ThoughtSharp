@@ -21,19 +21,30 @@
 // SOFTWARE.
 
 using TorchSharp;
+using TorchSharp.Modules;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-public record TorchInferenceStateNode(params IEnumerable<torch.Tensor> Value) : IDisposable
+sealed class MultiHeadedAttentionAdapter : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
 {
-  public TorchInferenceStateNode? Left { get; init; }
-  public TorchInferenceStateNode? Right { get; init; }
+  readonly torch.nn.Module<torch.Tensor, torch.Tensor> Adapter;
+  readonly MultiheadAttention Attention;
 
-  public void Dispose()
+  public MultiHeadedAttentionAdapter(int InputFeatures, int Heads, int FeaturesPerHead, string Name = "_unnamed") : base(Name)
   {
-    Left?.Dispose();
-    Right?.Dispose();
-    foreach (var Tensor in Value) 
-      Tensor.Dispose();
+    var HiddenDimensionSize = Heads * FeaturesPerHead;
+    Adapter = torch.nn.Linear(InputFeatures, HiddenDimensionSize);
+    Attention = torch.nn.MultiheadAttention(HiddenDimensionSize, Heads);
+
+    RegisterComponents();
+  }
+
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  {
+    var Adapted = Adapter.forward(Input.Payload);
+
+    var (Attended, _) = Attention.forward(Adapted, Adapted, Adapted, null, false, null);
+
+    return Input with {Payload = Attended};
   }
 }

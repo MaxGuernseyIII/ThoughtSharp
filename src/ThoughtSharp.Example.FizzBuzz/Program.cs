@@ -281,7 +281,7 @@ void DoFizzBuzz()
   var BrainBuilder = TorchBrainBuilder.For<FizzBuzzMind>()
     .UsingSequence(Outer =>
       Outer
-        .AddGRU(128)
+        .AddTimeAware(A => A.AddGRU(128))
         .AddParallel(P => P
           .AddLogicPath(16, 4, 8)
           .AddPath(S => S))
