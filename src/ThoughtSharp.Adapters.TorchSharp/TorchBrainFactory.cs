@@ -36,6 +36,11 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     this.MakeBrain = MakeBrain;
   }
 
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateTimeAware(IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children, torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Pooling)
+  {
+    throw new NotImplementedException();
+  }
+
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLinear(int InputFeatures, int OutputFeatures, bool WithBias)
   {
     var Unwrapped = torch.nn.Linear(InputFeatures, OutputFeatures, hasBias:WithBias);
@@ -43,6 +48,11 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     //torch.nn.init.zeros_(Unwrapped.bias);
 
     return new StatePassThroughModule(Unwrapped);
+  }
+
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateAttentionPooling(int InputFeatures)
+  {
+    throw new NotImplementedException();
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateTanh()
@@ -66,11 +76,25 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     return Children.Skip(1).Aggregate(Children.First(), (Previous, Current) => new ParallelModule(Previous, Current));
   }
 
-  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(int InputFeatures, int OutputFeatures, torch.Device Device)
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(
+    int InputFeatures, 
+    int OutputFeatures,
+    int GRULayers, 
+    torch.Device Device)
   {
-    var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures);
+    var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures, GRULayers);
     var Adapter = new DoubleTensorToTorchInferencePartsAdapter(Underlying, OutputFeatures, Device);  
     return Adapter;
+  }
+
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLatestTimeStepInStatePooling()
+  {
+    throw new NotImplementedException();
+  }
+
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateMeanOverTimeStepsPooling()
+  {
+    throw new NotImplementedException();
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateReLU()

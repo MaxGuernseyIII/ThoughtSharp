@@ -38,7 +38,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     this.Factory = Factory;
     Input = new VirtualConstructor(InputFeatures);
     Constructor = new AdaptOutputConstructor(Factory,
-      new SequenceConstructor(this, new VirtualConstructor(InputFeatures)), OutputFeatures, true);
+      new SequenceConstructor(this, Input), OutputFeatures, true);
     Device = this.Factory.GetDefaultOptimumDevice();
   }
 
@@ -161,7 +161,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
         Constructors =
         [
           ..Constructors,
-          new GRUConstructor(Host, Tail, Features)
+          new GRUConstructor(Host, Tail, Features, 1)
         ]
       };
     }
@@ -200,6 +200,56 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
           new SiLUConstructor(Host.Factory, Tail)
         ]
       };
+    }
+
+    public SequenceConstructor AddTimeAware(
+      Func<TimeAwareConstructor, TimeAwareConstructor> Configure)
+    {
+      return this with
+      {
+        Constructors = [
+          ..Constructors,
+          Configure(new(Host, Tail))
+          ]
+      };
+    }
+  }
+
+  public record TimeAwareConstructor : ModelConstructor
+  {
+    BrainBuilder<TBrain, TModel, TDevice> Host { get; init; }
+    ModelConstructor? Pooling { get; init; } = null;
+    ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
+    ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
+
+    public TimeAwareConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor)
+    {
+      this.Host = Host;
+      Predecessors = [Predecessor];
+    }
+
+    ImmutableArray<ModelConstructor> Predecessors { get; init; }
+
+    public TimeAwareConstructor AddGRU(int Features, int Layers)
+    {
+      var NewTail = new GRUConstructor(Host, Tail, Features, Layers);
+      return this with
+      {
+        Pooling = new LatestTimeStepOfStatePoolingConstructor(Host, NewTail),
+        Constructors = [
+          ..Constructors,
+          NewTail
+          ]
+      };
+    }
+
+    public int OutputFeatures => Tail.OutputFeatures;
+
+    public string CompactDescriptiveText => string.Join(string.Empty, Constructors.Select(C => C.CompactDescriptiveText));
+
+    public TModel Build()
+    {
+      return Host.Factory.CreateTimeAware(Constructors.Select(C => C.Build()), Pooling!.Build());
     }
   }
 
@@ -249,6 +299,18 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     }
   }
 
+  record LatestTimeStepOfStatePoolingConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor) : ModelConstructor
+  {
+    public int OutputFeatures => Predecessor.OutputFeatures;
+
+    public string CompactDescriptiveText => "";
+
+    public TModel Build()
+    {
+      return Host.Factory.CreateLatestTimeStepInStatePooling();
+    }
+  }
+
   sealed record AdaptOutputConstructor(
     BrainFactory<TBrain, TModel, TDevice> Factory,
     ModelConstructor CoreConstructor,
@@ -268,13 +330,14 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   sealed record GRUConstructor(
     BrainBuilder<TBrain, TModel, TDevice> Host,
     ModelConstructor Predecessor,
-    int OutputFeatures) : ModelConstructor
+    int OutputFeatures,
+    int Layers) : ModelConstructor
   {
     public string CompactDescriptiveText => $"s{OutputFeatures}";
 
     public TModel Build()
     {
-      return Host.Factory.CreateGRU(Predecessor.OutputFeatures, OutputFeatures, Host.Device);
+      return Host.Factory.CreateGRU(Predecessor.OutputFeatures, OutputFeatures, Layers, Host.Device);
     }
   }
 

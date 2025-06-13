@@ -63,7 +63,7 @@ public class BrainBuilding
   [TestMethod]
   public void SequenceWithoutFinalBias()
   {
-    var Actual = BrainBuilder.UsingSequence(S => S, WithFinalBias:false).Build();
+    var Actual = BrainBuilder.UsingSequence(S => S, false).Build();
 
     ShouldBeAdaptedContainerFor(Actual, InputFeatures, Factory.GetDefaultOptimumDevice(), [], false);
   }
@@ -227,9 +227,9 @@ public class BrainBuilding
   public void UsingParallelWithoutBias()
   {
     var Builder = BrainBuilder.UsingParallel(Parallel => Parallel
-      .AddPath(Sequence => Sequence.AddLinear(5))
-      .AddPath(Sequence => Sequence.AddLinear(10).AddLinear(4)),
-      WithFinalBias:false
+        .AddPath(Sequence => Sequence.AddLinear(5))
+        .AddPath(Sequence => Sequence.AddLinear(10).AddLinear(4)),
+      false
     );
 
     var Actual = Builder.Build();
@@ -298,7 +298,7 @@ public class BrainBuilding
 
     var Actual = BrainBuilder.UsingSequence(S => S.AddGRU(Features)).Build();
 
-    var Expected = Factory.CreateGRU(InputFeatures, Features, Device);
+    var Expected = Factory.CreateGRU(InputFeatures, Features, 1, Device);
     ShouldBeAdaptedContainerFor(Actual, Features, Device, Expected);
   }
 
@@ -323,16 +323,18 @@ public class BrainBuilding
     var Count = Any.Int();
     var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(Count)).Build();
 
-    ShouldBeAdaptedContainerFor(Actual, Count, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, Count, WithBias:true));
+    ShouldBeAdaptedContainerFor(Actual, Count, Factory.GetDefaultOptimumDevice(),
+      Factory.CreateLinear(InputFeatures, Count, true));
   }
 
   [TestMethod]
   public void AddLinearWithoutBias()
   {
     var Count = Any.Int();
-    var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(Count, WithBias:false)).Build();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(Count, false)).Build();
 
-    ShouldBeAdaptedContainerFor(Actual, Count, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, Count, WithBias:false));
+    ShouldBeAdaptedContainerFor(Actual, Count, Factory.GetDefaultOptimumDevice(),
+      Factory.CreateLinear(InputFeatures, Count, false));
   }
 
   [TestMethod]
@@ -340,7 +342,8 @@ public class BrainBuilding
   {
     var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(2).AddTanh().AddLinear(1)).Build();
 
-    ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2), Factory.CreateTanh(), Factory.CreateLinear(2, 1));
+    ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2),
+      Factory.CreateTanh(), Factory.CreateLinear(2, 1));
   }
 
   [TestMethod]
@@ -348,7 +351,8 @@ public class BrainBuilding
   {
     var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(2).AddReLU().AddLinear(1)).Build();
 
-    ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2), Factory.CreateReLU(), Factory.CreateLinear(2, 1));
+    ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2),
+      Factory.CreateReLU(), Factory.CreateLinear(2, 1));
   }
 
   [TestMethod]
@@ -356,16 +360,33 @@ public class BrainBuilding
   {
     var Actual = BrainBuilder.UsingSequence(S => S.AddLinear(2).AddSiLU().AddLinear(1)).Build();
 
-    ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2), Factory.CreateSiLU(), Factory.CreateLinear(2, 1));
+    ShouldBeAdaptedContainerFor(Actual, 1, Factory.GetDefaultOptimumDevice(), Factory.CreateLinear(InputFeatures, 2),
+      Factory.CreateSiLU(), Factory.CreateLinear(2, 1));
   }
 
-  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device, 
+  [TestMethod]
+  public void AddTimeAwareWithGRU()
+  {
+    var GRUFeatures = Any.Int(100, 200);
+    var GRULayers = Any.Int(1, 3);
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.AddGRU(GRUFeatures, GRULayers))).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, GRUFeatures,
+      Factory.GetDefaultOptimumDevice(),
+      Factory.CreateTimeAware([
+          Factory.CreateGRU(InputFeatures, GRUFeatures, GRULayers, Factory.GetDefaultOptimumDevice())
+        ],
+        Factory.CreateLatestTimeStepInStatePooling()));
+  }
+
+  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device,
     params IEnumerable<MockBuiltModel> ExpectedModels)
   {
     ShouldBeAdaptedContainerFor(Actual, Features, Device, ExpectedModels, true);
   }
 
-  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device, IEnumerable<MockBuiltModel> ExpectedModels,
+  void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device,
+    IEnumerable<MockBuiltModel> ExpectedModels,
     bool WithBias)
   {
     Actual.Should().Be(
@@ -425,14 +446,6 @@ public class BrainBuilding
 
   public record MockDevice;
 
-  sealed record MockCPUDevice : MockDevice;
-
-  sealed record MockCUDADevice : MockDevice;
-
-  sealed record MockDefaultOptimalDevice : MockDevice;
-
-  sealed record MockSiLU : MockBuiltModel;
-
   public class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel, MockDevice>
   {
     public MockBuiltModel CreateLinear(int InputFeatures, int OutputFeatures, bool HasBias)
@@ -460,7 +473,12 @@ public class BrainBuilding
       return new MockParallel(Children);
     }
 
-    public MockBuiltModel CreateGRU(int InputFeatures, int OutputFeatures, MockDevice Device)
+    public MockBuiltModel CreateTimeAware(IEnumerable<MockBuiltModel> Children, MockBuiltModel Pooling)
+    {
+      return new MockTimeAware(Children, Pooling);
+    }
+
+    public MockBuiltModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, MockDevice Device)
     {
       return new MockGRU(InputFeatures, OutputFeatures, Device);
     }
@@ -473,6 +491,21 @@ public class BrainBuilding
     public MockBuiltModel CreateSiLU()
     {
       return new MockSiLU();
+    }
+
+    public MockBuiltModel CreateLatestTimeStepInStatePooling()
+    {
+      return new MockLatestTimeStepInStatePooling();
+    }
+
+    public MockBuiltModel CreateMeanOverTimeStepsPooling()
+    {
+      return new MockMeanOverTimeStepsPooling();
+    }
+
+    public MockBuiltModel CreateAttentionPooling(int InputFeatures)
+    {
+      return new MockAttentionPooling(InputFeatures);
     }
 
     public MockDevice GetDefaultOptimumDevice()
@@ -489,6 +522,20 @@ public class BrainBuilding
     {
       return new MockCUDADevice();
     }
+
+    sealed record MockLatestTimeStepInStatePooling : MockBuiltModel;
+
+    sealed record MockMeanOverTimeStepsPooling : MockBuiltModel;
+
+    sealed record MockAttentionPooling(int InputFeatures) : MockBuiltModel;
+
+    sealed record MockCPUDevice : MockDevice;
+
+    sealed record MockCUDADevice : MockDevice;
+
+    sealed record MockDefaultOptimalDevice : MockDevice;
+
+    sealed record MockSiLU : MockBuiltModel;
 
     record MockReLU : MockBuiltModel;
 
@@ -527,6 +574,21 @@ public class BrainBuilding
         return HashCode.Combine(base.GetHashCode(), Children);
       }
     }
+
+    sealed record MockTimeAware(IEnumerable<MockBuiltModel> Children, MockBuiltModel Pooling) : MockBuiltModel
+    {
+      public bool Equals(MockTimeAware? Other)
+      {
+        if (Other is null) return false;
+        if (ReferenceEquals(this, Other)) return true;
+        return base.Equals(Other) && Children.SequenceEqual(Other.Children) && Equals(Pooling, Other.Pooling);
+      }
+
+      public override int GetHashCode()
+      {
+        return HashCode.Combine(base.GetHashCode(), Children);
+      }
+    }
   }
 
   public record MockBuiltModel;
@@ -547,7 +609,8 @@ public class BrainBuilding
 
 file static class MockBrainFactoryExtensions
 {
-  public static BrainBuilding.MockBuiltModel CreateLinear(this BrainFactory<BrainBuilding.MockBuiltBrain, BrainBuilding.MockBuiltModel, BrainBuilding.MockDevice> Factory,
+  public static BrainBuilding.MockBuiltModel CreateLinear(
+    this BrainFactory<BrainBuilding.MockBuiltBrain, BrainBuilding.MockBuiltModel, BrainBuilding.MockDevice> Factory,
     int InputParameters, int OutputParameters)
   {
     return Factory.CreateLinear(InputParameters, OutputParameters, true);
