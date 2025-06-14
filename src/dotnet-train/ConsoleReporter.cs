@@ -28,51 +28,16 @@ namespace dotnet_train;
 
 class ConsoleReporter : Reporter
 {
-  class ScenarioNameVisitor : ScenariosModelNodeVisitor<string>
-  {
-    public string Visit(ScenariosModel Model)
-    {
-      return Model.Name;
-    }
-
-    public string Visit(DirectoryNode Directory)
-    {
-      return Directory.Name;
-    }
-
-    public string Visit(CurriculumNode Curriculum)
-    {
-      return Curriculum.Name;
-    }
-
-    public string Visit(CapabilityNode Capability)
-    {
-      return Capability.Name;
-    }
-
-    public string Visit(MindPlaceNode MindPlace)
-    {
-      return MindPlace.Name;
-    }
-
-    public string Visit(BehaviorNode Behavior)
-    {
-      return $"{Behavior.HostType.Name}.{Behavior.Name}";
-    }
-
-    public string Visit(CurriculumPhaseNode CurriculumPhase)
-    {
-      return CurriculumPhase.Name;
-    }
-  }
-
   readonly CancellationTokenSource Cancellation = new();
+
+  readonly ScenarioNameVisitor GetScenarioName = new();
   readonly ConcurrentDictionary<ScenariosModelNode, RunResult> MostRecentFailures = [];
   readonly ConcurrentStack<ScenariosModelNode> Path = [];
+  readonly Task PrintTask;
   readonly TrainingDataScheme Scheme;
   readonly TextWriter Writer = Console.Out;
+  int LastLineCount;
   TrainingDataScheme? LastSchemeToPrint;
-  readonly Task PrintTask;
 
   public ConsoleReporter(TrainingDataScheme Scheme)
   {
@@ -82,7 +47,7 @@ class ConsoleReporter : Reporter
 
   public void ReportRunResult(ScenariosModelNode Node, RunResult Result)
   {
-    if (Result.Status == BehaviorRunStatus.Failure) 
+    if (Result.Status == BehaviorRunStatus.Failure)
       MostRecentFailures[Node] = Result;
   }
 
@@ -130,9 +95,6 @@ class ConsoleReporter : Reporter
     PrintScheme(SchemeToPrint);
   }
 
-  readonly ScenarioNameVisitor GetScenarioName = new();
-  int LastLineCount;
-
   void PrintScheme(TrainingDataScheme SchemeToPrint)
   {
     void WriteLine(string ToWrite)
@@ -142,7 +104,8 @@ class ConsoleReporter : Reporter
 
     if (SchemeToPrint.TrackedNodes.Any())
     {
-      var NodeNames = SchemeToPrint.TrackedNodes.Select(N => (Node: N, Name: N.Query(GetScenarioName))).OrderBy(Pair => Pair.Name).ToImmutableArray();
+      var NodeNames = SchemeToPrint.TrackedNodes.Select(N => (Node: N, Name: N.Query(GetScenarioName)))
+        .OrderBy(Pair => Pair.Name).ToImmutableArray();
       var LabelWidth = NodeNames.Select(Pair => Pair.Name.Length + 3).Max();
       var EmptyLabel = new string(' ', LabelWidth);
       var RemainingWidth = Console.WindowWidth - (10 + LabelWidth);
@@ -190,6 +153,14 @@ class ConsoleReporter : Reporter
             WriteLine($"{EmptyLabel}  {Line[..Math.Min(RemainingWidth, Line.Length)]}");
           }
         }
+        else
+        {
+          foreach (var _ in Enumerable.Range(0, 3))
+          {
+            ClearLine();
+            WriteLine("");
+          }
+        }
       }
     }
 
@@ -228,5 +199,43 @@ class ConsoleReporter : Reporter
     await Cancellation.CancelAsync();
     await PrintTask;
     Print();
+  }
+
+  class ScenarioNameVisitor : ScenariosModelNodeVisitor<string>
+  {
+    public string Visit(ScenariosModel Model)
+    {
+      return Model.Name;
+    }
+
+    public string Visit(DirectoryNode Directory)
+    {
+      return Directory.Name;
+    }
+
+    public string Visit(CurriculumNode Curriculum)
+    {
+      return Curriculum.Name;
+    }
+
+    public string Visit(CapabilityNode Capability)
+    {
+      return Capability.Name;
+    }
+
+    public string Visit(MindPlaceNode MindPlace)
+    {
+      return MindPlace.Name;
+    }
+
+    public string Visit(BehaviorNode Behavior)
+    {
+      return $"{Behavior.HostType.Name}.{Behavior.Name}";
+    }
+
+    public string Visit(CurriculumPhaseNode CurriculumPhase)
+    {
+      return CurriculumPhase.Name;
+    }
   }
 }
