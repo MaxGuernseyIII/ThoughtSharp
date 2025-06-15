@@ -364,6 +364,27 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void CannotSetDynamicWeightLimitsTooLow()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = 1,
+        SampleSize = 1,
+        MaximumAttempts = 1,
+        MinimumDynamicWeight = .01,
+        MaxinimumDynamicWeight = .01
+      },
+      RootNamespace,
+      nameof(DynamicWeightingSample),
+      nameof(DynamicWeightingSample.Curriculum),
+      nameof(DynamicWeightingSample.Curriculum.PhaseWithLowMinimumAndMaximumWeights)
+    );
+  }
+
+  [TestMethod]
   public void CanOverridePhaseDynamicMaximumWeight()
   {
     WhenParseAssembly();
@@ -381,6 +402,50 @@ public class AssemblyParsing
       nameof(DynamicWeightingSample),
       nameof(DynamicWeightingSample.Curriculum),
       nameof(DynamicWeightingSample.Curriculum.PhaseWithExplicitMaximumWeight)
+    );
+  }
+
+  [TestMethod]
+  public void CanNestedOverridePhaseDynamicMinimumWeight()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = 1,
+        SampleSize = 1,
+        MaximumAttempts = 1,
+        MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMinimumWeight.OverriddenMinimumWeight,
+        MaxinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.HeritableMaximumWeight
+      },
+      RootNamespace,
+      nameof(DynamicWeightingSample),
+      nameof(DynamicWeightingSample.Curriculum),
+      nameof(DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights),
+      nameof(DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMinimumWeight)
+    );
+  }
+
+  [TestMethod]
+  public void CanNestedOverridePhaseDynamicMaximumWeight()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = 1,
+        SampleSize = 1,
+        MaximumAttempts = 1,
+        MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.HeritableMinimumWeight,
+        MaxinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMaximumWeight.OverriddenMaximumWeight
+      },
+      RootNamespace,
+      nameof(DynamicWeightingSample),
+      nameof(DynamicWeightingSample.Curriculum),
+      nameof(DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights),
+      nameof(DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMaximumWeight)
     );
   }
 

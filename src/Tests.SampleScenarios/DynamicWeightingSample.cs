@@ -75,14 +75,10 @@ public class DynamicWeightingSample
       {
         public const float OverriddenMaximumWeight = .930f;
       }
-
-      [Phase(4)]
-      [DynamicWeighting(Minimum = 0, Maximum = 0)]
-      public class PhaseWithLowMinimumAndMaximumWeights;
-
-      [Phase(4)]
-      [DynamicWeighting(Minimum = 1, Maximum = 1)]
-      public class PhaseWithHighMinimumAndMaximumWeights;
     }
+
+    [Phase(4)]
+    [DynamicWeighting(Minimum = 0, Maximum = 0)]
+    public class PhaseWithLowMinimumAndMaximumWeights;
   }
 }
