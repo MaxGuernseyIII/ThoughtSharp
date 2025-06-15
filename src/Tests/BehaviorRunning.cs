@@ -22,7 +22,6 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
-using FluentAssertions.Specialized;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
@@ -583,5 +582,114 @@ public class BehaviorRunning
   static Task Isolated(Func<Task> ToDo)
   {
     return ToDo();
+  }
+}
+
+[TestClass]
+public class DynamicWeightedRunning
+{
+  const int ConvergenceTrackerLength = 10;
+  int RunCount;
+  RunResult RunResult = null!;
+  MockRunnable Underlying = null!;
+  ConvergenceTracker Tracker = null!;
+
+  [TestInitialize]
+  public void SetUp()
+  {
+    RunCount = 0;
+    RunResult = new() { Status = BehaviorRunStatus.Success };
+    Underlying = new()
+    {
+      RunBehavior = () =>
+      {
+        RunCount++;
+        return Task.FromResult(RunResult);
+      }
+    };
+    Tracker = new(ConvergenceTrackerLength);
+  }
+
+  [TestMethod]
+  public async Task WithFullWeightIsPassThrough()
+  {
+    var Runner = new DynamicWeightedRunnable(Underlying, 1, 1, Tracker, .5);
+
+    var Result = await Runner.Run();
+
+    Result.Should().BeSameAs(RunResult);
+  }
+
+  [TestMethod]
+  public async Task WithPartialWeightAndNoConvergenceDoesNotRunRightAway()
+  {
+    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+
+    var Result = await Runner.Run();
+
+    Result.Should().Be(new RunResult { Status = BehaviorRunStatus.NotRun});
+    RunCount.Should().Be(0);
+  }
+
+  [TestMethod]
+  public async Task WithPartialWeightAndNoConvergenceTakesMultipleTries()
+  {
+    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+
+    await Runner.Run();
+    var Result = await Runner.Run();
+
+    Result.Should().BeSameAs(RunResult);
+    RunCount.Should().Be(1);
+  }
+
+  [TestMethod]
+  public async Task WithPartialWeightAndFullConvergenceDoesNotRunRightAway()
+  {
+    GivenSuccesses(ConvergenceTrackerLength);
+
+    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+
+    var Result = await Runner.Run();
+
+    Result.Should().Be(new RunResult { Status = BehaviorRunStatus.NotRun});
+    RunCount.Should().Be(0);
+  }
+
+  [TestMethod]
+  public async Task WithPartialWeightAndFullConvergenceTakesMultipleTries()
+  {
+    GivenSuccesses(ConvergenceTrackerLength);
+
+    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+
+    await Runner.Run();
+    await Runner.Run();
+    await Runner.Run();
+    var Result = await Runner.Run();
+
+    Result.Should().BeSameAs(RunResult);
+    RunCount.Should().Be(1);
+  }
+
+  [TestMethod]
+  public async Task WithPartialWeightsAndPartialConvergenceTakesMultipleTries()
+  {
+    GivenSuccesses((int) (ConvergenceTrackerLength * .5 + ConvergenceTrackerLength * .5 * .7));
+
+    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+
+    await Runner.Run();
+    await Runner.Run();
+    var Result = await Runner.Run();
+
+    Result.Should().BeSameAs(RunResult);
+    RunCount.Should().Be(1);
+  }
+
+  void GivenSuccesses(int I)
+  {
+    foreach (var _ in Enumerable.Range(0, I)) 
+      Tracker.RecordResult(true);
   }
 }
