@@ -31,14 +31,14 @@ public record DynamicWeightedRunnable(
   : Runnable
 {
   readonly double Denominator = 1 - ConvergenceThreshold;
-  readonly double VariableWeightRange = MaximumWeight - MinimumWeight;
+  readonly double VariableWeightRange = MinimumWeight - MaximumWeight;
 
   double Error;
 
   public async Task<RunResult> Run()
   {
-    var T = 1 - Math.Clamp((ConvergenceSource.MeasureConvergence() - ConvergenceThreshold) / Denominator, 0, 1);
-    var Delta = MinimumWeight + VariableWeightRange * T;
+    var T = Math.Clamp((ConvergenceSource.MeasureConvergence() - ConvergenceThreshold) / Denominator, 0, 1);
+    var Delta = MaximumWeight + VariableWeightRange * T;
     Error += Delta;
 
     if (Error < 1)

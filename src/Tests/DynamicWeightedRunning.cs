@@ -34,6 +34,8 @@ public class DynamicWeightedRunning
   RunResult RunResult = null!;
   MockRunnable Underlying = null!;
   ConvergenceTracker Tracker = null!;
+  Counter TrialCounter = null!;
+  RunResult Result = null!;
 
   [TestInitialize]
   public void SetUp()
@@ -49,88 +51,116 @@ public class DynamicWeightedRunning
       }
     };
     Tracker = new(ConvergenceTrackerLength);
+    TrialCounter = new();
+    Result = null!;
   }
 
   [TestMethod]
   public async Task WithFullWeightIsPassThrough()
   {
-    var Runner = new DynamicWeightedRunnable(Underlying, 1, 1, Tracker, .5);
+    var Runner = GivenWeightedRunnable(1, 1, .5);
 
-    var Result = await Runner.Run();
+    await WhenRun(Runner);
 
-    Result.Should().BeSameAs(RunResult);
+    ThenResultIsWhatWasReturnedByUnderlying();
+    ThenRunCountIs(1);
   }
 
   [TestMethod]
   public async Task WithPartialWeightAndNoConvergenceDoesNotRunRightAway()
   {
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+    var Runner = GivenWeightedRunnable(.25, .5, .5);
 
-    var Result = await Runner.Run();
+    await WhenRun(Runner);
 
-    Result.Should().Be(new RunResult { Status = BehaviorRunStatus.NotRun});
-    RunCount.Should().Be(0);
+    ThenResultIsNotRun();
+    ThenRunCountIs(0);
   }
 
   [TestMethod]
   public async Task WithPartialWeightAndNoConvergenceTakesMultipleTries()
   {
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+    var Runner = GivenWeightedRunnable(.25, .5, .5);
+    await GivenPreviousRuns(Runner, 1);
 
-    await Runner.Run();
-    var Result = await Runner.Run();
+    await WhenRun(Runner);
 
-    Result.Should().BeSameAs(RunResult);
-    RunCount.Should().Be(1);
+    ThenResultIsWhatWasReturnedByUnderlying();
+    ThenRunCountIs(1);
   }
 
   [TestMethod]
   public async Task WithPartialWeightAndFullConvergenceDoesNotRunRightAway()
   {
     GivenSuccesses(ConvergenceTrackerLength);
+    var Runner = GivenWeightedRunnable(.25, .5, .5);
 
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+    await WhenRun(Runner);
 
-    var Result = await Runner.Run();
-
-    Result.Should().Be(new RunResult { Status = BehaviorRunStatus.NotRun});
-    RunCount.Should().Be(0);
+    ThenResultIsNotRun();
+    ThenRunCountIs(0);
   }
 
   [TestMethod]
   public async Task WithPartialWeightAndFullConvergenceTakesMultipleTries()
   {
     GivenSuccesses(ConvergenceTrackerLength);
+    var Runner = GivenWeightedRunnable(.25, .5, .5);
+    await GivenPreviousRuns(Runner, 3);
 
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+    await WhenRun(Runner);
 
-    await Runner.Run();
-    await Runner.Run();
-    await Runner.Run();
-    var Result = await Runner.Run();
-
-    Result.Should().BeSameAs(RunResult);
-    RunCount.Should().Be(1);
+    ThenResultIsWhatWasReturnedByUnderlying();
+    ThenRunCountIs(1);
   }
 
   [TestMethod]
   public async Task WithPartialWeightsAndPartialConvergenceTakesMultipleTries()
   {
-    GivenSuccesses((int) (ConvergenceTrackerLength * .5 + ConvergenceTrackerLength * .5 * .7));
+    var Runner = GivenWeightedRunnable(.25, .5, .5);
+    GivenSuccesses((int) (ConvergenceTrackerLength * .5 + ConvergenceTrackerLength * .5 * .6));
+    await GivenPreviousRuns(Runner, 2);
 
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
+    await WhenRun(Runner);
 
-    await Runner.Run();
-    await Runner.Run();
-    var Result = await Runner.Run();
-
-    Result.Should().BeSameAs(RunResult);
-    RunCount.Should().Be(1);
+    ThenResultIsWhatWasReturnedByUnderlying();
+    ThenRunCountIs(1);
   }
 
   void GivenSuccesses(int I)
   {
     foreach (var _ in Enumerable.Range(0, I)) 
       Tracker.RecordResult(true);
+  }
+
+  static async Task GivenPreviousRuns(DynamicWeightedRunnable Runner, int Count)
+  {
+    foreach (var _ in Enumerable.Range(0, Count))
+      await Runner.Run();
+  }
+
+  DynamicWeightedRunnable GivenWeightedRunnable(double MinimumWeight, double MaximumWeight, double ConvergenceThreshold)
+  {
+    return new(Underlying, MinimumWeight, MaximumWeight, Tracker, ConvergenceThreshold);
+  }
+
+  async Task WhenRun(DynamicWeightedRunnable Runner)
+  {
+    Result = await Runner.Run();
+  }
+
+  void ThenResultIsWhatWasReturnedByUnderlying()
+  {
+    Result.Should().BeSameAs(RunResult);
+  }
+
+  void ThenResultIsNotRun()
+  {
+    Result.Should().Be(new RunResult { Status = BehaviorRunStatus.NotRun});
+  }
+
+  void ThenRunCountIs(int Expected)
+  {
+    RunCount.Should().Be(Expected);
   }
 }
