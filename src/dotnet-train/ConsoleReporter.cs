@@ -22,6 +22,8 @@
 
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using Terminal.Gui;
+using Terminal.Gui.Trees;
 using ThoughtSharp.Scenarios.Model;
 
 namespace dotnet_train;
@@ -53,7 +55,7 @@ class ConsoleReporter : Reporter
 
   public void ReportEnter(ScenariosModelNode Node)
   {
-    Writer.WriteLine($"Enter: {Node.Name}");
+    //Writer.WriteLine($"Enter: {Node.Name}");
     Path.Push(Node);
   }
 
@@ -61,26 +63,28 @@ class ConsoleReporter : Reporter
   {
     Path.TryPop(out _);
 
-    Writer.WriteLine($"Exit: {Node.Name}");
+    //Writer.WriteLine($"Exit: {Node.Name}");
     Writer.WriteLine();
   }
 
   Task Start()
   {
-    return Task.Run(async () =>
-    {
-      while (!Cancellation.Token.IsCancellationRequested)
-        try
-        {
-          await Task.Delay(TimeSpan.FromSeconds(.2));
+    return new ConsoleRenderer(this).Start();
 
-          Print();
-        }
-        catch (Exception Ex)
-        {
-          Writer.WriteLine(Ex);
-        }
-    });
+    //return Task.Run(async () =>
+    //{
+    //  while (!Cancellation.Token.IsCancellationRequested)
+    //    try
+    //    {
+    //      await Task.Delay(TimeSpan.FromSeconds(.2));
+
+    //      Print();
+    //    }
+    //    catch (Exception Ex)
+    //    {
+    //      Writer.WriteLine(Ex);
+    //    }
+    //});
   }
 
   void Print()
@@ -236,6 +240,58 @@ class ConsoleReporter : Reporter
     public string Visit(CurriculumPhaseNode CurriculumPhase)
     {
       return CurriculumPhase.Name;
+    }
+  }
+
+  class ConsoleRenderer(ConsoleReporter Parent)
+  {
+    public Task Start()
+    {
+      return Task.Run(() =>
+      {
+        var Window = new Window("dotnet train")
+        {
+          X = 0,
+          Y = 0,
+          Width = Dim.Fill(),
+          Height = Dim.Fill(),
+        };
+
+        var Source = new DelegateTreeBuilder<TrainingDataScheme>(
+          S => S.SubSchemeNodes.Select(S.GetChildScheme),
+          S => S.SubSchemeNodes.Any())
+        {
+        };
+        var Tree = new TreeView<TrainingDataScheme>(Source)
+        {
+          X = 0,
+          Y = 0,
+          Width = Dim.Fill(),
+          Height = Dim.Fill(),
+          CanFocus = true,
+          
+        };
+        Tree.SelectionChanged +=
+          (Sender, Args) =>
+          {
+
+          };
+        Tree.SetFocus();
+        Application.Init();
+        Application.MainLoop.AddTimeout(TimeSpan.FromSeconds(.2), _ =>
+        {
+          Tree.Clear();
+          Tree.AddObjects(
+            Parent.Scheme.SubSchemeNodes
+              .Select(Parent.Scheme.GetChildScheme)
+              .SelectMany(S => S.SubSchemeNodes.Select(S.GetChildScheme)));
+          Tree.SetNeedsDisplay();
+          return true;
+        });
+        Window.Add(Tree);
+        Application.Top.Add(Window);
+        Application.Run();
+      });
     }
   }
 }

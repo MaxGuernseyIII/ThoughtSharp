@@ -27,7 +27,8 @@
     },
     "Axiom": {
       "commandName": "Project",
-      "workingDirectory": "E:\\repos\\producore\\Axiom\\Axiom.Shaping"
+      "workingDirectory": "E:\\repos\\producore\\Axiom\\Axiom.Shaping",
+      "console": "externalTerminal"
     },
     "pick one curriculum": {
       "commandName": "Project",
