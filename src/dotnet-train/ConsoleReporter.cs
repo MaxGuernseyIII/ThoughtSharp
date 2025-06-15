@@ -145,7 +145,7 @@ class ConsoleReporter : Reporter
             .Select(Line => Line.Length < RemainingWidth ? Line : Line[..(RemainingWidth - 4)] + "...")
             .Take(3);
 
-          Lines = [..Lines, ..Enumerable.Repeat("", 3 - Lines.Count())];
+          //Lines = [..Lines, ..Enumerable.Repeat("", 3 - Lines.Count())];
 
           foreach (var Line in Lines)
           {
@@ -153,14 +153,14 @@ class ConsoleReporter : Reporter
             WriteLine($"{EmptyLabel}  {Line[..Math.Min(RemainingWidth, Line.Length)]}");
           }
         }
-        else
-        {
-          foreach (var _ in Enumerable.Range(0, 3))
-          {
-            ClearLine();
-            WriteLine("");
-          }
-        }
+        //else
+        //{
+        //  foreach (var _ in Enumerable.Range(0, 3))
+        //  {
+        //    ClearLine();
+        //    WriteLine("");
+        //  }
+        //}
       }
     }
 
