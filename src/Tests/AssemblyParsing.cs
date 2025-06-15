@@ -331,7 +331,9 @@ public class AssemblyParsing
       {
         SuccessFraction = .6,
         SampleSize = 200,
-        MaximumAttempts = 50000
+        MaximumAttempts = 50000,
+        MinimumDynamicWeight = .75,
+        MaxinimumDynamicWeight = 1
       },
       RootNamespace,
       nameof(FizzBuzzTraining),
@@ -350,7 +352,9 @@ public class AssemblyParsing
       {
         SuccessFraction = .98,
         SampleSize = 500,
-        MaximumAttempts = 20000
+        MaximumAttempts = 20000,
+        MinimumDynamicWeight = .75,
+        MaxinimumDynamicWeight = 1
       },
       RootNamespace,
       nameof(FizzBuzzTraining),
@@ -370,7 +374,9 @@ public class AssemblyParsing
       {
         SuccessFraction = .95,
         SampleSize = 1000,
-        MaximumAttempts = 500
+        MaximumAttempts = 500,
+        MinimumDynamicWeight = .75,
+        MaxinimumDynamicWeight = 1
       },
       RootNamespace,
       nameof(CurriculumWithDefaultPhase),

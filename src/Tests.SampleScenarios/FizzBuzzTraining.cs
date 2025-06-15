@@ -310,7 +310,7 @@ public static partial class FizzBuzzTraining
     public static CognitiveDataCodec<byte> ValueCodec { get; } =
       new CompositeCodec<byte>(
         new BitwiseOneHotNumberCodec<byte>(),
-        new NumberToFloatingPointCodec<byte,float>(new NormalizingCodec<float>(
+        new NumberToFloatingPointCodec<byte, float>(new NormalizingCodec<float>(
           new RoundingCodec<float>(new CopyFloatCodec()), byte.MinValue, byte.MaxValue)));
   }
 
@@ -388,6 +388,64 @@ public static partial class FizzBuzzTraining
       {
         CurrentContentBuilder.Append(" ");
       }
+    }
+  }
+}
+
+public class DynamicWeightingSample
+{
+  [Curriculum]
+  public class Curriculum
+  {
+    [Phase(1)]
+    [DynamicWeighting(Minimum = MinimumWeight)]
+    public class PhaseWithExplicitMinimumWeight
+    {
+      public const float MinimumWeight = .394f;
+    }
+
+    [Phase(2)]
+    [DynamicWeighting(Maximum = MaximumWeight)]
+    public class PhaseWithExplicitMaximumWeight
+    {
+      public const float MaximumWeight = 0.606f;
+    }
+
+    [Phase(3)]
+    [DynamicWeighting(
+      Minimum = HeritableMinimumWeight,
+      Maximum = HeritableMaximumWeight)]
+    public class PhaseWithHeritableWeights
+    {
+      public const float HeritableMinimumWeight = 0.109f;
+      public const float HeritableMaximumWeight = 0.901f;
+
+      [Phase(1)]
+      public class PhaseWithInheritedWeights;
+
+      [Phase(2)]
+      [DynamicWeighting(
+        Minimum = OverriddenMinimumWeight)]
+      public class PhaseWithOverriddenMinimumWeight
+      {
+        public const float OverriddenMinimumWeight = .213f;
+      }
+
+      [Phase(3)]
+      [DynamicWeighting(
+        Maximum = OverriddenMaximumWeight)]
+      public class PhaseWithOverriddenMaximumWeight
+      {
+        public const float OverriddenMaximumWeight = .930f;
+      }
+
+      [Phase(4)]
+      [DynamicWeighting(Minimum = 0, Maximum = 0)]
+      public class PhaseWithLowMinimumAndMaximumWeights;
+
+      [Phase(4)]
+      [DynamicWeighting(Minimum = 1, Maximum = 1)]
+      public class PhaseWithHighMinimumAndMaximumWeights;
     }
   }
 }

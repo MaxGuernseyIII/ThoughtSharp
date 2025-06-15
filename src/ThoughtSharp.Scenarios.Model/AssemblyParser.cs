@@ -30,7 +30,9 @@ public class AssemblyParser
   {
     SuccessFraction = .95,
     SampleSize = 1000,
-    MaximumAttempts = 500
+    MaximumAttempts = 500,
+    MinimumDynamicWeight = .75,
+    MaxinimumDynamicWeight = 1
   };
 
   public ScenariosModel Parse(Assembly LoadedAssembly)

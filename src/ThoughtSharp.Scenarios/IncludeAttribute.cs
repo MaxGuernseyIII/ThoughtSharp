@@ -23,7 +23,4 @@
 namespace ThoughtSharp.Scenarios;
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class IncludeAttribute(Type Capability) : BehaviorSelectorAttribute(Capability)
-{
-  public double Weight { get; set; }
-}
+public class IncludeAttribute(Type Capability) : BehaviorSelectorAttribute(Capability);

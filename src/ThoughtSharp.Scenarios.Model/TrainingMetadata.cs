@@ -27,4 +27,6 @@ public record TrainingMetadata
   public required double SuccessFraction { get; init; }
   public required int SampleSize { get; init; }
   public required int MaximumAttempts { get; init; }
+  public required double MinimumDynamicWeight { get; init; }
+  public required double MaxinimumDynamicWeight { get; init; }
 }

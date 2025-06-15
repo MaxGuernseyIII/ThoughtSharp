@@ -70,7 +70,7 @@ static class Any
 {
   public static TrainingMetadata TrainingMetadata()
   {
-    return new() {MaximumAttempts = 1, SampleSize = 1, SuccessFraction = 1};
+    return new() {MaximumAttempts = 1, SampleSize = 1, SuccessFraction = 1, MinimumDynamicWeight = 1, MaxinimumDynamicWeight = 1};
   }
 }
 

@@ -125,7 +125,9 @@ static class Any
     {
       MaximumAttempts = Any.Int(1, 10),
       SampleSize = Any.Int(1, 10),
-      SuccessFraction = Any.Float
+      SuccessFraction = Any.Float,
+      MinimumDynamicWeight = Any.Float,
+      MaxinimumDynamicWeight = Any.Float
     };
   }
 
