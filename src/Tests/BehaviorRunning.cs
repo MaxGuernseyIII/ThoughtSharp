@@ -403,8 +403,9 @@ public class BehaviorRunning
     ];
     var SaveGate = new MockGate();
     var Scheme = new TrainingDataScheme(new MockNode(), Any.TrainingMetadata());
+    Incrementable TrialCounter = new Counter();
 
-    var Job = Model.GetTestPassFor(Pool, Scheme, SaveGate, Pool, Reporter, Nodes);
+    var Job = Model.GetTestPassFor(Pool, Scheme, SaveGate, Pool, Reporter, TrialCounter, Nodes);
 
     Job.Should().BeEquivalentTo(
       new AutomationPass(
@@ -417,8 +418,7 @@ public class BehaviorRunning
               Scheme.Metadata.MaxinimumDynamicWeight, 
               Scheme.GetConvergenceTrackerFor(Tuple.Node), 
               Scheme.Metadata.SuccessFraction,
-              // TODO: FIX!
-              null!)
+              TrialCounter)
           })],
         SaveGate,
         Pool,

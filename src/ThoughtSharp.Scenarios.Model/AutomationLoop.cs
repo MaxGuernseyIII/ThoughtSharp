@@ -32,14 +32,8 @@ public sealed record AutomationLoop(
   public async Task<RunResult> Run()
   {
     while (ContinueGate.IsOpen)
-      await OnePass();
+      await Pass.Run();
 
     return new() {Status = Success.IsOpen ? BehaviorRunStatus.Success : BehaviorRunStatus.Failure};
-  }
-
-  async Task OnePass()
-  {
-    await Pass.Run();
-    Counter.Increment();
   }
 }

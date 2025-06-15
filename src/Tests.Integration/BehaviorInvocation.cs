@@ -52,17 +52,11 @@ public class BehaviorInvocation
     var SingleNode = Model.GetNodeAtEndOfPath(RootNamespace, nameof(IntegrationTestInput),
       nameof(IntegrationTestInput.Runnables), nameof(IntegrationTestInput.Runnables.WillPass));
     MindPool Pool = new(Model.MindPlaceIndex);
-    var TestPass = Model.GetTestPassFor(Pool, new(null!, Any.TrainingMetadata()), new FalseGate(), Pool, new MockReporter(), SingleNode);
+    var TestPass = Model.GetTestPassFor(Pool, new(null!, Any.TrainingMetadata()), new FalseGate(), Pool, new MockReporter(), new Counter(), SingleNode);
 
     var Result = await TestPass.Run();
 
     Result.Status.Should().Be(BehaviorRunStatus.Success);
-  }
-
-  Type? ReplaceProxyWithLoadedType(Type Proxy)
-  {
-    var Expected = LoadedAssembly.GetType(Proxy.FullName!);
-    return Expected;
   }
 }
 

@@ -28,7 +28,7 @@ public record DynamicWeightedRunnable(
   double MaximumWeight,
   ConvergenceTracker ConvergenceSource,
   double ConvergenceThreshold,
-  Counter TrialCounter)
+  Incrementable TrialCounter)
   : Runnable
 {
   readonly double Denominator = 1 - ConvergenceThreshold;
