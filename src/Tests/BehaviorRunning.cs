@@ -22,7 +22,6 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
-using FluentAssertions.Specialized;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
@@ -303,7 +302,7 @@ public class BehaviorRunning
     var MethodInfo = HostType.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
     var Node = new BehaviorNode(HostType, MethodInfo);
 
-    ImmutableArray<(ScenariosModelNode Node, BehaviorRunner Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
+    ImmutableArray<(ScenariosModelNode Node, Runnable Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
 
     Runners.Should().BeEquivalentTo([(Node, new BehaviorRunner(Pool, HostType, MethodInfo))]);
   }
@@ -331,7 +330,7 @@ public class BehaviorRunning
         ])
       ]);
 
-    ImmutableArray<(ScenariosModelNode Node, BehaviorRunner Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
+    ImmutableArray<(ScenariosModelNode Node, Runnable Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
 
     Runners.Should().BeEquivalentTo([
       (Node1, new BehaviorRunner(Pool, HostType1, MethodInfo1)),
@@ -367,7 +366,7 @@ public class BehaviorRunning
       Repeated
     ];
 
-    ImmutableArray<(ScenariosModelNode Node, BehaviorRunner Runner)> Runners = [.. Nodes.GetBehaviorRunners(Pool)];
+    ImmutableArray<(ScenariosModelNode Node, Runnable Runner)> Runners = [.. Nodes.GetBehaviorRunners(Pool)];
 
     Runners.Should().BeEquivalentTo([
       (Node1, new BehaviorRunner(Pool, HostType1, MethodInfo1)),
@@ -403,13 +402,24 @@ public class BehaviorRunning
       ])
     ];
     var SaveGate = new MockGate();
-    var Scheme = new TrainingDataScheme((ScenariosModelNode) new MockNode(), Any.TrainingMetadata());
+    var Scheme = new TrainingDataScheme(new MockNode(), Any.TrainingMetadata());
+    Incrementable TrialCounter = new Counter();
 
-    var Job = Model.GetTestPassFor(Pool, Scheme, SaveGate, Pool, Reporter, Nodes);
+    var Job = Model.GetTestPassFor(Pool, Scheme, SaveGate, Pool, Reporter, TrialCounter, Nodes);
 
     Job.Should().BeEquivalentTo(
       new AutomationPass(
-        [.. Nodes.GetBehaviorRunners(Pool)],
+        [.. Nodes.GetBehaviorRunners(Pool)
+          .Select(Tuple => Tuple with
+          {
+            Runner = new DynamicWeightedRunnable(
+              Tuple.Runner, 
+              Scheme.Metadata.MinimumDynamicWeight, 
+              Scheme.Metadata.MaxinimumDynamicWeight, 
+              Scheme.GetConvergenceTrackerFor(Tuple.Node), 
+              Scheme.Metadata.SuccessFraction,
+              TrialCounter)
+          })],
         SaveGate,
         Pool,
         Scheme,

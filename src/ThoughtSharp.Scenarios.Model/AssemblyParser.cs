@@ -30,7 +30,9 @@ public class AssemblyParser
   {
     SuccessFraction = .95,
     SampleSize = 1000,
-    MaximumAttempts = 500
+    MaximumAttempts = 500,
+    MinimumDynamicWeight = .75,
+    MaxinimumDynamicWeight = 1
   };
 
   public ScenariosModel Parse(Assembly LoadedAssembly)
@@ -56,7 +58,8 @@ public class AssemblyParser
 
   static bool IsThoughtSharpTrainingType(Type Type)
   {
-    return IsCurriculumPhaseType(Type) || IsMindPlaceType(Type) || IsCurriculumType(Type) || IsCapabilityType(Type) || Type.GetNestedTypes().Any(IsThoughtSharpTrainingType);
+    return IsCurriculumPhaseType(Type) || IsMindPlaceType(Type) || IsCurriculumType(Type) || IsCapabilityType(Type) ||
+           Type.GetNestedTypes().Any(IsThoughtSharpTrainingType);
   }
 
   static IEnumerable<ScenariosModelNode> ParseTypes(Type Type, TrainingMetadata DefaultTrainingMetadata)
@@ -121,20 +124,28 @@ public class AssemblyParser
 
   static TrainingMetadata UpdateTrainingMetadataUsingType(Type Type, TrainingMetadata Metadata)
   {
-    var Standard = Type.GetCustomAttribute<ConvergenceStandard>();
-    if (Standard is not null)
+    if (Type.GetCustomAttribute<ConvergenceStandard>() is { } Standard)
       Metadata = Metadata with
       {
         SuccessFraction = Standard.Fraction,
         SampleSize = Standard.Of
       };
 
-    var MaxAttempts = Type.GetCustomAttribute<MaximumAttemptsAttribute>();
-    if (MaxAttempts is not null)
+    if (Type.GetCustomAttribute<MaximumAttemptsAttribute>() is { } MaxAttempts)
       Metadata = Metadata with
       {
         MaximumAttempts = MaxAttempts.Count
       };
+
+    if (Type.GetCustomAttribute<DynamicWeighting>() is { } DynamicWeighting)
+    {
+      if (!double.IsNaN(DynamicWeighting.Minimum))
+        Metadata = Metadata with {MinimumDynamicWeight = Math.Max(.01, DynamicWeighting.Minimum)};
+
+      if (!double.IsNaN(DynamicWeighting.Maximum))
+        Metadata = Metadata with {MaxinimumDynamicWeight = Math.Max(.01, DynamicWeighting.Maximum)};
+    }
+
     return Metadata;
   }
 

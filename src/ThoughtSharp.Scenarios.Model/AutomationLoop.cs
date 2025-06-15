@@ -25,21 +25,14 @@ namespace ThoughtSharp.Scenarios.Model;
 public sealed record AutomationLoop(
   Runnable Pass, 
   Gate ContinueGate, 
-  Gate Success, 
-  Incrementable Counter)
+  Gate Success)
   : Runnable
 {
   public async Task<RunResult> Run()
   {
     while (ContinueGate.IsOpen)
-      await OnePass();
+      await Pass.Run();
 
     return new() {Status = Success.IsOpen ? BehaviorRunStatus.Success : BehaviorRunStatus.Failure};
-  }
-
-  async Task OnePass()
-  {
-    await Pass.Run();
-    Counter.Increment();
   }
 }

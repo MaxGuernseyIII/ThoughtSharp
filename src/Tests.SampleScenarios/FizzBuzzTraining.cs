@@ -310,7 +310,7 @@ public static partial class FizzBuzzTraining
     public static CognitiveDataCodec<byte> ValueCodec { get; } =
       new CompositeCodec<byte>(
         new BitwiseOneHotNumberCodec<byte>(),
-        new NumberToFloatingPointCodec<byte,float>(new NormalizingCodec<float>(
+        new NumberToFloatingPointCodec<byte, float>(new NormalizingCodec<float>(
           new RoundingCodec<float>(new CopyFloatCodec()), byte.MinValue, byte.MaxValue)));
   }
 

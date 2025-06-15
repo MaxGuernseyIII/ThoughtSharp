@@ -71,6 +71,7 @@ public static class ScenariosModelNodeExtensions
       Gate.ForCounterAndMinimum(TrainingDataScheme.TimesSinceSaved, 100), 
       new ResetCounterSaver(Pool, TrainingDataScheme.TimesSinceSaved), 
       Reporter,
+      TrainingDataScheme.Attempts,
       Behaviors);
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
       Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), TrainingDataScheme.Metadata.SuccessFraction));
@@ -80,21 +81,29 @@ public static class ScenariosModelNodeExtensions
       Pass,
       Gate.ForAnd(
         Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, TrainingDataScheme.Metadata.MaximumAttempts), Gate.NotGate(SuccessGate)),
-        SuccessGate,
-        new CompoundIncrementable(TrainingDataScheme.Attempts, TrainingDataScheme.TimesSinceSaved)
+        SuccessGate
     );
   }
 
-  public static Runnable GetTestPassFor(
-    this ScenariosModel This, 
+  public static Runnable GetTestPassFor(this ScenariosModel This,
     MindPool Pool,
     TrainingDataScheme Scheme,
-    Gate SaveGate, 
-    Saver Saver, 
+    Gate SaveGate,
+    Saver Saver,
     Reporter Reporter,
+    Incrementable TrialCounter,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
-    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], SaveGate, Saver, Scheme, Reporter);
+    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool).Select(T => T with
+    {
+      Runner = new DynamicWeightedRunnable(
+        T.Runner, 
+        Scheme.Metadata.MinimumDynamicWeight, 
+        Scheme.Metadata.MaxinimumDynamicWeight, 
+        Scheme.GetConvergenceTrackerFor(T.Node), 
+        Scheme.Metadata.SuccessFraction, 
+        TrialCounter)
+    })], SaveGate, Saver, Scheme, Reporter);
   }
 
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)
@@ -102,19 +111,19 @@ public static class ScenariosModelNodeExtensions
     return Node.ChildNodes.OfType<CurriculumPhaseNode>().OrderBy(N => N.PhaseNumber).ToImmutableArray();
   }
 
-  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(
+  public static IEnumerable<(ScenariosModelNode Node, Runnable Runner)> GetBehaviorRunners(
     this ScenariosModelNode Node, MindPool Pool)
   {
-    return Node.Query(new CrawlingVisitor<(ScenariosModelNode Node, BehaviorRunner Runner)>
+    return Node.Query(new CrawlingVisitor<(ScenariosModelNode Node, Runnable Runner)>
       {VisitBehavior = VisitBehavior});
 
-    IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> VisitBehavior(BehaviorNode BehaviorNode)
+    IEnumerable<(ScenariosModelNode Node, Runnable Runner)> VisitBehavior(BehaviorNode BehaviorNode)
     {
-      yield return (BehaviorNode, new(Pool, BehaviorNode.HostType, BehaviorNode.Method));
+      yield return (BehaviorNode, new BehaviorRunner(Pool, BehaviorNode.HostType, BehaviorNode.Method));
     }
   }
 
-  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(
+  public static IEnumerable<(ScenariosModelNode Node, Runnable Runner)> GetBehaviorRunners(
     this IEnumerable<ScenariosModelNode> Nodes,
     MindPool Pool)
   {

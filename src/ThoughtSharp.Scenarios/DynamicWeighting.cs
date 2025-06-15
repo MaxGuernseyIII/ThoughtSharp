@@ -20,14 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios.Model;
+using static System.Double;
 
-static class Queries
+namespace ThoughtSharp.Scenarios;
+
+[AttributeUsage(AttributeTargets.Class)]
+public class DynamicWeighting : Attribute
 {
-  public static ScenariosModelNodeVisitor<IEnumerable<TrainingMetadata>> GetTrainingMetadata { get; } =
-    new TargetedVisitor<TrainingMetadata>()
-    {
-      VisitCurriculum = C => [new() { MaximumAttempts = 1, SampleSize = 1, SuccessFraction = 1, MinimumDynamicWeight = -1, MaxinimumDynamicWeight = -1}],
-      VisitCurriculumPhase = P => [P.TrainingMetadata]
-    };
+  public double Minimum { get; init; } = NaN;
+  public double Maximum { get; init; } = NaN;
 }

@@ -51,7 +51,7 @@ static class DotnetTrain
       }
     );
 
-    var Scheme = new TrainingDataScheme(Model, new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1});
+    var Scheme = new TrainingDataScheme(Model, new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1, MinimumDynamicWeight = 1, MaxinimumDynamicWeight = 1});
     var ConsoleReporter = new ConsoleReporter(Scheme);
     foreach (var Curriculum in CurriculumNodes)
     {

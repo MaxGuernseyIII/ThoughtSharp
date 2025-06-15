@@ -22,12 +22,37 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-static class Queries
+public record DynamicWeightedRunnable(
+  Runnable Underlying,
+  double MinimumWeight,
+  double MaximumWeight,
+  ConvergenceTracker ConvergenceSource,
+  double ConvergenceThreshold,
+  Incrementable TrialCounter)
+  : Runnable
 {
-  public static ScenariosModelNodeVisitor<IEnumerable<TrainingMetadata>> GetTrainingMetadata { get; } =
-    new TargetedVisitor<TrainingMetadata>()
+  readonly double Denominator = 1 - ConvergenceThreshold;
+  readonly double VariableWeightRange = MinimumWeight - MaximumWeight;
+
+  double Error;
+
+  public async Task<RunResult> Run()
+  {
+    var T = Math.Clamp((ConvergenceSource.MeasureConvergence() - ConvergenceThreshold) / Denominator, 0, 1);
+    var Delta = MaximumWeight + VariableWeightRange * T;
+    Error += Delta;
+
+    if (Error < 1)
+      return new() {Status = BehaviorRunStatus.NotRun};
+
+    try
     {
-      VisitCurriculum = C => [new() { MaximumAttempts = 1, SampleSize = 1, SuccessFraction = 1, MinimumDynamicWeight = -1, MaxinimumDynamicWeight = -1}],
-      VisitCurriculumPhase = P => [P.TrainingMetadata]
-    };
+      return await Underlying.Run();
+    }
+    finally
+    {
+      Error -= 1;
+      TrialCounter.Increment();
+    }
+  }
 }

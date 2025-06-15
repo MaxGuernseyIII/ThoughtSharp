@@ -51,8 +51,10 @@ public class AutomationLoopCreation
     var MaximumAttempts = Any.Int(20, 100);
     var SampleSize = Any.Int(100, 200);
     var SuccessFraction = Any.Float;
+    var MinimumWeight = Any.Float;
+    var MaximumWeight = Any.Float;
     var TrainingMetadata = new TrainingMetadata
-      {SampleSize = SampleSize, SuccessFraction = SuccessFraction, MaximumAttempts = MaximumAttempts};
+      {SampleSize = SampleSize, SuccessFraction = SuccessFraction, MaximumAttempts = MaximumAttempts, MinimumDynamicWeight = MinimumWeight, MaxinimumDynamicWeight = MaximumWeight};
     var PhaseNode = new CurriculumPhaseNode(null!, Any.Float,
       TrainingMetadata, [],
       [
@@ -71,7 +73,7 @@ public class AutomationLoopCreation
       ]);
 
     var SchemeNode = new MockNode();
-    var Scheme = new TrainingDataScheme((ScenariosModelNode) SchemeNode, TrainingMetadata);
+    var Scheme = new TrainingDataScheme(SchemeNode, TrainingMetadata);
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
     ImmutableArray<ScenariosModelNode> SourceNodes = [CapabilityNode, BehaviorNode3, BehaviorNode1];
     var ConvergenceGates = SourceNodes.GetBehaviorRunners(Pool)
@@ -90,14 +92,14 @@ public class AutomationLoopCreation
           Gate.ForCounterAndMinimum(Scheme.TimesSinceSaved, 100), 
           new ResetCounterSaver(Pool, Scheme.TimesSinceSaved), 
           Reporter,
+          Scheme.Attempts,
           [
             ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
           ]),
         new AndGate(
           new CounterAndMaximumGate(Scheme.Attempts, MaximumAttempts),
           Gate.NotGate(ConvergenceRule)),
-        ConvergenceRule,
-        new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts)),
+        ConvergenceRule),
       O => O.PreferringRuntimeMemberTypes());
   }
 
