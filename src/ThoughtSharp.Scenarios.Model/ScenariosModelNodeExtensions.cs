@@ -81,8 +81,7 @@ public static class ScenariosModelNodeExtensions
       Pass,
       Gate.ForAnd(
         Gate.ForCounterAndMaximum(TrainingDataScheme.Attempts, TrainingDataScheme.Metadata.MaximumAttempts), Gate.NotGate(SuccessGate)),
-        SuccessGate,
-        new CompoundIncrementable(TrainingDataScheme.Attempts, TrainingDataScheme.TimesSinceSaved)
+        SuccessGate
     );
   }
 

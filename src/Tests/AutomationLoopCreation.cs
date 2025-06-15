@@ -99,8 +99,7 @@ public class AutomationLoopCreation
         new AndGate(
           new CounterAndMaximumGate(Scheme.Attempts, MaximumAttempts),
           Gate.NotGate(ConvergenceRule)),
-        ConvergenceRule,
-        new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts)),
+        ConvergenceRule),
       O => O.PreferringRuntimeMemberTypes());
   }
 
