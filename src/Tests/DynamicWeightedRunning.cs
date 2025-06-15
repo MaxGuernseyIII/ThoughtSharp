@@ -127,6 +127,18 @@ public class DynamicWeightedRunning
     ThenRunCountIs(1);
   }
 
+  [TestMethod]
+  public async Task KeepsCounterUpToDate()
+  {
+    var Runner = GivenWeightedRunnable(.25, .5, .5);
+    GivenSuccesses(Any.Int(0, ConvergenceTrackerLength));
+    await GivenPreviousRuns(Runner, Any.Int(0, 10));
+
+    await WhenRun(Runner);
+
+    ThenCounterHasSameValueAsNumberOfRuns();
+  }
+
   void GivenSuccesses(int I)
   {
     foreach (var _ in Enumerable.Range(0, I)) 
@@ -141,7 +153,7 @@ public class DynamicWeightedRunning
 
   DynamicWeightedRunnable GivenWeightedRunnable(double MinimumWeight, double MaximumWeight, double ConvergenceThreshold)
   {
-    return new(Underlying, MinimumWeight, MaximumWeight, Tracker, ConvergenceThreshold);
+    return new(Underlying, MinimumWeight, MaximumWeight, Tracker, ConvergenceThreshold, TrialCounter);
   }
 
   async Task WhenRun(DynamicWeightedRunnable Runner)
@@ -162,5 +174,10 @@ public class DynamicWeightedRunning
   void ThenRunCountIs(int Expected)
   {
     RunCount.Should().Be(Expected);
+  }
+
+  void ThenCounterHasSameValueAsNumberOfRuns()
+  {
+    TrialCounter.Value.Should().Be(RunCount);
   }
 }

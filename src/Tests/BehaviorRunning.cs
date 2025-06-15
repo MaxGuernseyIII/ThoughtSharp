@@ -416,7 +416,9 @@ public class BehaviorRunning
               Scheme.Metadata.MinimumDynamicWeight, 
               Scheme.Metadata.MaxinimumDynamicWeight, 
               Scheme.GetConvergenceTrackerFor(Tuple.Node), 
-              Scheme.Metadata.SuccessFraction)
+              Scheme.Metadata.SuccessFraction,
+              // TODO: FIX!
+              null!)
           })],
         SaveGate,
         Pool,

@@ -101,7 +101,9 @@ public static class ScenariosModelNodeExtensions
         Scheme.Metadata.MinimumDynamicWeight, 
         Scheme.Metadata.MaxinimumDynamicWeight, 
         Scheme.GetConvergenceTrackerFor(T.Node), 
-        Scheme.Metadata.SuccessFraction)
+        Scheme.Metadata.SuccessFraction, 
+        // TODO: FIX!
+        null!)
     })], SaveGate, Saver, Scheme, Reporter);
   }
 

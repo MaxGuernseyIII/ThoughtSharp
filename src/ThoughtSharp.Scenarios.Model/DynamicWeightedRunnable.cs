@@ -27,7 +27,8 @@ public record DynamicWeightedRunnable(
   double MinimumWeight,
   double MaximumWeight,
   ConvergenceTracker ConvergenceSource,
-  double ConvergenceThreshold)
+  double ConvergenceThreshold,
+  Counter TrialCounter)
   : Runnable
 {
   readonly double Denominator = 1 - ConvergenceThreshold;
@@ -44,8 +45,14 @@ public record DynamicWeightedRunnable(
     if (Error < 1)
       return new() {Status = BehaviorRunStatus.NotRun};
 
-    Error -= 1;
-
-    return await Underlying.Run();
+    try
+    {
+      return await Underlying.Run();
+    }
+    finally
+    {
+      Error -= 1;
+      TrialCounter.Increment();
+    }
   }
 }
