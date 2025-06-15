@@ -322,7 +322,7 @@ public class AssemblyParsing
   //}
 
   [TestMethod]
-  public void InheritsDefaultMinimumWeights()
+  public void InheritsDefaultDynamicWeights()
   {
     WhenParseAssembly();
 
@@ -339,6 +339,27 @@ public class AssemblyParsing
       nameof(DynamicWeightingSample),
       nameof(DynamicWeightingSample.Curriculum),
       nameof(DynamicWeightingSample.Curriculum.PhaseWithImplicitDynamicWeights)
+    );
+  }
+
+  [TestMethod]
+  public void InheritsExplicitWeights()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = 1,
+        SampleSize = 1,
+        MaximumAttempts = 1,
+        MinimumDynamicWeight = DynamicWeightingSample.CurriculumWithExplicitWeight.MinimumWeight,
+        MaxinimumDynamicWeight = DynamicWeightingSample.CurriculumWithExplicitWeight.MaximumWeight
+      },
+      RootNamespace,
+      nameof(DynamicWeightingSample),
+      nameof(DynamicWeightingSample.CurriculumWithExplicitWeight),
+      nameof(DynamicWeightingSample.CurriculumWithExplicitWeight.PhaseWithImplicitDynamicWeights)
     );
   }
 

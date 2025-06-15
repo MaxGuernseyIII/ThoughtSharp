@@ -81,4 +81,17 @@ public class DynamicWeightingSample
     [DynamicWeighting(Minimum = 0, Maximum = 0)]
     public class PhaseWithLowMinimumAndMaximumWeights;
   }
+
+  [MaximumAttempts(1)]
+  [ConvergenceStandard(Fraction = 1, Of = 1)]
+  [DynamicWeighting(Minimum = MinimumWeight, Maximum = MaximumWeight)]
+  [Curriculum]
+  public class CurriculumWithExplicitWeight
+  {
+    public const double MinimumWeight = 0.4149;
+    public const double MaximumWeight = .631415;
+
+    [Phase(1)]
+    public class PhaseWithImplicitDynamicWeights;
+  }
 }
