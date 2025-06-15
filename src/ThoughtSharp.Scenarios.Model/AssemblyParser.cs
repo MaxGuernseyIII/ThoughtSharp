@@ -123,20 +123,28 @@ public class AssemblyParser
 
   static TrainingMetadata UpdateTrainingMetadataUsingType(Type Type, TrainingMetadata Metadata)
   {
-    var Standard = Type.GetCustomAttribute<ConvergenceStandard>();
-    if (Standard is not null)
+    if (Type.GetCustomAttribute<ConvergenceStandard>() is {} Standard)
       Metadata = Metadata with
       {
         SuccessFraction = Standard.Fraction,
         SampleSize = Standard.Of
       };
 
-    var MaxAttempts = Type.GetCustomAttribute<MaximumAttemptsAttribute>();
-    if (MaxAttempts is not null)
+    if (Type.GetCustomAttribute<MaximumAttemptsAttribute>() is {} MaxAttempts)
       Metadata = Metadata with
       {
         MaximumAttempts = MaxAttempts.Count
       };
+
+    if (Type.GetCustomAttribute<DynamicWeighting>() is { } DynamicWeighting)
+    {
+      if (!double.IsNaN(DynamicWeighting.Minimum))
+        Metadata = Metadata with {MinimumDynamicWeight = DynamicWeighting.Minimum};
+
+      if (!double.IsNaN(DynamicWeighting.Maximum))
+        Metadata = Metadata with {MaxinimumDynamicWeight = DynamicWeighting.Maximum};
+    }
+
     return Metadata;
   }
 

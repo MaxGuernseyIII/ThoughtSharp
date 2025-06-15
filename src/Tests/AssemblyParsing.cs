@@ -322,6 +322,69 @@ public class AssemblyParsing
   //}
 
   [TestMethod]
+  public void InheritsDefaultMinimumWeights()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = 1,
+        SampleSize = 1,
+        MaximumAttempts = 1,
+        MinimumDynamicWeight = .75,
+        MaxinimumDynamicWeight = 1
+      },
+      RootNamespace,
+      nameof(DynamicWeightingSample),
+      nameof(DynamicWeightingSample.Curriculum),
+      nameof(DynamicWeightingSample.Curriculum.PhaseWithImplicitDynamicWeights)
+    );
+  }
+
+  [TestMethod]
+  public void CanOverridePhaseDynamicMinimumWeight()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = 1,
+        SampleSize = 1,
+        MaximumAttempts = 1,
+        MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMinimumWeight.MinimumWeight,
+        MaxinimumDynamicWeight = 1
+      },
+      RootNamespace,
+      nameof(DynamicWeightingSample),
+      nameof(DynamicWeightingSample.Curriculum),
+      nameof(DynamicWeightingSample.Curriculum.PhaseWithExplicitMinimumWeight)
+    );
+  }
+
+  [TestMethod]
+  public void CanOverridePhaseDynamicMaximumWeight()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      new()
+      {
+        SuccessFraction = 1,
+        SampleSize = 1,
+        MaximumAttempts = 1,
+        MinimumDynamicWeight = .75,
+        MaxinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMaximumWeight.MaximumWeight
+      },
+      RootNamespace,
+      nameof(DynamicWeightingSample),
+      nameof(DynamicWeightingSample.Curriculum),
+      nameof(DynamicWeightingSample.Curriculum.PhaseWithExplicitMaximumWeight)
+    );
+  }
+
+  [TestMethod]
   public void GetsPhaseMetadata()
   {
     WhenParseAssembly();
