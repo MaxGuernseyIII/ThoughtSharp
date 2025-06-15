@@ -71,7 +71,6 @@ public static class ScenariosModelNodeExtensions
       Gate.ForCounterAndMinimum(TrainingDataScheme.TimesSinceSaved, 100), 
       new ResetCounterSaver(Pool, TrainingDataScheme.TimesSinceSaved), 
       Reporter,
-      TrainingDataScheme.Attempts,
       Behaviors);
     var Nodes = Behaviors.GetBehaviorRunners(Pool).Select(R => R.Node).Select(N =>
       Gate.ForConvergenceTrackerAndThreshold(TrainingDataScheme.GetConvergenceTrackerFor(N), TrainingDataScheme.Metadata.SuccessFraction));
@@ -91,7 +90,6 @@ public static class ScenariosModelNodeExtensions
     Gate SaveGate,
     Saver Saver,
     Reporter Reporter,
-    Incrementable TrialCounter,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
     return new AutomationPass([..Nodes.GetBehaviorRunners(Pool).Select(T => T with
@@ -102,7 +100,7 @@ public static class ScenariosModelNodeExtensions
         Scheme.Metadata.MaxinimumDynamicWeight, 
         Scheme.GetConvergenceTrackerFor(T.Node), 
         Scheme.Metadata.SuccessFraction, 
-        TrialCounter)
+        new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts))
     })], SaveGate, Saver, Scheme, Reporter);
   }
 

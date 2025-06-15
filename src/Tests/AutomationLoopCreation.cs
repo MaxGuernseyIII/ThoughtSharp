@@ -92,7 +92,6 @@ public class AutomationLoopCreation
           Gate.ForCounterAndMinimum(Scheme.TimesSinceSaved, 100), 
           new ResetCounterSaver(Pool, Scheme.TimesSinceSaved), 
           Reporter,
-          Scheme.Attempts,
           [
             ..PhaseNode.IncludedTrainingScenarioNodeFinders.Select(F => Model.Query(F)).Where(R => R is not null)!
           ]),

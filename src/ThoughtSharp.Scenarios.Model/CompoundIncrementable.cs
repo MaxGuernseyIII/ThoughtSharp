@@ -31,4 +31,16 @@ public sealed record CompoundIncrementable(params ImmutableArray<Incrementable> 
     foreach (var Incrementable in Counters)
       Incrementable.Increment();
   }
+
+  public bool Equals(CompoundIncrementable? Other)
+  {
+    if (Other is null) return false;
+    if (ReferenceEquals(this, Other)) return true;
+    return Counters.SequenceEqual(Other.Counters);
+  }
+
+  public override int GetHashCode()
+  {
+    return Counters.Aggregate(0, HashCode.Combine);
+  }
 }
