@@ -302,7 +302,7 @@ public class BehaviorRunning
     var MethodInfo = HostType.GetMethod(nameof(BehaviorTestingHost.Behavior))!;
     var Node = new BehaviorNode(HostType, MethodInfo);
 
-    ImmutableArray<(ScenariosModelNode Node, BehaviorRunner Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
+    ImmutableArray<(ScenariosModelNode Node, Runnable Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
 
     Runners.Should().BeEquivalentTo([(Node, new BehaviorRunner(Pool, HostType, MethodInfo))]);
   }
@@ -330,7 +330,7 @@ public class BehaviorRunning
         ])
       ]);
 
-    ImmutableArray<(ScenariosModelNode Node, BehaviorRunner Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
+    ImmutableArray<(ScenariosModelNode Node, Runnable Runner)> Runners = [.. Node.GetBehaviorRunners(Pool)];
 
     Runners.Should().BeEquivalentTo([
       (Node1, new BehaviorRunner(Pool, HostType1, MethodInfo1)),
@@ -366,7 +366,7 @@ public class BehaviorRunning
       Repeated
     ];
 
-    ImmutableArray<(ScenariosModelNode Node, BehaviorRunner Runner)> Runners = [.. Nodes.GetBehaviorRunners(Pool)];
+    ImmutableArray<(ScenariosModelNode Node, Runnable Runner)> Runners = [.. Nodes.GetBehaviorRunners(Pool)];
 
     Runners.Should().BeEquivalentTo([
       (Node1, new BehaviorRunner(Pool, HostType1, MethodInfo1)),
@@ -402,13 +402,22 @@ public class BehaviorRunning
       ])
     ];
     var SaveGate = new MockGate();
-    var Scheme = new TrainingDataScheme((ScenariosModelNode) new MockNode(), Any.TrainingMetadata());
+    var Scheme = new TrainingDataScheme(new MockNode(), Any.TrainingMetadata());
 
     var Job = Model.GetTestPassFor(Pool, Scheme, SaveGate, Pool, Reporter, Nodes);
 
     Job.Should().BeEquivalentTo(
       new AutomationPass(
-        [.. Nodes.GetBehaviorRunners(Pool)],
+        [.. Nodes.GetBehaviorRunners(Pool)
+          .Select(Tuple => Tuple with
+          {
+            Runner = new DynamicWeightedRunnable(
+              Tuple.Runner, 
+              Scheme.Metadata.MinimumDynamicWeight, 
+              Scheme.Metadata.MaxinimumDynamicWeight, 
+              Scheme.GetConvergenceTrackerFor(Tuple.Node), 
+              Scheme.Metadata.SuccessFraction)
+          })],
         SaveGate,
         Pool,
         Scheme,
@@ -582,114 +591,5 @@ public class BehaviorRunning
   static Task Isolated(Func<Task> ToDo)
   {
     return ToDo();
-  }
-}
-
-[TestClass]
-public class DynamicWeightedRunning
-{
-  const int ConvergenceTrackerLength = 10;
-  int RunCount;
-  RunResult RunResult = null!;
-  MockRunnable Underlying = null!;
-  ConvergenceTracker Tracker = null!;
-
-  [TestInitialize]
-  public void SetUp()
-  {
-    RunCount = 0;
-    RunResult = new() { Status = BehaviorRunStatus.Success };
-    Underlying = new()
-    {
-      RunBehavior = () =>
-      {
-        RunCount++;
-        return Task.FromResult(RunResult);
-      }
-    };
-    Tracker = new(ConvergenceTrackerLength);
-  }
-
-  [TestMethod]
-  public async Task WithFullWeightIsPassThrough()
-  {
-    var Runner = new DynamicWeightedRunnable(Underlying, 1, 1, Tracker, .5);
-
-    var Result = await Runner.Run();
-
-    Result.Should().BeSameAs(RunResult);
-  }
-
-  [TestMethod]
-  public async Task WithPartialWeightAndNoConvergenceDoesNotRunRightAway()
-  {
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
-
-    var Result = await Runner.Run();
-
-    Result.Should().Be(new RunResult { Status = BehaviorRunStatus.NotRun});
-    RunCount.Should().Be(0);
-  }
-
-  [TestMethod]
-  public async Task WithPartialWeightAndNoConvergenceTakesMultipleTries()
-  {
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
-
-    await Runner.Run();
-    var Result = await Runner.Run();
-
-    Result.Should().BeSameAs(RunResult);
-    RunCount.Should().Be(1);
-  }
-
-  [TestMethod]
-  public async Task WithPartialWeightAndFullConvergenceDoesNotRunRightAway()
-  {
-    GivenSuccesses(ConvergenceTrackerLength);
-
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
-
-    var Result = await Runner.Run();
-
-    Result.Should().Be(new RunResult { Status = BehaviorRunStatus.NotRun});
-    RunCount.Should().Be(0);
-  }
-
-  [TestMethod]
-  public async Task WithPartialWeightAndFullConvergenceTakesMultipleTries()
-  {
-    GivenSuccesses(ConvergenceTrackerLength);
-
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
-
-    await Runner.Run();
-    await Runner.Run();
-    await Runner.Run();
-    var Result = await Runner.Run();
-
-    Result.Should().BeSameAs(RunResult);
-    RunCount.Should().Be(1);
-  }
-
-  [TestMethod]
-  public async Task WithPartialWeightsAndPartialConvergenceTakesMultipleTries()
-  {
-    GivenSuccesses((int) (ConvergenceTrackerLength * .5 + ConvergenceTrackerLength * .5 * .7));
-
-    var Runner = new DynamicWeightedRunnable(Underlying, .25, .5, Tracker, .5);
-
-    await Runner.Run();
-    await Runner.Run();
-    var Result = await Runner.Run();
-
-    Result.Should().BeSameAs(RunResult);
-    RunCount.Should().Be(1);
-  }
-
-  void GivenSuccesses(int I)
-  {
-    foreach (var _ in Enumerable.Range(0, I)) 
-      Tracker.RecordResult(true);
   }
 }

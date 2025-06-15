@@ -94,7 +94,15 @@ public static class ScenariosModelNodeExtensions
     Reporter Reporter,
     params ImmutableArray<ScenariosModelNode> Nodes)
   {
-    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool)], SaveGate, Saver, Scheme, Reporter);
+    return new AutomationPass([..Nodes.GetBehaviorRunners(Pool).Select(T => T with
+    {
+      Runner = new DynamicWeightedRunnable(
+        T.Runner, 
+        Scheme.Metadata.MinimumDynamicWeight, 
+        Scheme.Metadata.MaxinimumDynamicWeight, 
+        Scheme.GetConvergenceTrackerFor(T.Node), 
+        Scheme.Metadata.SuccessFraction)
+    })], SaveGate, Saver, Scheme, Reporter);
   }
 
   public static IEnumerable<CurriculumPhaseNode> GetChildPhases(this ScenariosModelNode Node)
@@ -102,19 +110,19 @@ public static class ScenariosModelNodeExtensions
     return Node.ChildNodes.OfType<CurriculumPhaseNode>().OrderBy(N => N.PhaseNumber).ToImmutableArray();
   }
 
-  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(
+  public static IEnumerable<(ScenariosModelNode Node, Runnable Runner)> GetBehaviorRunners(
     this ScenariosModelNode Node, MindPool Pool)
   {
-    return Node.Query(new CrawlingVisitor<(ScenariosModelNode Node, BehaviorRunner Runner)>
+    return Node.Query(new CrawlingVisitor<(ScenariosModelNode Node, Runnable Runner)>
       {VisitBehavior = VisitBehavior});
 
-    IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> VisitBehavior(BehaviorNode BehaviorNode)
+    IEnumerable<(ScenariosModelNode Node, Runnable Runner)> VisitBehavior(BehaviorNode BehaviorNode)
     {
-      yield return (BehaviorNode, new(Pool, BehaviorNode.HostType, BehaviorNode.Method));
+      yield return (BehaviorNode, new BehaviorRunner(Pool, BehaviorNode.HostType, BehaviorNode.Method));
     }
   }
 
-  public static IEnumerable<(ScenariosModelNode Node, BehaviorRunner Runner)> GetBehaviorRunners(
+  public static IEnumerable<(ScenariosModelNode Node, Runnable Runner)> GetBehaviorRunners(
     this IEnumerable<ScenariosModelNode> Nodes,
     MindPool Pool)
   {
