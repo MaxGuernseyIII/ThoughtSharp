@@ -25,7 +25,7 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device>
+public sealed class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenceParts, TorchInferenceParts>, torch.Device>
 {
   public static TorchBrainFactory Instance => new((M, D) => new(M, D));
 
