@@ -217,7 +217,9 @@ public class BrainBuilding
               Factory.CreateLinear(InputFeatures, 10),
               Factory.CreateLinear(10, 4)
             )),
-          Factory.CreateLinear(9, OutputFeatures)
+          Factory.CreateParallel(
+            Factory.CreateLinear(9, OutputFeatures)
+          )
         ),
         Factory.GetDefaultOptimumDevice()
       ));
@@ -244,7 +246,9 @@ public class BrainBuilding
               Factory.CreateLinear(InputFeatures, 10),
               Factory.CreateLinear(10, 4)
             )),
-          Factory.CreateLinear(9, OutputFeatures, false)
+          Factory.CreateParallel(
+            Factory.CreateLinear(9, OutputFeatures, false)
+          )
         ),
         Factory.GetDefaultOptimumDevice()
       ));
@@ -285,7 +289,10 @@ public class BrainBuilding
               )),
             Factory.CreateLinear(Layer2A1Features + Layer2B2Features, Layer3Features)
           ),
-          Factory.CreateLinear(Layer3Features, OutputFeatures)),
+          Factory.CreateParallel(
+            Factory.CreateLinear(Layer3Features, OutputFeatures))
+        )
+        ,
         Factory.GetDefaultOptimumDevice()
       ).Model);
   }
@@ -425,7 +432,9 @@ public class BrainBuilding
           Factory.CreateSequence(
             ExpectedModels
           ),
-          Factory.CreateLinear(Features, OutputFeatures, WithBias)),
+          Factory.CreateParallel(
+            Factory.CreateLinear(Features, OutputFeatures, WithBias))
+        ),
         Device));
   }
 
@@ -445,7 +454,8 @@ public class BrainBuilding
 
     var LastOutputFeatures = FeatureLayerCounts.Any() ? FeatureLayerCounts[^1] : InputFeatures;
 
-    return (FeatureLayerCounts, ExpectedLayers, Factory.CreateLinear(LastOutputFeatures, OutputFeatures));
+    return (FeatureLayerCounts, ExpectedLayers, Factory.CreateParallel(
+        Factory.CreateLinear(LastOutputFeatures, OutputFeatures)));
   }
 
   (List<int> FeatureLayerCounts, List<MockBuiltModel> ExpectedLayers) GetExpectedLayers()

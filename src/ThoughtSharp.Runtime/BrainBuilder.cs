@@ -38,7 +38,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     this.Factory = Factory;
     Input = new VirtualConstructor(InputFeatures);
     Constructor = new AdaptOutputConstructor(Factory,
-      new SequenceConstructor(this, Input), OutputFeatures, true);
+      new SequenceConstructor(this, Input), true, [OutputFeatures]);
     Device = this.Factory.GetDefaultOptimumDevice();
   }
 
@@ -65,15 +65,17 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   {
     return this with
     {
-      Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(this, Input)), OutputFeatures, WithFinalBias)
+      Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(this, Input)), WithFinalBias,
+        [OutputFeatures])
     };
   }
 
-  public BrainBuilder<TBrain, TModel, TDevice> UsingParallel(Func<ParallelConstructor, ParallelConstructor> Transform, bool WithFinalBias = true)
+  public BrainBuilder<TBrain, TModel, TDevice> UsingParallel(Func<ParallelConstructor, ParallelConstructor> Transform,
+    bool WithFinalBias = true)
   {
     return this with
     {
-      Constructor = new AdaptOutputConstructor(Factory, Transform(new(this, Input)), OutputFeatures, WithFinalBias)
+      Constructor = new AdaptOutputConstructor(Factory, Transform(new(this, Input)), WithFinalBias, [OutputFeatures])
     };
   }
 
@@ -195,21 +197,17 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return this with
       {
-        Constructors = [
+        Constructors =
+        [
           ..Constructors,
           Configure(new(Host, Tail))
-          ]
+        ]
       };
     }
   }
 
   public record TimeAwareConstructor : ModelConstructor
   {
-    BrainBuilder<TBrain, TModel, TDevice> Host { get; }
-    ModelConstructor Pooling { get; init; }
-    ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
-    ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
-
     public TimeAwareConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor)
     {
       this.Host = Host;
@@ -217,7 +215,22 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       Pooling = new MeanOverTimeStepsPoolingConstructor(Host, Tail);
     }
 
+    BrainBuilder<TBrain, TModel, TDevice> Host { get; }
+    ModelConstructor Pooling { get; init; }
+    ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
+    ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
+
     ImmutableArray<ModelConstructor> Predecessors { get; }
+
+    public int OutputFeatures => Tail.OutputFeatures;
+
+    public string CompactDescriptiveText =>
+      string.Join(string.Empty, Constructors.Select(C => C.CompactDescriptiveText));
+
+    public TModel Build()
+    {
+      return Host.Factory.CreateTimeAware(Constructors.Select(C => C.Build()), Pooling.Build());
+    }
 
     public TimeAwareConstructor AddGRU(int Features, int Layers = 1)
     {
@@ -225,20 +238,12 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       return this with
       {
         Pooling = new LatestTimeStepOfStatePoolingConstructor(Host, NewTail),
-        Constructors = [
+        Constructors =
+        [
           ..Constructors,
           NewTail
-          ]
+        ]
       };
-    }
-
-    public int OutputFeatures => Tail.OutputFeatures;
-
-    public string CompactDescriptiveText => string.Join(string.Empty, Constructors.Select(C => C.CompactDescriptiveText));
-
-    public TModel Build()
-    {
-      return Host.Factory.CreateTimeAware(Constructors.Select(C => C.Build()), Pooling.Build());
     }
 
     public TimeAwareConstructor AddAttention(int Heads, int FeaturesPerHead)
@@ -247,14 +252,16 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       return this with
       {
         Pooling = new AttentionPoolingConstructor(Host, NewTail),
-        Constructors = [
+        Constructors =
+        [
           ..Constructors,
           NewTail
-          ]
+        ]
       };
     }
 
-    class AttentionPoolingConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor) : ModelConstructor
+    class AttentionPoolingConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor)
+      : ModelConstructor
     {
       public int OutputFeatures => Predecessor.OutputFeatures;
 
@@ -313,7 +320,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     }
   }
 
-  class MeanOverTimeStepsPoolingConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor) : ModelConstructor
+  class MeanOverTimeStepsPoolingConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor)
+    : ModelConstructor
   {
     public int OutputFeatures => Predecessor.OutputFeatures;
 
@@ -341,7 +349,9 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     }
   }
 
-  record LatestTimeStepOfStatePoolingConstructor(BrainBuilder<TBrain, TModel, TDevice> Host, ModelConstructor Predecessor) : ModelConstructor
+  record LatestTimeStepOfStatePoolingConstructor(
+    BrainBuilder<TBrain, TModel, TDevice> Host,
+    ModelConstructor Predecessor) : ModelConstructor
   {
     public int OutputFeatures => Predecessor.OutputFeatures;
 
@@ -356,16 +366,21 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   sealed record AdaptOutputConstructor(
     BrainFactory<TBrain, TModel, TDevice> Factory,
     ModelConstructor CoreConstructor,
-    int OutputFeatures,
-    bool WithBias) : ModelConstructor
+    bool WithBias,
+    ImmutableArray<int> IsolationBoundaries) : ModelConstructor
   {
+    public int OutputFeatures => IsolationBoundaries.Last();
+
     public string CompactDescriptiveText => CoreConstructor.CompactDescriptiveText;
 
     public TModel Build()
     {
       return Factory.CreateSequence(
         CoreConstructor.Build(),
-        Factory.CreateLinear(CoreConstructor.OutputFeatures, OutputFeatures, WithBias));
+        Factory.CreateParallel(
+          Factory.CreateLinear(CoreConstructor.OutputFeatures, OutputFeatures, WithBias)
+        )
+      );
     }
   }
 
@@ -409,7 +424,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     }
   }
 
-  sealed record SiLUConstructor(BrainFactory<TBrain, TModel, TDevice> BrainFactory, ModelConstructor Predecessor) : ModelConstructor
+  sealed record SiLUConstructor(BrainFactory<TBrain, TModel, TDevice> BrainFactory, ModelConstructor Predecessor)
+    : ModelConstructor
   {
     public int OutputFeatures => Predecessor.OutputFeatures;
 
