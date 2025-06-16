@@ -165,6 +165,11 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return Add(new SiLUConstructor(Host.Factory, Tail));
     }
+
+    public T AddDropout(float DropRate)
+    {
+      return Add(new DropoutConstructor(Host.Factory, Tail, DropRate));
+    }
   }
 
   public sealed record SequenceConstructor(
@@ -191,11 +196,6 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     protected override SequenceConstructor With(ImmutableArray<ModelConstructor> Constructors)
     {
       return new(Host, Tail, Constructors);
-    }
-
-    public SequenceConstructor AddDropout(float DropRate)
-    {
-      return Add(new DropoutConstructor(Host.Factory, Tail, DropRate));
     }
   }
 
