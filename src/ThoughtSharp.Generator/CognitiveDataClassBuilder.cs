@@ -37,10 +37,11 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     return new(TypeAddress, [..Parameters], [..Codecs], IsPublic, ExplicitConstructor);
   }
 
-  public void AddParameterValue(IValueSymbol Member, bool Implied = false, string? NameOverride = null)
+  public CognitiveParameter AddParameterValue(IValueSymbol Member, bool Implied = false, string? NameOverride = null)
   {
     var Result = CreateParameterFor(Member, Implied, NameOverride);
     AddParameter(Result);
+    return Result;
   }
 
   void AddParameter(CognitiveParameter Parameter)
@@ -56,9 +57,6 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
       : Member.Type;
 
     var CodecExpression = GetCodecExpression(EncodedType, Member);
-
-    if (Member.Raw.HasAttribute(CognitiveAttributeNames.IsolatedAttributeName))
-      CodecExpression += ".Isolated()";
 
     var Initializer = GetInitializerExpression(Member, ExplicitCount);
     var Result = new CognitiveParameter(
@@ -78,7 +76,7 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     return new(Member.Name);
   }
 
-  static string GetInitializerExpression(IValueSymbol Member, int? ExplicitCount)
+  public static string GetInitializerExpression(IValueSymbol Member, int? ExplicitCount)
   {
     var CoreExpression = Member.Type.SpecialType switch
     {
@@ -118,9 +116,9 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
     return null;
   }
 
-  static string GetCodecExpression(ITypeSymbol EncodedType, IValueSymbol Member)
+  public static string GetCodecExpression(ITypeSymbol EncodedType, IValueSymbol Member)
   {
-    return EncodedType switch
+    var Result = EncodedType switch
     {
       {SpecialType: SpecialType.System_Single} => GetFloatCodecExpression(Member),
       {SpecialType: SpecialType.System_Boolean} => "new CopyBoolCodec()",
@@ -139,6 +137,11 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
         => "new SubDataCodec<" + T.GetFullPath() + ">()",
       _ => "new UnknownCodec()"
     };
+
+    if (Member.Raw.HasAttribute(CognitiveAttributeNames.IsolatedAttributeName))
+      Result += ".Isolated()";
+
+    return Result;
   }
 
   static string GetEnumCodecExpression(INamedTypeSymbol Enum)

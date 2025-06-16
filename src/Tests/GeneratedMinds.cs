@@ -31,6 +31,54 @@ namespace Tests;
 public partial class GeneratedMinds
 {
   [TestMethod]
+  public void DoTimeAwareMake()
+  {
+    var Brain = new MockBrain<HasTimeStepsMind.Input, HasTimeStepsMind.Output>();
+    var Mind = new HasTimeStepsMind(Brain);
+    var InputToMakeCall = Any.FloatArray();
+    var ExpectedOutput = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+    Brain.SetOutputForOnlyInput(
+      [
+        ..InputToMakeCall.Select(Step => new HasTimeStepsMind.Input()
+        {
+          OperationCode = 1,
+          Parameters =
+          {
+            TimeAwareMake =
+            {
+              Params = Step
+            }
+          }
+        })
+      ],
+      new()
+      {
+        Parameters =
+        {
+          TimeAwareMake =
+          {
+            Value = ExpectedOutput
+          }
+        }
+      });
+
+    var Actual = Mind.TimeAwareMake(InputToMakeCall).Payload;
+
+    Actual.Should().BeEquivalentTo(ExpectedOutput);
+  }
+
+
+  [Mind]
+  public partial class HasTimeStepsMind
+  {
+    [Make]
+    public partial CognitiveResult<SimpleOutputData, SimpleOutputData> TimeAwareMake([TimeSteps] float[] Params);
+  }
+
+  [TestMethod]
   public void DoSimpleMake()
   {
     var Brain = new MockBrain<SimpleMakeMockMind.Input, SimpleMakeMockMind.Output>();

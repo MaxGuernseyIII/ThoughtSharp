@@ -81,6 +81,19 @@ public static class TypeSymbolExtensions
     return true;
   }
 
+  public static ITypeSymbol GetEnumeratedType(this ITypeSymbol Type)
+  {
+    if (Type is IArrayTypeSymbol ArrayType)
+      return ArrayType.ElementType;
+
+    return Type
+      .AllInterfaces
+      .Concat([Type])
+      .OfType<INamedTypeSymbol>()
+      .First(T => T.IsIEnumerableOf(_ => true))
+      .TypeArguments[0];
+  }
+
   public static bool ImplementsIEnumerableOf(this ITypeSymbol Type, Func<ITypeSymbol, bool> ArgumentConstraint)
   {
     return Type.AllInterfaces.Concat([Type]).OfType<INamedTypeSymbol>().Any(T => T.IsIEnumerableOf(ArgumentConstraint));

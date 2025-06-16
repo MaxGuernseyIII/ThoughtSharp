@@ -43,4 +43,5 @@ static class CognitiveAttributeNames
   public const string BitwiseAttributeName = "BitwiseAttribute";
   public const string CategoricalAttributeName = "CategoricalAttribute";
   public const string IsolatedAttributeName = "IsolatedAttribute";
+  public const string TimeStepsAttributeName = "TimeStepsAttribute";
 }

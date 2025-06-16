@@ -32,7 +32,7 @@ class CognitiveParameter(
 {
   public string Name { get; } = Name;
   public string CodecExpression { get; } = CodecExpression;
-  public int? ExplicitCount { get; } = ExplicitCount;
+  public int? ExplicitCount { get; set; } = ExplicitCount;
   public bool Implied { get; } = Implied;
   public string FullType { get; } = FullType;
   public string? Initializer { get; } = Initializer;
