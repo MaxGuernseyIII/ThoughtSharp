@@ -121,14 +121,15 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     TModel Build();
   }
 
-  public interface HasInternalSequence
+  public interface HasInternalSequence<out T>
+    where T : HasInternalSequence<T>
   {
     ModelConstructor Tail { get; }
-    BrainBuilder<TBrain, TModel, TDevice> Host { get; init; }
-    SequenceConstructor Add(ModelConstructor MockArbitraryConstructor);
+    BrainBuilder<TBrain, TModel, TDevice> Host { get; }
+    T Add(ModelConstructor MockArbitraryConstructor);
   }
 
-  public sealed record SequenceConstructor : ModelConstructor, HasInternalSequence
+  public sealed record SequenceConstructor : ModelConstructor, HasInternalSequence<SequenceConstructor>
   {
     readonly ImmutableArray<ModelConstructor> Predecessors;
 
@@ -143,7 +144,9 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
 
-    ModelConstructor HasInternalSequence.Tail => Tail;
+    ModelConstructor HasInternalSequence<SequenceConstructor>.Tail => Tail;
+    BrainBuilder<TBrain, TModel, TDevice> HasInternalSequence<SequenceConstructor>.Host => Host;
+
     public BrainBuilder<TBrain, TModel, TDevice> Host { get; init; }
 
     public int OutputFeatures => Tail.OutputFeatures;
