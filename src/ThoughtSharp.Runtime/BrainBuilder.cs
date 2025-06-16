@@ -263,6 +263,11 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return new(Host, Tail, Constructors);
     }
+
+    public TimeAwareConstructor WithPooling(ModelConstructor Constructor)
+    {
+      return this with { Pooling = Constructor };
+    }
   }
 
   sealed record LinearConstructor(

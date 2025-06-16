@@ -22,6 +22,7 @@
 
 using FluentAssertions;
 using FluentAssertions.Execution;
+using JetBrains.Annotations;
 using ThoughtSharp.Runtime;
 
 // ReSharper disable NotAccessedPositionalProperty.Local
@@ -522,6 +523,19 @@ public class BrainBuilding
     ShouldBeAdaptedContainerFor(Actual, InputFeatures,
       Device,
       Factory.CreateTimeAware([], Factory.CreateMeanOverTimeStepsPooling()));
+  }
+
+  [TestMethod]
+  public void AddTimeAwareAndChangePoolingToArbitrary()
+  {
+    var Size = Any.Int();
+    var Device = UpdateBrainBuilderToAnyDevice();
+
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.WithPooling(new MockArbitraryConstructor(Size)))).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures,
+      Device,
+      Factory.CreateTimeAware([], new MockArbitrary()));
   }
 
   [TestMethod]
