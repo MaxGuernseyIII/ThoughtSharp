@@ -22,7 +22,6 @@
 
 using FluentAssertions;
 using FluentAssertions.Execution;
-using JetBrains.Annotations;
 using ThoughtSharp.Runtime;
 
 // ReSharper disable NotAccessedPositionalProperty.Local
@@ -463,26 +462,12 @@ public class BrainBuilding
       Factory.CreateSiLU(), Factory.CreateLinear(2, 1));
   }
 
-  record MockArbitrary : MockBuiltModel;
-
-  class MockArbitraryConstructor(int OutputFeatures) : BrainBuilder<MockBuiltBrain, MockBuiltModel, MockDevice>.ModelConstructor
-  {
-    public int OutputFeatures { get; } = OutputFeatures;
-
-    public string CompactDescriptiveText => "mock!";
-
-    public MockBuiltModel Build()
-    {
-      return new MockArbitrary();
-    }
-  }
-
   [TestMethod]
   public void AddArbitrary()
   {
     var Device = UpdateBrainBuilderToAnyDevice();
     var ArbitraryOutputSize = Any.Int();
-    
+
     var Actual = BrainBuilder.UsingSequence(S => S.Add(new MockArbitraryConstructor(ArbitraryOutputSize))).Build();
 
     ShouldBeAdaptedContainerFor(Actual, ArbitraryOutputSize, Device, new MockArbitrary());
@@ -531,11 +516,25 @@ public class BrainBuilding
     var Size = Any.Int();
     var Device = UpdateBrainBuilderToAnyDevice();
 
-    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.WithPooling(new MockArbitraryConstructor(Size)))).Build();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.WithPooling(new MockArbitraryConstructor(Size))))
+      .Build();
 
     ShouldBeAdaptedContainerFor(Actual, InputFeatures,
       Device,
       Factory.CreateTimeAware([], new MockArbitrary()));
+  }
+
+  [TestMethod]
+  public void AddDropout()
+  {
+    var DropRate = Any.Float;
+    var Device = UpdateBrainBuilderToAnyDevice();
+
+    var Actual = BrainBuilder.UsingSequence(S => S.AddDropout(DropRate)).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures,
+      Device,
+      Factory.CreateDropout(DropRate));
   }
 
   [TestMethod]
@@ -659,6 +658,21 @@ public class BrainBuilding
     return LayerFeatureCounts;
   }
 
+  record MockArbitrary : MockBuiltModel;
+
+  class MockArbitraryConstructor(int OutputFeatures)
+    : BrainBuilder<MockBuiltBrain, MockBuiltModel, MockDevice>.ModelConstructor
+  {
+    public int OutputFeatures { get; } = OutputFeatures;
+
+    public string CompactDescriptiveText => "mock!";
+
+    public MockBuiltModel Build()
+    {
+      return new MockArbitrary();
+    }
+  }
+
   public record MockDevice;
 
   public class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel, MockDevice>
@@ -703,6 +717,11 @@ public class BrainBuilding
       return new MockMultiHeadedAttention(InputFeatures, Heads, FeaturesPerHead);
     }
 
+    public MockBuiltModel CreateDropout(float Rate)
+    {
+      return new MockDropout(Rate);
+    }
+
     public MockBuiltModel CreateReLU()
     {
       return new MockReLU();
@@ -742,6 +761,8 @@ public class BrainBuilding
     {
       return new MockCUDADevice();
     }
+
+    record MockDropout(float Rate) : MockBuiltModel;
 
     sealed record MockLatestTimeStepInStatePooling : MockBuiltModel;
 

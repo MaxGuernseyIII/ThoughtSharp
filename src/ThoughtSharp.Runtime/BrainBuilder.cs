@@ -192,6 +192,11 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return new(Host, Tail, Constructors);
     }
+
+    public SequenceConstructor AddDropout(float DropRate)
+    {
+      return Add(new DropoutConstructor(Host.Factory, Tail, DropRate));
+    }
   }
 
   public record TimeAwareConstructor :  HasInternalSequence<TimeAwareConstructor>, ModelConstructor
@@ -326,6 +331,18 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     public TModel Build()
     {
       return Host.Factory.CreateMeanOverTimeStepsPooling();
+    }
+  }
+
+  class DropoutConstructor(BrainFactory<TBrain, TModel, TDevice> Factory, ModelConstructor Predecessor, float DropRate) : ModelConstructor
+  {
+    public int OutputFeatures => Predecessor.OutputFeatures;
+
+    public string CompactDescriptiveText => "d";
+
+    public TModel Build()
+    {
+      return Factory.CreateDropout(DropRate);
     }
   }
 
