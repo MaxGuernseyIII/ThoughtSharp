@@ -40,4 +40,9 @@ class MockMind : MockDisposable, Mind<MockMind>
   {
     throw new NotImplementedException();
   }
+
+  public static void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+    throw new NotImplementedException();
+  }
 }

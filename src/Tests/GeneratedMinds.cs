@@ -581,6 +581,20 @@ public partial class GeneratedMinds
     ]);
   }
 
+  [TestMethod]
+  public void MindOutputIsolationBoundaries()
+  {
+    var S = new IsolationBoundaryStream();
+    var Offset = Any.Int(0, 1000);
+    var W = new IsolationBoundariesWriter(S, Offset);
+    var ExpectedStream = new IsolationBoundaryStream();
+    UsesIsolationMind.Output.WriteIsolationBoundaries(new IsolationBoundariesWriter(ExpectedStream, Offset));
+
+    UsesIsolationMind.WriteIsolationBoundaries(W);
+
+    S.Boundaries.Should().BeEquivalentTo(ExpectedStream.Boundaries);
+  }
+
   class MockSynchronousSurface : SynchronousActionSurface
   {
     public float? SomeData;
@@ -623,6 +637,13 @@ public partial class GeneratedMinds
     [Isolated] public float P3;
 
     public float P4;
+  }
+
+  [Mind]
+  public partial class UsesIsolationMind
+  {
+    [Make]
+    public partial CognitiveResult<HasIsolationBoundaries, HasIsolationBoundaries> MakeIsolatedContent();
   }
 
   [CognitiveData]
