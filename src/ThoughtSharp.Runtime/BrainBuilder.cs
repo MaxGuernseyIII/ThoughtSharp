@@ -391,7 +391,8 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public TModel Build()
     {
-      var NormalizedBoundaries = IsolationBoundaries.Concat([0, OutputFeatures]).Distinct().Order().ToImmutableArray();
+      var NormalizedBoundaries = IsolationBoundaries.Except([0, OutputFeatures]).Distinct().Order().ToImmutableArray();
+      NormalizedBoundaries = [0, ..NormalizedBoundaries, OutputFeatures];
       var IsolationZoneSizes = NormalizedBoundaries
         .Zip(NormalizedBoundaries.Skip(1)).Select(P => P.Second - P.First).ToImmutableArray();
 
