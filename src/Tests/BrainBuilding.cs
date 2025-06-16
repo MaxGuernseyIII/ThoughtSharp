@@ -250,6 +250,20 @@ public class BrainBuilding
       ));
   }
 
+  [TestMethod]
+  public void IsolationLayersWithExtras()
+  {
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(0, 4, 4, 9, 12, 12)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, 12)
+      .UsingSequence(S => S.AddLinear(12)).Build());
+  }
+
 
   [TestMethod]
   public void UsingParallelWithoutBias()

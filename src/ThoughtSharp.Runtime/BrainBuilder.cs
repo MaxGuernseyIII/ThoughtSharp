@@ -374,8 +374,9 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public TModel Build()
     {
-      var Pairwise = Host.IsolationBoundaries.Zip(Host.IsolationBoundaries.Skip(1)).Select(P => P.Second - P.First).ToImmutableArray();
-
+      var NormalizedBoundaries = Host.IsolationBoundaries.Distinct();
+      var Pairwise = NormalizedBoundaries
+        .Zip(NormalizedBoundaries.Skip(1)).Select(P => P.Second - P.First).ToImmutableArray();
 
       return Host.Factory.CreateSequence(
         CoreConstructor.Build(),
