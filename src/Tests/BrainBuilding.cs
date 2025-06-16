@@ -462,6 +462,31 @@ public class BrainBuilding
       Factory.CreateSiLU(), Factory.CreateLinear(2, 1));
   }
 
+  record MockArbitrary : MockBuiltModel;
+
+  class MockArbitraryConstructor(int OutputFeatures) : BrainBuilder<MockBuiltBrain, MockBuiltModel, MockDevice>.ModelConstructor
+  {
+    public int OutputFeatures { get; } = OutputFeatures;
+
+    public string CompactDescriptiveText => "mock!";
+
+    public MockBuiltModel Build()
+    {
+      return new MockArbitrary();
+    }
+  }
+
+  [TestMethod]
+  public void AddArbitrary()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+    var ArbitraryOutputSize = Any.Int();
+    
+    var Actual = BrainBuilder.UsingSequence(S => S.WithArbitrary(new MockArbitraryConstructor(ArbitraryOutputSize))).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, ArbitraryOutputSize, Device, new MockArbitrary());
+  }
+
   [TestMethod]
   public void AddEmptyTimeAware()
   {
@@ -474,7 +499,7 @@ public class BrainBuilding
   }
 
   [TestMethod]
-  public void TimeAwareWithAttention()
+  public void AddTimeAwareWithAttention()
   {
     var Device = UpdateBrainBuilderToAnyDevice();
     var Heads = Any.Int(2, 4);

@@ -221,6 +221,18 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
         ]
       };
     }
+
+    public SequenceConstructor WithArbitrary(ModelConstructor MockArbitraryConstructor)
+    {
+      return this with
+      {
+        Constructors =
+        [
+          ..Constructors,
+          MockArbitraryConstructor
+        ]
+      };
+    }
   }
 
   public record TimeAwareConstructor : ModelConstructor
