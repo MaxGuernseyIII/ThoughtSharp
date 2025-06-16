@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.CodeDom.Compiler;
+using System.Diagnostics;
 
 namespace ThoughtSharp.Generator;
 
@@ -138,10 +139,36 @@ static class MindRenderer
     W.Indent++;
     RenderInputObjectForOpCode(W, OperationCode);
 
-    foreach (var Parameter in MakeOperation.Parameters)
-      W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {Parameter.Name};");
+    var TimeStepParameterName = MakeOperation.TimeSteps?.ParameterName;
 
-    RenderMakeInference(W, Model);
+    W.WriteLine("var InputBuffers = new List<float[]>();");
+    W.WriteLine();
+    if (TimeStepParameterName is not null)
+    {
+      W.WriteLine($@"foreach (var __TIMESTEP__ in {TimeStepParameterName})");
+      W.WriteLine("{");
+      W.Indent++;
+    }
+
+    foreach (var Parameter in MakeOperation.Parameters)
+    {
+      var AssignmentSource = Parameter.Name == TimeStepParameterName ? @"__TIMESTEP__" : Parameter.Name;
+      W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {AssignmentSource};");
+    }
+
+    W.WriteLine("var InputBuffer = new float[Input.Length];");
+    W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+    W.WriteLine("InputBuffers.Add(InputBuffer);");
+
+    if (TimeStepParameterName is not null)
+    {
+      W.Indent--;
+      W.WriteLine("}");
+    }
+    W.WriteLine();
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([..InputBuffers]);");
+    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+    W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
     W.WriteLine();
 
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");

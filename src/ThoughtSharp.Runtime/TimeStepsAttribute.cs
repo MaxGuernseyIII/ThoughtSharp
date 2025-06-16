@@ -20,16 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Generator;
+namespace ThoughtSharp.Runtime;
 
-class MindMakeOperationModel(
-  string Name, 
-  string ReturnType, 
-  IReadOnlyList<(string Name, string Type)> Parameters,
-  (string ParameterTypeName, string ParameterName)? TimeSteps)
-{
-  public string Name { get; } = Name;
-  public string ReturnType { get; } = ReturnType;
-  public IReadOnlyList<(string Name, string Type)> Parameters { get; } = Parameters;
-  public (string ParameterTypeName, string ParameterName)? TimeSteps { get; } = TimeSteps;
-}
+[AttributeUsage(AttributeTargets.Parameter)]
+public class TimeStepsAttribute : Attribute;

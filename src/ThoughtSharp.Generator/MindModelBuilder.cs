@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 
 namespace ThoughtSharp.Generator;
@@ -100,7 +101,33 @@ class MindModelBuilder
 
   public void AddMakeMethodFor(IMethodSymbol MakeMethod)
   {
-    var ThisInputDataModel = MakeMethod.GetParametersDataModel(GetInputParametersClassName(MakeMethod));
+    (string TypeName, string ParameterName)? TimeStepsDefinition = null;
+    var ThisInputDataModel = MakeMethod.GetParametersDataModel(
+      GetInputParametersClassName(MakeMethod), Intercept);
+
+    bool Intercept(IParameterSymbol Parameter, CognitiveDataClassBuilder Builder)
+    {
+      if (
+        Parameter.HasAttribute(CognitiveAttributeNames.TimeStepsAttributeName) &&
+        Parameter.Type.ImplementsIEnumerableOf(_ => true))
+      {
+        var TimeStepType = Parameter.Type.GetEnumeratedType();
+        TimeStepsDefinition = (TimeStepType.GetFullPath(), Parameter.Name);
+
+        var Member = Parameter.ToValueSymbolOrDefault()!;
+        Builder.AddCompilerDefinedParameter(
+          Parameter.Name,
+          CognitiveDataClassBuilder.GetCodecExpression(TimeStepType, Member),
+          null,
+          TimeStepType.GetFullPath(),
+          CognitiveDataClassBuilder.GetInitializerExpression(Member, null));
+
+        return true;
+      }
+
+      return false;
+    }
+
     AssociatedDataTypes.Add(ThisInputDataModel);
     InputParametersBuilder.AddCompilerDefinedSubDataParameter(MakeMethod.Name, ThisInputDataModel.Address.FullName);
     var ProductType = ((INamedTypeSymbol) MakeMethod.ReturnType).TypeArguments[0];
@@ -114,7 +141,7 @@ class MindModelBuilder
     AssociatedDataTypes.Add(ThisOutputModelBuilder.Build());
 
     MakeOperations.Add(new(MakeMethod.Name, ProductType.GetFullPath(),
-      [..MakeMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath()))]));
+      [..MakeMethod.Parameters.Select(P => (P.Name, P.Type.GetFullPath()))], TimeStepsDefinition));
   }
 
   public void AddUseMethodFor(IMethodSymbol UseMethod)
@@ -205,7 +232,8 @@ class MindModelBuilder
     var Parameter = TellMethod.Parameters[0];
     var NamedParameterType = (INamedTypeSymbol) Parameter.Type;
     var AllPossibleInterfaces = NamedParameterType.AllInterfaces.Concat([NamedParameterType]);
-    var Enumerable = AllPossibleInterfaces.First(E => E.IsIEnumerableOf(T => T.HasAttribute(CognitiveAttributeNames.DataAttributeName)));
+    var Enumerable = AllPossibleInterfaces.First(E =>
+      E.IsIEnumerableOf(T => T.HasAttribute(CognitiveAttributeNames.DataAttributeName)));
     var ItemType = Enumerable.TypeArguments[0].GetFullPath();
 
     ThisInputBuilder.AddCompilerDefinedSubDataParameter(Parameter.Name, ItemType);
