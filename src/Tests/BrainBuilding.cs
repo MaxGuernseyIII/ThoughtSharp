@@ -482,7 +482,7 @@ public class BrainBuilding
     var Device = UpdateBrainBuilderToAnyDevice();
     var ArbitraryOutputSize = Any.Int();
     
-    var Actual = BrainBuilder.UsingSequence(S => S.AddArbitrary(new MockArbitraryConstructor(ArbitraryOutputSize))).Build();
+    var Actual = BrainBuilder.UsingSequence(S => S.Add(new MockArbitraryConstructor(ArbitraryOutputSize))).Build();
 
     ShouldBeAdaptedContainerFor(Actual, ArbitraryOutputSize, Device, new MockArbitrary());
   }

@@ -151,64 +151,36 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public SequenceConstructor AddLinear(int Features, bool WithBias = true)
     {
-      return AddArbitrary(new LinearConstructor(Host.Factory, Tail, Features, WithBias));
+      return Add(new LinearConstructor(Host.Factory, Tail, Features, WithBias));
     }
 
     public SequenceConstructor AddParallel(Func<ParallelConstructor, ParallelConstructor> Transform)
     {
-      return AddArbitrary(Transform(new(Host, Tail)));
+      return Add(Transform(new(Host, Tail)));
     }
 
     public SequenceConstructor AddTanh()
     {
-      return this with
-      {
-        Constructors =
-        [
-          ..Constructors,
-          new TanhConstructor(Host.Factory, Tail)
-        ]
-      };
+      return Add(new TanhConstructor(Host.Factory, Tail));
     }
 
     public SequenceConstructor AddReLU()
     {
-      return this with
-      {
-        Constructors =
-        [
-          ..Constructors,
-          new ReLUConstructor(Host.Factory, Tail)
-        ]
-      };
+      return Add(new ReLUConstructor(Host.Factory, Tail));
     }
 
     public SequenceConstructor AddSiLU()
     {
-      return this with
-      {
-        Constructors =
-        [
-          ..Constructors,
-          new SiLUConstructor(Host.Factory, Tail)
-        ]
-      };
+      return Add(new SiLUConstructor(Host.Factory, Tail));
     }
 
     public SequenceConstructor AddTimeAware(
       Func<TimeAwareConstructor, TimeAwareConstructor> Configure)
     {
-      return this with
-      {
-        Constructors =
-        [
-          ..Constructors,
-          Configure(new(Host, Tail))
-        ]
-      };
+      return Add(Configure(new(Host, Tail)));
     }
 
-    public SequenceConstructor AddArbitrary(ModelConstructor MockArbitraryConstructor)
+    public SequenceConstructor Add(ModelConstructor MockArbitraryConstructor)
     {
       return this with
       {
