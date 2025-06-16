@@ -37,8 +37,9 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     this.OutputFeatures = OutputFeatures;
     this.Factory = Factory;
     Input = new VirtualConstructor(InputFeatures);
-    Constructor = new AdaptOutputConstructor(Factory,
-      new SequenceConstructor(this, Input), true, [OutputFeatures]);
+    Constructor = new AdaptOutputConstructor(this,
+      new SequenceConstructor(this, Input), true);
+    IsolationBoundaries = [0, OutputFeatures];
     Device = this.Factory.GetDefaultOptimumDevice();
   }
 
@@ -46,10 +47,10 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   TDevice Device { get; init; }
 
   ModelConstructor Constructor { get; init; }
-  bool FinalBias { get; init; } = true;
 
-  public int InputFeatures { get; init; }
-  public int OutputFeatures { get; init; }
+  public int InputFeatures { get; }
+  public int OutputFeatures { get; }
+  public ImmutableArray<int> IsolationBoundaries { get; init; }
 
   public string CompactDescriptiveText => Constructor.CompactDescriptiveText;
 
@@ -65,8 +66,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   {
     return this with
     {
-      Constructor = new AdaptOutputConstructor(Factory, TransformSequenceBuilder(new(this, Input)), WithFinalBias,
-        [OutputFeatures])
+      Constructor = new AdaptOutputConstructor(this, TransformSequenceBuilder(new(this, Input)), WithFinalBias)
     };
   }
 
@@ -75,7 +75,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   {
     return this with
     {
-      Constructor = new AdaptOutputConstructor(Factory, Transform(new(this, Input)), WithFinalBias, [OutputFeatures])
+      Constructor = new AdaptOutputConstructor(this, Transform(new(this, Input)), WithFinalBias)
     };
   }
 
@@ -364,21 +364,23 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   }
 
   sealed record AdaptOutputConstructor(
-    BrainFactory<TBrain, TModel, TDevice> Factory,
+    BrainBuilder<TBrain, TModel, TDevice> Host,
     ModelConstructor CoreConstructor,
-    bool WithBias,
-    ImmutableArray<int> IsolationBoundaries) : ModelConstructor
+    bool WithBias) : ModelConstructor
   {
-    public int OutputFeatures => IsolationBoundaries.Last();
+    public int OutputFeatures => Host.OutputFeatures;
 
     public string CompactDescriptiveText => CoreConstructor.CompactDescriptiveText;
 
     public TModel Build()
     {
-      return Factory.CreateSequence(
+      var Pairwise = Host.IsolationBoundaries.Zip(Host.IsolationBoundaries.Skip(1)).Select(P => P.Second - P.First).ToImmutableArray();
+
+
+      return Host.Factory.CreateSequence(
         CoreConstructor.Build(),
-        Factory.CreateParallel(
-          Factory.CreateLinear(CoreConstructor.OutputFeatures, OutputFeatures, WithBias)
+        Host.Factory.CreateParallel(
+          Pairwise.Select(Length => Host.Factory.CreateLinear(CoreConstructor.OutputFeatures, Length, WithBias))
         )
       );
     }
@@ -435,5 +437,10 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return BrainFactory.CreateSiLU();
     }
+  }
+
+  public BrainBuilder<TBrain, TModel, TDevice> WithIsolationBoundaries(params ImmutableArray<int> Boundaries)
+  {
+    return this with { IsolationBoundaries = Boundaries };
   }
 }

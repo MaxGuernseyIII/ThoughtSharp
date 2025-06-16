@@ -226,6 +226,32 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void SetIsolationLayers()
+  {
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, 12)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(
+      Factory.CreateBrain(
+        Factory.CreateSequence(
+          Factory.CreateSequence(
+            Factory.CreateLinear(InputFeatures, 12)
+          ),
+          Factory.CreateParallel(
+            Factory.CreateLinear(12, 4),
+            Factory.CreateLinear(12, 5),
+            Factory.CreateLinear(12, 3)
+          )
+        ),
+        Factory.GetDefaultOptimumDevice()
+      ));
+  }
+
+
+  [TestMethod]
   public void UsingParallelWithoutBias()
   {
     var Builder = BrainBuilder.UsingParallel(Parallel => Parallel
@@ -455,7 +481,7 @@ public class BrainBuilding
     var LastOutputFeatures = FeatureLayerCounts.Any() ? FeatureLayerCounts[^1] : InputFeatures;
 
     return (FeatureLayerCounts, ExpectedLayers, Factory.CreateParallel(
-        Factory.CreateLinear(LastOutputFeatures, OutputFeatures)));
+      Factory.CreateLinear(LastOutputFeatures, OutputFeatures)));
   }
 
   (List<int> FeatureLayerCounts, List<MockBuiltModel> ExpectedLayers) GetExpectedLayers()
