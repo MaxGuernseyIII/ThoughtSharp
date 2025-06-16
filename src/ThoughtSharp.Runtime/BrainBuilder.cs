@@ -289,6 +289,30 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
         return Host.Factory.CreateAttentionPooling(Predecessor.OutputFeatures);
       }
     }
+
+    public TimeAwareConstructor WithMeanPooling()
+    {
+      return this with
+      {
+        Pooling = new MeanOverTimeStepsPoolingConstructor(Host, Tail)
+      };
+    }
+
+    public TimeAwareConstructor WithAttentionPooling()
+    {
+      return this with
+      {
+        Pooling = new AttentionPoolingConstructor(Host, Tail)
+      };
+    }
+
+    public TimeAwareConstructor WithLastTimeStepOfStatePooling()
+    {
+      return this with
+      {
+        Pooling = new LatestTimeStepOfStatePoolingConstructor(Host, Tail)
+      };
+    }
   }
 
   sealed record LinearConstructor(

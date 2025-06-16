@@ -489,6 +489,39 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void AddTimeAwareAndChangePoolingToMean()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.WithMeanPooling())).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures,
+      Device,
+      Factory.CreateTimeAware([], Factory.CreateMeanOverTimeStepsPooling()));
+  }
+
+  [TestMethod]
+  public void AddTimeAwareAndChangePoolingToAttention()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.WithAttentionPooling())).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures,
+      Device,
+      Factory.CreateTimeAware([], Factory.CreateAttentionPooling(InputFeatures)));
+  }
+
+  [TestMethod]
+  public void AddTimeAwareAndChangePoolingToLast()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.WithLastTimeStepOfStatePooling())).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures,
+      Device,
+      Factory.CreateTimeAware([], Factory.CreateLatestTimeStepInStatePooling()));
+  }
+
+  [TestMethod]
   public void AddTimeAwareWithGRU()
   {
     var Device = UpdateBrainBuilderToAnyDevice();
