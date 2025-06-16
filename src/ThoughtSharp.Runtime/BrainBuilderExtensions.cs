@@ -45,7 +45,10 @@ public static class BrainBuilderExtensions
     if (!LayerCounts.Any())
       LayerCounts = [4, 2];
 
-    return LayerCounts.Aggregate(S, (Previous, Features) => Previous.AddLinear(S.Host.InputFeatures * Features).AddReLU()) ;
+    return LayerCounts.Aggregate(S, (Previous, Features) => Previous
+      .AddLinear(S.Host.InputFeatures * Features)
+      .AddReLU()
+      .AddDropout(.1f)) ;
   }
 
   public static BrainBuilder<BuiltBrain, BuiltModel, TDevice>.ParallelConstructor AddLogicPath<BuiltBrain, BuiltModel, TDevice>(

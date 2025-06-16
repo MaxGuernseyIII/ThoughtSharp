@@ -92,7 +92,7 @@ public class BrainBuilding
     var Actual = BrainBuilder.UsingSequence(S => S.AddLogicLayers(LayerCounts)).Build();
 
     Actual.Should().Be(BrainBuilder.UsingSequence(S => LayerCounts.Aggregate(S,
-      (Previous, Features) => Previous.AddLinear(Features * BrainBuilder.InputFeatures).AddReLU())).Build());
+      (Previous, Features) => Previous.AddLinear(Features * BrainBuilder.InputFeatures).AddReLU().AddDropout(.1f))).Build());
   }
 
   [TestMethod]
@@ -535,6 +535,19 @@ public class BrainBuilding
     ShouldBeAdaptedContainerFor(Actual, InputFeatures,
       Device,
       Factory.CreateDropout(DropRate));
+  }
+
+  [TestMethod]
+  public void AddDropoutWithDefaultRate()
+  {
+    var DropRate = Any.Float;
+    var Device = UpdateBrainBuilderToAnyDevice();
+
+    var Actual = BrainBuilder.UsingSequence(S => S.AddDropout()).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures,
+      Device,
+      Factory.CreateDropout(.1f));
   }
 
   [TestMethod]

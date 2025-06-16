@@ -166,7 +166,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       return Add(new SiLUConstructor(Host.Factory, Tail));
     }
 
-    public T AddDropout(float DropRate)
+    public T AddDropout(float DropRate = 0.1f)
     {
       return Add(new DropoutConstructor(Host.Factory, Tail, DropRate));
     }
