@@ -15,6 +15,9 @@ public interface BrainFactory<
   TModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, TDevice Device);
   TModel CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead);
 
+  TModel CreateDropout(float Rate);
+  TModel CreateLayerNorm(int InputFeatures);
+
   TModel CreateLatestTimeStepInStatePooling();
   TModel CreateMeanOverTimeStepsPooling();
   TModel CreateAttentionPooling(int InputFeatures);

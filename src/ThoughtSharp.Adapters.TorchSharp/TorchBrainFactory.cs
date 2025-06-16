@@ -22,7 +22,6 @@
 
 using ThoughtSharp.Runtime;
 using TorchSharp;
-using TorchSharp.Modules;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
@@ -89,6 +88,16 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead)
   {
     return new MultiHeadedAttentionAdapter(InputFeatures, Heads, FeaturesPerHead);
+  }
+
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateDropout(float Rate)
+  {
+    return new StatePassThroughModule(torch.nn.Dropout(Rate));
+  }
+
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLayerNorm(int InputFeatures)
+  {
+    return new StatePassThroughModule(torch.nn.LayerNorm(InputFeatures));
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLatestTimeStepInStatePooling()
