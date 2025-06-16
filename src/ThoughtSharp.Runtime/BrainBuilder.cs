@@ -140,6 +140,31 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     }
 
     protected abstract T With(ImmutableArray<ModelConstructor> Constructors);
+
+    public T AddLinear(int Features, bool WithBias = true)
+    {
+      return Add(new LinearConstructor(Host.Factory, Tail, Features, WithBias));
+    }
+
+    public T AddParallel(Func<ParallelConstructor, ParallelConstructor> Transform)
+    {
+      return Add(Transform(new(Host, Tail)));
+    }
+
+    public T AddTanh()
+    {
+      return Add(new TanhConstructor(Host.Factory, Tail));
+    }
+
+    public T AddReLU()
+    {
+      return Add(new ReLUConstructor(Host.Factory, Tail));
+    }
+
+    public T AddSiLU()
+    {
+      return Add(new SiLUConstructor(Host.Factory, Tail));
+    }
   }
 
   public sealed record SequenceConstructor(
@@ -155,31 +180,6 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       [
         ..Constructors.Select(M => M.Build())
       ]);
-    }
-
-    public SequenceConstructor AddLinear(int Features, bool WithBias = true)
-    {
-      return Add(new LinearConstructor(Host.Factory, Tail, Features, WithBias));
-    }
-
-    public SequenceConstructor AddParallel(Func<ParallelConstructor, ParallelConstructor> Transform)
-    {
-      return Add(Transform(new(Host, Tail)));
-    }
-
-    public SequenceConstructor AddTanh()
-    {
-      return Add(new TanhConstructor(Host.Factory, Tail));
-    }
-
-    public SequenceConstructor AddReLU()
-    {
-      return Add(new ReLUConstructor(Host.Factory, Tail));
-    }
-
-    public SequenceConstructor AddSiLU()
-    {
-      return Add(new SiLUConstructor(Host.Factory, Tail));
     }
 
     public SequenceConstructor AddTimeAware(
