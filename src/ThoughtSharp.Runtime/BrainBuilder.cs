@@ -38,7 +38,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     this.Factory = Factory;
     Input = new VirtualConstructor(InputFeatures);
     Constructor = new(Factory,
-      new SequenceConstructor(this, Input), true, OutputFeatures, [0, OutputFeatures]);
+      new SequenceConstructor(this, Input, []), true, OutputFeatures, [0, OutputFeatures]);
     Device = this.Factory.GetDefaultOptimumDevice();
   }
 
@@ -66,7 +66,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       Constructor = Constructor with
       {
-        CoreConstructor = TransformSequenceBuilder(new(this, Input)),
+        CoreConstructor = TransformSequenceBuilder(new(this, Input, [])),
         WithBias = WithFinalBias
       }
     };
@@ -121,27 +121,34 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     TModel Build();
   }
 
-  public sealed record SequenceConstructor : ModelConstructor
+  public abstract class HasInternalSequence<T>(
+    BrainBuilder<TBrain, TModel, TDevice> Host,
+    ModelConstructor Predecessor,
+    ImmutableArray<ModelConstructor> Constructors)
+    where T : HasInternalSequence<T>
   {
-    readonly ImmutableArray<ModelConstructor> Predecessors;
+    public BrainBuilder<TBrain, TModel, TDevice> Host { get; } = Host;
+    protected ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
+    public int OutputFeatures => Tail.OutputFeatures;
+    public string CompactDescriptiveText => string.Join("", Constructors.Select(C => C.CompactDescriptiveText));
+    protected readonly ImmutableArray<ModelConstructor> Predecessors = [Predecessor];
+    protected readonly ImmutableArray<ModelConstructor> Constructors = Constructors;
 
-    public SequenceConstructor(BrainBuilder<TBrain, TModel, TDevice> Host,
-      ModelConstructor Predecessor)
+    public T Add(ModelConstructor Constructor)
     {
-      this.Host = Host;
-      Predecessors = [Predecessor];
+      return With([..Constructors, Constructor]);
     }
 
-    ImmutableArray<ModelConstructor> Constructors { get; init; } = [];
+    protected abstract T With(ImmutableArray<ModelConstructor> Constructors);
+  }
 
-    ModelConstructor Tail => Predecessors.Concat(Constructors).Last();
-
-    public BrainBuilder<TBrain, TModel, TDevice> Host { get; init; }
-
-    public int OutputFeatures => Tail.OutputFeatures;
-
-    public string CompactDescriptiveText => string.Join("", Constructors.Select(C => C.CompactDescriptiveText));
-
+  public sealed class SequenceConstructor(
+    BrainBuilder<TBrain, TModel, TDevice> Host,
+    ModelConstructor Predecessor,
+    ImmutableArray<ModelConstructor> Constructors
+    )
+    : HasInternalSequence<SequenceConstructor>(Host, Predecessor, Constructors), ModelConstructor
+  {
     TModel ModelConstructor.Build()
     {
       return Host.Factory.CreateSequence(
@@ -181,16 +188,9 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       return Add(Configure(new(Host, Tail)));
     }
 
-    public SequenceConstructor Add(ModelConstructor MockArbitraryConstructor)
+    protected override SequenceConstructor With(ImmutableArray<ModelConstructor> Constructors)
     {
-      return this with
-      {
-        Constructors =
-        [
-          ..Constructors,
-          MockArbitraryConstructor
-        ]
-      };
+      return new(Host, Tail, Constructors);
     }
   }
 
@@ -318,7 +318,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public ParallelConstructor AddPath(Func<SequenceConstructor, SequenceConstructor> Transform)
     {
-      return this with {Paths = [..Paths, Transform(new(Host, Predecessor))]};
+      return this with {Paths = [..Paths, Transform(new(Host, Predecessor, []))]};
     }
   }
 
