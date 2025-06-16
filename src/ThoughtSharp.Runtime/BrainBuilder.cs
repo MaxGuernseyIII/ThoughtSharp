@@ -170,6 +170,23 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return Add(new DropoutConstructor(Host.Factory, Tail, DropRate));
     }
+
+    public T AddLayerNorm()
+    {
+      return Add(new LayerNormConstructor(Host.Factory, Tail));
+    }
+  }
+
+  class LayerNormConstructor(BrainFactory<TBrain, TModel, TDevice> Factory, ModelConstructor Predecessor) : ModelConstructor
+  {
+    public int OutputFeatures => Predecessor.OutputFeatures;
+
+    public string CompactDescriptiveText => "n";
+
+    public TModel Build()
+    {
+      return Factory.CreateLayerNorm(Predecessor.OutputFeatures);
+    }
   }
 
   public sealed record SequenceConstructor(

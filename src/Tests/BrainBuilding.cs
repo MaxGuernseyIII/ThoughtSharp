@@ -538,6 +538,18 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void AddLayerNorm()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+
+    var Actual = BrainBuilder.UsingSequence(S => S.AddLayerNorm()).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, InputFeatures,
+      Device,
+      Factory.CreateLayerNorm(InputFeatures));
+  }
+
+  [TestMethod]
   public void AddTimeAwareAndChangePoolingToAttention()
   {
     var Device = UpdateBrainBuilderToAnyDevice();
@@ -675,6 +687,8 @@ public class BrainBuilding
 
   public record MockDevice;
 
+  record MockLayerNorm(int InputFeatures) : MockBuiltModel;
+
   public class MockFactory : BrainFactory<MockBuiltBrain, MockBuiltModel, MockDevice>
   {
     public MockBuiltModel CreateLinear(int InputFeatures, int OutputFeatures, bool HasBias)
@@ -720,6 +734,11 @@ public class BrainBuilding
     public MockBuiltModel CreateDropout(float Rate)
     {
       return new MockDropout(Rate);
+    }
+
+    public MockBuiltModel CreateLayerNorm(int InputFeatures)
+    {
+      return new MockLayerNorm(InputFeatures);
     }
 
     public MockBuiltModel CreateReLU()

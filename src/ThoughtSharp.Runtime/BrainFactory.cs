@@ -16,6 +16,7 @@ public interface BrainFactory<
   TModel CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead);
 
   TModel CreateDropout(float Rate);
+  TModel CreateLayerNorm(int InputFeatures);
 
   TModel CreateLatestTimeStepInStatePooling();
   TModel CreateMeanOverTimeStepsPooling();

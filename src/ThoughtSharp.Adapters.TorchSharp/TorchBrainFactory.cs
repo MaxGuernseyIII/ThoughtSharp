@@ -95,6 +95,11 @@ class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module<TorchInferenc
     return new StatePassThroughModule(torch.nn.Dropout(Rate));
   }
 
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLayerNorm(int InputFeatures)
+  {
+    return new StatePassThroughModule(torch.nn.LayerNorm(InputFeatures));
+  }
+
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLatestTimeStepInStatePooling()
   {
     return new LatestTimeStepInStatePooling();
