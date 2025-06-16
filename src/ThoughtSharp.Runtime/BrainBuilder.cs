@@ -222,7 +222,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       };
     }
 
-    public SequenceConstructor WithArbitrary(ModelConstructor MockArbitraryConstructor)
+    public SequenceConstructor AddArbitrary(ModelConstructor MockArbitraryConstructor)
     {
       return this with
       {
