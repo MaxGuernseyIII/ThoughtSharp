@@ -228,8 +228,11 @@ public class BrainBuilding
   [TestMethod]
   public void SetIsolationLayers()
   {
+    OutputFeatures = Any.Int(10, 20);
+    BrainBuilder = new(Factory, InputFeatures, OutputFeatures);
+
     var Builder = BrainBuilder
-      .WithIsolationBoundaries(0, 4, 9, 12)
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
       .UsingSequence(S => S.AddLinear(12));
 
     var Actual = Builder.Build();
@@ -243,7 +246,7 @@ public class BrainBuilding
           Factory.CreateParallel(
             Factory.CreateLinear(12, 4),
             Factory.CreateLinear(12, 5),
-            Factory.CreateLinear(12, 3)
+            Factory.CreateLinear(12, OutputFeatures - 9)
           )
         ),
         Factory.GetDefaultOptimumDevice()
@@ -254,16 +257,76 @@ public class BrainBuilding
   public void IsolationLayersWithExtras()
   {
     var Builder = BrainBuilder
-      .WithIsolationBoundaries(0, 4, 4, 9, 12, 12)
+      .WithIsolationBoundaries(0, 4, 4, 9, OutputFeatures, OutputFeatures)
       .UsingSequence(S => S.AddLinear(12));
 
     var Actual = Builder.Build();
 
     Actual.Should().Be(BrainBuilder
-      .WithIsolationBoundaries(0, 4, 9, 12)
-      .UsingSequence(S => S.AddLinear(12)).Build());
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
   }
 
+  [TestMethod]
+  public void AddingIsolationLate()
+  {
+    var Builder = BrainBuilder
+      .UsingSequence(S => S.AddLinear(12))
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures);
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
+  }
+
+  [TestMethod]
+  public void IsolationOrderDoesNotMatter()
+  {
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(4, 9, OutputFeatures, 0)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
+  }
+
+  [TestMethod]
+  public void IsolationWithoutBeginning()
+  {
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
+  }
+
+  [TestMethod]
+  public void IsolationWithoutEnding()
+  {
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
+  }
 
   [TestMethod]
   public void UsingParallelWithoutBias()
