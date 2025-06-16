@@ -42,6 +42,11 @@ public class NumberToFloatingPointCodec<T, U>(CognitiveDataCodec<U> Inner) : Cog
     Inner.WriteLossRulesFor(ObjectOfInnerType, Writer);
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+    Inner.WriteIsolationBoundaries(Writer);
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     var ObjectOfInnerType = Inner.DecodeFrom(Source);

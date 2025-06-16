@@ -38,6 +38,11 @@ public class SubDataCodec<T> : CognitiveDataCodec<T>
     Target.WriteAsLossRules(Writer);
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+    T.WriteIsolationBoundaries(Writer);
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     return T.UnmarshalFrom(Source);

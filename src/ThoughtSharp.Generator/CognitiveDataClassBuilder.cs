@@ -56,6 +56,10 @@ class CognitiveDataClassBuilder(TypeAddress TypeAddress)
       : Member.Type;
 
     var CodecExpression = GetCodecExpression(EncodedType, Member);
+
+    if (Member.Raw.HasAttribute(CognitiveAttributeNames.IsolatedAttributeName))
+      CodecExpression += ".Isolated()";
+
     var Initializer = GetInitializerExpression(Member, ExplicitCount);
     var Result = new CognitiveParameter(
       NameOverride ?? Member.Name, CodecExpression, ExplicitCount, Implied,

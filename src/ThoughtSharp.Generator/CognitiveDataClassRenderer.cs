@@ -119,6 +119,12 @@ class CognitiveDataClassRenderer
     }
     W.Indent--;
     W.WriteLine("}");
+
+    W.WriteLine();
+
+    using (W.DeclareWithBlock("public static void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)"))
+      foreach (var Parameter in CognitiveDataClass.Parameters) 
+        W.WriteLine($"{GetCodecFieldNameFor(Parameter)}.WriteIsolationBoundaries(Writer.AddOffset({GetIndexFieldNameFor(Parameter)}));");
   }
 
   static void WriteIndexValue(IndentedTextWriter Target, string LastValue, CognitiveParameter? LastParameter)

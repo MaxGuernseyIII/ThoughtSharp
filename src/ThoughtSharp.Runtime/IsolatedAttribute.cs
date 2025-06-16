@@ -22,24 +22,5 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface CognitiveDataCodec<T>
-{
-  int Length { get; }
-
-  void EncodeTo(T ObjectToEncode, Span<float> Target);
-
-  void WriteLossRulesFor(T Target, LossRuleWriter Writer);
-  void WriteIsolationBoundaries(IsolationBoundariesWriter Writer);
-
-  T DecodeFrom(ReadOnlySpan<float> Source);
-}
-
-public static class CognitiveDataCodecExtensions
-{
-  public static void WriteStandardLossRulesFor<T>(this CognitiveDataCodec<T> Codec, T Target, LossRuleWriter Writer)
-  {
-    var TargetBuffer = new float[Codec.Length];
-    Codec.EncodeTo(Target, TargetBuffer);
-    Writer.WriteLossRule(0, new BinaryCrossEntropyWithLogitsLossRule(TargetBuffer));
-  }
-}
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+public class IsolatedAttribute : Attribute;

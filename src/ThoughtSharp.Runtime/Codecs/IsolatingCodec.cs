@@ -20,26 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+namespace ThoughtSharp.Runtime.Codecs;
 
-public interface CognitiveDataCodec<T>
+public class IsolatingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<T>
 {
-  int Length { get; }
+  public int Length => Inner.Length;
 
-  void EncodeTo(T ObjectToEncode, Span<float> Target);
-
-  void WriteLossRulesFor(T Target, LossRuleWriter Writer);
-  void WriteIsolationBoundaries(IsolationBoundariesWriter Writer);
-
-  T DecodeFrom(ReadOnlySpan<float> Source);
-}
-
-public static class CognitiveDataCodecExtensions
-{
-  public static void WriteStandardLossRulesFor<T>(this CognitiveDataCodec<T> Codec, T Target, LossRuleWriter Writer)
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
-    var TargetBuffer = new float[Codec.Length];
-    Codec.EncodeTo(Target, TargetBuffer);
-    Writer.WriteLossRule(0, new BinaryCrossEntropyWithLogitsLossRule(TargetBuffer));
+    Inner.EncodeTo(ObjectToEncode, Target);
+  }
+
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+  {
+    Inner.WriteLossRulesFor(Target, Writer);
+  }
+
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+    Writer.Write(0);
+    Inner.WriteIsolationBoundaries(Writer);
+    Writer.Write(Length);
+  }
+
+  public T DecodeFrom(ReadOnlySpan<float> Source)
+  {
+    return Inner.DecodeFrom(Source);
   }
 }

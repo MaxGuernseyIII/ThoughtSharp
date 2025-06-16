@@ -48,6 +48,10 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
     this.WriteStandardLossRulesFor(Target, Writer);
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+  }
+
   public string DecodeFrom(ReadOnlySpan<float> Source)
   {
     var ResultBuffer = new char[MaximumCharacters];

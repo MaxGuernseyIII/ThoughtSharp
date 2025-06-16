@@ -20,26 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+using System.Numerics;
 
-public interface CognitiveDataCodec<T>
+namespace ThoughtSharp.Runtime.Codecs;
+
+public static class CodecExtensions
 {
-  int Length { get; }
+  public static CognitiveDataCodec<T> Isolated<T>(this CognitiveDataCodec<T> This) => new IsolatingCodec<T>(This);
 
-  void EncodeTo(T ObjectToEncode, Span<float> Target);
+  public static CognitiveDataCodec<T> Rounded<T>(this CognitiveDataCodec<T> This) where T : IFloatingPoint<T> =>
+    new RoundingCodec<T>(This);
 
-  void WriteLossRulesFor(T Target, LossRuleWriter Writer);
-  void WriteIsolationBoundaries(IsolationBoundariesWriter Writer);
-
-  T DecodeFrom(ReadOnlySpan<float> Source);
-}
-
-public static class CognitiveDataCodecExtensions
-{
-  public static void WriteStandardLossRulesFor<T>(this CognitiveDataCodec<T> Codec, T Target, LossRuleWriter Writer)
-  {
-    var TargetBuffer = new float[Codec.Length];
-    Codec.EncodeTo(Target, TargetBuffer);
-    Writer.WriteLossRule(0, new BinaryCrossEntropyWithLogitsLossRule(TargetBuffer));
-  }
+  public static CognitiveDataCodec<T> NormalizedTo<T>(this CognitiveDataCodec<T> This, T Minimum, T Maximum) where T : IFloatingPoint<T> =>
+    new NormalizingCodec<T>(This, Minimum, Maximum);
 }

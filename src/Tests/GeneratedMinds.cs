@@ -421,7 +421,7 @@ public partial class GeneratedMinds
     var Brain = new MockBrain<CanBeTold.Input, CanBeTold.Output>();
     var Mind = new CanBeTold(Brain);
 
-    ImmutableArray<Token> Tokens = [..Any.ListOf(() => new Token() { C1 = Any.Char, C2 = Any.Char }, 1, 5)];
+    ImmutableArray<Token> Tokens = [..Any.ListOf(() => new Token {C1 = Any.Char, C2 = Any.Char}, 1, 5)];
 
     var CallCount = 0;
 
@@ -567,6 +567,20 @@ public partial class GeneratedMinds
     return More;
   }
 
+  [TestMethod]
+  public void CognitiveDataIsolation()
+  {
+    var S = new IsolationBoundaryStream();
+    var Offset = Any.Int(0, 1000);
+    var W = new IsolationBoundariesWriter(S, Offset);
+
+    HasIsolationBoundaries.WriteIsolationBoundaries(W);
+
+    S.Boundaries.Should().BeEquivalentTo([
+      Offset + HasIsolationBoundaries.P3Index, Offset + HasIsolationBoundaries.P3Index + HasIsolationBoundaries.P3Codec.Length
+    ]);
+  }
+
   class MockSynchronousSurface : SynchronousActionSurface
   {
     public float? SomeData;
@@ -598,6 +612,17 @@ public partial class GeneratedMinds
       this.SomeOtherData = SomeOtherData;
       return Task.CompletedTask;
     }
+  }
+
+  [CognitiveData]
+  public partial class HasIsolationBoundaries
+  {
+    public float P1;
+    public float P2;
+
+    [Isolated] public float P3;
+
+    public float P4;
   }
 
   [CognitiveData]
@@ -690,7 +715,5 @@ public partial class GeneratedMinds
   }
 
   [CognitiveCategory<MockSelectable, MockDescriptor>(3)]
-  partial class MockCategory
-  {
-  }
+  partial class MockCategory;
 }

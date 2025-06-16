@@ -52,6 +52,11 @@ public class ValueWiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
     Inner.WriteLossRulesFor(U.CreateChecked(Index), Writer);
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+    Inner.WriteIsolationBoundaries(Writer);
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     var Index = int.CreateChecked(Inner.DecodeFrom(Source));
