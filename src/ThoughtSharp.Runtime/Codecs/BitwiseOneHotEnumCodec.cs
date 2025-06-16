@@ -50,6 +50,10 @@ public class BitwiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
     Inner.WriteLossRulesFor((U)(object)Target, Writer);
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+  }
+
 
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {

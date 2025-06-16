@@ -30,6 +30,7 @@ public interface CognitiveData<out T> where T : CognitiveData<T>
   void WriteAsLossRules(LossRuleWriter Target);
 
   static abstract T UnmarshalFrom(ReadOnlySpan<float> Source);
+  static abstract void WriteIsolationBoundaries(IsolationBoundariesWriter Writer);
 }
 
 public class LossRuleStream

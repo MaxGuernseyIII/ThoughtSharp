@@ -23,6 +23,4 @@
 namespace ThoughtSharp.Runtime;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public class CognitiveDataAttribute : Attribute
-{
-}
+public class CognitiveDataAttribute : Attribute;

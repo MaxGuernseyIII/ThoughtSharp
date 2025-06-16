@@ -37,6 +37,12 @@ public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T
     First.WriteLossRulesFor(Target, Writer);
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+    First.WriteIsolationBoundaries(Writer);
+    Second.WriteIsolationBoundaries(Writer.AddOffset(First.Length));
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     return First.DecodeFrom(Source[..First.Length]);

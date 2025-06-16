@@ -37,6 +37,10 @@ public class CopyBoolCodec(float Threshold = .5f) : CognitiveDataCodec<bool>
     this.WriteStandardLossRulesFor(Target, Writer);
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+  }
+
   public bool DecodeFrom(ReadOnlySpan<float> Source)
   {
     return Source[0] > Threshold;

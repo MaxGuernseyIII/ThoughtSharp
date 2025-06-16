@@ -32,7 +32,10 @@ public static class TorchBrainBuilder
     For<TMind>()
     where TMind : Mind<TMind>
   {
-    return For(TMind.InputLength, TMind.OutputLength);
+    var Stream = new IsolationBoundaryStream();
+    var Writer = new IsolationBoundariesWriter(Stream);
+    TMind.WriteIsolationBoundaries(Writer);
+    return For(TMind.InputLength, TMind.OutputLength).WithIsolationBoundaries(Stream.Boundaries);
   }
 
   public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device> 

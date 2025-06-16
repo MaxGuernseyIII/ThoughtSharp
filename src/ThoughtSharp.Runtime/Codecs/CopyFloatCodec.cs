@@ -37,6 +37,10 @@ public class CopyFloatCodec : CognitiveDataCodec<float>
     Writer.WriteLossRule(0, new HuberLossRule([Target]));
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+  }
+
   public float DecodeFrom(ReadOnlySpan<float> Source)
   {
     return Source[0];

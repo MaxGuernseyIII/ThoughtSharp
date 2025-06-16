@@ -40,6 +40,11 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
     Inner.WriteLossRulesFor(GetNormalized(Target), Writer);
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+    Inner.WriteIsolationBoundaries(Writer);
+  }
+
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
     var Normalized = Inner.DecodeFrom(Source);

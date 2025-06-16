@@ -217,10 +217,115 @@ public class BrainBuilding
               Factory.CreateLinear(InputFeatures, 10),
               Factory.CreateLinear(10, 4)
             )),
-          Factory.CreateLinear(9, OutputFeatures)
+          Factory.CreateParallel(
+            Factory.CreateLinear(9, OutputFeatures)
+          )
         ),
         Factory.GetDefaultOptimumDevice()
       ));
+  }
+
+  [TestMethod]
+  public void SetIsolationLayers()
+  {
+    OutputFeatures = Any.Int(10, 20);
+    BrainBuilder = new(Factory, InputFeatures, OutputFeatures);
+
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(
+      Factory.CreateBrain(
+        Factory.CreateSequence(
+          Factory.CreateSequence(
+            Factory.CreateLinear(InputFeatures, 12)
+          ),
+          Factory.CreateParallel(
+            Factory.CreateLinear(12, 4),
+            Factory.CreateLinear(12, 5),
+            Factory.CreateLinear(12, OutputFeatures - 9)
+          )
+        ),
+        Factory.GetDefaultOptimumDevice()
+      ));
+  }
+
+  [TestMethod]
+  public void IsolationLayersWithExtras()
+  {
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(0, 4, 4, 9, OutputFeatures, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
+  }
+
+  [TestMethod]
+  public void AddingIsolationLate()
+  {
+    var Builder = BrainBuilder
+      .UsingSequence(S => S.AddLinear(12))
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures);
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
+  }
+
+  [TestMethod]
+  public void IsolationOrderDoesNotMatter()
+  {
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(4, 9, OutputFeatures, 0)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
+  }
+
+  [TestMethod]
+  public void IsolationWithoutBeginning()
+  {
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
+  }
+
+  [TestMethod]
+  public void IsolationWithoutEnding()
+  {
+    var Builder = BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9)
+      .UsingSequence(S => S.AddLinear(12));
+
+    var Actual = Builder.Build();
+
+    Actual.Should().Be(BrainBuilder
+      .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
+      .UsingSequence(S => S.AddLinear(12))
+      .Build());
   }
 
   [TestMethod]
@@ -244,7 +349,9 @@ public class BrainBuilding
               Factory.CreateLinear(InputFeatures, 10),
               Factory.CreateLinear(10, 4)
             )),
-          Factory.CreateLinear(9, OutputFeatures, false)
+          Factory.CreateParallel(
+            Factory.CreateLinear(9, OutputFeatures, false)
+          )
         ),
         Factory.GetDefaultOptimumDevice()
       ));
@@ -285,7 +392,10 @@ public class BrainBuilding
               )),
             Factory.CreateLinear(Layer2A1Features + Layer2B2Features, Layer3Features)
           ),
-          Factory.CreateLinear(Layer3Features, OutputFeatures)),
+          Factory.CreateParallel(
+            Factory.CreateLinear(Layer3Features, OutputFeatures))
+        )
+        ,
         Factory.GetDefaultOptimumDevice()
       ).Model);
   }
@@ -425,7 +535,9 @@ public class BrainBuilding
           Factory.CreateSequence(
             ExpectedModels
           ),
-          Factory.CreateLinear(Features, OutputFeatures, WithBias)),
+          Factory.CreateParallel(
+            Factory.CreateLinear(Features, OutputFeatures, WithBias))
+        ),
         Device));
   }
 
@@ -445,7 +557,8 @@ public class BrainBuilding
 
     var LastOutputFeatures = FeatureLayerCounts.Any() ? FeatureLayerCounts[^1] : InputFeatures;
 
-    return (FeatureLayerCounts, ExpectedLayers, Factory.CreateLinear(LastOutputFeatures, OutputFeatures));
+    return (FeatureLayerCounts, ExpectedLayers, Factory.CreateParallel(
+      Factory.CreateLinear(LastOutputFeatures, OutputFeatures)));
   }
 
   (List<int> FeatureLayerCounts, List<MockBuiltModel> ExpectedLayers) GetExpectedLayers()

@@ -72,6 +72,11 @@ static class MindRenderer
     W.WriteLine($"public static int InputLength {{ get; }} = {M.TypeName.FullName}.Input.Length;");
     W.WriteLine($"public static int OutputLength {{ get; }} = {M.TypeName.FullName}.Output.Length;");
     W.WriteLine();
+
+    using (W.DeclareWithBlock($"public static void WriteIsolationBoundaries(IsolationBoundariesWriter W)"))
+    {
+      W.WriteLine("Output.WriteIsolationBoundaries(W);");
+    }
   }
 
   static void RenderModelMembers(IndentedTextWriter W, MindModel M, ushort OperationCode)

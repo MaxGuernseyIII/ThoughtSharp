@@ -31,4 +31,5 @@ public interface Mind<out T>
   public static abstract int OutputLength { get; }
 
   public static abstract T Create(Brain Brain);
+  public static abstract void WriteIsolationBoundaries(IsolationBoundariesWriter Writer);
 }

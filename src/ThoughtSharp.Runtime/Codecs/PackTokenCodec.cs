@@ -43,6 +43,10 @@ public class PackTokenCodec(string ValidCharacters, int MaximumLength) : Cogniti
     throw new NotSupportedException("This is an input-only codec");
   }
 
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+  }
+
   public string DecodeFrom(ReadOnlySpan<float> Source)
   {
     throw new NotSupportedException("This is an input-only codec");
