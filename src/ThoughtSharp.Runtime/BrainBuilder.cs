@@ -151,26 +151,12 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public SequenceConstructor AddLinear(int Features, bool WithBias = true)
     {
-      return this with
-      {
-        Constructors =
-        [
-          ..Constructors,
-          new LinearConstructor(Host.Factory, Tail, Features, WithBias)
-        ]
-      };
+      return AddArbitrary(new LinearConstructor(Host.Factory, Tail, Features, WithBias));
     }
 
     public SequenceConstructor AddParallel(Func<ParallelConstructor, ParallelConstructor> Transform)
     {
-      return this with
-      {
-        Constructors =
-        [
-          ..Constructors,
-          Transform(new(Host, Tail))
-        ]
-      };
+      return AddArbitrary(Transform(new(Host, Tail)));
     }
 
     public SequenceConstructor AddTanh()
