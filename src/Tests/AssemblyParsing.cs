@@ -480,7 +480,7 @@ public class AssemblyParsing
       {
         SuccessFraction = .6,
         SampleSize = 200,
-        MaximumAttempts = 50000,
+        MaximumAttempts = 200000,
         MinimumDynamicWeight = .75,
         MaxinimumDynamicWeight = 1
       },
@@ -501,7 +501,7 @@ public class AssemblyParsing
       {
         SuccessFraction = .98,
         SampleSize = 500,
-        MaximumAttempts = 20000,
+        MaximumAttempts = 80000,
         MinimumDynamicWeight = .75,
         MaxinimumDynamicWeight = 1
       },

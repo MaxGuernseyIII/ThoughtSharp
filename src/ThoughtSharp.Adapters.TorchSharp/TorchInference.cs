@@ -40,9 +40,6 @@ public class TorchInference(
 
   protected TorchBrain Brain { get; } = Brain;
 
-  static float Sigmoid(float X) =>
-    1f / (1f + MathF.Exp(-X));
-
   public void Dispose()
   {
     StateOutput?.Dispose();
@@ -74,6 +71,8 @@ public class TorchInference(
   TorchInferenceParts Replay()
   {
     var StateTensor = Predecessor?.Replay().State ?? Brain.EmptyState;
+
+    using var Mode = Brain.EnterTrainingMode(true);
 
     return Brain.Forward(OriginalBatches, StateTensor);
   }

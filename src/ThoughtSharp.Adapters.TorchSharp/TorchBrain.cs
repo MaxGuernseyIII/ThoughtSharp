@@ -42,6 +42,31 @@ public class TorchBrain(
     Model.load(Path);
   }
 
+  public IDisposable EnterTrainingMode(bool NewTrainingMode)
+  {
+    var CurrentlyTraining = Model.training;
+
+    SetTrainingMode(NewTrainingMode);
+
+    return new RestoreMode(this, CurrentlyTraining);
+  }
+
+  void SetTrainingMode(bool Training)
+  {
+    if (Training)
+      Model.train();
+    else
+      Model.eval();
+  }
+
+  class RestoreMode(TorchBrain TorchBrain, bool OriginalTrainingMode) : IDisposable
+  {
+    public void Dispose()
+    {
+      TorchBrain.SetTrainingMode(OriginalTrainingMode);
+    }
+  }
+
   internal TorchInferenceStateNode EmptyState => new();
   readonly Lazy<optim.Optimizer> OptimizerLazy = new(() => optim.Adam(Model.parameters()));
   optim.Optimizer Optimizer => OptimizerLazy.Value;
@@ -82,6 +107,8 @@ public class TorchBrain(
     TorchInferenceStateNode? StateInputTensor,
     float[][] Batches)
   {
+    using var Mode = EnterTrainingMode(false);
+
     var Tensors = Forward(Batches, StateInputTensor);
 
     return new TorchInference(this, Predecessor, Batches, Tensors.State, Tensors.Payload);
@@ -90,61 +117,7 @@ public class TorchBrain(
   public void ApplyLoss(Tensor Loss)
   {
     Model.zero_grad();
-    //foreach (var (name, param) in Model.named_parameters())
-    //{
-    //  if (param.grad is not null)
-    //    Console.WriteLine($"{name}.grad.device: {param.grad.device}");
-    //}
-
-    //var optimizer = optim.Adam(Model.parameters(), lr: 1e-3);
     Loss.backward();
-    //foreach (var (Name, Param) in Model.named_parameters())
-    //{
-    //  Console.WriteLine($"{Name}: {Param.device}");
-    //}
-
-    //foreach (var (name, param) in Model.named_parameters())
-    //{
-    //  if (param.grad is not null)
-    //  {
-    //    Console.WriteLine($"{name}: param.shape = {param.shape}, grad.shape = {param.grad.shape}, grad.device = {param.grad.device}");
-    //  }
-    //  else
-    //  {
-    //    Console.WriteLine($"{name}: grad is null");
-    //  }
-    //}
-
-    //foreach (var (name, param) in Model.named_parameters())
-    //{
-    //  if (param is null)
-    //  {
-    //    Console.WriteLine($"{name}: param is null");
-    //    continue;
-    //  }
-
-    //  try
-    //  {
-    //    var pShape = string.Join(", ", param.shape);
-    //    var gShape = param.grad is not null ? string.Join(", ", param.grad.shape) : "no grad";
-    //    Console.WriteLine($"{name}: param.shape = [{pShape}], grad.shape = [{gShape}], device = {param.device}");
-    //  }
-    //  catch (Exception ex)
-    //  {
-    //    Console.WriteLine($"{name}: shape check failed — {ex.Message}");
-    //  }
-    //}
-
-    //foreach (var (Name, Param) in Model.named_parameters())
-    //{
-    //  if (Param.grad is not null)
-    //  {
-    //    Console.WriteLine($"{Name}: Param = [{string.Join(", ", Param.shape)}], Grad = [{string.Join(", ", Param.grad.shape)}]");
-    //  }
-    //}
-
-    //optimizer.step();
-
     Optimizer.step();
   }
 

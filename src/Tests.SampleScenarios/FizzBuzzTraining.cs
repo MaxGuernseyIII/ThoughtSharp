@@ -242,7 +242,7 @@ public static partial class FizzBuzzTraining
   }
 
   [Curriculum]
-  [MaximumAttempts(50000)]
+  [MaximumAttempts(200000)]
   public static class FizzBuzzTrainingPlan
   {
     [Phase(1)]
@@ -251,7 +251,7 @@ public static partial class FizzBuzzTraining
     public class InitialSteps;
 
     [Phase(2)]
-    [MaximumAttempts(20000)]
+    [MaximumAttempts(80000)]
     [ConvergenceStandard(Fraction = .98, Of = 500)]
     public class FocusedTraining
     {

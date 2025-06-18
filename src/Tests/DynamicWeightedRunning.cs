@@ -67,6 +67,17 @@ public class DynamicWeightedRunning
   }
 
   [TestMethod]
+  public async Task SupportsConvergenceThresholdOfOneHundredPercent()
+  {
+    var Runner = GivenWeightedRunnable(1, 1, 1);
+
+    await WhenRun(Runner);
+
+    ThenResultIsWhatWasReturnedByUnderlying();
+    ThenRunCountIs(1);
+  }
+
+  [TestMethod]
   public async Task WithPartialWeightAndNoConvergenceDoesNotRunRightAway()
   {
     var Runner = GivenWeightedRunnable(.25, .5, .5);
