@@ -40,12 +40,12 @@ sealed class AttentionPooling : torch.nn.Module<TorchInferenceParts, TorchInfere
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
     var Scores = Weighting.forward(Input.Payload);
-    var Weights = Scores.softmax(0);
+    var Weights = Scores.softmax(1);
     var Weighted = Weights * Input.Payload;
 
     return Input with
     {
-      Payload = Weighted.sum(dim: 0)
+      Payload = Weighted.sum(dim: 1).unsqueeze(1)
     };
   }
 }

@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
 using ThoughtSharp.Runtime;
 using TorchSharp;
 
@@ -29,21 +28,20 @@ namespace ThoughtSharp.Adapters.TorchSharp;
 public class TorchInference(
   TorchBrain Brain,
   TorchInference? Predecessor,
-  float[][] OriginalBatches,
-  TorchInferenceStateNode? StateOutput,
-  torch.Tensor ProductOutputTensor) : Inference
+  TorchInferenceParts OriginalInput,
+  TorchInferenceParts Output) : Inference
 {
-  internal TorchInferenceStateNode? StateOutput { get; } = StateOutput;
-  internal torch.Tensor ProductOutputTensor { get; } = ProductOutputTensor;
+  internal TorchInferenceParts Output { get; } = Output;
+  internal TorchInferenceParts OriginalInput { get; } = OriginalInput;
 
-  public ReadOnlySpan<float> Result => ProductOutputTensor[ProductOutputTensor.shape[0] - 1].to(torch.CPU).data<float>().ToArray();
+  public ReadOnlySpan<float> Result => Output.Payload[Output.Payload.shape[0] - 1].to(torch.CPU).data<float>().ToArray();
 
   protected TorchBrain Brain { get; } = Brain;
 
   public void Dispose()
   {
-    StateOutput?.Dispose();
-    ProductOutputTensor.Dispose();
+    OriginalInput.State?.Dispose();
+    Output.Payload.Dispose();
   }
 
   public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
@@ -55,7 +53,7 @@ public class TorchInference(
 
     foreach (var (At, Rule) in LossRules)
     {
-      var AffectedSlice = TensorForBackPropagation.slice(1, At, At + Rule.Length, 1);
+      var AffectedSlice = TensorForBackPropagation.slice(2, At, At + Rule.Length, 1);
       var SliceLoss = Rule.Accept(AffectedSlice, Visitor);
       //Console.WriteLine($"Target: {SliceLoss.device}");
 
@@ -74,11 +72,18 @@ public class TorchInference(
 
     using var Mode = Brain.EnterTrainingMode(true);
 
-    return Brain.Forward(OriginalBatches, StateTensor);
+    return Brain.Forward(OriginalInput with
+    {
+      State = StateTensor
+    });
   }
 
-  public Inference MakeInference(float[][] Batches)
+  public Inference MakeInference(float[][][] JaggedTensor)
   {
-    return Brain.ExecuteInference(this, StateOutput, Batches);
+    return Brain.ExecuteInference(this, 
+      Brain.ConvertFloatsToInput(JaggedTensor) with
+      {
+        State = Output.State
+      });
   }
 }

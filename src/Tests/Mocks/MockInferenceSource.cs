@@ -44,9 +44,9 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
   public Func<ImmutableArray<TInput>, Inference> MakeInferenceFunc;
   public List<MockInference<TInput, TOutput>> MockInferences = [];
 
-  public Inference MakeInference(float[][] Parameters)
+  public Inference MakeInference(float[][][] Parameters)
   {
-    var Inputs = Parameters.Select(StepInput =>
+    var Inputs = Parameters.Last().Select(StepInput =>
     {
       StepInput.Length.Should().Be(TInput.Length);
       var Input = TInput.UnmarshalFrom(StepInput);

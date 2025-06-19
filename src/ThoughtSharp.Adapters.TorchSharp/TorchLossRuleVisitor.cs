@@ -29,25 +29,25 @@ class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
 {
   public Tensor Visit(BinaryCrossEntropyWithLogitsLossRule Rule, Tensor Prediction)
   {
-    var Target = Brain.ConvertFloatsToTensor([Rule.Target]);
+    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
     return nn.functional.binary_cross_entropy_with_logits(Prediction, Target);
   }
 
   public Tensor Visit(MeanSquareErrorLossRule Rule, Tensor Prediction)
   {
-    var Target = Brain.ConvertFloatsToTensor([Rule.Target]);
+    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
     return nn.functional.mse_loss(Prediction, Target);
   }
 
   public Tensor Visit(CrossEntropyLossRule Rule, Tensor Prediction)
   {
     var Target = Brain.GetInt64ScalarTensor(Rule.Index);
-    return nn.functional.cross_entropy(Prediction, Target);
+    return nn.functional.cross_entropy(Prediction[-1], Target);
   }
 
   public Tensor Visit(HuberLossRule Rule, Tensor Prediction)
   {
-    var Target = Brain.ConvertFloatsToTensor([Rule.Target]);
+    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
     return nn.functional.huber_loss(Prediction, Target);
   }
 }

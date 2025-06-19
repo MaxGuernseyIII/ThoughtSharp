@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using ThoughtSharp.Runtime;
 using static TorchSharp.torch;
 using static TorchSharp.torch.nn;
@@ -77,41 +78,28 @@ public class TorchBrain(
     Optimizer.Dispose();
   }
 
-  internal Tensor ConvertFloatsToTensor(float[][] Batches)
+  internal Tensor ConvertFloatsToTensor(float[][][] JaggedTensor)
   {
-    var TensorShaped = new float[Batches.Length, Batches.Max(B => B.Length)];
-
-    foreach (var BatchNumber in Enumerable.Range(0, TensorShaped.GetLength(0)))
-    foreach (var FeatureNumber in Enumerable.Range(0, Batches[BatchNumber].Length))
-      TensorShaped[BatchNumber, FeatureNumber] = Batches[BatchNumber][FeatureNumber];
-
-    return tensor(TensorShaped, ScalarType.Float32).to(Device);
+    return ConvertFloatsToInput(JaggedTensor).Payload;
   }
 
-  internal TorchInferenceParts Forward(float[][] Batches, TorchInferenceStateNode? State)
+  internal TorchInferenceParts Forward(TorchInferenceParts Input)
   {
-    return Model.forward(new()
-    {
-      Payload = ConvertFloatsToTensor(Batches),
-      State = State
-    });
+    return Model.forward(Input);
   }
 
-  public virtual Inference MakeInference(float[][] Batches)
+  public Inference MakeInference(float[][][] JaggedTensor)
   {
-    return ExecuteInference(null, EmptyState, Batches);
+    return ExecuteInference(null, ConvertFloatsToInput(JaggedTensor));
   }
 
-  internal Inference ExecuteInference(
-    TorchInference? Predecessor,
-    TorchInferenceStateNode? StateInputTensor,
-    float[][] Batches)
+  internal Inference ExecuteInference(TorchInference? Predecessor, TorchInferenceParts Input)
   {
     using var Mode = EnterTrainingMode(false);
 
-    var Tensors = Forward(Batches, StateInputTensor);
+    var Output = Forward(Input);
 
-    return new TorchInference(this, Predecessor, Batches, Tensors.State, Tensors.Payload);
+    return new TorchInference(this, Predecessor, Input, Output);
   }
 
   public void ApplyLoss(Tensor Loss)
@@ -124,5 +112,26 @@ public class TorchBrain(
   public Tensor GetInt64ScalarTensor(long RuleIndex)
   {
     return tensor([RuleIndex], ScalarType.Int64).to(Device);
+  }
+
+  public TorchInferenceParts ConvertFloatsToInput(float[][][] JaggedTensor)
+  {
+    var TensorShaped = new float[
+      JaggedTensor.Length,
+      JaggedTensor.Max(B => B.Length),
+      JaggedTensor.SelectMany(B => B).Max(R => R.Length)];
+
+    var Sequences = JaggedTensor.Select((TimeSequence, TimeSequenceNumber) => (TimeSequence, TimeSequenceNumber)).ToImmutableArray();
+    foreach (var (TimeSequence, TimeSequenceNumber) in Sequences)
+    foreach (var (TimeStep, TimeStepNumber) in TimeSequence.Select((TimeStep, TimeStepNumber) => (TimeStep, TimeStepNumber)))
+    foreach (var (Feature, FeatureNumber) in TimeStep.Select((Feature, FeatureNumber) => (Feature, FeatureNumber)))
+      TensorShaped[TimeSequenceNumber, TimeStepNumber, FeatureNumber] = Feature;
+
+    return new()
+    {
+      Payload= tensor(TensorShaped, ScalarType.Float32).to(Device),
+      SequenceLengths = tensor(Sequences.Select(S => S.TimeSequence.Length).ToArray(), dtype: int64),
+      State = EmptyState
+    };
   }
 }

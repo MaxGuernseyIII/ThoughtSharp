@@ -46,10 +46,7 @@ sealed class TimeAwareModule : torch.nn.Module<TorchInferenceParts, TorchInferen
 
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var WithTimeSteps = Input with
-    {
-      Payload = Input.Payload.unsqueeze(1)
-    };
+    var WithTimeSteps = Input;
 
     var Transformed = Submodules.Aggregate(WithTimeSteps,
       (Previous, Module) => Module.forward(Previous));

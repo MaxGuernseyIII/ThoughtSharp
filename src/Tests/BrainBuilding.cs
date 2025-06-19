@@ -874,7 +874,7 @@ public class BrainBuilding
     {
     }
 
-    public Inference MakeInference(float[][] Parameters)
+    public Inference MakeInference(float[][][] Parameters)
     {
       Assert.Fail();
       return null!;

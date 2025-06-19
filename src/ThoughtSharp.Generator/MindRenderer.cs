@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using System.CodeDom.Compiler;
-using System.Diagnostics;
 
 namespace ThoughtSharp.Generator;
 
@@ -114,21 +113,12 @@ static class MindRenderer
       }
 
       W.WriteLine();
-      W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(InputBuffers.ToArray());");
+      W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([InputBuffers.ToArray()]);");
       W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
       W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
     }
   }
 
-  //static void RenderDisposeMembers(IndentedTextWriter W)
-  //{
-  //  W.WriteLine("public void Dispose()");
-  //  W.WriteLine("{");
-  //  W.Indent++;
-  //  W.WriteLine("Brain.Dispose();");
-  //  W.Indent--;
-  //  W.WriteLine("}");
-  //}
 
   static void RenderMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation,
     ushort OperationCode)
@@ -166,7 +156,7 @@ static class MindRenderer
       W.WriteLine("}");
     }
     W.WriteLine();
-    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([..InputBuffers]);");
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([[..InputBuffers]]);");
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
     W.WriteLine();
@@ -365,7 +355,7 @@ static class MindRenderer
     W.WriteLine("var InputBuffer = new float[Input.Length];");
     W.WriteLine("InputObject.MarshalTo(InputBuffer);");
     W.WriteLine();
-    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([InputBuffer]);");
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([[InputBuffer]]);");
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
   }

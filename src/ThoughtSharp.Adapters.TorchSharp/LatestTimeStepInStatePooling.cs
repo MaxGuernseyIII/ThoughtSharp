@@ -24,13 +24,16 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-class LatestTimeStepInStatePooling(string Name = "") : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
+class LatestTimeStepInStatePooling(string Name = "_unnamed") : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
 {
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
+    var State = Input.State!.Value.First();
+    var Tensor = State[torch.TensorIndex.Colon, -1];
+    var LastSteps = Tensor.unsqueeze(1);
     return Input with
     {
-      Payload = Input.State!.Value.First()[-1]
+      Payload = LastSteps
     };
   }
 }

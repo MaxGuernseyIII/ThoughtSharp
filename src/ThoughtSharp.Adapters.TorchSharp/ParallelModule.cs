@@ -46,9 +46,9 @@ public sealed class ParallelModule : torch.nn.Module<TorchInferenceParts, TorchI
     //Console.WriteLine($"Left path output: [{string.Join(", ", LeftOutput.Payload.shape)}]");
     //Console.WriteLine($"Right path output: [{string.Join(", ", RightOutput.Payload.shape)}]");
 
-    var Result = new TorchInferenceParts()
+    var Result = Input with
     {
-      Payload = torch.cat([LeftOutput.Payload, RightOutput.Payload], 1),
+      Payload = torch.cat([LeftOutput.Payload, RightOutput.Payload], 2),
       State = new(Input.State?.Value ?? [])
       {
         Left = LeftOutput.State,
