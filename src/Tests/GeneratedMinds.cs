@@ -347,6 +347,64 @@ public partial class GeneratedMinds
     }, null, ExpectedSomeOtherDataData);
   }
 
+  [TestMethod]
+  public async Task UseAsynchronousActionSurfaceOperationsInBatch()
+  {
+    var ExpectedSomeData = Any.Float;
+    var ExpectedSomeOtherDataData = Any.Float;
+
+    await TestAsynchronousBatchUseMethod([
+      (new()
+      {
+        ActionCode = 1,
+        MoreActions = false,
+        Parameters =
+        {
+          DoSomething1 =
+          {
+            SomeData = ExpectedSomeData
+          }
+        }
+      }, ExpectedSomeData, null),
+      (new()
+      {
+        ActionCode = 2,
+        MoreActions = false,
+        Parameters =
+        {
+          DoSomething2 =
+          {
+            SomeOtherData = ExpectedSomeOtherDataData
+          }
+        }
+      }, null, ExpectedSomeOtherDataData)
+    ]);
+  }
+
+  [DataRow(true, true)]
+  [DataRow(false, true)]
+  [DataRow(true, false)]
+  [DataRow(false, false)]
+  [TestMethod]
+  public async Task UseAsynchronousActionSurfaceInBatchReturnsMore(bool ExpectedMore1, bool ExpectedMore2)
+  {
+    var Surface = new MockAsynchronousSurface();
+    var ActualMore = await ExecuteAsynchronousUseBatchOperation([
+      (new()
+      {
+        ActionCode = (ushort) Any.Int(0, 2),
+        MoreActions = ExpectedMore1
+      }, Surface),
+      (new()
+      {
+        ActionCode = (ushort) Any.Int(0, 2),
+        MoreActions = ExpectedMore2
+      }, Surface)
+    ]);
+
+    ActualMore.Should().BeEquivalentTo([ExpectedMore1, ExpectedMore2], C => C.WithStrictOrdering());
+  }
+
   [DataRow(true)]
   [DataRow(false)]
   [TestMethod]
@@ -688,6 +746,77 @@ public partial class GeneratedMinds
       ExpectedInput.Parameters.AsynchronousUseSomeInterface.Argument2);
     var More = Thought.Payload;
     return More;
+  }
+
+  static async Task TestAsynchronousBatchUseMethod(ImmutableArray<(
+    AsynchronousActionSurface.Output Selection,
+    float? ExpectedSomeData,
+    float? ExpectedSomeOtherData)> Actions
+  )
+  {
+    var Operations = Actions.Select(A => (
+      A.Selection,
+      Surface: new MockAsynchronousSurface(),
+      A.ExpectedSomeData,
+      A.ExpectedSomeOtherData)).ToImmutableArray();
+
+    await ExecuteAsynchronousUseBatchOperation([..Operations.Select(A => (A.Selection, A.Surface))]);
+
+    foreach (var (_, Surface, ExpectedSomeData, ExpectedSomeOtherData) in Operations)
+    {
+      Surface.SomeData.Should().Be(ExpectedSomeData);
+      Surface.SomeOtherData.Should().Be(ExpectedSomeOtherData);
+    }
+  }
+
+  static async Task<IReadOnlyList<bool>> ExecuteAsynchronousUseBatchOperation(
+    ImmutableArray<(
+      AsynchronousActionSurface.Output Selection,
+      MockAsynchronousSurface Surface)> Actions
+  )
+  {
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
+    var ExpectedInputs = new List<StatelessMind.Input>();
+    var StipulatedOutputs = new List<StatelessMind.Output>();
+
+    foreach (var (Selection, Surface) in Actions)
+    {
+      var ExpectedInput = new StatelessMind.Input
+      {
+        OperationCode = 3,
+        Parameters =
+        {
+          AsynchronousUseSomeInterface =
+          {
+            Argument1 = Any.Int(0, 100),
+            Argument2 = Any.Int(0, 10000)
+          }
+        }
+      };
+
+      var StipulatedOutput = new StatelessMind.Output
+      {
+        Parameters =
+        {
+          AsynchronousUseSomeInterface =
+          {
+            Surface = Selection
+          }
+        }
+      };
+      ExpectedInputs.Add(ExpectedInput);
+      StipulatedOutputs.Add(StipulatedOutput);
+    }
+
+    Brain.SetOutputsForBatchedInputs([..ExpectedInputs.Select(I => new[] {I}.ToImmutableArray())],
+      [..StipulatedOutputs]);
+    var Thought = await new StatelessMind(Brain).AsynchronousUseSomeInterfaceBatch(
+      ExpectedInputs.Zip(Actions).Select(Pair => new StatelessMind.AsynchronousUseSomeInterfaceArgs(Pair.Second.Surface,
+        Pair.First.Parameters.AsynchronousUseSomeInterface.Argument1,
+        Pair.First.Parameters.AsynchronousUseSomeInterface.Argument2)
+      ).ToImmutableArray()
+    );
+    return Thought.Payload;
   }
 
   [TestMethod]

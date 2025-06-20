@@ -28,8 +28,26 @@ public class AsyncUseFeedbackSink<TSurface>(TSurface Mock, Action<bool> Commit)
   public void TrainWith(AsyncUseFeedbackMethod<TSurface> Configure)
   {
     var ShouldHaveRequestedMore = new BoxedBool();
-    Configure(Mock, ShouldHaveRequestedMore);
+    Configure(Mock, ShouldHaveRequestedMore).GetAwaiter().GetResult();
 
     Commit(ShouldHaveRequestedMore.Value);
+  }
+}
+
+public class AsyncBatchUseFeedbackSink<TSurface>(
+  IReadOnlyList<(TSurface Mock, Action<bool> CommitOne)> TimeSequences,
+  Action CommitBatch)
+  : FeedbackSink<IReadOnlyList<AsyncUseFeedbackMethod<TSurface>>>
+{
+  public void TrainWith(IReadOnlyList<AsyncUseFeedbackMethod<TSurface>> ConfigureAll)
+  {
+    foreach (var ((Mock, CommitOne), Configure) in TimeSequences.Zip(ConfigureAll))
+    {
+      var RequiresMore = new BoxedBool();
+      Configure(Mock, RequiresMore).GetAwaiter().GetResult();
+      CommitOne(RequiresMore.Value);
+    }
+
+    CommitBatch();
   }
 }
