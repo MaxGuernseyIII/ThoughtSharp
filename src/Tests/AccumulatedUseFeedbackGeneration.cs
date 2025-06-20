@@ -30,9 +30,9 @@ namespace Tests;
 [TestClass]
 public class AccumulatedUseFeedbackGeneration
 {
-  Queue<UseFeedbackSink<MockSurface>> Steps = null!;
-  MockMind Mind = null!;
   MockMind ChainedMind = null!;
+  MockMind Mind = null!;
+  Queue<UseFeedbackSink<MockSurface>> Steps = null!;
   List<MockMind> UsedMinds = null!;
 
   [TestInitialize]
@@ -81,14 +81,14 @@ public class AccumulatedUseFeedbackGeneration
 
     ThenStepsShouldBe(T, Step1, Step2);
   }
-  
+
   [TestMethod]
   public void MaxNumberOfOperations()
   {
     var MaximumNumber = Any.Int(3, 6);
     var Expected = GivenSteps(MaximumNumber);
 
-    var T = WhenUse(new() { MaxTrials = MaximumNumber });
+    var T = WhenUse(new() {MaxTrials = MaximumNumber});
 
     ThenStepsShouldBe(T, [.. Expected]);
   }
@@ -100,7 +100,7 @@ public class AccumulatedUseFeedbackGeneration
     var Expected = GivenSteps(MaximumNumber);
     GivenStep();
 
-    var T = WhenUse(new() { MaxTrials = MaximumNumber });
+    var T = WhenUse(new() {MaxTrials = MaximumNumber});
 
     ThenStepsShouldBe(T, [.. Expected]);
   }
@@ -128,8 +128,10 @@ public class AccumulatedUseFeedbackGeneration
 
   UseFeedbackSink<MockSurface> GivenStep()
   {
-    var Step = new UseFeedbackSink<MockSurface>(null!,
-      delegate { Assert.Fail("This object is only used for its identity."); });
+    var Step = new UseFeedbackSink<MockSurface>(new BatchUseFeedbackSink<MockSurface>([
+      (null!,
+        delegate { Assert.Fail("This object is only used for its identity."); })
+    ], delegate { Assert.Fail("This object is only used for its identity."); }));
     Steps.Enqueue(Step);
     return Step;
   }

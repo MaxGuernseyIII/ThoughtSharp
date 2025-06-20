@@ -276,52 +276,6 @@ static class MindRenderer
     if (MethodIsAsync)
       ReturnType = $"Task<{ReturnType}>";
 
-    W.WriteLine();
-    W.WriteLine($"class {UseOperation.Name}FeedbackMock(Inference ToTrain) : {ActionSurface.TypeName}");
-    W.WriteLine("{");
-    W.Indent++;
-    W.WriteLine("bool Conditioned;");
-    W.WriteLine("Output Expected = new();");
-    W.WriteLine();
-
-    ushort ActionCode = 1;
-    foreach (var Path in ActionSurface.AssociatedInterpreter!.Paths)
-    {
-      W.WriteLine(
-        $"public {Path.ReturnType} {Path.MethodName}({string.Join(", ", Path.ParametersClass.Parameters.Select(P => $"{P.FullType} {P.Name}"))})");
-      W.WriteLine("{");
-      W.Indent++;
-      W.WriteLine("if (Conditioned) throw new InvalidOperationException(\"Cannot condition a training mock twice.\");");
-      W.WriteLine("Conditioned = true;");
-      W.WriteLine(
-        $"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.ActionCode = {ActionCode.ToLiteralExpression()};");
-
-      foreach (var Parameter in Path.ParametersClass.Parameters)
-        W.WriteLine(
-          $"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.Parameters.{Path.MethodName}.{Parameter.Name} = {Parameter.Name};");
-
-      var ReturnValue = Path.RequiresAwait ? " Task.CompletedTask" : "";
-      W.WriteLine($"return{ReturnValue};");
-
-      W.Indent--;
-      W.WriteLine("}");
-      W.WriteLine();
-      ActionCode++;
-    }
-
-    W.WriteLine("public void Commit(bool ExpectedMore)");
-    W.WriteLine("{");
-    W.Indent++;
-    W.WriteLine($"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.MoreActions = ExpectedMore;");
-    W.WriteLine("var Stream = new LossRuleStream();");
-    W.WriteLine("var Writer = new LossRuleWriter(Stream);");
-    W.WriteLine("Expected.WriteAsLossRules(Writer);");
-    W.WriteLine("ToTrain.Train(Stream.PositionRulePairs);");
-    W.Indent--;
-    W.WriteLine("}");
-    W.Indent--;
-    W.WriteLine("}");
-    W.WriteLine();
     var (Async, Unwrap) = MethodIsAsync
       ? ("async ", "await ")
       : ("", "");
@@ -330,33 +284,12 @@ static class MindRenderer
       $"public partial {Async}{ReturnType} {UseOperation.Name}({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
-    RenderInputObjectForOpCode(W, OperationCode);
-    W.WriteLine();
-
-    foreach (var Parameter in InputParameters)
-      W.WriteLine($"InputObject.Parameters.{UseOperation.Name}.{Parameter.Name} = {Parameter.Name};");
-    W.WriteLine();
-    RenderMakeInference(W, Model);
+    W.WriteLine($"var __ARGS__ = new {UseOperation.Name}Args({string.Join(", ", UseOperation.Parameters.Select(P => $"{P.Name}"))});");
+    W.WriteLine($"var __RESULT__ = {Unwrap}{UseOperation.Name}Batch(__ARGS__);");
+    W.WriteLine($"var __REQUIRES_MORE__ = __RESULT__.Payload[0];");
 
     W.WriteLine();
-    W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{UseOperation.Name}Index;");
-    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{UseOperation.Name}Parameters.Length;");
-    W.WriteLine();
-
-    W.WriteLine($"var FeedbackMock = new {UseOperation.Name}FeedbackMock(Inference);");
-    W.WriteLine($"var Feedback = new {FeedbackSinkType}(");
-    W.Indent++;
-    W.WriteLine("FeedbackMock,");
-    W.WriteLine("FeedbackMock.Commit");
-    W.Indent--;
-    W.WriteLine(");");
-    W.WriteLine();
-
-    W.WriteLine(
-      $"var MoreActions = ({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name})).Payload;");
-
-    W.WriteLine();
-    W.WriteLine("return CognitiveResult.From(MoreActions, Feedback);");
+    W.WriteLine($"return CognitiveResult.From(__REQUIRES_MORE__, new {FeedbackSinkType}(__RESULT__.FeedbackSink));");
     W.Indent--;
     W.WriteLine("}");
   }
@@ -386,7 +319,7 @@ static class MindRenderer
       ReturnType = $"Task<{ReturnType}>";
 
     W.WriteLine();
-    W.WriteLine($"class {UseOperation.Name}BatchFeedbackMock(IList<Output> Outputs, int TimeSequenceNumber) : {ActionSurface.TypeName}");
+    W.WriteLine($"class {UseOperation.Name}FeedbackMock(IList<Output> Outputs, int TimeSequenceNumber) : {ActionSurface.TypeName}");
     W.WriteLine("{");
     W.Indent++;
     W.WriteLine("bool Conditioned;");
@@ -459,7 +392,7 @@ static class MindRenderer
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
 
     W.WriteLine($"var FeedbackOutputs = new List<Output>(OutputObjects);");
-    W.WriteLine($"var FeedbackMocks = new List<({UseOperation.Name}BatchFeedbackMock Mock, Action<bool> CommitOne)>();");
+    W.WriteLine($"var FeedbackMocks = new List<({UseOperation.Name}FeedbackMock Mock, Action<bool> CommitOne)>();");
     W.WriteLine();
     W.WriteLine("var ReturnValues = new List<bool>();");
     using (W.DeclareWithBlock("foreach (var (OutputObject, TimeSequenceIndex) in OutputObjects.Select((O, I) => (O, I)))"))
@@ -472,7 +405,7 @@ static class MindRenderer
       W.Indent--;
       W.WriteLine("ReturnValues.Add(MoreActions);");
       W.WriteLine();
-      W.WriteLine($"var FeedbackMock = new {UseOperation.Name}BatchFeedbackMock(FeedbackOutputs, TimeSequenceIndex);");
+      W.WriteLine($"var FeedbackMock = new {UseOperation.Name}FeedbackMock(FeedbackOutputs, TimeSequenceIndex);");
       W.WriteLine("FeedbackMocks.Add((FeedbackMock, FeedbackMock.Commit));");
     }
     W.WriteLine($"var FeedbackSink = new {FeedbackSinkType}([..FeedbackMocks], delegate");

@@ -22,15 +22,12 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class AsyncUseFeedbackSink<TSurface>(TSurface Mock, Action<bool> Commit)
+public class AsyncUseFeedbackSink<TSurface>(FeedbackSink<IReadOnlyList<AsyncUseFeedbackMethod<TSurface>>> Core)
   : FeedbackSink<AsyncUseFeedbackMethod<TSurface>>
 {
   public void TrainWith(AsyncUseFeedbackMethod<TSurface> Configure)
   {
-    var ShouldHaveRequestedMore = new BoxedBool();
-    Configure(Mock, ShouldHaveRequestedMore).GetAwaiter().GetResult();
-
-    Commit(ShouldHaveRequestedMore.Value);
+    Core.TrainWith([Configure]);
   }
 }
 
