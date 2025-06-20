@@ -577,11 +577,11 @@ public class BrainBuilding
   public void AddTimeAwareAndChangePoolingToLast()
   {
     var Device = UpdateBrainBuilderToAnyDevice();
-    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.WithLastTimeStepOfStatePooling())).Build();
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.WithLastTimeStepPooling())).Build();
 
     ShouldBeAdaptedContainerFor(Actual, InputFeatures,
       Device,
-      Factory.CreateTimeAware([], Factory.CreateLatestTimeStepInStatePooling()));
+      Factory.CreateTimeAware([], Factory.CreateLastTimeStep()));
   }
 
   [TestMethod]
@@ -597,7 +597,7 @@ public class BrainBuilding
       Factory.CreateTimeAware([
           Factory.CreateGRU(InputFeatures, GRUFeatures, GRULayers, Device)
         ],
-        Factory.CreateLatestTimeStepInStatePooling()));
+        Factory.CreateLastTimeStep()));
   }
 
   [TestMethod]
@@ -612,7 +612,7 @@ public class BrainBuilding
       Factory.CreateTimeAware([
           Factory.CreateGRU(InputFeatures, GRUFeatures, 1, Device)
         ],
-        Factory.CreateLatestTimeStepInStatePooling()));
+        Factory.CreateLastTimeStep()));
   }
 
   void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device,
@@ -764,9 +764,9 @@ public class BrainBuilding
       return new MockSiLU();
     }
 
-    public MockBuiltModel CreateLatestTimeStepInStatePooling()
+    public MockBuiltModel CreateLastTimeStep()
     {
-      return new MockLatestTimeStepInStatePooling();
+      return new MockLastTimeStepPooling();
     }
 
     public MockBuiltModel CreateMeanOverTimeStepsPooling()
@@ -796,7 +796,7 @@ public class BrainBuilding
 
     record MockDropout(float Rate) : MockBuiltModel;
 
-    sealed record MockLatestTimeStepInStatePooling : MockBuiltModel;
+    sealed record MockLastTimeStepPooling : MockBuiltModel;
 
     sealed record MockMeanOverTimeStepsPooling : MockBuiltModel;
 

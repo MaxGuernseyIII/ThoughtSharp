@@ -18,7 +18,7 @@ public interface BrainFactory<
   TModel CreateDropout(float Rate);
   TModel CreateLayerNorm(int InputFeatures);
 
-  TModel CreateLatestTimeStepInStatePooling();
+  TModel CreateLastTimeStep();
   TModel CreateMeanOverTimeStepsPooling();
   TModel CreateAttentionPooling(int InputFeatures);
 

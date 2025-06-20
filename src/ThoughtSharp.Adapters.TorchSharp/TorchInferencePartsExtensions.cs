@@ -24,20 +24,13 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-class LatestTimeStepInStatePooling(string Name = "_unnamed") : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
+public static class TorchInferencePartsExtensions
 {
-  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  public static torch.Tensor GetMask(this TorchInferenceParts This)
   {
-    var State = Input.State!.Value.First();
-    var LastIndices = (Input.SequenceLengths - 1).unsqueeze(1).unsqueeze(2);
-    var BatchSize = LastIndices.shape[0];
+    var Range = torch.arange(This.Payload.shape[1]).unsqueeze(0);
+    var Lengths = This.SequenceLengths.unsqueeze(1);
 
-    var LastSteps = State.gather(1, LastIndices.expand([BatchSize, 1, State.shape[2]]));
-
-    return Input with
-    {
-      Payload = LastSteps,
-      SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0], dtype: torch.ScalarType.Int64) + 1
-    };
+    return Range < Lengths;
   }
 }

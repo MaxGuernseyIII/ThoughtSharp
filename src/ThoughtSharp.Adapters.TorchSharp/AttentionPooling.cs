@@ -39,8 +39,11 @@ sealed class AttentionPooling : torch.nn.Module<TorchInferenceParts, TorchInfere
 
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
+    var Mask = Input.GetMask().unsqueeze(-1);
     var Scores = Weighting.forward(Input.Payload);
-    var Weights = Scores.softmax(1);
+    var MinusInfinity = torch.full_like(Scores, float.NegativeInfinity, dtype:torch.ScalarType.Float32);
+    var MaskedScores = torch.where(Mask, Scores, MinusInfinity);
+    var Weights = MaskedScores.softmax(1);
     var Weighted = Weights * Input.Payload;
 
     return Input with

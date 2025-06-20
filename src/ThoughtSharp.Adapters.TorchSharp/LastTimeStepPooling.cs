@@ -24,20 +24,20 @@ using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-class MeanOverTimeStepsPooling(string Name = "_unnamed") : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
+class LastTimeStepPooling(string Name = "_unnamed") : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
 {
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var Mask = Input.GetMask().unsqueeze(-1);
-    var Masked = Input.Payload * Mask;
-    var Sum = Masked.sum(1);
-    var Count = Mask.sum(1).clamp_min(1);
+    var AllTimeSteps = Input.Payload;
+    var LastIndices = (Input.SequenceLengths - 1).unsqueeze(1).unsqueeze(2);
+    var BatchSize = LastIndices.shape[0];
 
-    var Mean = Sum / Count;
+    var AllLastIndices = LastIndices.expand([BatchSize, 1, AllTimeSteps.shape[2]]);
+    var LastTimeStep = AllTimeSteps.gather(1, AllLastIndices);
 
     return Input with
     {
-      Payload = Mean.unsqueeze(1),
+      Payload = LastTimeStep,
       SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0], dtype: torch.ScalarType.Int64) + 1
     };
   }

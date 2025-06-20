@@ -100,9 +100,9 @@ public sealed class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module
     return new StatePassThroughModule(torch.nn.LayerNorm(InputFeatures));
   }
 
-  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLatestTimeStepInStatePooling()
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLastTimeStep()
   {
-    return new LatestTimeStepInStatePooling();
+    return new LastTimeStepPooling();
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateMeanOverTimeStepsPooling()
