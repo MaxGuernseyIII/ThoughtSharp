@@ -33,3 +33,21 @@ public class UseFeedbackSink<TSurface>(TSurface Mock, Action<bool> Commit)
     Commit(ShouldHaveRequestedMore.Value);
   }
 }
+
+public class BatchUseFeedbackSink<TSurface>(
+  IReadOnlyList<(TSurface Mock, Action<bool> CommitOne)> TimeSequences,
+  Action CommitBatch)
+  : FeedbackSink<IReadOnlyList<UseFeedbackMethod<TSurface>>>
+{
+  public void TrainWith(IReadOnlyList<UseFeedbackMethod<TSurface>> ConfigureAll)
+  {
+    foreach (var ((Mock, CommitOne), Configure) in TimeSequences.Zip(ConfigureAll))
+    {
+      var RequiresMore = new BoxedBool();
+      Configure(Mock, RequiresMore);
+      CommitOne(RequiresMore.Value);
+    }
+
+    CommitBatch();
+  }
+}
