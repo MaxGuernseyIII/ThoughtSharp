@@ -46,7 +46,7 @@ sealed class AttentionPooling : torch.nn.Module<TorchInferenceParts, TorchInfere
     return Input with
     {
       Payload = Weighted.sum(dim: 1).unsqueeze(1),
-      SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0]) + 1
+      SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0], dtype:torch.ScalarType.Int64) + 1
     };
   }
 }

@@ -43,7 +43,9 @@ public class TorchInference(
       var LastIndices = (Output.SequenceLengths - 1).unsqueeze(1).unsqueeze(2);
       var BatchSize = LastIndices.shape[0];
 
-      var FinalItems = OutputTensor.gather(1, LastIndices.expand([BatchSize, 1, OutputTensor.shape[2]]));
+      var ExpandedIndices = LastIndices.expand([BatchSize, 1, OutputTensor.shape[2]]);
+
+      var FinalItems = OutputTensor.gather(1, ExpandedIndices);
 
       return FinalItems
         .to(torch.CPU)
@@ -72,7 +74,9 @@ public class TorchInference(
 
     foreach (var (BatchNumber, At, Rule) in LossRules)
     {
-      var AffectedSlice = TensorForBackPropagation[BatchNumber].slice(1, At, At + Rule.Length, 1);
+      var AffectedSlice = TensorForBackPropagation
+        .slice(0, BatchNumber, BatchNumber + 1, 1)
+        .slice(2, At, At + Rule.Length, 1);
       var SliceLoss = Rule.Accept(AffectedSlice, Visitor);
 
       CumulativeLoss += SliceLoss;
