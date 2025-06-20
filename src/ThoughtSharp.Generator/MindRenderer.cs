@@ -55,25 +55,28 @@ static class MindRenderer
     W.WriteLine();
     W.WriteLine($"public static {M.TypeName.FullName} Create(Brain Brain) => new(Brain);");
     W.WriteLine();
-    W.WriteLine($"public {M.TypeName.TypeName.Name}(Brain Brain) : this(Brain, new IsolatedCognitionMode(Brain)) {{ }}");
+    W.WriteLine(
+      $"public {M.TypeName.TypeName.Name}(Brain Brain) : this(Brain, new IsolatedCognitionMode(Brain)) {{ }}");
     W.WriteLine();
     using (W.DeclareWithBlock($"{M.TypeName.TypeName.Name}(Brain Brain, CognitionMode CognitionMode)"))
     {
       W.WriteLine("this.Brain = Brain;");
       W.WriteLine("this.CognitionMode = CognitionMode;");
     }
+
     W.WriteLine();
   }
 
   static void WriteInterfaceMembers(IndentedTextWriter W, MindModel M)
   {
-    W.WriteLine($"public {M.TypeName.FullName} WithChainedReasoning() => new {M.TypeName.FullName}(Brain, CognitionMode.EnterChainedLineOfReasoning());");
+    W.WriteLine(
+      $"public {M.TypeName.FullName} WithChainedReasoning() => new {M.TypeName.FullName}(Brain, CognitionMode.EnterChainedLineOfReasoning());");
 
     W.WriteLine($"public static int InputLength {{ get; }} = {M.TypeName.FullName}.Input.Length;");
     W.WriteLine($"public static int OutputLength {{ get; }} = {M.TypeName.FullName}.Output.Length;");
     W.WriteLine();
 
-    using (W.DeclareWithBlock($"public static void WriteIsolationBoundaries(IsolationBoundariesWriter W)"))
+    using (W.DeclareWithBlock("public static void WriteIsolationBoundaries(IsolationBoundariesWriter W)"))
     {
       W.WriteLine("Output.WriteIsolationBoundaries(W);");
     }
@@ -82,7 +85,10 @@ static class MindRenderer
   static void RenderModelMembers(IndentedTextWriter W, MindModel M, ushort OperationCode)
   {
     foreach (var MakeOperation in M.MakeOperations)
-      RenderMakeMethod(W, M, MakeOperation, OperationCode++);
+    {
+      RenderMakeMethod(W, M, MakeOperation, OperationCode);
+      RenderBatchMakeMethod(W, M, MakeOperation, OperationCode++);
+    }
 
     foreach (var UseOperation in M.UseOperations)
       RenderUseMethod(W, M, UseOperation, OperationCode++);
@@ -90,7 +96,7 @@ static class MindRenderer
     foreach (var ChooseOperation in M.ChooseOperations)
       RenderChooseMethod(W, M, ChooseOperation, OperationCode++);
 
-    foreach (var TellOperation in M.TellOperations) 
+    foreach (var TellOperation in M.TellOperations)
       RenderTellMethod(W, M, TellOperation, OperationCode++);
   }
 
@@ -114,11 +120,10 @@ static class MindRenderer
 
       W.WriteLine();
       W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([InputBuffers.ToArray()]);");
-      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
       W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
     }
   }
-
 
   static void RenderMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation,
     ushort OperationCode)
@@ -155,9 +160,10 @@ static class MindRenderer
       W.Indent--;
       W.WriteLine("}");
     }
+
     W.WriteLine();
     W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([[..InputBuffers]]);");
-    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
     W.WriteLine();
 
@@ -188,6 +194,91 @@ static class MindRenderer
     W.WriteLine("var Writer = new LossRuleWriter(Stream);");
     W.WriteLine("O.WriteAsLossRules(Writer);");
     W.WriteLine("return Stream.PositionRulePairs;");
+    W.Indent--;
+    W.WriteLine("}");
+    W.Indent--;
+    W.WriteLine(")");
+    W.Indent--;
+    W.WriteLine(");");
+    W.Indent--;
+    W.WriteLine("}");
+  }
+
+  static void RenderBatchMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation,
+    ushort OperationCode)
+  {
+    W.WriteLine(
+      $"public partial record {MakeOperation.Name}Args({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))});");
+    W.WriteLine(
+      $"public CognitiveResult<IReadOnlyList<{MakeOperation.ReturnType}>, IReadOnlyList<{MakeOperation.ReturnType}>> {MakeOperation.Name}Batch(params IReadOnlyList<{MakeOperation.Name}Args> TimeSequences)");
+    W.WriteLine("{");
+    W.Indent++;
+
+    var TimeStepParameterName = MakeOperation.TimeSteps?.ParameterName;
+
+    W.WriteLine("var InputBatches = new List<float[][]>();");
+
+    using (W.DeclareWithBlock("foreach (var __TIME_SEQUENCE__ in TimeSequences)"))
+    {
+      W.WriteLine("var InputBuffers = new List<float[]>();");
+
+      W.WriteLine();
+
+      using (TimeStepParameterName is not null
+               ? W.DeclareWithBlock($@"foreach (var __TIME_STEP__ in __TIME_SEQUENCE__.{TimeStepParameterName})")
+               : null)
+      {
+        RenderInputObjectForOpCode(W, OperationCode);
+
+        foreach (var Parameter in MakeOperation.Parameters)
+        {
+          var AssignmentSource = Parameter.Name == TimeStepParameterName ? @"__TIME_STEP__" : $"__TIME_SEQUENCE__.{Parameter.Name}";
+          W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {AssignmentSource};");
+        }
+
+        W.WriteLine("var InputBuffer = new float[Input.Length];");
+        W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+        W.WriteLine("InputBuffers.Add(InputBuffer);");
+      }
+
+      W.WriteLine("InputBatches.Add([..InputBuffers]);");
+    }
+
+    W.WriteLine();
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([..InputBatches]);");
+    W.WriteLine($"var ReturnObjects = new List<{MakeOperation.ReturnType}>();");
+    using (W.DeclareWithBlock("foreach (var Result in Inference.Result)"))
+    {
+      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Result);");
+      W.WriteLine($"ReturnObjects.Add(OutputObject.Parameters.{MakeOperation.Name}.Value);");
+    }
+    W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
+    W.WriteLine();
+
+    W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
+    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
+
+    W.WriteLine("return CognitiveResult.From(");
+    W.Indent++;
+    W.WriteLine("ReturnObjects,");
+    W.WriteLine($"new BatchMakeFeedbackSink<{MakeOperation.ReturnType}>(");
+    W.Indent++;
+    W.WriteLine("new(");
+    W.Indent++;
+    W.WriteLine("Inference");
+    W.Indent--;
+    W.WriteLine("),");
+    W.WriteLine("(V, Writer) => ");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine("var O = new Output");
+    W.WriteLine("{");
+    W.Indent++;
+    W.WriteLine($"Parameters = {{ {MakeOperation.Name} = {{ Value = V }} }}");
+    W.Indent--;
+    W.WriteLine("};");
+    W.WriteLine();
+    W.WriteLine("O.WriteAsLossRules(Writer);");
     W.Indent--;
     W.WriteLine("}");
     W.Indent--;
@@ -316,7 +407,8 @@ static class MindRenderer
       $"public partial {ChooseOperation.ReturnType} {ChooseOperation.Name}({string.Join(", ", ChooseOperation.Parameters.Select(P => $"{P.TypeName} {P.Name}"))})");
     W.WriteLine("{");
     W.Indent++;
-    W.WriteLine($"var Source = ChooseFeedback<{ChooseOperation.SelectableTypeName}>.GetSource<{ChooseOperation.Parameters.Single(P => P.Name == ChooseOperation.CategoryParameter).TypeName}.Output>();");
+    W.WriteLine(
+      $"var Source = ChooseFeedback<{ChooseOperation.SelectableTypeName}>.GetSource<{ChooseOperation.Parameters.Single(P => P.Name == ChooseOperation.CategoryParameter).TypeName}.Output>();");
     W.WriteLine($"var Champion = {ChooseOperation.CategoryParameter}.AllOptions.First();");
     W.WriteLine();
     W.WriteLine($"foreach (var Contender in {ChooseOperation.CategoryParameter}.AllOptions.Skip(1))");
@@ -327,19 +419,22 @@ static class MindRenderer
         if (Parameter.Name != ChooseOperation.CategoryParameter)
           W.WriteLine($"InputObject.Parameters.{ChooseOperation.Name}.{Parameter.Name} = {Parameter.Name};");
 
-      W.WriteLine($"InputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter} = {ChooseOperation.CategoryParameter}.GetContestBetween(Champion, Contender);");
+      W.WriteLine(
+        $"InputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter} = {ChooseOperation.CategoryParameter}.GetContestBetween(Champion, Contender);");
 
       W.WriteLine();
       RenderMakeInference(W, MindModel);
 
-      W.WriteLine($"var Offset = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index + Output.OutputParameters.{ChooseOperation.Name}Parameters.{ChooseOperation.CategoryParameter}Index;");
-      W.WriteLine($"var T = {ChooseOperation.CategoryParameter}.Interpret(Champion, Contender, OutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}, Inference, Offset);");
+      W.WriteLine(
+        $"var Offset = Output.ParametersIndex + Output.OutputParameters.{ChooseOperation.Name}Index + Output.OutputParameters.{ChooseOperation.Name}Parameters.{ChooseOperation.CategoryParameter}Index;");
+      W.WriteLine(
+        $"var T = {ChooseOperation.CategoryParameter}.Interpret(Champion, Contender, OutputObject.Parameters.{ChooseOperation.Name}.{ChooseOperation.CategoryParameter}, Inference, Offset);");
       W.WriteLine("Source.Configurator.AddSingleChoice(T.FeedbackSink);");
       W.WriteLine("Champion = T.Payload;");
     }
 
     W.WriteLine(
-      $"return CognitiveResult.From(Champion.Payload, Source.CreateFeedback());");
+      "return CognitiveResult.From(Champion.Payload, Source.CreateFeedback());");
     W.Indent--;
     W.WriteLine("}");
   }
@@ -356,7 +451,7 @@ static class MindRenderer
     W.WriteLine("InputObject.MarshalTo(InputBuffer);");
     W.WriteLine();
     W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([[InputBuffer]]);");
-    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result);");
+    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
   }
 }

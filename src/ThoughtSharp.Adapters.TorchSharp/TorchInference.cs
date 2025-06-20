@@ -22,6 +22,7 @@
 
 using ThoughtSharp.Runtime;
 using TorchSharp;
+using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
@@ -34,7 +35,25 @@ public class TorchInference(
   internal TorchInferenceParts Output { get; } = Output;
   internal TorchInferenceParts OriginalInput { get; } = OriginalInput;
 
-  public ReadOnlySpan<float> Result => Output.Payload[Output.Payload.shape[0] - 1].to(torch.CPU).data<float>().ToArray();
+  public float[][] Result
+  {
+    get
+    {
+      var OutputTensor = Output.Payload;
+      var LastIndices = (Output.SequenceLengths - 1).unsqueeze(1).unsqueeze(2);
+      var BatchSize = LastIndices.shape[0];
+
+      var FinalItems = OutputTensor.gather(1, LastIndices.expand([BatchSize, 1, OutputTensor.shape[2]]));
+
+      return FinalItems
+        .to(torch.CPU)
+        .data<float>()
+        .ToArray()
+        .Chunk((int)OutputTensor.shape[2])
+        .Select(Chunk => Chunk.ToArray())
+        .ToArray();
+    }
+  }
 
   protected TorchBrain Brain { get; } = Brain;
 

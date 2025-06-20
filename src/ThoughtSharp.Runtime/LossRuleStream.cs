@@ -27,8 +27,8 @@ public class LossRuleStream
   readonly List<(int In, int At, LossRule Rule)> WriteableRules = [];
   public IReadOnlyList<(int In, int At, LossRule Rule)> PositionRulePairs => WriteableRules;
 
-  public void WriteRule(int BatchNumber, int Offset, LossRule Rule)
+  public void WriteRule(int TimeSequenceNumber, int Offset, LossRule Rule)
   {
-    WriteableRules.Add((BatchNumber, Offset, Rule));
+    WriteableRules.Add((TimeSequenceNumber, Offset, Rule));
   }
 }

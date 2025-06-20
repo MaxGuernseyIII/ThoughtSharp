@@ -34,3 +34,24 @@ public class MakeFeedbackSink<TMade>(
     Underlying.ApplyLoses(Buffer);
   }
 }
+
+public class BatchMakeFeedbackSink<TMade>(
+  InferenceFeedback Underlying,
+  Action<TMade, LossRuleWriter> WriteLossRules
+)
+  : FeedbackSink<IReadOnlyList<TMade>>
+  where TMade : CognitiveData<TMade>
+{
+  public void TrainWith(IReadOnlyList<TMade> Feedback)
+  {
+    var Writer = new LossRuleWriter();
+
+    foreach (var (FeedbackItem, TimeSequenceNumber) in Feedback.Select((F, I) => (F, I)))
+    {
+      Writer.AtBeginningOfTimeSequence(TimeSequenceNumber);
+      WriteLossRules(FeedbackItem, Writer);
+    }
+
+    Underlying.ApplyLoses(Writer.Stream.PositionRulePairs);
+  }
+}

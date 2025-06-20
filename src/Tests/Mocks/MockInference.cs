@@ -20,26 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using FluentAssertions;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-class MockInference<TInput, TOutput>(TOutput ResultOutput)
+class MockInference<TInput, TOutput>(params ImmutableArray<TOutput> ResultOutputs)
   : MockInferenceSource<TInput, TOutput>, Inference
   where TInput : CognitiveData<TInput>
   where TOutput : CognitiveData<TOutput>, new()
 {
-  public TOutput ResultOutput { get; } = ResultOutput;
+  public ImmutableArray<TOutput> ResultOutputs { get; } = ResultOutputs;
   IReadOnlyList<(int, int, LossRule)>? TrainedLossRules;
 
-  public ReadOnlySpan<float> Result
+  public float[][] Result
   {
     get
     {
-      var Buffer = new float[TOutput.Length];
-      ResultOutput.MarshalTo(Buffer);
-      return Buffer;
+      var Result = new List<float[]>();
+      foreach (var ResultOutput in ResultOutputs)
+      {
+        var Buffer = new float[TOutput.Length];
+        ResultOutput.MarshalTo(Buffer);
+        Result.Add(Buffer);
+      }
+
+      return Result.ToArray();
     }
   }
 

@@ -35,22 +35,25 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
   {
     MakeInferenceFunc = _ =>
     {
-      var MockInference = new MockInference<TInput, TOutput>(new());
+      var MockInference = new MockInference<TInput, TOutput>([new()]);
       MockInferences.Add(MockInference);
       return MockInference;
     };
   }
 
-  public Func<ImmutableArray<TInput>, Inference> MakeInferenceFunc;
+  public Func<ImmutableArray<ImmutableArray<TInput>>, Inference> MakeInferenceFunc;
   public List<MockInference<TInput, TOutput>> MockInferences = [];
 
   public Inference MakeInference(float[][][] Parameters)
   {
-    var Inputs = Parameters.Last().Select(StepInput =>
+    var Inputs = Parameters.Select(Batch =>
     {
-      StepInput.Length.Should().Be(TInput.Length);
-      var Input = TInput.UnmarshalFrom(StepInput);
-      return Input;
+      return Batch.Select(StepInput =>
+      {
+        StepInput.Length.Should().Be(TInput.Length);
+        var Input = TInput.UnmarshalFrom(StepInput);
+        return Input;
+      }).ToImmutableArray();
     }).ToImmutableArray();
 
     var Result = MakeInferenceFunc(Inputs);
@@ -58,13 +61,23 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     return Result;
   }
 
-  public MockInference<TInput, TOutput> SetOutputForOnlyInput(ImmutableArray<TInput> ExpectedInput, TOutput StipulatedOutput)
+  public MockInference<TInput, TOutput> SetOutputForOnlyInput(
+    ImmutableArray<TInput> ExpectedInput, 
+    TOutput StipulatedOutput)
   {
-    var ResultInference = new MockInference<TInput, TOutput>(StipulatedOutput);
+    return SetOutputsForBatchedInputs([ExpectedInput], [StipulatedOutput]);
+  }
 
-    MakeInferenceFunc = ActualInput =>
+  public MockInference<TInput, TOutput> SetOutputsForBatchedInputs(
+    ImmutableArray<ImmutableArray<TInput>> ExpectedInputs,
+    ImmutableArray<TOutput> StipulatedOutputs)
+  {
+
+    var ResultInference = new MockInference<TInput, TOutput>(StipulatedOutputs);
+
+    MakeInferenceFunc = ActualInputs =>
     {
-      AssertEx.AssertJsonDiff(ExpectedInput, ActualInput);
+      AssertEx.AssertJsonDiff(ExpectedInputs, ActualInputs);
 
       return ResultInference;
     };

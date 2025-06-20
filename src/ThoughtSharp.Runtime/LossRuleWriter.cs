@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class LossRuleWriter(LossRuleStream Stream, int BatchNumber, int Base)
+public class LossRuleWriter(LossRuleStream Stream, int TimeSequenceNumber, int Base)
 {
   public LossRuleWriter() : this(new()) { }
 
@@ -30,9 +30,9 @@ public class LossRuleWriter(LossRuleStream Stream, int BatchNumber, int Base)
 
   public LossRuleStream Stream { get; } = Stream;
 
-  public LossRuleWriter ForOffset(int Offset) => new(Stream, BatchNumber, Base + Offset);
+  public LossRuleWriter ForOffset(int Offset) => new(Stream, TimeSequenceNumber, Base + Offset);
 
-  public LossRuleWriter AtBeginningOfBatch(int NewBatchNumber) => new(Stream, NewBatchNumber, 0);
+  public LossRuleWriter AtBeginningOfTimeSequence(int NewTimeSequenceNumber) => new(Stream, NewTimeSequenceNumber, 0);
 
-  public void WriteLossRule(int Offset, LossRule Rule) => Stream.WriteRule(BatchNumber, Base + Offset, Rule);
+  public void WriteLossRule(int Offset, LossRule Rule) => Stream.WriteRule(TimeSequenceNumber, Base + Offset, Rule);
 }

@@ -36,7 +36,8 @@ class LatestTimeStepInStatePooling(string Name = "_unnamed") : torch.nn.Module<T
 
     return Input with
     {
-      Payload = LastSteps
+      Payload = LastSteps,
+      SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0]) + 1
     };
   }
 }

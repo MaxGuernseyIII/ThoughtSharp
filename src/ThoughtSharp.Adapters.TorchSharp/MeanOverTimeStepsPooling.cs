@@ -30,7 +30,8 @@ class MeanOverTimeStepsPooling(string Name = "_unnamed") : torch.nn.Module<Torch
   {
     return Input with
     {
-      Payload = Input.Payload.mean([1]).unsqueeze(1)
+      Payload = Input.Payload.mean([1]).unsqueeze(1),
+      SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0]) + 1
     };
   }
 }

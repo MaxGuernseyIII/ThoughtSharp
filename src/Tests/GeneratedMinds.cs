@@ -42,7 +42,7 @@ public partial class GeneratedMinds
     };
     Brain.SetOutputForOnlyInput(
       [
-        ..InputToMakeCall.Select(Step => new HasTimeStepsMind.Input()
+        ..InputToMakeCall.Select(Step => new HasTimeStepsMind.Input
         {
           OperationCode = 1,
           Parameters =
@@ -70,12 +70,76 @@ public partial class GeneratedMinds
     Actual.Should().BeEquivalentTo(ExpectedOutput);
   }
 
-
-  [Mind]
-  public partial class HasTimeStepsMind
+  [TestMethod]
+  public void DoBatchTimeAwareMake()
   {
-    [Make]
-    public partial CognitiveResult<SimpleOutputData, SimpleOutputData> TimeAwareMake([TimeSteps] float[] Params);
+    var Brain = new MockBrain<HasTimeStepsMind.Input, HasTimeStepsMind.Output>();
+    var Mind = new HasTimeStepsMind(Brain);
+    var InputToMakeCallBatch0 = Any.FloatArray();
+    var InputToMakeCallBatch1 = Any.FloatArray();
+    var ExpectedOutput0 = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+    var ExpectedOutput1 = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+    Brain.SetOutputsForBatchedInputs(
+      [
+        [
+          ..InputToMakeCallBatch0.Select(Step => new HasTimeStepsMind.Input
+          {
+            OperationCode = 1,
+            Parameters =
+            {
+              TimeAwareMake =
+              {
+                Params = Step
+              }
+            }
+          })
+        ],
+        [
+          ..InputToMakeCallBatch1.Select(Step => new HasTimeStepsMind.Input
+          {
+            OperationCode = 1,
+            Parameters =
+            {
+              TimeAwareMake =
+              {
+                Params = Step
+              }
+            }
+          })
+        ]
+      ],
+      [
+        new()
+        {
+          Parameters =
+          {
+            TimeAwareMake =
+            {
+              Value = ExpectedOutput0
+            }
+          }
+        },
+        new()
+        {
+          Parameters =
+          {
+            TimeAwareMake =
+            {
+              Value = ExpectedOutput1
+            }
+          }
+        }
+      ]);
+
+    var Actual = Mind.TimeAwareMakeBatch([new(InputToMakeCallBatch0), new(InputToMakeCallBatch1)]).Payload;
+
+    Actual.Should().BeEquivalentTo([ExpectedOutput0, ExpectedOutput1]);
   }
 
   [TestMethod]
@@ -135,16 +199,18 @@ public partial class GeneratedMinds
     T.FeedbackSink.TrainWith(ExpectedObject);
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith([new StatelessMind.Output
-    {
-      Parameters =
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
       {
-        MakeSimpleOutput =
+        Parameters =
         {
-          Value = ExpectedObject
+          MakeSimpleOutput =
+          {
+            Value = ExpectedObject
+          }
         }
       }
-    }]);
+    ]);
   }
 
   [TestMethod]
@@ -218,27 +284,29 @@ public partial class GeneratedMinds
     });
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith([new StatelessMind.Output
-    {
-      Parameters =
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
       {
-        SynchronousUseSomeInterface =
+        Parameters =
         {
-          Surface =
+          SynchronousUseSomeInterface =
           {
-            ActionCode = 2,
-            MoreActions = ExpectedMore,
-            Parameters =
+            Surface =
             {
-              DoSomething2 =
+              ActionCode = 2,
+              MoreActions = ExpectedMore,
+              Parameters =
               {
-                SomeOtherData = SomeOtherData
+                DoSomething2 =
+                {
+                  SomeOtherData = SomeOtherData
+                }
               }
             }
           }
         }
       }
-    }]);
+    ]);
   }
 
   [TestMethod]
@@ -313,27 +381,29 @@ public partial class GeneratedMinds
     });
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith([new StatelessMind.Output
-    {
-      Parameters =
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
       {
-        AsynchronousUseSomeInterface =
+        Parameters =
         {
-          Surface =
+          AsynchronousUseSomeInterface =
           {
-            ActionCode = 2,
-            MoreActions = ExpectedMore,
-            Parameters =
+            Surface =
             {
-              DoSomething2 =
+              ActionCode = 2,
+              MoreActions = ExpectedMore,
+              Parameters =
               {
-                SomeOtherData = SomeOtherData
+                DoSomething2 =
+                {
+                  SomeOtherData = SomeOtherData
+                }
               }
             }
           }
         }
       }
-    }]);
+    ]);
   }
 
   [TestMethod]
@@ -377,8 +447,10 @@ public partial class GeneratedMinds
       new List<(CognitiveOption<MockSelectable, MockDescriptor> Left, CognitiveOption<MockSelectable, MockDescriptor>
         Right, MockInference<StatelessMind.Input, StatelessMind.Output> Inference)>();
 
-    Brain.MakeInferenceFunc = Inputs =>
+    Brain.MakeInferenceFunc = Batches =>
     {
+      Batches.Length.Should().Be(1);
+      var Inputs = Batches[0];
       Inputs.Length.Should().Be(1);
       var Input = Inputs.Single();
       var Cat = Input.Parameters.ChooseItems.Category;
@@ -416,7 +488,8 @@ public partial class GeneratedMinds
       Item.Inference.ShouldHaveBeenTrainedWith(
         new MockCategory.Output {RightIsWinner = false}.ExtractLossRules(0, Offset));
     foreach (var Item in RightItems)
-      Item.Inference.ShouldHaveBeenTrainedWith(new MockCategory.Output {RightIsWinner = true}.ExtractLossRules(0, Offset));
+      Item.Inference.ShouldHaveBeenTrainedWith(
+        new MockCategory.Output {RightIsWinner = true}.ExtractLossRules(0, Offset));
     foreach (var Item in SelectionLog.Except(LeftItems).Except(RightItems))
       Item.Inference.ShouldNotHaveBeenTrained();
   }
@@ -476,7 +549,7 @@ public partial class GeneratedMinds
     Brain.MakeInferenceFunc = delegate
     {
       CallCount++;
-      return new MockInference<CanBeTold.Input, CanBeTold.Output>(new());
+      return new MockInference<CanBeTold.Input, CanBeTold.Output>([new()]);
     };
 
     Mind.Tell(Tokens);
@@ -504,8 +577,10 @@ public partial class GeneratedMinds
 
     Result.Should().BeSameAs(Selected.Payload);
 
-    Inference MakeInferenceFunction(ImmutableArray<StatelessMind.Input> Inputs)
+    Inference MakeInferenceFunction(ImmutableArray<ImmutableArray<StatelessMind.Input>> Batches)
     {
+      Batches.Length.Should().Be(1);
+      var Inputs = Batches[0];
       Inputs.Length.Should().Be(1);
       var Input = Inputs.Single();
       Input.OperationCode.Should().Be(4);
@@ -625,7 +700,8 @@ public partial class GeneratedMinds
     HasIsolationBoundaries.WriteIsolationBoundaries(W);
 
     S.Boundaries.Should().BeEquivalentTo([
-      Offset + HasIsolationBoundaries.P3Index, Offset + HasIsolationBoundaries.P3Index + HasIsolationBoundaries.P3Codec.Length
+      Offset + HasIsolationBoundaries.P3Index,
+      Offset + HasIsolationBoundaries.P3Index + HasIsolationBoundaries.P3Codec.Length
     ]);
   }
 
@@ -636,11 +712,18 @@ public partial class GeneratedMinds
     var Offset = Any.Int(0, 1000);
     var W = new IsolationBoundariesWriter(S, Offset);
     var ExpectedStream = new IsolationBoundaryStream();
-    UsesIsolationMind.Output.WriteIsolationBoundaries(new IsolationBoundariesWriter(ExpectedStream, Offset));
+    UsesIsolationMind.Output.WriteIsolationBoundaries(new(ExpectedStream, Offset));
 
     UsesIsolationMind.WriteIsolationBoundaries(W);
 
     S.Boundaries.Should().BeEquivalentTo(ExpectedStream.Boundaries);
+  }
+
+  [Mind]
+  public partial class HasTimeStepsMind
+  {
+    [Make]
+    public partial CognitiveResult<SimpleOutputData, SimpleOutputData> TimeAwareMake([TimeSteps] float[] Params);
   }
 
   class MockSynchronousSurface : SynchronousActionSurface
