@@ -30,7 +30,8 @@ sealed class MultiHeadedAttentionAdapter : torch.nn.Module<TorchInferenceParts, 
   readonly torch.nn.Module<torch.Tensor, torch.Tensor> Adapter;
   readonly MultiheadAttention Attention;
 
-  public MultiHeadedAttentionAdapter(int InputFeatures, int Heads, int FeaturesPerHead, string Name = "_unnamed") : base(Name)
+  public MultiHeadedAttentionAdapter(int InputFeatures, int Heads, int FeaturesPerHead, string Name = "_unnamed") :
+    base(Name)
   {
     var HiddenDimensionSize = Heads * FeaturesPerHead;
     Adapter = torch.nn.Linear(InputFeatures, HiddenDimensionSize);
@@ -43,8 +44,12 @@ sealed class MultiHeadedAttentionAdapter : torch.nn.Module<TorchInferenceParts, 
   {
     var Adapted = Adapter.forward(Input.Payload);
 
-    var (Attended, _) = Attention.forward(Adapted, Adapted, Adapted, null, false, null);
+    var TimeFirst = Adapted.transpose(0, 1);
 
-    return Input with {Payload = Attended};
+    var (Attended, _) = Attention.forward(TimeFirst, TimeFirst, TimeFirst, null, false, null);
+
+    var BatchFirst = Attended.transpose(0, 1);
+
+    return Input with {Payload = BatchFirst};
   }
 }

@@ -20,34 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-using static TorchSharp.torch;
+using TorchSharp;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
-class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
+class LastTimeStepPooling(string Name = "_unnamed") : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
 {
-  public Tensor Visit(BinaryCrossEntropyWithLogitsLossRule Rule, Tensor Prediction)
+  public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.binary_cross_entropy_with_logits(Prediction, Target);
-  }
+    var AllTimeSteps = Input.Payload;
+    var LastIndices = (Input.SequenceLengths - 1).unsqueeze(1).unsqueeze(2);
+    var BatchSize = LastIndices.shape[0];
 
-  public Tensor Visit(MeanSquareErrorLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.mse_loss(Prediction, Target);
-  }
+    var AllLastIndices = LastIndices.expand([BatchSize, 1, AllTimeSteps.shape[2]]);
+    var LastTimeStep = AllTimeSteps.gather(1, AllLastIndices);
 
-  public Tensor Visit(CrossEntropyLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.GetInt64ScalarTensor(Rule.Index);
-    return nn.functional.cross_entropy(Prediction.squeeze(0), Target);
-  }
-
-  public Tensor Visit(HuberLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.huber_loss(Prediction, Target);
+    return Input with
+    {
+      Payload = LastTimeStep,
+      SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0], dtype: torch.ScalarType.Int64) + 1
+    };
   }
 }

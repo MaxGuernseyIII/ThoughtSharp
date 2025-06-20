@@ -33,6 +33,11 @@
       "commandName": "Project",
       "commandLineArgs": "--curricula LearnToPickMaximum",
       "workingDirectory": "E:\\repos\\ThoughtSharp\\src\\Tests.SampleScenarios"
+    },
+    "target one curriculum in samples folder": {
+      "commandName": "Project",
+      "commandLineArgs": "--curricula BatchFizzBuzzTrainingPlan",
+      "workingDirectory": "E:\\repos\\ThoughtSharp\\src\\Tests.SampleScenarios"
     }
   }
 }

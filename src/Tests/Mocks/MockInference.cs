@@ -20,47 +20,58 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-class MockInference<TInput, TOutput>(TOutput ResultOutput)
+class MockInference<TInput, TOutput>(params ImmutableArray<TOutput> ResultOutputs)
   : MockInferenceSource<TInput, TOutput>, Inference
   where TInput : CognitiveData<TInput>
   where TOutput : CognitiveData<TOutput>, new()
 {
-  public TOutput ResultOutput { get; } = ResultOutput;
-  IReadOnlyList<(int, LossRule)>? TrainedLossRules;
+  public ImmutableArray<TOutput> ResultOutputs { get; } = ResultOutputs;
+  IReadOnlyList<(int, int, LossRule)>? TrainedLossRules;
 
-  public ReadOnlySpan<float> Result
+  public float[][] Result
   {
     get
     {
-      var Buffer = new float[TOutput.Length];
-      ResultOutput.MarshalTo(Buffer);
-      return Buffer;
+      var Result = new List<float[]>();
+      foreach (var ResultOutput in ResultOutputs)
+      {
+        var Buffer = new float[TOutput.Length];
+        ResultOutput.MarshalTo(Buffer);
+        Result.Add(Buffer);
+      }
+
+      return Result.ToArray();
     }
   }
 
-  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  public void Train(params IReadOnlyList<(int, int, LossRule)> LossRules)
   {
     TrainedLossRules = LossRules;
   }
 
-  public void ShouldHaveBeenTrainedWith(TOutput Output)
+  public void ShouldHaveBeenTrainedWith(IReadOnlyList<TOutput> Outputs)
   {
-    var Stream = new LossRuleStream();
-    var Writer = new LossRuleWriter(Stream, 0);
-    Output.WriteAsLossRules(Writer);
+    var Writer = new LossRuleWriter();
 
-    var Expected = Stream.PositionRulePairs;
+    foreach (var (Output, I) in Outputs.Select((Output, I) => (Output, I)))
+    {
+      Writer = Writer.AtBeginningOfTimeSequence(I);
+      Output.WriteAsLossRules(Writer);
+    }
 
-    ShouldHaveBeenTrainedWith(Expected);
+    ShouldHaveBeenTrainedWith(Writer.Stream.PositionRulePairs);
   }
 
-  public void ShouldHaveBeenTrainedWith(params IReadOnlyList<(int At, LossRule Rule)> Expected)
+  public void ShouldHaveBeenTrainedWith(params IReadOnlyList<(int BatchNumber, int At, LossRule Rule)> Expected)
   {
+    AssertionScope.Current.FormattingOptions.MaxLines = 10000;
     TrainedLossRules.Should().Equal(Expected);
   }
 

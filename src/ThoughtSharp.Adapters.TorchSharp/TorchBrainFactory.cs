@@ -61,7 +61,7 @@ public sealed class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateSequence(params IEnumerable<torch.nn.Module<TorchInferenceParts, TorchInferenceParts>> Children)
   {
     torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Initial = new FullPassThroughModule();
-    return Children.Aggregate(Initial, (Current1, Module) => new CompositeModule(Current1, Module));
+    return Children.Aggregate(Initial, (Current, Module) => new CompositeModule(Current, Module));
   }
 
   public TorchBrain CreateBrain(torch.nn.Module<TorchInferenceParts, TorchInferenceParts> Model, torch.Device Device)
@@ -80,7 +80,7 @@ public sealed class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module
     int GRULayers, 
     torch.Device Device)
   {
-    var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures, GRULayers);
+    var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures, GRULayers, batchFirst:true);
     var Adapter = new GRUAdapter(Underlying, OutputFeatures, GRULayers, Device);  
     return Adapter;
   }
@@ -100,9 +100,9 @@ public sealed class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module
     return new StatePassThroughModule(torch.nn.LayerNorm(InputFeatures));
   }
 
-  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLatestTimeStepInStatePooling()
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLastTimeStep()
   {
-    return new LatestTimeStepInStatePooling();
+    return new LastTimeStepPooling();
   }
 
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateMeanOverTimeStepsPooling()

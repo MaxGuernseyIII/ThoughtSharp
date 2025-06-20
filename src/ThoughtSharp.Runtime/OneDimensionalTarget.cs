@@ -22,15 +22,26 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class MakeFeedbackSink<TMade>(
-  InferenceFeedback Underlying,
-  Func<TMade, IReadOnlyList<(int, LossRule)>> ToExpectedOutput)
-  : FeedbackSink<TMade>
-  where TMade : CognitiveData<TMade>
+public class OneDimensionalTarget(float[] Target)
 {
-  public void TrainWith(TMade Expected)
+  public float[] Target { get; } = Target;
+  public int Length { get; } = Target.Length;
+
+  bool Equals(OneDimensionalTarget Other)
   {
-    var Buffer = ToExpectedOutput(Expected);
-    Underlying.ApplyLoses(Buffer);
+    return Target.SequenceEqual(Other.Target);
+  }
+
+  public override bool Equals(object? Other)
+  {
+    if (Other is null) return false;
+    if (ReferenceEquals(this, Other)) return true;
+    if (Other.GetType() != GetType()) return false;
+    return Equals((OneDimensionalTarget) Other);
+  }
+
+  public override int GetHashCode()
+  {
+    return Target.GetHashCode();
   }
 }

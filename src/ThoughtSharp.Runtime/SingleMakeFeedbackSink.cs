@@ -20,34 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-using static TorchSharp.torch;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
-
-class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
+public class SingleMakeFeedbackSink<TMade>(
+  FeedbackSink<IReadOnlyList<TMade>> Underlying)
+  : FeedbackSink<TMade>
+  where TMade : CognitiveData<TMade>
 {
-  public Tensor Visit(BinaryCrossEntropyWithLogitsLossRule Rule, Tensor Prediction)
+  public void TrainWith(TMade Expected)
   {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.binary_cross_entropy_with_logits(Prediction, Target);
-  }
-
-  public Tensor Visit(MeanSquareErrorLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.mse_loss(Prediction, Target);
-  }
-
-  public Tensor Visit(CrossEntropyLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.GetInt64ScalarTensor(Rule.Index);
-    return nn.functional.cross_entropy(Prediction.squeeze(0), Target);
-  }
-
-  public Tensor Visit(HuberLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.huber_loss(Prediction, Target);
+    Underlying.TrainWith([Expected]);
   }
 }

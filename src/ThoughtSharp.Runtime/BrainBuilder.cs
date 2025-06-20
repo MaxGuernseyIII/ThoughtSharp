@@ -236,7 +236,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public TimeAwareConstructor AddGRU(int Features, int Layers = 1)
     {
-      return Add(new GRUConstructor(Host, Tail, Features, Layers)).WithLastTimeStepOfStatePooling();
+      return Add(new GRUConstructor(Host, Tail, Features, Layers)).WithLastTimeStepPooling();
     }
 
     public TimeAwareConstructor AddAttention(int Heads, int FeaturesPerHead)
@@ -273,11 +273,11 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       };
     }
 
-    public TimeAwareConstructor WithLastTimeStepOfStatePooling()
+    public TimeAwareConstructor WithLastTimeStepPooling()
     {
       return this with
       {
-        Pooling = new LatestTimeStepOfStatePoolingConstructor(Host, Tail)
+        Pooling = new LastTimeStepPoolingConstructor(Host, Tail)
       };
     }
 
@@ -379,7 +379,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     }
   }
 
-  record LatestTimeStepOfStatePoolingConstructor(
+  record LastTimeStepPoolingConstructor(
     BrainBuilder<TBrain, TModel, TDevice> Host,
     ModelConstructor Predecessor) : ModelConstructor
   {
@@ -389,7 +389,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public TModel Build()
     {
-      return Host.Factory.CreateLatestTimeStepInStatePooling();
+      return Host.Factory.CreateLastTimeStep();
     }
   }
 

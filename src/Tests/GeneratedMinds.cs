@@ -42,7 +42,7 @@ public partial class GeneratedMinds
     };
     Brain.SetOutputForOnlyInput(
       [
-        ..InputToMakeCall.Select(Step => new HasTimeStepsMind.Input()
+        ..InputToMakeCall.Select(Step => new HasTimeStepsMind.Input
         {
           OperationCode = 1,
           Parameters =
@@ -70,12 +70,76 @@ public partial class GeneratedMinds
     Actual.Should().BeEquivalentTo(ExpectedOutput);
   }
 
-
-  [Mind]
-  public partial class HasTimeStepsMind
+  [TestMethod]
+  public void DoBatchTimeAwareMake()
   {
-    [Make]
-    public partial CognitiveResult<SimpleOutputData, SimpleOutputData> TimeAwareMake([TimeSteps] float[] Params);
+    var Brain = new MockBrain<HasTimeStepsMind.Input, HasTimeStepsMind.Output>();
+    var Mind = new HasTimeStepsMind(Brain);
+    var InputToMakeCallBatch0 = Any.FloatArray();
+    var InputToMakeCallBatch1 = Any.FloatArray();
+    var ExpectedOutput0 = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+    var ExpectedOutput1 = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+    Brain.SetOutputsForBatchedInputs(
+      [
+        [
+          ..InputToMakeCallBatch0.Select(Step => new HasTimeStepsMind.Input
+          {
+            OperationCode = 1,
+            Parameters =
+            {
+              TimeAwareMake =
+              {
+                Params = Step
+              }
+            }
+          })
+        ],
+        [
+          ..InputToMakeCallBatch1.Select(Step => new HasTimeStepsMind.Input
+          {
+            OperationCode = 1,
+            Parameters =
+            {
+              TimeAwareMake =
+              {
+                Params = Step
+              }
+            }
+          })
+        ]
+      ],
+      [
+        new()
+        {
+          Parameters =
+          {
+            TimeAwareMake =
+            {
+              Value = ExpectedOutput0
+            }
+          }
+        },
+        new()
+        {
+          Parameters =
+          {
+            TimeAwareMake =
+            {
+              Value = ExpectedOutput1
+            }
+          }
+        }
+      ]);
+
+    var Actual = Mind.TimeAwareMakeBatch([new(InputToMakeCallBatch0), new(InputToMakeCallBatch1)]).Payload;
+
+    Actual.Should().BeEquivalentTo([ExpectedOutput0, ExpectedOutput1]);
   }
 
   [TestMethod]
@@ -135,16 +199,61 @@ public partial class GeneratedMinds
     T.FeedbackSink.TrainWith(ExpectedObject);
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
-    {
-      Parameters =
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
       {
-        MakeSimpleOutput =
+        Parameters =
         {
-          Value = ExpectedObject
+          MakeSimpleOutput =
+          {
+            Value = ExpectedObject
+          }
         }
       }
-    });
+    ]);
+  }
+
+  [TestMethod]
+  public void TrainBatchMake()
+  {
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
+    var Mind = new StatelessMind(Brain);
+    var T = Mind.MakeSimpleOutputBatch([new(new()), new(new())]);
+    var ExpectedObject1 = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+
+    var ExpectedObject2 = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+
+    T.FeedbackSink.TrainWith([ExpectedObject1, ExpectedObject2]);
+
+    var Inference = Brain.MockInferences.Single();
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
+      {
+        Parameters =
+        {
+          MakeSimpleOutput =
+          {
+            Value = ExpectedObject1
+          }
+        }
+      },
+      new StatelessMind.Output
+      {
+        Parameters =
+        {
+          MakeSimpleOutput =
+          {
+            Value = ExpectedObject2
+          }
+        }
+      }
+    ]);
   }
 
   [TestMethod]
@@ -218,27 +327,29 @@ public partial class GeneratedMinds
     });
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
-    {
-      Parameters =
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
       {
-        SynchronousUseSomeInterface =
+        Parameters =
         {
-          Surface =
+          SynchronousUseSomeInterface =
           {
-            ActionCode = 2,
-            MoreActions = ExpectedMore,
-            Parameters =
+            Surface =
             {
-              DoSomething2 =
+              ActionCode = 2,
+              MoreActions = ExpectedMore,
+              Parameters =
               {
-                SomeOtherData = SomeOtherData
+                DoSomething2 =
+                {
+                  SomeOtherData = SomeOtherData
+                }
               }
             }
           }
         }
       }
-    });
+    ]);
   }
 
   [TestMethod]
@@ -279,6 +390,64 @@ public partial class GeneratedMinds
     }, null, ExpectedSomeOtherDataData);
   }
 
+  [TestMethod]
+  public async Task UseAsynchronousActionSurfaceOperationsInBatch()
+  {
+    var ExpectedSomeData = Any.Float;
+    var ExpectedSomeOtherDataData = Any.Float;
+
+    await TestAsynchronousBatchUseMethod([
+      (new()
+      {
+        ActionCode = 1,
+        MoreActions = false,
+        Parameters =
+        {
+          DoSomething1 =
+          {
+            SomeData = ExpectedSomeData
+          }
+        }
+      }, ExpectedSomeData, null),
+      (new()
+      {
+        ActionCode = 2,
+        MoreActions = false,
+        Parameters =
+        {
+          DoSomething2 =
+          {
+            SomeOtherData = ExpectedSomeOtherDataData
+          }
+        }
+      }, null, ExpectedSomeOtherDataData)
+    ]);
+  }
+
+  [DataRow(true, true)]
+  [DataRow(false, true)]
+  [DataRow(true, false)]
+  [DataRow(false, false)]
+  [TestMethod]
+  public async Task UseAsynchronousActionSurfaceInBatchReturnsMore(bool ExpectedMore1, bool ExpectedMore2)
+  {
+    var Surface = new MockAsynchronousSurface();
+    var ActualMore = await ExecuteAsynchronousUseBatchOperation([
+      (new()
+      {
+        ActionCode = (ushort) Any.Int(0, 2),
+        MoreActions = ExpectedMore1
+      }, Surface),
+      (new()
+      {
+        ActionCode = (ushort) Any.Int(0, 2),
+        MoreActions = ExpectedMore2
+      }, Surface)
+    ]);
+
+    ActualMore.Should().BeEquivalentTo([ExpectedMore1, ExpectedMore2], C => C.WithStrictOrdering());
+  }
+
   [DataRow(true)]
   [DataRow(false)]
   [TestMethod]
@@ -313,27 +482,108 @@ public partial class GeneratedMinds
     });
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
-    {
-      Parameters =
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
       {
-        AsynchronousUseSomeInterface =
+        Parameters =
         {
-          Surface =
+          AsynchronousUseSomeInterface =
           {
-            ActionCode = 2,
-            MoreActions = ExpectedMore,
-            Parameters =
+            Surface =
             {
-              DoSomething2 =
+              ActionCode = 2,
+              MoreActions = ExpectedMore,
+              Parameters =
               {
-                SomeOtherData = SomeOtherData
+                DoSomething2 =
+                {
+                  SomeOtherData = SomeOtherData
+                }
               }
             }
           }
         }
       }
-    });
+    ]);
+  }
+
+  [TestMethod]
+  public async Task TrainingOfAsynchronousBatchUseAsOutputThought()
+  {
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
+    var Mind = new StatelessMind(Brain);
+
+    var T = await Mind.AsynchronousUseSomeInterfaceBatch(
+      [
+        new(new MockAsynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100)),
+        new(new MockAsynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100)),
+      ]);
+
+    var ExpectedMore1 = Any.Bool;
+    var ExpectedMore2 = Any.Bool;
+    var SomeOtherData1 = Any.Float;
+    var SomeData2 = Any.Float;
+
+    T.FeedbackSink.TrainWith([
+        (Mock, More) =>
+        {
+          Mock.DoSomething2(SomeOtherData1);
+          More.Value = ExpectedMore1;
+          return Task.CompletedTask;
+        },
+        (Mock, More) =>
+        {
+          Mock.DoSomething1(SomeData2);
+          More.Value = ExpectedMore2;
+          return Task.CompletedTask;
+        }
+      ]);
+
+    var Inference = Brain.MockInferences.Single();
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
+      {
+        Parameters =
+        {
+          AsynchronousUseSomeInterface =
+          {
+            Surface =
+            {
+              ActionCode = 2,
+              MoreActions = ExpectedMore1,
+              Parameters =
+              {
+                DoSomething2 =
+                {
+                  SomeOtherData = SomeOtherData1
+                }
+              }
+            }
+          }
+        }
+      },
+      new()
+      {
+        Parameters =
+        {
+          AsynchronousUseSomeInterface =
+          {
+            Surface =
+            {
+              ActionCode = 1,
+              MoreActions = ExpectedMore2,
+              Parameters =
+              {
+                DoSomething1 =
+                {
+                  SomeData = SomeData2
+                }
+              }
+            }
+          }
+        }
+      }
+    ]);
   }
 
   [TestMethod]
@@ -377,8 +627,10 @@ public partial class GeneratedMinds
       new List<(CognitiveOption<MockSelectable, MockDescriptor> Left, CognitiveOption<MockSelectable, MockDescriptor>
         Right, MockInference<StatelessMind.Input, StatelessMind.Output> Inference)>();
 
-    Brain.MakeInferenceFunc = Inputs =>
+    Brain.MakeInferenceFunc = Batches =>
     {
+      Batches.Length.Should().Be(1);
+      var Inputs = Batches[0];
       Inputs.Length.Should().Be(1);
       var Input = Inputs.Single();
       var Cat = Input.Parameters.ChooseItems.Category;
@@ -414,9 +666,10 @@ public partial class GeneratedMinds
     var RightItems = SelectionLog.Where(I => I.Right == Selected);
     foreach (var Item in LeftItems)
       Item.Inference.ShouldHaveBeenTrainedWith(
-        new MockCategory.Output {RightIsWinner = false}.ExtractLossRules(Offset));
+        new MockCategory.Output {RightIsWinner = false}.ExtractLossRules(0, Offset));
     foreach (var Item in RightItems)
-      Item.Inference.ShouldHaveBeenTrainedWith(new MockCategory.Output {RightIsWinner = true}.ExtractLossRules(Offset));
+      Item.Inference.ShouldHaveBeenTrainedWith(
+        new MockCategory.Output {RightIsWinner = true}.ExtractLossRules(0, Offset));
     foreach (var Item in SelectionLog.Except(LeftItems).Except(RightItems))
       Item.Inference.ShouldNotHaveBeenTrained();
   }
@@ -476,7 +729,7 @@ public partial class GeneratedMinds
     Brain.MakeInferenceFunc = delegate
     {
       CallCount++;
-      return new MockInference<CanBeTold.Input, CanBeTold.Output>(new());
+      return new MockInference<CanBeTold.Input, CanBeTold.Output>([new()]);
     };
 
     Mind.Tell(Tokens);
@@ -504,8 +757,10 @@ public partial class GeneratedMinds
 
     Result.Should().BeSameAs(Selected.Payload);
 
-    Inference MakeInferenceFunction(ImmutableArray<StatelessMind.Input> Inputs)
+    Inference MakeInferenceFunction(ImmutableArray<ImmutableArray<StatelessMind.Input>> Batches)
     {
+      Batches.Length.Should().Be(1);
+      var Inputs = Batches[0];
       Inputs.Length.Should().Be(1);
       var Input = Inputs.Single();
       Input.OperationCode.Should().Be(4);
@@ -615,6 +870,77 @@ public partial class GeneratedMinds
     return More;
   }
 
+  static async Task TestAsynchronousBatchUseMethod(ImmutableArray<(
+    AsynchronousActionSurface.Output Selection,
+    float? ExpectedSomeData,
+    float? ExpectedSomeOtherData)> Actions
+  )
+  {
+    var Operations = Actions.Select(A => (
+      A.Selection,
+      Surface: new MockAsynchronousSurface(),
+      A.ExpectedSomeData,
+      A.ExpectedSomeOtherData)).ToImmutableArray();
+
+    await ExecuteAsynchronousUseBatchOperation([..Operations.Select(A => (A.Selection, A.Surface))]);
+
+    foreach (var (_, Surface, ExpectedSomeData, ExpectedSomeOtherData) in Operations)
+    {
+      Surface.SomeData.Should().Be(ExpectedSomeData);
+      Surface.SomeOtherData.Should().Be(ExpectedSomeOtherData);
+    }
+  }
+
+  static async Task<IReadOnlyList<bool>> ExecuteAsynchronousUseBatchOperation(
+    ImmutableArray<(
+      AsynchronousActionSurface.Output Selection,
+      MockAsynchronousSurface Surface)> Actions
+  )
+  {
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
+    var ExpectedInputs = new List<StatelessMind.Input>();
+    var StipulatedOutputs = new List<StatelessMind.Output>();
+
+    foreach (var (Selection, Surface) in Actions)
+    {
+      var ExpectedInput = new StatelessMind.Input
+      {
+        OperationCode = 3,
+        Parameters =
+        {
+          AsynchronousUseSomeInterface =
+          {
+            Argument1 = Any.Int(0, 100),
+            Argument2 = Any.Int(0, 10000)
+          }
+        }
+      };
+
+      var StipulatedOutput = new StatelessMind.Output
+      {
+        Parameters =
+        {
+          AsynchronousUseSomeInterface =
+          {
+            Surface = Selection
+          }
+        }
+      };
+      ExpectedInputs.Add(ExpectedInput);
+      StipulatedOutputs.Add(StipulatedOutput);
+    }
+
+    Brain.SetOutputsForBatchedInputs([..ExpectedInputs.Select(I => new[] {I}.ToImmutableArray())],
+      [..StipulatedOutputs]);
+    var Thought = await new StatelessMind(Brain).AsynchronousUseSomeInterfaceBatch(
+      ExpectedInputs.Zip(Actions).Select(Pair => new StatelessMind.AsynchronousUseSomeInterfaceArgs(Pair.Second.Surface,
+        Pair.First.Parameters.AsynchronousUseSomeInterface.Argument1,
+        Pair.First.Parameters.AsynchronousUseSomeInterface.Argument2)
+      ).ToImmutableArray()
+    );
+    return Thought.Payload;
+  }
+
   [TestMethod]
   public void CognitiveDataIsolation()
   {
@@ -625,7 +951,8 @@ public partial class GeneratedMinds
     HasIsolationBoundaries.WriteIsolationBoundaries(W);
 
     S.Boundaries.Should().BeEquivalentTo([
-      Offset + HasIsolationBoundaries.P3Index, Offset + HasIsolationBoundaries.P3Index + HasIsolationBoundaries.P3Codec.Length
+      Offset + HasIsolationBoundaries.P3Index,
+      Offset + HasIsolationBoundaries.P3Index + HasIsolationBoundaries.P3Codec.Length
     ]);
   }
 
@@ -636,11 +963,18 @@ public partial class GeneratedMinds
     var Offset = Any.Int(0, 1000);
     var W = new IsolationBoundariesWriter(S, Offset);
     var ExpectedStream = new IsolationBoundaryStream();
-    UsesIsolationMind.Output.WriteIsolationBoundaries(new IsolationBoundariesWriter(ExpectedStream, Offset));
+    UsesIsolationMind.Output.WriteIsolationBoundaries(new(ExpectedStream, Offset));
 
     UsesIsolationMind.WriteIsolationBoundaries(W);
 
     S.Boundaries.Should().BeEquivalentTo(ExpectedStream.Boundaries);
+  }
+
+  [Mind]
+  public partial class HasTimeStepsMind
+  {
+    [Make]
+    public partial CognitiveResult<SimpleOutputData, SimpleOutputData> TimeAwareMake([TimeSteps] float[] Params);
   }
 
   class MockSynchronousSurface : SynchronousActionSurface

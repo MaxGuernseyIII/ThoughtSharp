@@ -20,34 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-using static TorchSharp.torch;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
-
-class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
+public class CrossEntropyLossRule(long Index, int Length) : LossRule
 {
-  public Tensor Visit(BinaryCrossEntropyWithLogitsLossRule Rule, Tensor Prediction)
+  public long Index { get; } = Index;
+  public int Length { get; } = Length;
+
+  public U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor)
   {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.binary_cross_entropy_with_logits(Prediction, Target);
+    return Visitor.Visit(this, Prediction);
   }
 
-  public Tensor Visit(MeanSquareErrorLossRule Rule, Tensor Prediction)
+  bool Equals(CrossEntropyLossRule Other)
   {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.mse_loss(Prediction, Target);
+    return Index == Other.Index && Length == Other.Length;
   }
 
-  public Tensor Visit(CrossEntropyLossRule Rule, Tensor Prediction)
+  public override bool Equals(object? Other)
   {
-    var Target = Brain.GetInt64ScalarTensor(Rule.Index);
-    return nn.functional.cross_entropy(Prediction.squeeze(0), Target);
+    if (Other is null) return false;
+    if (ReferenceEquals(this, Other)) return true;
+    if (Other.GetType() != GetType()) return false;
+    return Equals((CrossEntropyLossRule) Other);
   }
 
-  public Tensor Visit(HuberLossRule Rule, Tensor Prediction)
+  public override int GetHashCode()
   {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.huber_loss(Prediction, Target);
+    return HashCode.Combine(Index, Length);
   }
 }

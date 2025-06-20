@@ -22,14 +22,29 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class UseFeedbackSink<TSurface>(TSurface Mock, Action<bool> Commit)
+public class UseFeedbackSink<TSurface>(FeedbackSink<IReadOnlyList<UseFeedbackMethod<TSurface>>> Core)
   : FeedbackSink<UseFeedbackMethod<TSurface>>
 {
   public void TrainWith(UseFeedbackMethod<TSurface> Configure)
   {
-    var ShouldHaveRequestedMore = new BoxedBool();
-    Configure(Mock, ShouldHaveRequestedMore);
+    Core.TrainWith([Configure]);
+  }
+}
 
-    Commit(ShouldHaveRequestedMore.Value);
+public class BatchUseFeedbackSink<TSurface>(
+  IReadOnlyList<(TSurface Mock, Action<bool> CommitOne)> TimeSequences,
+  Action CommitBatch)
+  : FeedbackSink<IReadOnlyList<UseFeedbackMethod<TSurface>>>
+{
+  public void TrainWith(IReadOnlyList<UseFeedbackMethod<TSurface>> ConfigureAll)
+  {
+    foreach (var ((Mock, CommitOne), Configure) in TimeSequences.Zip(ConfigureAll))
+    {
+      var RequiresMore = new BoxedBool();
+      Configure(Mock, RequiresMore);
+      CommitOne(RequiresMore.Value);
+    }
+
+    CommitBatch();
   }
 }

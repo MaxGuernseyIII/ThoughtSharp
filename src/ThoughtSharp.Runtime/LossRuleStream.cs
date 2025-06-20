@@ -20,34 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ThoughtSharp.Runtime;
-using static TorchSharp.torch;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
-
-class TorchLossRuleVisitor(TorchBrain Brain) : LossRuleVisitor<Tensor, Tensor>
+public class LossRuleStream
 {
-  public Tensor Visit(BinaryCrossEntropyWithLogitsLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.binary_cross_entropy_with_logits(Prediction, Target);
-  }
+  readonly List<(int In, int At, LossRule Rule)> WriteableRules = [];
+  public IReadOnlyList<(int In, int At, LossRule Rule)> PositionRulePairs => WriteableRules;
 
-  public Tensor Visit(MeanSquareErrorLossRule Rule, Tensor Prediction)
+  public void WriteRule(int TimeSequenceNumber, int Offset, LossRule Rule)
   {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.mse_loss(Prediction, Target);
-  }
-
-  public Tensor Visit(CrossEntropyLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.GetInt64ScalarTensor(Rule.Index);
-    return nn.functional.cross_entropy(Prediction.squeeze(0), Target);
-  }
-
-  public Tensor Visit(HuberLossRule Rule, Tensor Prediction)
-  {
-    var Target = Brain.ConvertFloatsToTensor([[Rule.Target]]);
-    return nn.functional.huber_loss(Prediction, Target);
+    WriteableRules.Add((TimeSequenceNumber, Offset, Rule));
   }
 }

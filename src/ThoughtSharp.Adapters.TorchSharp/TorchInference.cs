@@ -20,50 +20,67 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System;
 using ThoughtSharp.Runtime;
 using TorchSharp;
+using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
 public class TorchInference(
   TorchBrain Brain,
   TorchInference? Predecessor,
-  float[][] OriginalBatches,
-  TorchInferenceStateNode? StateOutput,
-  torch.Tensor ProductOutputTensor) : Inference
+  TorchInferenceParts OriginalInput,
+  TorchInferenceParts Output) : Inference
 {
-  internal TorchInferenceStateNode? StateOutput { get; } = StateOutput;
-  internal torch.Tensor ProductOutputTensor { get; } = ProductOutputTensor;
+  internal TorchInferenceParts Output { get; } = Output;
+  internal TorchInferenceParts OriginalInput { get; } = OriginalInput;
 
-  public ReadOnlySpan<float> Result => ProductOutputTensor[ProductOutputTensor.shape[0] - 1].to(torch.CPU).data<float>().ToArray();
+  public float[][] Result
+  {
+    get
+    {
+      var OutputTensor = Output.Payload;
+      var LastIndices = (Output.SequenceLengths - 1).unsqueeze(1).unsqueeze(2);
+      var BatchSize = LastIndices.shape[0];
+
+      var ExpandedIndices = LastIndices.expand([BatchSize, 1, OutputTensor.shape[2]]);
+
+      var FinalItems = OutputTensor.gather(1, ExpandedIndices);
+
+      return FinalItems
+        .to(torch.CPU)
+        .data<float>()
+        .ToArray()
+        .Chunk((int)OutputTensor.shape[2])
+        .Select(Chunk => Chunk.ToArray())
+        .ToArray();
+    }
+  }
 
   protected TorchBrain Brain { get; } = Brain;
 
   public void Dispose()
   {
-    StateOutput?.Dispose();
-    ProductOutputTensor.Dispose();
+    OriginalInput.State?.Dispose();
+    Output.Payload.Dispose();
   }
 
-  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  public void Train(params IReadOnlyList<(int, int, LossRule)> LossRules)
   {
     var Visitor = new TorchLossRuleVisitor(Brain);
     var TensorForBackPropagation = Replay().Payload;
 
     var CumulativeLoss = torch.tensor(0.0f, requires_grad: true);
 
-    foreach (var (At, Rule) in LossRules)
+    foreach (var (BatchNumber, At, Rule) in LossRules)
     {
-      var AffectedSlice = TensorForBackPropagation.slice(1, At, At + Rule.Length, 1);
+      var AffectedSlice = TensorForBackPropagation
+        .slice(0, BatchNumber, BatchNumber + 1, 1)
+        .slice(2, At, At + Rule.Length, 1);
       var SliceLoss = Rule.Accept(AffectedSlice, Visitor);
-      //Console.WriteLine($"Target: {SliceLoss.device}");
 
       CumulativeLoss += SliceLoss;
     }
-
-    //Console.WriteLine($"Input: {TensorForBackPropagation.device}");
-    //Console.WriteLine($"Loss: {CumulativeLoss.device}");
 
     Brain.ApplyLoss(CumulativeLoss);
   }
@@ -74,11 +91,18 @@ public class TorchInference(
 
     using var Mode = Brain.EnterTrainingMode(true);
 
-    return Brain.Forward(OriginalBatches, StateTensor);
+    return Brain.Forward(OriginalInput with
+    {
+      State = StateTensor
+    });
   }
 
-  public Inference MakeInference(float[][] Batches)
+  public Inference MakeInference(float[][][] JaggedTensor)
   {
-    return Brain.ExecuteInference(this, StateOutput, Batches);
+    return Brain.ExecuteInference(this, 
+      Brain.ConvertFloatsToInput(JaggedTensor) with
+      {
+        State = Output.State
+      });
   }
 }

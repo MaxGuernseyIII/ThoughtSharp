@@ -20,17 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using TorchSharp;
+namespace ThoughtSharp.Runtime;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
-
-class LatestTimeStepInStatePooling(string Name = "") : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>(Name)
+public sealed record Batch<T>
 {
-  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  public required IReadOnlyList<TimeSequence<T>> TimeSequences { get; init; }
+
+  public IEnumerable<IReadOnlyList<T?>> TimeWiseOrDefault()
   {
-    return Input with
+    var MaximumLength = TimeSequences.Max(S => S.TimeSteps.Count);
+
+    foreach (var TimeStepNumber in Enumerable.Range(0, MaximumLength))
     {
-      Payload = Input.State!.Value.First()[-1]
-    };
+      var Row = Enumerable.Range(0, TimeSequences.Count)
+        .Select(TimeSequenceNumber => 
+          TimeStepNumber < TimeSequences[TimeSequenceNumber].TimeSteps.Count ? 
+            TimeSequences[TimeSequenceNumber].TimeSteps[TimeStepNumber] : default).ToList();
+
+      yield return Row;
+    }
   }
 }

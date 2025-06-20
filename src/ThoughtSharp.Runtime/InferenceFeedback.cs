@@ -24,7 +24,7 @@ namespace ThoughtSharp.Runtime;
 
 public class InferenceFeedback(Inference Target)
 {
-  public void ApplyLoses(params IReadOnlyList<(int, LossRule)> LossRules)
+  public void ApplyLoses(params IReadOnlyList<(int BatchNumber, int FirstFeatureNumber, LossRule Rule)> LossRules)
   {
     Target.Train(LossRules);
   }

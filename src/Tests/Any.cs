@@ -55,7 +55,7 @@ static class Any
 
   public static float[] FloatArray()
   {
-    return FloatArray(Int());
+    return FloatArray(Int(1, 3));
   }
 
   public static string ASCIIString(int Length)
