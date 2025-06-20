@@ -84,11 +84,8 @@ static class MindRenderer
 
   static void RenderModelMembers(IndentedTextWriter W, MindModel M, ushort OperationCode)
   {
-    foreach (var MakeOperation in M.MakeOperations)
-    {
-      RenderMakeMethod(W, M, MakeOperation, OperationCode);
-      RenderBatchMakeMethod(W, M, MakeOperation, OperationCode++);
-    }
+    foreach (var MakeOperation in M.MakeOperations) 
+      RenderForSpecifiedMakeMethod(W, M, MakeOperation, OperationCode++);
 
     foreach (var UseOperation in M.UseOperations)
       RenderUseMethod(W, M, UseOperation, OperationCode++);
@@ -98,6 +95,13 @@ static class MindRenderer
 
     foreach (var TellOperation in M.TellOperations)
       RenderTellMethod(W, M, TellOperation, OperationCode++);
+  }
+
+  static void RenderForSpecifiedMakeMethod(IndentedTextWriter W, MindModel M,
+    MindMakeOperationModel MakeOperation, ushort OperationCode)
+  {
+    RenderMakeMethod(W, M, MakeOperation, OperationCode);
+    RenderBatchMakeMethod(W, M, MakeOperation, OperationCode);
   }
 
   static void RenderTellMethod(IndentedTextWriter W, MindModel M, MindTellOperationModel TellOperation, ushort OpCode)
