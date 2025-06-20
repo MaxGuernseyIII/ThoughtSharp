@@ -33,12 +33,8 @@ public class BatchMakeFeedbackSink<TMade>(
   {
     var Writer = new LossRuleWriter();
 
-    foreach (var (FeedbackItem, TimeSequenceNumber) in Feedback.Select((F, I) => (F, I)))
-    {
-      // TODO: Make sure there is a test to fix this line!!!
-      Writer.AtBeginningOfTimeSequence(TimeSequenceNumber);
-      WriteLossRules(FeedbackItem, Writer);
-    }
+    foreach (var (FeedbackItem, TimeSequenceNumber) in Feedback.Select((F, I) => (F, I))) 
+      WriteLossRules(FeedbackItem, Writer.AtBeginningOfTimeSequence(TimeSequenceNumber));
 
     Underlying.ApplyLoses(Writer.Stream.PositionRulePairs);
   }

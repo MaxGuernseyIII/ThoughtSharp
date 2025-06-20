@@ -214,6 +214,49 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
+  public void TrainBatchMake()
+  {
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
+    var Mind = new StatelessMind(Brain);
+    var T = Mind.MakeSimpleOutputBatch([new(new()), new(new())]);
+    var ExpectedObject1 = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+
+    var ExpectedObject2 = new SimpleOutputData
+    {
+      R1 = Any.Float
+    };
+
+    T.FeedbackSink.TrainWith([ExpectedObject1, ExpectedObject2]);
+
+    var Inference = Brain.MockInferences.Single();
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
+      {
+        Parameters =
+        {
+          MakeSimpleOutput =
+          {
+            Value = ExpectedObject1
+          }
+        }
+      },
+      new StatelessMind.Output
+      {
+        Parameters =
+        {
+          MakeSimpleOutput =
+          {
+            Value = ExpectedObject2
+          }
+        }
+      }
+    ]);
+  }
+
+  [TestMethod]
   public void UseSynchronousActionSurfaceOperation1()
   {
     var ExpectedSomeData = Any.Float;
