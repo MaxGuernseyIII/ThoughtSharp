@@ -36,7 +36,7 @@
     },
     "target one curriculum in samples folder": {
       "commandName": "Project",
-      "commandLineArgs": "--curricula FizzBuzzTrainingPlan",
+      "commandLineArgs": "--curricula BatchFizzBuzzTrainingPlan",
       "workingDirectory": "E:\\repos\\ThoughtSharp\\src\\Tests.SampleScenarios"
     }
   }
