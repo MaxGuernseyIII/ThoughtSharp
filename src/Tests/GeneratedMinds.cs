@@ -465,6 +465,85 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
+  public async Task TrainingOfAsynchronousBatchUseAsOutputThought()
+  {
+    var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
+    var Mind = new StatelessMind(Brain);
+
+    var T = await Mind.AsynchronousUseSomeInterfaceBatch(
+      [
+        new(new MockAsynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100)),
+        new(new MockAsynchronousSurface(), Any.Int(0, 10), Any.Int(-100, 100)),
+      ]);
+
+    var ExpectedMore1 = Any.Bool;
+    var ExpectedMore2 = Any.Bool;
+    var SomeOtherData1 = Any.Float;
+    var SomeData2 = Any.Float;
+
+    T.FeedbackSink.TrainWith([
+        (Mock, More) =>
+        {
+          Mock.DoSomething2(SomeOtherData1);
+          More.Value = ExpectedMore1;
+          return Task.CompletedTask;
+        },
+        (Mock, More) =>
+        {
+          Mock.DoSomething1(SomeData2);
+          More.Value = ExpectedMore2;
+          return Task.CompletedTask;
+        }
+      ]);
+
+    var Inference = Brain.MockInferences.Single();
+    Inference.ShouldHaveBeenTrainedWith([
+      new StatelessMind.Output
+      {
+        Parameters =
+        {
+          AsynchronousUseSomeInterface =
+          {
+            Surface =
+            {
+              ActionCode = 2,
+              MoreActions = ExpectedMore1,
+              Parameters =
+              {
+                DoSomething2 =
+                {
+                  SomeOtherData = SomeOtherData1
+                }
+              }
+            }
+          }
+        }
+      },
+      new()
+      {
+        Parameters =
+        {
+          AsynchronousUseSomeInterface =
+          {
+            Surface =
+            {
+              ActionCode = 1,
+              MoreActions = ExpectedMore2,
+              Parameters =
+              {
+                DoSomething1 =
+                {
+                  SomeData = SomeData2
+                }
+              }
+            }
+          }
+        }
+      }
+    ]);
+  }
+
+  [TestMethod]
   public void ChooseFromSmallCompleteBatchOfOptions()
   {
     TestChooseBatches(new([AnyMockOption(), AnyMockOption(), AnyMockOption()]));

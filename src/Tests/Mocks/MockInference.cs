@@ -22,6 +22,7 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
@@ -57,22 +58,20 @@ class MockInference<TInput, TOutput>(params ImmutableArray<TOutput> ResultOutput
 
   public void ShouldHaveBeenTrainedWith(IReadOnlyList<TOutput> Outputs)
   {
-    var AllLossRules = new List<(int, int, LossRule)>();
+    var Writer = new LossRuleWriter();
 
     foreach (var (Output, I) in Outputs.Select((Output, I) => (Output, I)))
     {
-      var Stream = new LossRuleStream();
-      var Writer = new LossRuleWriter(Stream);
+      Writer = Writer.AtBeginningOfTimeSequence(I);
       Output.WriteAsLossRules(Writer);
-      var Expected = Stream.PositionRulePairs;
-      AllLossRules.AddRange(Expected.Select(O => (I, O.At, O.Rule)));
     }
 
-    ShouldHaveBeenTrainedWith(AllLossRules);
+    ShouldHaveBeenTrainedWith(Writer.Stream.PositionRulePairs);
   }
 
   public void ShouldHaveBeenTrainedWith(params IReadOnlyList<(int BatchNumber, int At, LossRule Rule)> Expected)
   {
+    AssertionScope.Current.FormattingOptions.MaxLines = 10000;
     TrainedLossRules.Should().Equal(Expected);
   }
 

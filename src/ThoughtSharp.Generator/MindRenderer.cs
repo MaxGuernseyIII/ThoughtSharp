@@ -458,20 +458,8 @@ static class MindRenderer
     W.WriteLine("var OutputObjects = Inference.Result.Select(R => Output.UnmarshalFrom(R)).ToList();");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
 
-    W.WriteLine($"var FeedbackMocks = new List<({UseOperation.Name}FeedbackMock Mock, Action<bool> CommitOne)>();");
-
-    //W.WriteLine($"var FeedbackMock = new {UseOperation.Name}FeedbackMock(Inference);");
-    //W.WriteLine($"var Feedback = new {FeedbackSinkType}(");
-    //W.Indent++;
-    //W.WriteLine("FeedbackMock,");
-    //W.WriteLine("FeedbackMock.Commit");
-    //W.Indent--;
-    //W.WriteLine(");");
-    //W.WriteLine();
-
-    //W.WriteLine(
-    //  $"var MoreActions = ({Unwrap}OutputObject.Parameters.{UseOperation.Name}.{ActionSurface.Name}.InterpretFor({ActionSurface.Name})).Payload;");
-
+    W.WriteLine($"var FeedbackOutputs = new List<Output>(OutputObjects);");
+    W.WriteLine($"var FeedbackMocks = new List<({UseOperation.Name}BatchFeedbackMock Mock, Action<bool> CommitOne)>();");
     W.WriteLine();
     W.WriteLine("var ReturnValues = new List<bool>();");
     using (W.DeclareWithBlock("foreach (var (OutputObject, TimeSequenceIndex) in OutputObjects.Select((O, I) => (O, I)))"))
@@ -483,8 +471,22 @@ static class MindRenderer
         $".InterpretFor(__TIME_SEQUENCES__[TimeSequenceIndex].{ActionSurface.Name})).Payload;");
       W.Indent--;
       W.WriteLine("ReturnValues.Add(MoreActions);");
+      W.WriteLine();
+      W.WriteLine($"var FeedbackMock = new {UseOperation.Name}BatchFeedbackMock(FeedbackOutputs, TimeSequenceIndex);");
+      W.WriteLine("FeedbackMocks.Add((FeedbackMock, FeedbackMock.Commit));");
     }
-    W.WriteLine($"var FeedbackSink = new {FeedbackSinkType}([..FeedbackMocks], delegate{{}});");
+    W.WriteLine($"var FeedbackSink = new {FeedbackSinkType}([..FeedbackMocks], delegate");
+    using (W.EnterBlock())
+    {
+      W.WriteLine("var Writer = new LossRuleWriter();");
+      using (W.DeclareWithBlock("foreach (var (Expected, Index) in FeedbackOutputs.Select((E, I) => (E, I)))"))
+      {
+        W.WriteLine("Writer = Writer.AtBeginningOfTimeSequence(Index);");
+        W.WriteLine("Expected.WriteAsLossRules(Writer);");
+      }
+      W.WriteLine("Inference.Train(Writer.Stream.PositionRulePairs);");
+    }
+    W.WriteLine($");");
     W.WriteLine();
     W.WriteLine("return CognitiveResult.From(ReturnValues, FeedbackSink);");
     W.Indent--;

@@ -33,9 +33,9 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
 {
   public MockInferenceSource()
   {
-    MakeInferenceFunc = _ =>
+    MakeInferenceFunc = Batch =>
     {
-      var MockInference = new MockInference<TInput, TOutput>([new()]);
+      var MockInference = new MockInference<TInput, TOutput>([..Enumerable.Repeat(new TOutput(), Batch.Length)]);
       MockInferences.Add(MockInference);
       return MockInference;
     };

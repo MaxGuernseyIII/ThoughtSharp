@@ -35,6 +35,7 @@ public class BatchMakeFeedbackSink<TMade>(
 
     foreach (var (FeedbackItem, TimeSequenceNumber) in Feedback.Select((F, I) => (F, I)))
     {
+      // TODO: Make sure there is a test to fix this line!!!
       Writer.AtBeginningOfTimeSequence(TimeSequenceNumber);
       WriteLossRules(FeedbackItem, Writer);
     }
