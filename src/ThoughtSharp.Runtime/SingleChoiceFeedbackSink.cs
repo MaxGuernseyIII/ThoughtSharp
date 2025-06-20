@@ -22,11 +22,6 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface SingleChoiceFeedbackSink<in TSelectable>
-{
-  void TrainWith(TSelectable ExpectedWinner);
-}
-
 public class SingleChoiceFeedbackSink<TSelectable, TOutput>(
   Inference Inference,
   TSelectable Left,
