@@ -22,9 +22,17 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface Inference : IDisposable, InferenceSource
+public class LossRuleWriter(LossRuleStream Stream, int BatchNumber, int Base)
 {
-  ReadOnlySpan<float> Result { get; }
+  public LossRuleWriter() : this(new()) { }
 
-  void Train(params IReadOnlyList<(int BatchNumber, int FirstFeatureNumber, LossRule Rule)> LossRules);
+  public LossRuleWriter(LossRuleStream Stream) : this(Stream, 0, 0) {}
+
+  public LossRuleStream Stream { get; } = Stream;
+
+  public LossRuleWriter ForOffset(int Offset) => new(Stream, BatchNumber, Base + Offset);
+
+  public LossRuleWriter AtBeginningOfBatch(int NewBatchNumber) => new(Stream, NewBatchNumber, 0);
+
+  public void WriteLossRule(int Offset, LossRule Rule) => Stream.WriteRule(BatchNumber, Base + Offset, Rule);
 }

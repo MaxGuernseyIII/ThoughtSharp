@@ -22,9 +22,15 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface Inference : IDisposable, InferenceSource
+public class MakeFeedbackSink<TMade>(
+  InferenceFeedback Underlying,
+  Func<TMade, IReadOnlyList<(int, int, LossRule)>> ToExpectedOutput)
+  : FeedbackSink<TMade>
+  where TMade : CognitiveData<TMade>
 {
-  ReadOnlySpan<float> Result { get; }
-
-  void Train(params IReadOnlyList<(int BatchNumber, int FirstFeatureNumber, LossRule Rule)> LossRules);
+  public void TrainWith(TMade Expected)
+  {
+    var Buffer = ToExpectedOutput(Expected);
+    Underlying.ApplyLoses(Buffer);
+  }
 }

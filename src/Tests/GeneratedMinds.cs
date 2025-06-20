@@ -135,7 +135,7 @@ public partial class GeneratedMinds
     T.FeedbackSink.TrainWith(ExpectedObject);
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
+    Inference.ShouldHaveBeenTrainedWith([new StatelessMind.Output
     {
       Parameters =
       {
@@ -144,7 +144,7 @@ public partial class GeneratedMinds
           Value = ExpectedObject
         }
       }
-    });
+    }]);
   }
 
   [TestMethod]
@@ -218,7 +218,7 @@ public partial class GeneratedMinds
     });
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
+    Inference.ShouldHaveBeenTrainedWith([new StatelessMind.Output
     {
       Parameters =
       {
@@ -238,7 +238,7 @@ public partial class GeneratedMinds
           }
         }
       }
-    });
+    }]);
   }
 
   [TestMethod]
@@ -313,7 +313,7 @@ public partial class GeneratedMinds
     });
 
     var Inference = Brain.MockInferences.Single();
-    Inference.ShouldHaveBeenTrainedWith(new StatelessMind.Output
+    Inference.ShouldHaveBeenTrainedWith([new StatelessMind.Output
     {
       Parameters =
       {
@@ -333,7 +333,7 @@ public partial class GeneratedMinds
           }
         }
       }
-    });
+    }]);
   }
 
   [TestMethod]
@@ -414,9 +414,9 @@ public partial class GeneratedMinds
     var RightItems = SelectionLog.Where(I => I.Right == Selected);
     foreach (var Item in LeftItems)
       Item.Inference.ShouldHaveBeenTrainedWith(
-        new MockCategory.Output {RightIsWinner = false}.ExtractLossRules(Offset));
+        new MockCategory.Output {RightIsWinner = false}.ExtractLossRules(0, Offset));
     foreach (var Item in RightItems)
-      Item.Inference.ShouldHaveBeenTrainedWith(new MockCategory.Output {RightIsWinner = true}.ExtractLossRules(Offset));
+      Item.Inference.ShouldHaveBeenTrainedWith(new MockCategory.Output {RightIsWinner = true}.ExtractLossRules(0, Offset));
     foreach (var Item in SelectionLog.Except(LeftItems).Except(RightItems))
       Item.Inference.ShouldNotHaveBeenTrained();
   }

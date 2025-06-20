@@ -22,9 +22,31 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface Inference : IDisposable, InferenceSource
+public class CrossEntropyLossRule(long Index, int Length) : LossRule
 {
-  ReadOnlySpan<float> Result { get; }
+  public long Index { get; } = Index;
+  public int Length { get; } = Length;
 
-  void Train(params IReadOnlyList<(int BatchNumber, int FirstFeatureNumber, LossRule Rule)> LossRules);
+  public U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor)
+  {
+    return Visitor.Visit(this, Prediction);
+  }
+
+  bool Equals(CrossEntropyLossRule Other)
+  {
+    return Index == Other.Index && Length == Other.Length;
+  }
+
+  public override bool Equals(object? Other)
+  {
+    if (Other is null) return false;
+    if (ReferenceEquals(this, Other)) return true;
+    if (Other.GetType() != GetType()) return false;
+    return Equals((CrossEntropyLossRule) Other);
+  }
+
+  public override int GetHashCode()
+  {
+    return HashCode.Combine(Index, Length);
+  }
 }

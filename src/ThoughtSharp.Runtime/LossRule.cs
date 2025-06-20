@@ -22,9 +22,8 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface Inference : IDisposable, InferenceSource
+public interface LossRule
 {
-  ReadOnlySpan<float> Result { get; }
-
-  void Train(params IReadOnlyList<(int BatchNumber, int FirstFeatureNumber, LossRule Rule)> LossRules);
+  int Length { get; }
+  U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor);
 }

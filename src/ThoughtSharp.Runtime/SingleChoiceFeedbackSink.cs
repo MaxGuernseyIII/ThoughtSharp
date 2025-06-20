@@ -32,6 +32,7 @@ public class SingleChoiceFeedbackSink<TSelectable, TOutput>(
   TSelectable Left,
   TSelectable Right,
   Func<bool, TOutput> MakeOutput,
+  int BatchNumber,
   int Offset) : FeedbackSink<TSelectable>
   where TOutput : CognitiveData<TOutput>
 {
@@ -44,8 +45,8 @@ public class SingleChoiceFeedbackSink<TSelectable, TOutput>(
       return;
 
     var Output = MakeOutput(WinnerIsRight);
-    var Writer = new LossRuleWriter(new(), Offset);
+    var Writer = new LossRuleWriter(new(), BatchNumber, Offset);
     Output.WriteAsLossRules(Writer);
-    Inference.Train(Writer.Stream.PositionRulePairs);
+    Inference.Train(Writer.Stream.PositionRulePairs.Select(R => (0, R.At, R.Rule)).ToList());
   }
 }

@@ -22,9 +22,10 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface Inference : IDisposable, InferenceSource
+public class BinaryCrossEntropyWithLogitsLossRule(float[] Target) : OneDimensionalTarget(Target), LossRule
 {
-  ReadOnlySpan<float> Result { get; }
-
-  void Train(params IReadOnlyList<(int BatchNumber, int FirstFeatureNumber, LossRule Rule)> LossRules);
+  public U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor)
+  {
+    return Visitor.Visit(this, Prediction);
+  }
 }

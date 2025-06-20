@@ -81,7 +81,7 @@ public partial class CognitiveCategoryTests
 
     T.FeedbackSink.TrainWith(Left.Payload);
 
-    MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = false }.ExtractLossRules(Offset));
+    MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = false }.ExtractLossRules(0, Offset));
   }
 
   [TestMethod]
@@ -95,7 +95,7 @@ public partial class CognitiveCategoryTests
 
     T.FeedbackSink.TrainWith(Right.Payload);
 
-    MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output() { RightIsWinner = true }.ExtractLossRules(Offset));
+    MockInference.ShouldHaveBeenTrainedWith(new TestCategory.Output { RightIsWinner = true }.ExtractLossRules(0, Offset));
   }
 
   [TestMethod]
@@ -131,11 +131,11 @@ public partial class CognitiveCategoryTests
 
 static class LossRuleExtensions
 {
-  public static IReadOnlyList<(int, LossRule)> ExtractLossRules<T>(this T This, int Offset)
+  public static IReadOnlyList<(int, int, LossRule)> ExtractLossRules<T>(this T This, int BatchNumber, int Offset)
     where T : CognitiveData<T>
   {
     var Stream = new LossRuleStream();
-    var Writer = new LossRuleWriter(Stream, Offset);
+    var Writer = new LossRuleWriter(Stream, BatchNumber, Offset);
 
     This.WriteAsLossRules(Writer);
 

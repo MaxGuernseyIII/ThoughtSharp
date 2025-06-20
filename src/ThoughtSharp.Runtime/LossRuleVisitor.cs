@@ -22,9 +22,10 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface Inference : IDisposable, InferenceSource
+public interface LossRuleVisitor<in TPrediction, out TTarget>
 {
-  ReadOnlySpan<float> Result { get; }
-
-  void Train(params IReadOnlyList<(int BatchNumber, int FirstFeatureNumber, LossRule Rule)> LossRules);
+  TTarget Visit(BinaryCrossEntropyWithLogitsLossRule Rule, TPrediction Prediction);
+  TTarget Visit(MeanSquareErrorLossRule Rule, TPrediction Prediction);
+  TTarget Visit(CrossEntropyLossRule Rule, TPrediction Prediction);
+  TTarget Visit(HuberLossRule Rule, TPrediction Prediction);
 }

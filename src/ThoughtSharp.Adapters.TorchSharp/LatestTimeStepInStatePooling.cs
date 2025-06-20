@@ -29,8 +29,11 @@ class LatestTimeStepInStatePooling(string Name = "_unnamed") : torch.nn.Module<T
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
     var State = Input.State!.Value.First();
-    var Tensor = State[torch.TensorIndex.Colon, -1];
-    var LastSteps = Tensor.unsqueeze(1);
+    var LastIndices = (Input.SequenceLengths - 1).unsqueeze(1).unsqueeze(2);
+    var BatchSize = LastIndices.shape[0];
+
+    var LastSteps = State.gather(1, LastIndices.expand([BatchSize, 1, State.shape[2]]));
+
     return Input with
     {
       Payload = LastSteps

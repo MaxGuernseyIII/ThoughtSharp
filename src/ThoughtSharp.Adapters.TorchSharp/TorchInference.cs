@@ -44,24 +44,20 @@ public class TorchInference(
     Output.Payload.Dispose();
   }
 
-  public void Train(params IReadOnlyList<(int, LossRule)> LossRules)
+  public void Train(params IReadOnlyList<(int, int, LossRule)> LossRules)
   {
     var Visitor = new TorchLossRuleVisitor(Brain);
     var TensorForBackPropagation = Replay().Payload;
 
     var CumulativeLoss = torch.tensor(0.0f, requires_grad: true);
 
-    foreach (var (At, Rule) in LossRules)
+    foreach (var (BatchNumber, At, Rule) in LossRules)
     {
-      var AffectedSlice = TensorForBackPropagation.slice(2, At, At + Rule.Length, 1);
+      var AffectedSlice = TensorForBackPropagation[BatchNumber].slice(1, At, At + Rule.Length, 1);
       var SliceLoss = Rule.Accept(AffectedSlice, Visitor);
-      //Console.WriteLine($"Target: {SliceLoss.device}");
 
       CumulativeLoss += SliceLoss;
     }
-
-    //Console.WriteLine($"Input: {TensorForBackPropagation.device}");
-    //Console.WriteLine($"Loss: {CumulativeLoss.device}");
 
     Brain.ApplyLoss(CumulativeLoss);
   }

@@ -185,7 +185,7 @@ static class MindRenderer
     W.WriteLine("};");
     W.WriteLine();
     W.WriteLine("var Stream = new LossRuleStream();");
-    W.WriteLine("var Writer = new LossRuleWriter(Stream, 0);");
+    W.WriteLine("var Writer = new LossRuleWriter(Stream);");
     W.WriteLine("O.WriteAsLossRules(Writer);");
     W.WriteLine("return Stream.PositionRulePairs;");
     W.Indent--;
@@ -259,7 +259,7 @@ static class MindRenderer
     W.Indent++;
     W.WriteLine($"Expected.Parameters.{UseOperation.Name}.{ActionSurface.Name}.MoreActions = ExpectedMore;");
     W.WriteLine("var Stream = new LossRuleStream();");
-    W.WriteLine("var Writer = new LossRuleWriter(Stream, 0);");
+    W.WriteLine("var Writer = new LossRuleWriter(Stream);");
     W.WriteLine("Expected.WriteAsLossRules(Writer);");
     W.WriteLine("ToTrain.Train(Stream.PositionRulePairs);");
     W.Indent--;
