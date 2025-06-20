@@ -100,8 +100,8 @@ static class MindRenderer
   static void RenderForSpecifiedMakeMethod(IndentedTextWriter W, MindModel M,
     MindMakeOperationModel MakeOperation, ushort OperationCode)
   {
-    RenderMakeMethod(W, M, MakeOperation, OperationCode);
-    RenderBatchMakeMethod(W, M, MakeOperation, OperationCode);
+    RenderSingularMakeMethod(W, MakeOperation);
+    RenderBatchMakeMethod(W, MakeOperation, OperationCode);
   }
 
   static void RenderTellMethod(IndentedTextWriter W, MindModel M, MindTellOperationModel TellOperation, ushort OpCode)
@@ -129,86 +129,32 @@ static class MindRenderer
     }
   }
 
-  static void RenderMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation,
-    ushort OperationCode)
+  static void RenderSingularMakeMethod(IndentedTextWriter W, MindMakeOperationModel MakeOperation)
   {
-    W.WriteLine(
-      $"public partial CognitiveResult<{MakeOperation.ReturnType}, {MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})");
-    W.WriteLine("{");
-    W.Indent++;
-    RenderInputObjectForOpCode(W, OperationCode);
-
-    var TimeStepParameterName = MakeOperation.TimeSteps?.ParameterName;
-
-    W.WriteLine("var InputBuffers = new List<float[]>();");
-    W.WriteLine();
-    if (TimeStepParameterName is not null)
+    using (W.DeclareWithBlock(
+      $"public partial CognitiveResult<{MakeOperation.ReturnType}, {MakeOperation.ReturnType}> {MakeOperation.Name}({string.Join(", ", MakeOperation.Parameters.Select(P => $"{P.Type} {P.Name}"))})"))
     {
-      W.WriteLine($@"foreach (var __TIMESTEP__ in {TimeStepParameterName})");
-      W.WriteLine("{");
+      W.WriteLine($"var Result = {MakeOperation.Name}Batch(");
       W.Indent++;
-    }
+      W.WriteLine("[");
+      W.Indent++;
+      W.WriteLine("new(");
+      W.Indent++;
 
-    foreach (var Parameter in MakeOperation.Parameters)
-    {
-      var AssignmentSource = Parameter.Name == TimeStepParameterName ? @"__TIMESTEP__" : Parameter.Name;
-      W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {AssignmentSource};");
-    }
+      W.WriteLine(string.Join(", ", MakeOperation.Parameters.Select(P => P.Name)));
 
-    W.WriteLine("var InputBuffer = new float[Input.Length];");
-    W.WriteLine("InputObject.MarshalTo(InputBuffer);");
-    W.WriteLine("InputBuffers.Add(InputBuffer);");
-
-    if (TimeStepParameterName is not null)
-    {
       W.Indent--;
-      W.WriteLine("}");
+      W.WriteLine(")");
+      W.Indent--;
+      W.WriteLine("]");
+      W.Indent--;
+      W.WriteLine(");");
+
+      W.WriteLine($"return CognitiveResult.From(Result.Payload[0], new SingleMakeFeedbackSink<{MakeOperation.ReturnType}>(Result.FeedbackSink));");
     }
-
-    W.WriteLine();
-    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([[..InputBuffers]]);");
-    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
-    W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
-    W.WriteLine();
-
-    W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
-    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
-
-    W.WriteLine("return CognitiveResult.From(");
-    W.Indent++;
-    W.WriteLine($"OutputObject.Parameters.{MakeOperation.Name}.Value,");
-    W.WriteLine($"new MakeFeedbackSink<{MakeOperation.ReturnType}>(");
-    W.Indent++;
-    W.WriteLine("new(");
-    W.Indent++;
-    W.WriteLine("Inference");
-    W.Indent--;
-    W.WriteLine("),");
-    W.WriteLine("V => ");
-    W.WriteLine("{");
-    W.Indent++;
-    W.WriteLine("var O = new Output");
-    W.WriteLine("{");
-    W.Indent++;
-    W.WriteLine($"Parameters = {{ {MakeOperation.Name} = {{ Value = V }} }}");
-    W.Indent--;
-    W.WriteLine("};");
-    W.WriteLine();
-    W.WriteLine("var Stream = new LossRuleStream();");
-    W.WriteLine("var Writer = new LossRuleWriter(Stream);");
-    W.WriteLine("O.WriteAsLossRules(Writer);");
-    W.WriteLine("return Stream.PositionRulePairs;");
-    W.Indent--;
-    W.WriteLine("}");
-    W.Indent--;
-    W.WriteLine(")");
-    W.Indent--;
-    W.WriteLine(");");
-    W.Indent--;
-    W.WriteLine("}");
   }
 
-  static void RenderBatchMakeMethod(IndentedTextWriter W, MindModel Model, MindMakeOperationModel MakeOperation,
+  static void RenderBatchMakeMethod(IndentedTextWriter W, MindMakeOperationModel MakeOperation,
     ushort OperationCode)
   {
     W.WriteLine(

@@ -22,19 +22,6 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class MakeFeedbackSink<TMade>(
-  InferenceFeedback Underlying,
-  Func<TMade, IReadOnlyList<(int, int, LossRule)>> ToExpectedOutput)
-  : FeedbackSink<TMade>
-  where TMade : CognitiveData<TMade>
-{
-  public void TrainWith(TMade Expected)
-  {
-    var Buffer = ToExpectedOutput(Expected);
-    Underlying.ApplyLoses(Buffer);
-  }
-}
-
 public class BatchMakeFeedbackSink<TMade>(
   InferenceFeedback Underlying,
   Action<TMade, LossRuleWriter> WriteLossRules
