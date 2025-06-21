@@ -20,4 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Runtime;
+using FluentAssertions;
+using ThoughtSharp.Runtime;
+
+namespace Tests;
+
+[TestClass]
+public class BatchBuilding
+{
+  [TestMethod]
+  public void DefaultValue()
+  {
+    var Default = Any.Float;
+    var SequenceCount = Any.Int(1, 10);
+    var BatchBuilder = new Batch<float>.Builder(Default, SequenceCount);
+    BatchBuilder.AddStep();
+
+    var Batch = BatchBuilder.Build();
+
+    Batch.Time[0].InSequence[Any.Int(0, SequenceCount - 1)].Should().Be(Default);
+  }
+
+  [TestMethod]
+  public void AssignValues()
+  {
+    var SequenceCount = Any.Int(1, 10);
+    var BatchBuilder = new Batch<float>.Builder(Any.Float, SequenceCount);
+    var Step = BatchBuilder.AddStep();
+    var AffectedSequenceNumber = Any.Int(0, SequenceCount - 1);
+    var Expected = Any.Float;
+    Step[AffectedSequenceNumber] = Expected;
+
+    var Batch = BatchBuilder.Build();
+
+    Batch.Time[0].InSequence[AffectedSequenceNumber].Should().Be(Expected);
+  }
+}

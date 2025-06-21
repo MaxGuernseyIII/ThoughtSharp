@@ -24,20 +24,61 @@ namespace ThoughtSharp.Runtime;
 
 public sealed record Batch<T>
 {
-  public required IReadOnlyList<TimeSequence<T>> TimeSequences { get; init; }
+  readonly T[,] Grid;
 
-  public IEnumerable<IReadOnlyList<T?>> TimeWiseOrDefault()
+  Batch(T[,] Grid)
   {
-    var MaximumLength = TimeSequences.Max(S => S.TimeSteps.Count);
+    this.Grid = Grid;
+  }
 
-    foreach (var TimeStepNumber in Enumerable.Range(0, MaximumLength))
+  public readonly ref struct TimeFirstView(Batch<T> Into)
+  {
+    public TimeFirstStepView this[int T] => new(Into, T);
+  }
+
+  public readonly ref struct TimeFirstStepView(Batch<T> Into, int TimeStepNumber)
+  {
+    public TimeFirstThenBatchView InSequence => new(Into, TimeStepNumber);
+  };
+
+  public readonly ref struct TimeFirstThenBatchView(Batch<T> Into, int TimeStepNumber)
+  {
+    public T this[int SequenceNumber] => Into.Grid[TimeStepNumber, SequenceNumber];
+  }
+
+  public TimeFirstView Time => new(this);
+
+  public class Builder(T DefaultValue, int SequenceCount)
+  {
+    readonly List<T[]> Steps = [];
+
+    public readonly ref struct StepBuilder(T[] ThisStep)
     {
-      var Row = Enumerable.Range(0, TimeSequences.Count)
-        .Select(TimeSequenceNumber => 
-          TimeStepNumber < TimeSequences[TimeSequenceNumber].TimeSteps.Count ? 
-            TimeSequences[TimeSequenceNumber].TimeSteps[TimeStepNumber] : default).ToList();
+      public T this[int SequenceNumber]
+      {
+        get => ThisStep[SequenceNumber];
+        set => ThisStep[SequenceNumber] = value;
+      }
+    }
 
-      yield return Row;
+    public StepBuilder AddStep()
+    {
+      var NewStep = new T[SequenceCount];
+      Array.Fill(NewStep, DefaultValue);
+      Steps.Add(NewStep);
+
+      return new(NewStep);
+    }
+
+    public Batch<T> Build()
+    {
+      var Grid = new T[Steps.Count, SequenceCount];
+
+      foreach (var StepNumber in Enumerable.Range(0, Steps.Count))
+      foreach (var SequenceNumber in Enumerable.Range(0, SequenceCount))
+        Grid[StepNumber, SequenceNumber] = Steps[StepNumber][SequenceNumber];
+
+      return new(Grid);
     }
   }
 }
