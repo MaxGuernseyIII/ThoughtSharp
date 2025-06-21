@@ -53,6 +53,25 @@ public class BatchBuilding
   }
 
   [TestMethod]
+  public void ExposesSequenceCount()
+  {
+    WhenBuild();
+
+    ThenSequenceCountIs(SequenceCount);
+  }
+
+  [TestMethod]
+  public void ExposesStepCount()
+  {
+    var Count = Any.Int(1, 9);
+    GivenSteps(Count);
+
+    WhenBuild();
+
+    ThenStepCountIs(Count);
+  }
+
+  [TestMethod]
   public void AssignValues()
   {
     var Expected = Any.Float;
@@ -75,6 +94,11 @@ public class BatchBuilding
     Step = BatchBuilder.AddStep();
   }
 
+  void GivenSteps(int Count)
+  {
+    foreach (var _ in Enumerable.Range(0, Count)) GivenStep();
+  }
+
   void WhenBuild()
   {
     Batch = BatchBuilder.Build();
@@ -83,6 +107,16 @@ public class BatchBuilding
   void ThenBatchElementIs(int StepNumber, int SequenceNumber, float Expected)
   {
     Batch.Time[StepNumber].InSequence[SequenceNumber].Should().Be(Expected);
+  }
+
+  void ThenSequenceCountIs(int Expected)
+  {
+    Batch.SequenceCount.Should().Be(Expected);
+  }
+
+  void ThenStepCountIs(int Expected)
+  {
+    Batch.StepCount.Should().Be(Expected);
   }
 
   int AnyValidSequenceNumber => Any.Int(0, SequenceCount - 1);

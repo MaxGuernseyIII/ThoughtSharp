@@ -47,6 +47,9 @@ public sealed record Batch<T>
   }
 
   public TimeFirstView Time => new(this);
+  public int StepCount => Grid.GetLength(0);
+  public int SequenceCount => Grid.GetLength(1);
+
 
   public class Builder(T DefaultValue, int SequenceCount)
   {
