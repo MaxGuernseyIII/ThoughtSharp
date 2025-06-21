@@ -28,31 +28,62 @@ namespace Tests;
 [TestClass]
 public class BatchBuilding
 {
+  float Default;
+  int SequenceCount;
+  Batch<float>.Builder BatchBuilder;
+  Batch<float> Batch;
+  Batch<float>.Builder.StepBuilder Step;
+
+  [TestInitialize]
+  public void SetUp()
+  {
+    Default = Any.Float;
+    SequenceCount = Any.Int(1, 10);
+    BatchBuilder = new(Default, SequenceCount);
+  }
+
   [TestMethod]
   public void DefaultValue()
   {
-    var Default = Any.Float;
-    var SequenceCount = Any.Int(1, 10);
-    var BatchBuilder = new Batch<float>.Builder(Default, SequenceCount);
-    BatchBuilder.AddStep();
+    GivenStep();
 
-    var Batch = BatchBuilder.Build();
+    WhenBuild();
 
-    Batch.Time[0].InSequence[Any.Int(0, SequenceCount - 1)].Should().Be(Default);
+    ThenBatchElementIs(0, AnyValidSequenceNumber, Default);
   }
 
   [TestMethod]
   public void AssignValues()
   {
-    var SequenceCount = Any.Int(1, 10);
-    var BatchBuilder = new Batch<float>.Builder(Any.Float, SequenceCount);
-    var Step = BatchBuilder.AddStep();
-    var AffectedSequenceNumber = Any.Int(0, SequenceCount - 1);
     var Expected = Any.Float;
-    Step[AffectedSequenceNumber] = Expected;
+    var AffectedSequenceNumber = AnyValidSequenceNumber;
+    GivenStep();
+    GivenAssignmentInBuilder(AffectedSequenceNumber, Expected);
 
-    var Batch = BatchBuilder.Build();
+    WhenBuild();
 
-    Batch.Time[0].InSequence[AffectedSequenceNumber].Should().Be(Expected);
+    ThenBatchElementIs(0, AffectedSequenceNumber, Expected);
   }
+
+  void GivenAssignmentInBuilder(int AffectedSequenceNumber, float Expected)
+  {
+    Step[AffectedSequenceNumber] = Expected;
+  }
+
+  void GivenStep()
+  {
+    Step = BatchBuilder.AddStep();
+  }
+
+  void WhenBuild()
+  {
+    Batch = BatchBuilder.Build();
+  }
+
+  void ThenBatchElementIs(int StepNumber, int SequenceNumber, float Expected)
+  {
+    Batch.Time[StepNumber].InSequence[SequenceNumber].Should().Be(Expected);
+  }
+
+  int AnyValidSequenceNumber => Any.Int(0, SequenceCount - 1);
 }

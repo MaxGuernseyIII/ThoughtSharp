@@ -52,7 +52,7 @@ public sealed record Batch<T>
   {
     readonly List<T[]> Steps = [];
 
-    public readonly ref struct StepBuilder(T[] ThisStep)
+    public readonly struct StepBuilder(T[] ThisStep)
     {
       public T this[int SequenceNumber]
       {
