@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections;
+
 namespace ThoughtSharp.Runtime;
 
 public sealed record Batch<T>
@@ -31,19 +33,43 @@ public sealed record Batch<T>
     this.Grid = Grid;
   }
 
-  public readonly ref struct TimeFirstView(Batch<T> Into)
+  public readonly struct TimeFirstView(Batch<T> Into)
+    : IEnumerable<TimeFirstStepView>
   {
     public TimeFirstStepView this[int T] => new(Into, T);
+
+    public IEnumerator<TimeFirstStepView> GetEnumerator()
+    {
+      foreach (var T in Enumerable.Range(0, Into.StepCount))
+        yield return this[T];
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+      return GetEnumerator();
+    }
   }
 
-  public readonly ref struct TimeFirstStepView(Batch<T> Into, int TimeStepNumber)
+  public readonly struct TimeFirstStepView(Batch<T> Into, int TimeStepNumber)
   {
     public TimeFirstThenBatchView InSequence => new(Into, TimeStepNumber);
   };
 
-  public readonly ref struct TimeFirstThenBatchView(Batch<T> Into, int TimeStepNumber)
+  public readonly struct TimeFirstThenBatchView(Batch<T> Into, int TimeStepNumber)
+    : IEnumerable<T>
   {
     public T this[int SequenceNumber] => Into.Grid[TimeStepNumber, SequenceNumber];
+
+    public IEnumerator<T> GetEnumerator()
+    {
+      foreach (var SequenceNumber in Enumerable.Range(0, Into.SequenceCount))
+        yield return this[SequenceNumber];
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+      return GetEnumerator();
+    }
   }
 
   public TimeFirstView Time => new(this);

@@ -96,20 +96,25 @@ public class BatchBuilding
     ThenBatchSliceIs(0, ..(TopSequenceNumber + 1), Data);
   }
 
-  void ThenBatchSliceIs(int StepNumber, Range Range, IReadOnlyList<float> Data)
+  [TestMethod]
+  public void ValuesCanBeEnumerated()
   {
-    var RangeStart = Range.Start.GetOffset(Batch.SequenceCount);
-    var RangeEnd = Range.End.GetOffset(Batch.SequenceCount);
-    var Slice = Enumerable.Range(RangeStart, RangeEnd - RangeStart)
-      .Select(SequenceNumber => Batch.Time[StepNumber].InSequence[SequenceNumber])
-      .ToList();
+    var Data1 = AnyData();
+    var Data2 = AnyData();
 
-    Slice.Should().BeEquivalentTo(Data, O => O.WithStrictOrdering());
+    GivenStep(Data1);
+    GivenStep(Data2);
+
+    WhenBuild();
+
+    ThenEntireBatchIs([Data1, Data2]);
   }
 
-  IReadOnlyList<float> AnyData(int TopSequenceNumber)
+  void ThenEntireBatchIs(IReadOnlyList<IReadOnlyList<float>> TimeFirstDataRows)
   {
-    return [..Enumerable.Range(0, TopSequenceNumber + 1).Select(S => Any.Float)];
+    Batch.Time.Select(Step => Step.InSequence.ToList())
+      .Should()
+      .BeEquivalentTo(TimeFirstDataRows, O => O.WithStrictOrdering());
   }
 
   void GivenAssignmentInBuilder(int AffectedSequenceNumber, float Expected)
@@ -147,5 +152,26 @@ public class BatchBuilding
     Batch.StepCount.Should().Be(Expected);
   }
 
+  void ThenBatchSliceIs(int StepNumber, Range Range, IReadOnlyList<float> Data)
+  {
+    var RangeStart = Range.Start.GetOffset(Batch.SequenceCount);
+    var RangeEnd = Range.End.GetOffset(Batch.SequenceCount);
+    var Slice = Enumerable.Range(RangeStart, RangeEnd - RangeStart)
+      .Select(SequenceNumber => Batch.Time[StepNumber].InSequence[SequenceNumber])
+      .ToList();
+
+    Slice.Should().BeEquivalentTo(Data, O => O.WithStrictOrdering());
+  }
+
   int AnyValidSequenceNumber => Any.Int(0, SequenceCount - 1);
+
+  IReadOnlyList<float> AnyData(int TopSequenceNumber)
+  {
+    return [.. Enumerable.Range(0, TopSequenceNumber + 1).Select(S => Any.Float)];
+  }
+
+  IReadOnlyList<float> AnyData()
+  {
+    return [.. Enumerable.Range(0, SequenceCount).Select(S => Any.Float)];
+  }
 }
