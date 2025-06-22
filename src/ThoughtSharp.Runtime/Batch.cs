@@ -20,44 +20,75 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime;
 
 public sealed record Batch<T>
 {
-  Batch(IEnumerable<Sequence> Sequences)
+  Batch(ImmutableArray<Sequence> Sequences)
   {
-    this.Sequences = [..Sequences];
+    this.Sequences = Sequences;
   }
 
-  public IReadOnlyList<Sequence> Sequences { get; }
+  public ImmutableArray<Sequence> Sequences { get; }
 
-  public class Builder
+  public sealed record Builder
   {
-    readonly List<List<T>> Sequences = [];
+    ImmutableArray<Sequence> Sequences { get; init; } = [];
 
-    public SequenceBuilder AddStep()
+    public Builder AddSequence(Func<SequenceBuilder, SequenceBuilder> ConfigureBuilder)
     {
-      var SequenceList = new List<T>();
-      Sequences.Add(SequenceList);
-      return new(SequenceList);
+      return this with {Sequences = [..Sequences, ConfigureBuilder(new()).Build()]};
     }
 
     public Batch<T> Build()
     {
-      return new(Sequences.Select(L => new Sequence(L)));
+      return new(Sequences);
     }
 
-    public class SequenceBuilder(List<T> Sequence)
+    public sealed record SequenceBuilder()
     {
-      public void AddStep(T Result)
+      ImmutableArray<T> Steps = [];
+
+      public SequenceBuilder AddStep(T NextStep)
       {
-        Sequence.Add(Result);
+        return this with {Steps = [..Steps, NextStep]};
+      }
+
+      public Sequence Build()
+      {
+        return new(Steps);
       }
     }
   }
 
-  public class Sequence(IReadOnlyList<T> Steps)
+  public sealed record Sequence(IReadOnlyList<T> Steps)
   {
     public IReadOnlyList<T> Steps { get; } = Steps;
+
+    public bool Equals(Sequence? Other)
+    {
+      if (Other is null) return false;
+      if (ReferenceEquals(this, Other)) return true;
+      return Steps.SequenceEqual(Other.Steps);
+    }
+
+    public override int GetHashCode()
+    {
+      return Steps.Aggregate(0, HashCode.Combine);
+    }
+  }
+
+  public bool Equals(Batch<T>? Other)
+  {
+    if (Other is null) return false;
+    if (ReferenceEquals(this, Other)) return true;
+    return Sequences.SequenceEqual(Other.Sequences);
+  }
+
+  public override int GetHashCode()
+  {
+    return Sequences.Aggregate(0, HashCode.Combine);
   }
 }

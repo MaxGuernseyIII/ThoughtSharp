@@ -41,22 +41,27 @@ public class BatchBuilding
   public void AddValueToSequence()
   {
     var SequenceCount = GivenSequences();
-    var S = GivenSequence();
-    var StepCount = GivenStepsInSequence(S);
-    var Value = GivenStepInSequence(S);
+    var StepCount = Any.Int(0, 3);
+    var Value = Any.Float;
+    GivenSequence(
+      GivenStepsInSequence(StepCount),
+      GivenStepInSequence(Value)
+      );
 
     WhenBuild();
 
     ThenBatchElementIs(SequenceCount, StepCount, Value);
   }
 
-  int GivenStepsInSequence(Batch<float>.Builder.SequenceBuilder SequenceBuilder)
+  static Func<Batch<float>.Builder.SequenceBuilder, Batch<float>.Builder.SequenceBuilder> GivenStepsInSequence(int Count)
   {
-    var Count = Any.Int(0, 3);
-    foreach (var I in Enumerable.Range(0, Count))
-      GivenStepInSequence(SequenceBuilder);
+    return S =>
+    {
+      foreach (var I in Enumerable.Range(0, Count))
+        S = GivenStepInSequence(Any.Float)(S);
 
-    return Count;
+      return S;
+    };
   }
 
   int GivenSequences()
@@ -68,17 +73,19 @@ public class BatchBuilding
     return Count;
   }
 
-  Batch<float>.Builder.SequenceBuilder GivenSequence()
+  void GivenSequence(params IEnumerable<Func<Batch<float>.Builder.SequenceBuilder, Batch<float>.Builder.SequenceBuilder>> Configs)
   {
-    return BatchBuilder.AddStep();
+    BatchBuilder = BatchBuilder.AddSequence(S =>
+    {
+      foreach (var Config in Configs) 
+        S = Config(S);
+      return S;
+    });
   }
 
-  float GivenStepInSequence(Batch<float>.Builder.SequenceBuilder SequenceBuilder)
+  static Func<Batch<float>.Builder.SequenceBuilder, Batch<float>.Builder.SequenceBuilder> GivenStepInSequence(float Value)
   {
-    var Result = Any.Float;
-    SequenceBuilder.AddStep(Result);
-
-    return Result;
+    return S => S.AddStep(Value);
   }
 
   void WhenBuild()
