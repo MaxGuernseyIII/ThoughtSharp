@@ -28,14 +28,12 @@ namespace Tests;
 [TestClass]
 public class BatchBuilding
 {
-  float Default;
-  Batch<float>.Builder BatchBuilder;
-  Batch<float> Batch;
+  Batch<float>.Builder BatchBuilder = null!;
+  Batch<float> Batch = null!;
 
   [TestInitialize]
   public void SetUp()
   {
-    Default = Any.Float;
     BatchBuilder = new();
   }
 
@@ -91,10 +89,5 @@ public class BatchBuilding
   void ThenBatchElementIs(int SequenceNumber, int StepNumber, float Expected)
   {
     Batch.Sequences[SequenceNumber].Steps[StepNumber].Should().Be(Expected);
-  }
-
-  IReadOnlyList<float> AnyData(int Amount)
-  {
-    return [.. Enumerable.Range(0, Amount).Select(S => Any.Float)];
   }
 }
