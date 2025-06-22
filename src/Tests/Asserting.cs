@@ -69,16 +69,18 @@ public class AssertingValues : AssertingBase<int>
 public class AssertingFuzzyValues : AssertingBase<float>
 {
   float Epsilon;
+  float TrainingValue;
 
   [TestInitialize]
   public void SetUp()
   {
     Payload = Any.Float;
     Epsilon = Any.Float;
+    TrainingValue = Any.Float;
   }
 
   [TestMethod]
-  public void PassedAssert()
+  public void PassedAssertApproximately()
   {
     var R = GivenCognitiveResult();
 
@@ -89,7 +91,7 @@ public class AssertingFuzzyValues : AssertingBase<float>
   }
 
   [TestMethod]
-  public void FailedAssert()
+  public void FailedAssertApproximately()
   {
     var R = GivenCognitiveResult();
     var Expected = Any.FloatOutsideOf(Payload, Epsilon);
@@ -100,8 +102,42 @@ public class AssertingFuzzyValues : AssertingBase<float>
     ThenModelWasTrainedWith([Expected]);
   }
 
+  [TestMethod]
+  public void PassedAssertGreaterThan()
+  {
+    var R = GivenCognitiveResult();
+
+    float Expectation = Any.FloatLessThan(Payload);
+    WhenAssertThatResultIsGreaterThan(R, TrainingValue, Expectation);
+
+    ThenAssertionDidNotThrowAnException();
+    ThenModelWasTrainedWith([TrainingValue]);
+  }
+
+  [TestMethod]
+  public void FailedAssertGreaterThan()
+  {
+    var R = GivenCognitiveResult();
+    var Expected = Any.FloatGreaterThanOrEqualTo(Payload);
+
+    WhenAssertThatResultIsGreaterThan(R, TrainingValue, Expected);
+
+    ThenAssertionThrewAssertionFailedException($"Expected >{Expected} but found {Payload}");
+    ThenModelWasTrainedWith([TrainingValue]);
+  }
+
   void WhenAssertThatResultIsApproximately(CognitiveResult<float, float> R, float Expectation, float Epsilon)
   {
-    Action = FluentActions.Invoking(() => Assert.That(R).Is(Expectation, Assertion: V => V.ShouldBeApproximately(Expectation, Epsilon)));
+    Action = FluentActions.Invoking(() => Assert.That(R).Is(Expectation, V => V.ShouldBeApproximately(Expectation, Epsilon)));
+  }
+
+  void WhenAssertThatResultIsGreaterThan(CognitiveResult<float, float> R, float TrainingValue, float Expectation)
+  {
+    Action = FluentActions.Invoking(() => Assert.That(R).Is(TrainingValue, V => V.ShouldBeGreaterThan(Expectation)));
+  }
+
+  void WhenAssertThatResultIsLessThan(CognitiveResult<float, float> R, float Expectation)
+  {
+    Action = FluentActions.Invoking(() => Assert.That(R).Is(Expectation, V => V.ShouldBeLessThan(Expectation)));
   }
 }
