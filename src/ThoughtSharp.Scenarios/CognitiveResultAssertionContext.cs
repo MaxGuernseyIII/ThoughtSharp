@@ -33,12 +33,19 @@ public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TR
     Is(Expected, C => C.ExpectEqual(D => D));
   }
 
-  public void Is(TResultFeedback Expected, Action<ObjectComparison<TResultFeedback>> Assertion)
+  public void Is(TResultFeedback Expected, Action<ObjectComparison<TResultFeedback>> Assertions)
   {
     Subject.FeedbackSink.TrainWith(Expected);
 
     var Comparison = new ObjectComparison<TResultFeedback>(Expected, Subject.Payload);
-    Assertion(Comparison);
+    Assertions(Comparison);
+  }
+
+  public void Is(TResultFeedback Expected, Action<TResultFeedback> Assertion)
+  {
+    Subject.FeedbackSink.TrainWith(Expected);
+
+    Assertion(Subject.Payload);
   }
 }
 

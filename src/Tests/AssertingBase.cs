@@ -23,6 +23,7 @@
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
+using ThoughtSharp.Scenarios;
 using Assert = ThoughtSharp.Scenarios.Assert;
 
 namespace Tests;
@@ -52,5 +53,10 @@ public class AssertingBase<T>
   protected void ThenModelWasTrainedWith(IEnumerable<T> Expected)
   {
     FeedbackMock.RecordedFeedback.Should().BeEquivalentTo(Expected, O => O.WithStrictOrdering());
+  }
+
+  protected void ThenAssertionThrewAssertionFailedException(string ExpectedMessage)
+  {
+    Action.Should().Throw<AssertionFailedException>().WithMessage(ExpectedMessage);
   }
 }

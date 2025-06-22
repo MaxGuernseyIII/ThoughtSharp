@@ -28,7 +28,7 @@ using Assert = ThoughtSharp.Scenarios.Assert;
 namespace Tests;
 
 [TestClass]
-public class AssertingSingleObjects : AssertingBase<int>
+public class AssertingValues : AssertingBase<int>
 {
   [TestInitialize]
   public void SetUp()
@@ -51,21 +51,57 @@ public class AssertingSingleObjects : AssertingBase<int>
   public void FailedAssert()
   {
     var R = GivenCognitiveResult();
-    var Expected = Any.Int();
+    var Expected = Any.IntOtherThan(Payload);
 
     WhenAssertThatResultIs(R, Expected);
 
-    ThenAssertionThrewAssertionFailedException(Expected, Payload);
+    ThenAssertionThrewAssertionFailedException($"Expected {Expected} but found {Payload}");
     ThenModelWasTrainedWith([Expected]);
-  }
-
-  void ThenAssertionThrewAssertionFailedException(int Expected, int Actual)
-  {
-    Action.Should().Throw<AssertionFailedException>().WithMessage($"Expected {Expected} but found {Actual}");
   }
 
   void WhenAssertThatResultIs(CognitiveResult<int, int> R, int Payload)
   {
     Action = FluentActions.Invoking(() => Assert.That(R).Is(Payload));
+  }
+}
+
+[TestClass]
+public class AssertingFuzzyValues : AssertingBase<float>
+{
+  float Epsilon;
+
+  [TestInitialize]
+  public void SetUp()
+  {
+    Payload = Any.Float;
+    Epsilon = Any.Float;
+  }
+
+  [TestMethod]
+  public void PassedAssert()
+  {
+    var R = GivenCognitiveResult();
+
+    WhenAssertThatResultIsApproximately(R, Payload, Epsilon);
+
+    ThenAssertionDidNotThrowAnException();
+    ThenModelWasTrainedWith([Payload]);
+  }
+
+  [TestMethod]
+  public void FailedAssert()
+  {
+    var R = GivenCognitiveResult();
+    var Expected = Any.FloatOutsideOf(Payload, Epsilon);
+
+    WhenAssertThatResultIsApproximately(R, Expected, Epsilon);
+
+    ThenAssertionThrewAssertionFailedException($"Expected {Expected}±{Epsilon} but found {Payload}");
+    ThenModelWasTrainedWith([Expected]);
+  }
+
+  void WhenAssertThatResultIsApproximately(CognitiveResult<float, float> R, float Expectation, float Epsilon)
+  {
+    Action = FluentActions.Invoking(() => Assert.That(R).Is(Expectation, Assertion: V => V.ShouldBeApproximately(Expectation, Epsilon)));
   }
 }
