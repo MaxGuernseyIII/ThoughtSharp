@@ -60,7 +60,7 @@ public static class Assert
       throw new AssertionFailedException($"Expected {Expected}±{Epsilon} but found {Actual}");
   }
 
-  public static void ShouldBeGreaterThan<T>(this T Actual, T Expected)
+  public static void ShouldBeMoreThan<T>(this T Actual, T Expected)
     where T : IComparisonOperators<T, T, bool>
   {
     if (Actual <= Expected)
@@ -74,14 +74,14 @@ public static class Assert
       throw new AssertionFailedException($"Expected <{Expected} but found {Actual}");
   }
 
-  public static void ShouldBeGreaterThanOrEqualTo<T>(this T Actual, T Expected)
+  public static void ShouldBeAtLeast<T>(this T Actual, T Expected)
     where T : IComparisonOperators<T, T, bool>
   {
     if (Actual < Expected)
       throw new AssertionFailedException($"Expected >={Expected} but found {Actual}");
   }
 
-  public static void ShouldBeLessThanOrEqualTo<T>(this T Actual, T Expected)
+  public static void ShouldBeAtMost<T>(this T Actual, T Expected)
     where T : IComparisonOperators<T, T, bool>
   {
     if (Actual > Expected)
