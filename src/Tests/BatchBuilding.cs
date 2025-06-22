@@ -77,9 +77,7 @@ public class BatchBuilding
   {
     BatchBuilder = BatchBuilder.AddSequence(S =>
     {
-      foreach (var Config in Configs) 
-        S = Config(S);
-      return S;
+      return Configs.Aggregate(S, (Current, Config) => Config(Current));
     });
   }
 
