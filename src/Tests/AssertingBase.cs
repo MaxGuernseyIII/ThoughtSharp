@@ -20,8 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios;
+using FluentAssertions;
+using Tests.Mocks;
+using ThoughtSharp.Runtime;
+using Assert = ThoughtSharp.Scenarios.Assert;
 
-public class AssertionFailedException(string Message) : Exception(Message)
+namespace Tests;
+
+public class AssertingBase<T>
 {
+  protected T Payload = default!;
+  protected MockFeedbackSink<T> FeedbackMock = null!;
+  protected Action? Action;
+
+  [TestInitialize]
+  public void BaseSetUp()
+  {
+    FeedbackMock = new();
+  }
+
+  protected void ThenAssertionDidNotThrowAnException()
+  {
+    Action.Should().NotThrow();
+  }
+
+  protected CognitiveResult<T, T> GivenCognitiveResult()
+  {
+    return CognitiveResult.From(Payload, FeedbackMock);
+  }
+
+  protected void ThenModelWasTrainedWith(IEnumerable<T> Expected)
+  {
+    FeedbackMock.RecordedFeedback.Should().BeEquivalentTo(Expected, O => O.WithStrictOrdering());
+  }
 }

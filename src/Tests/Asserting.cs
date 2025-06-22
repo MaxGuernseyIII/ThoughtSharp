@@ -21,45 +21,11 @@
 // SOFTWARE.
 
 using FluentAssertions;
-using Tests.Mocks;
 using ThoughtSharp.Runtime;
-using static FluentAssertions.FluentActions;
+using ThoughtSharp.Scenarios;
 using Assert = ThoughtSharp.Scenarios.Assert;
 
 namespace Tests;
-
-public class AssertingBase<T>
-{
-  protected T Payload = default!;
-  protected MockFeedbackSink<T> FeedbackMock = null!;
-  protected Action? Action;
-
-  [TestInitialize]
-  public void BaseSetUp()
-  {
-    FeedbackMock = new();
-  }
-
-  protected void ThenAssertionDidNotThrowAnException()
-  {
-    Action.Should().NotThrow();
-  }
-
-  protected void WhenAssertThatResultIs(CognitiveResult<T, T> R, T Payload)
-  {
-    Action = Invoking(() => Assert.That(R).Is(Payload));
-  }
-
-  protected CognitiveResult<T, T> GivenCognitiveResult()
-  {
-    return CognitiveResult.From(Payload, FeedbackMock);
-  }
-
-  protected void ThenModelWasTrainedWith(IEnumerable<T> Expected)
-  {
-    FeedbackMock.RecordedFeedback.Should().BeEquivalentTo(Expected, O => O.WithStrictOrdering());
-  }
-}
 
 [TestClass]
 public class AssertingSingleObjects : AssertingBase<int>
@@ -71,7 +37,7 @@ public class AssertingSingleObjects : AssertingBase<int>
   }
 
   [TestMethod]
-  public void AssertOnSingleObjects()
+  public void PassedAssert()
   {
     var R = GivenCognitiveResult();
 
@@ -79,5 +45,27 @@ public class AssertingSingleObjects : AssertingBase<int>
 
     ThenAssertionDidNotThrowAnException();
     ThenModelWasTrainedWith([Payload]);
+  }
+
+  [TestMethod]
+  public void FailedAssert()
+  {
+    var R = GivenCognitiveResult();
+    var Expected = Any.Int();
+
+    WhenAssertThatResultIs(R, Expected);
+
+    ThenAssertionThrewAssertionFailedException(Expected, Payload);
+    ThenModelWasTrainedWith([Expected]);
+  }
+
+  void ThenAssertionThrewAssertionFailedException(int Expected, int Actual)
+  {
+    Action.Should().Throw<AssertionFailedException>().WithMessage($"Expected {Expected} but found {Actual}");
+  }
+
+  void WhenAssertThatResultIs(CognitiveResult<int, int> R, int Payload)
+  {
+    Action = FluentActions.Invoking(() => Assert.That(R).Is(Payload));
   }
 }
