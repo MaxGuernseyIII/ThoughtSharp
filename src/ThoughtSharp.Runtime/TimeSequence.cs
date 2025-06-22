@@ -21,8 +21,3 @@
 // SOFTWARE.
 
 namespace ThoughtSharp.Runtime;
-
-public sealed record TimeSequence<T>
-{
-  public required IReadOnlyList<T> TimeSteps { get; init; }
-}

@@ -24,5 +24,5 @@ namespace ThoughtSharp.Runtime;
 
 public interface InferenceSource
 {
-  Inference MakeInference(float[][][] BatchOfTimeSequences);
+  Inference MakeInference(Batch<float[]> BatchOfTimeSequences);
 }

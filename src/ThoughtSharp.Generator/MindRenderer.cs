@@ -130,7 +130,7 @@ static class MindRenderer
       }
 
       W.WriteLine();
-      W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([InputBuffers.ToArray()]);");
+      W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfFeatureSets.Builder.AddSequence(S => InputBuffers.Aggregate(S, (Previous, Step) => Previous.AddStep(Step))).Build());");
       W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
       W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
     }
@@ -200,8 +200,9 @@ static class MindRenderer
       W.WriteLine("InputBatches.Add([..InputBuffers]);");
     }
 
+    WriteBatchConstructionLogic(W, "InputBatches");
     W.WriteLine();
-    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([..InputBatches]);");
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(__BATCH__);");
     W.WriteLine($"var ReturnObjects = new List<{MakeOperation.ReturnType}>();");
     using (W.DeclareWithBlock("foreach (var Result in Inference.Result)"))
     {
@@ -243,6 +244,23 @@ static class MindRenderer
     W.WriteLine(");");
     W.Indent--;
     W.WriteLine("}");
+  }
+
+  static void WriteBatchConstructionLogic(IndentedTextWriter W, string BatchListName)
+  {
+    W.WriteLine("var __BATCH__ = " + BatchListName + ".Aggregate(Batch.OfFeatureSets.Builder,");
+    W.Indent++;
+    W.WriteLine("(B, Sequence) => B.AddSequence(SB =>");
+    W.Indent++;
+    W.WriteLine("Sequence.Aggregate(SB,");
+    W.Indent++;
+    W.WriteLine("(Previous, Step) => Previous.AddStep(Step)");
+    W.WriteLine(")");
+    W.Indent--;
+    W.WriteLine(")");
+    W.Indent--;
+    W.WriteLine(").Build();");
+    W.Indent--;
   }
 
   static void AddArgsFor(IndentedTextWriter W, string OperationName, IReadOnlyList<(string Name, string Type)> Parameters)
@@ -369,7 +387,7 @@ static class MindRenderer
     W.WriteLine("{");
     W.Indent++;
 
-    W.WriteLine("var Batch = new List<float[][]>();");
+    W.WriteLine("var InputBuffers = new List<float[][]>();");
 
     using (W.DeclareWithBlock("foreach (var __TIME_SEQUENCE__ in __TIME_SEQUENCES__)"))
     {
@@ -381,13 +399,15 @@ static class MindRenderer
 
       W.WriteLine("var InputBuffer = new float[Input.Length];");
       W.WriteLine("InputObject.MarshalTo(InputBuffer);");
-      W.WriteLine("Batch.Add([InputBuffer]);");
+      W.WriteLine("InputBuffers.Add([InputBuffer]);");
 
       W.WriteLine();
     }
 
+    WriteBatchConstructionLogic(W, "InputBuffers");
+
     W.WriteLine();
-    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([..Batch]);");
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(__BATCH__);");
     W.WriteLine("var OutputObjects = Inference.Result.Select(R => Output.UnmarshalFrom(R)).ToList();");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
 
@@ -479,7 +499,7 @@ static class MindRenderer
     W.WriteLine("var InputBuffer = new float[Input.Length];");
     W.WriteLine("InputObject.MarshalTo(InputBuffer);");
     W.WriteLine();
-    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference([[InputBuffer]]);");
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfFeatureSets.Builder.AddSequence(S => S.AddStep(InputBuffer)).Build());");
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
   }

@@ -78,7 +78,7 @@ public class TorchBrain(
     Optimizer.Dispose();
   }
 
-  internal Tensor ConvertFloatsToTensor(float[][][] JaggedTensor)
+  internal Tensor ConvertFloatsToTensor(Batch<float[]> JaggedTensor)
   {
     return ConvertFloatsToInput(JaggedTensor).Payload;
   }
@@ -88,7 +88,7 @@ public class TorchBrain(
     return Model.forward(Input);
   }
 
-  public Inference MakeInference(float[][][] JaggedTensor)
+  public Inference MakeInference(Batch<float[]> JaggedTensor)
   {
     return ExecuteInference(null, ConvertFloatsToInput(JaggedTensor));
   }
@@ -114,23 +114,23 @@ public class TorchBrain(
     return tensor([RuleIndex], ScalarType.Int64).to(Device);
   }
 
-  public TorchInferenceParts ConvertFloatsToInput(float[][][] JaggedTensor)
+  public TorchInferenceParts ConvertFloatsToInput(Batch<float[]> JaggedTensor)
   {
     var TensorShaped = new float[
-      JaggedTensor.Length,
-      JaggedTensor.Max(B => B.Length),
-      JaggedTensor.SelectMany(B => B).Max(R => R.Length)];
+      JaggedTensor.Sequences.Length,
+      JaggedTensor.Sequences.Max(B => B.Steps.Count),
+      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Length)];
 
-    var Sequences = JaggedTensor.Select((TimeSequence, TimeSequenceNumber) => (TimeSequence, TimeSequenceNumber)).ToImmutableArray();
+    var Sequences = JaggedTensor.Sequences.Select((TimeSequence, TimeSequenceNumber) => (TimeSequence, TimeSequenceNumber)).ToImmutableArray();
     foreach (var (TimeSequence, TimeSequenceNumber) in Sequences)
-    foreach (var (TimeStep, TimeStepNumber) in TimeSequence.Select((TimeStep, TimeStepNumber) => (TimeStep, TimeStepNumber)))
+    foreach (var (TimeStep, TimeStepNumber) in TimeSequence.Steps.Select((TimeStep, TimeStepNumber) => (TimeStep, TimeStepNumber)))
     foreach (var (Feature, FeatureNumber) in TimeStep.Select((Feature, FeatureNumber) => (Feature, FeatureNumber)))
       TensorShaped[TimeSequenceNumber, TimeStepNumber, FeatureNumber] = Feature;
 
     return new()
     {
       Payload= tensor(TensorShaped, ScalarType.Float32).to(Device),
-      SequenceLengths = tensor(Sequences.Select(S => S.TimeSequence.Length).ToArray(), dtype: int64),
+      SequenceLengths = tensor(Sequences.Select(S => S.TimeSequence.Steps.Count).ToArray(), dtype: int64),
       State = EmptyState
     };
   }

@@ -22,7 +22,6 @@
 
 using ThoughtSharp.Runtime;
 using TorchSharp;
-using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
@@ -97,7 +96,7 @@ public class TorchInference(
     });
   }
 
-  public Inference MakeInference(float[][][] JaggedTensor)
+  public Inference MakeInference(Batch<float[]> JaggedTensor)
   {
     return Brain.ExecuteInference(this, 
       Brain.ConvertFloatsToInput(JaggedTensor) with

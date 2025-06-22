@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class ChooseFeedback<TSelectable>(List<FeedbackSink<TSelectable>> SingleChoices)
+public class ChooseFeedback<TSelectable>(IReadOnlyList<FeedbackSink<TSelectable>> SingleChoices)
    : FeedbackSink<TSelectable>
 {
   public static FeedbackSource<ChooseFeedbackConfigurator<TSelectable>, ChooseFeedback<TSelectable>> GetSource<TOutput>()
