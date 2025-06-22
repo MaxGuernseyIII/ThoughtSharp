@@ -27,7 +27,7 @@ using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
 
-[UsedImplicitly(ImplicitUseTargetFlags.WithMembers, Reason = "Public API")]
+[PublicAPI]
 public static class Assert
 {
   public static AccumulatedUseAssertionContext<TSurface> That<TSurface>(AccumulatedUseFeedback<TSurface> Subject)
@@ -37,6 +37,12 @@ public static class Assert
 
   public static CognitiveResultAssertionContext<TResultFeedback> That<TResultFeedback>(
     CognitiveResult<TResultFeedback, TResultFeedback> Subject)
+  {
+    return new(Subject);
+  }
+
+  public static BatchCognitiveResultAssertionContext<TResultFeedback> That<TResultFeedback>(
+    CognitiveResult<IReadOnlyList<TResultFeedback>, IReadOnlyList<TResultFeedback>> Subject)
   {
     return new(Subject);
   }

@@ -41,3 +41,22 @@ public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TR
     Assertion(Comparison);
   }
 }
+
+[PublicAPI]
+public class BatchCognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<IReadOnlyList<TResultFeedback>, IReadOnlyList<TResultFeedback>> Subject)
+{
+  public void Is(IReadOnlyList<TResultFeedback> Expected)
+  {
+    Is(Expected, C => C.ExpectEqual(D => D));
+  }
+
+  public void Is(IReadOnlyList<TResultFeedback> Expected, Action<ObjectComparison<TResultFeedback>> Assertion)
+  {
+    Subject.FeedbackSink.TrainWith(Expected);
+
+    Subject.Payload.Count.ShouldBe(Expected.Count);
+
+    foreach (var (ActualItem, ExpectedItem) in Subject.Payload.Zip(Expected)) 
+      Assertion(new(ExpectedItem, ActualItem));
+  }
+}

@@ -20,46 +20,64 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using FluentAssertions;
-using FluentAssertions.Collections;
-using FluentAssertions.Primitives;
+using Tests.Mocks;
 using ThoughtSharp.Runtime;
+using static FluentAssertions.FluentActions;
+using Assert = ThoughtSharp.Scenarios.Assert;
 
 namespace Tests;
 
-static class AssertionExtensions
+public class AssertingBase<T>
 {
-  public static GenericCollectionAssertions<T> MarshalToSameTensor<T>(this GenericCollectionAssertions<T> Assertions,
-    IEnumerable<T> Expected)
-    where T : CognitiveData<T>
+  protected T Payload = default!;
+  protected MockFeedbackSink<T> FeedbackMock = null!;
+  protected Action? Action;
+
+  [TestInitialize]
+  public void BaseSetUp()
   {
-    var ActualBuffer = MarshalToBuffer(Assertions.Subject);
-    var ExpectedBuffer = MarshalToBuffer(Expected);
-
-    ActualBuffer.Should().Equal(ExpectedBuffer);
-
-    return Assertions;
-  }
-  public static ObjectAssertions MarshalToSameTensor<T>(this ObjectAssertions Assertions,
-    T Expected)
-    where T : CognitiveData<T>
-  {
-    var ActualBuffer = MarshalToBuffer<T>([(T)Assertions.Subject]);
-    var ExpectedBuffer = MarshalToBuffer([Expected]);
-
-    ActualBuffer.Should().Equal(ExpectedBuffer);
-
-    return Assertions;
+    FeedbackMock = new();
   }
 
-  static float[] MarshalToBuffer<T>(IEnumerable<T> CollectionSubject) where T : CognitiveData<T>
+  protected void ThenAssertionDidNotThrowAnException()
   {
-    var Items = CollectionSubject.ToImmutableArray();
-    var Buffer = new float[T.Length * Items.Length];
-    for (var I = 0; I < Items.Length; ++I)
-      Items[I].MarshalTo(Buffer[(I * T.Length)..((I + 1) * T.Length)]);
+    Action.Should().NotThrow();
+  }
 
-    return Buffer;
+  protected void WhenAssertThatResultIs(CognitiveResult<T, T> R, T Payload)
+  {
+    Action = Invoking(() => Assert.That(R).Is(Payload));
+  }
+
+  protected CognitiveResult<T, T> GivenCognitiveResult()
+  {
+    return CognitiveResult.From(Payload, FeedbackMock);
+  }
+
+  protected void ThenModelWasTrainedWith(IEnumerable<T> Expected)
+  {
+    FeedbackMock.RecordedFeedback.Should().BeEquivalentTo(Expected, O => O.WithStrictOrdering());
+  }
+}
+
+[TestClass]
+public class AssertingSingleObjects : AssertingBase<int>
+{
+  [TestInitialize]
+  public void SetUp()
+  {
+    Payload = Any.Int();
+  }
+
+  [TestMethod]
+  public void AssertOnSingleObjects()
+  {
+    var R = GivenCognitiveResult();
+
+    WhenAssertThatResultIs(R, Payload);
+
+    ThenAssertionDidNotThrowAnException();
+    ThenModelWasTrainedWith([Payload]);
   }
 }
