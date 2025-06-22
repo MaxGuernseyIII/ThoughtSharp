@@ -84,14 +84,42 @@ public class BatchBuilding
     ThenBatchElementIs(0, AffectedSequenceNumber, Expected);
   }
 
+  [TestMethod]
+  public void AddValuesForPartOfTimeSequences()
+  {
+    var TopSequenceNumber = AnyValidSequenceNumber;
+    var Data = AnyData(TopSequenceNumber);
+    GivenStep(Data);
+
+    WhenBuild();
+
+    ThenBatchSliceIs(0, ..(TopSequenceNumber + 1), Data);
+  }
+
+  void ThenBatchSliceIs(int StepNumber, Range Range, IReadOnlyList<float> Data)
+  {
+    var RangeStart = Range.Start.GetOffset(Batch.SequenceCount);
+    var RangeEnd = Range.End.GetOffset(Batch.SequenceCount);
+    var Slice = Enumerable.Range(RangeStart, RangeEnd - RangeStart)
+      .Select(SequenceNumber => Batch.Time[StepNumber].InSequence[SequenceNumber])
+      .ToList();
+
+    Slice.Should().BeEquivalentTo(Data, O => O.WithStrictOrdering());
+  }
+
+  IReadOnlyList<float> AnyData(int TopSequenceNumber)
+  {
+    return [..Enumerable.Range(0, TopSequenceNumber + 1).Select(S => Any.Float)];
+  }
+
   void GivenAssignmentInBuilder(int AffectedSequenceNumber, float Expected)
   {
     Step[AffectedSequenceNumber] = Expected;
   }
 
-  void GivenStep()
+  void GivenStep(params IReadOnlyList<float> Data)
   {
-    Step = BatchBuilder.AddStep();
+    Step = BatchBuilder.AddStep(Data);
   }
 
   void GivenSteps(int Count)

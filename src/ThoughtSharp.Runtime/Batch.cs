@@ -64,10 +64,13 @@ public sealed record Batch<T>
       }
     }
 
-    public StepBuilder AddStep()
+    public StepBuilder AddStep(params IReadOnlyList<T> PerBatchValues)
     {
       var NewStep = new T[SequenceCount];
       Array.Fill(NewStep, DefaultValue);
+      foreach (var I in Enumerable.Range(0, PerBatchValues.Count)) 
+        NewStep[I] = PerBatchValues[I];
+
       Steps.Add(NewStep);
 
       return new(NewStep);
