@@ -22,7 +22,6 @@
 
 using ThoughtSharp.Runtime;
 using TorchSharp;
-using static TorchSharp.torch.nn;
 
 namespace ThoughtSharp.Adapters.TorchSharp;
 
