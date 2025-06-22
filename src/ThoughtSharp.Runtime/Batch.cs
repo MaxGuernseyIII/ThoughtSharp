@@ -92,3 +92,11 @@ public sealed record Batch<T>
     return Sequences.Aggregate(0, HashCode.Combine);
   }
 }
+
+public static class Batch
+{
+  public static class OfFeatureSets
+  {
+    public static Batch<float[]>.Builder Builder => new();
+  }
+}
