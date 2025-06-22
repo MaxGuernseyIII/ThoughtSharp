@@ -20,97 +20,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections;
-
 namespace ThoughtSharp.Runtime;
 
 public sealed record Batch<T>
 {
-  readonly T[,] Grid;
-
-  Batch(T[,] Grid)
+  Batch(IEnumerable<Sequence> Sequences)
   {
-    this.Grid = Grid;
+    this.Sequences = [..Sequences];
   }
 
-  public readonly struct TimeFirstView(Batch<T> Into)
-    : IEnumerable<TimeFirstStepView>
+  public IReadOnlyList<Sequence> Sequences { get; }
+
+  public class Builder
   {
-    public TimeFirstStepView this[int T] => new(Into, T);
+    readonly List<List<T>> Sequences = [];
 
-    public IEnumerator<TimeFirstStepView> GetEnumerator()
+    public SequenceBuilder AddStep()
     {
-      foreach (var T in Enumerable.Range(0, Into.StepCount))
-        yield return this[T];
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-      return GetEnumerator();
-    }
-  }
-
-  public readonly struct TimeFirstStepView(Batch<T> Into, int TimeStepNumber)
-  {
-    public TimeFirstThenBatchView InSequence => new(Into, TimeStepNumber);
-  };
-
-  public readonly struct TimeFirstThenBatchView(Batch<T> Into, int TimeStepNumber)
-    : IEnumerable<T>
-  {
-    public T this[int SequenceNumber] => Into.Grid[TimeStepNumber, SequenceNumber];
-
-    public IEnumerator<T> GetEnumerator()
-    {
-      foreach (var SequenceNumber in Enumerable.Range(0, Into.SequenceCount))
-        yield return this[SequenceNumber];
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-      return GetEnumerator();
-    }
-  }
-
-  public TimeFirstView Time => new(this);
-  public int StepCount => Grid.GetLength(0);
-  public int SequenceCount => Grid.GetLength(1);
-
-
-  public class Builder(T DefaultValue, int SequenceCount)
-  {
-    readonly List<T[]> Steps = [];
-
-    public readonly struct StepBuilder(T[] ThisStep)
-    {
-      public T this[int SequenceNumber]
-      {
-        get => ThisStep[SequenceNumber];
-        set => ThisStep[SequenceNumber] = value;
-      }
-    }
-
-    public StepBuilder AddStep(params IReadOnlyList<T> PerBatchValues)
-    {
-      var NewStep = new T[SequenceCount];
-      Array.Fill(NewStep, DefaultValue);
-      foreach (var I in Enumerable.Range(0, PerBatchValues.Count)) 
-        NewStep[I] = PerBatchValues[I];
-
-      Steps.Add(NewStep);
-
-      return new(NewStep);
+      var SequenceList = new List<T>();
+      Sequences.Add(SequenceList);
+      return new(SequenceList);
     }
 
     public Batch<T> Build()
     {
-      var Grid = new T[Steps.Count, SequenceCount];
-
-      foreach (var StepNumber in Enumerable.Range(0, Steps.Count))
-      foreach (var SequenceNumber in Enumerable.Range(0, SequenceCount))
-        Grid[StepNumber, SequenceNumber] = Steps[StepNumber][SequenceNumber];
-
-      return new(Grid);
+      return new(Sequences.Select(L => new Sequence(L)));
     }
+
+    public class SequenceBuilder(List<T> Sequence)
+    {
+      public void AddStep(T Result)
+      {
+        Sequence.Add(Result);
+      }
+    }
+  }
+
+  public class Sequence(IReadOnlyList<T> Steps)
+  {
+    public IReadOnlyList<T> Steps { get; } = Steps;
   }
 }
