@@ -62,9 +62,27 @@ public class AssertingBatches : AssertingBase<IReadOnlyList<int>, IReadOnlyList<
     ThenModelWasTrainedWith([Expected]);
   }
 
+  [TestMethod]
+  public void AssertIsWithTooManyValues()
+  {
+    var NumberOfBatches = GivenPayloadIsConfiguredForBatches();
+    var R = GivenCognitiveResult();
+    var Expected = GivenExpectedListWithMoreItemsThan(NumberOfBatches);
+
+    WhenAssertResultIs(R, Expected);
+
+    ThenAssertionThrewAssertionFailedException($"Expected {Expected.Count} batch(es) but found {Payload.Count}");
+    ThenModelWasTrainedWith([Expected]);
+  }
+
   IReadOnlyList<int> GivenExpectedListWithFewerItemsThan(int NumberOfBatches)
   {
     return Any.ListOf(Any.Int, 0, NumberOfBatches - 1);
+  }
+
+  IReadOnlyList<int> GivenExpectedListWithMoreItemsThan(int NumberOfBatches)
+  {
+    return Any.ListOf(Any.Int, NumberOfBatches + 1, NumberOfBatches + 10);
   }
 
   int GivenPayloadIsConfiguredForBatches()
