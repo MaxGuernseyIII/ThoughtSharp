@@ -20,8 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using JetBrains.Annotations;
+using ThoughtSharp.Runtime;
+
 namespace ThoughtSharp.Scenarios;
 
-public class AssertionFailedException(string Message) : Exception(Message)
+[PublicAPI]
+public class BatchCognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<IReadOnlyList<TResultFeedback>, IReadOnlyList<TResultFeedback>> Subject)
 {
+  public void Is(IReadOnlyList<TResultFeedback> Expected)
+  {
+    Is(Expected, C => C.ExpectEqual(D => D));
+  }
+
+  public void Is(IReadOnlyList<TResultFeedback> Expected, Action<ObjectComparison<TResultFeedback>> Assertion)
+  {
+    Subject.FeedbackSink.TrainWith(Expected);
+
+    Subject.Payload.Count.ShouldBe(Expected.Count, "Expected {0} batch(es) but found {1}");
+
+    foreach (var (ActualItem, ExpectedItem) in Subject.Payload.Zip(Expected)) 
+      Assertion(new(ExpectedItem, ActualItem));
+  }
 }

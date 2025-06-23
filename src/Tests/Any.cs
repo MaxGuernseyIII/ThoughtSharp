@@ -33,6 +33,53 @@ static class Any
 
   public static float Float => Core.NextSingle();
 
+  public static float FloatLessThanOrEqualTo(float Boundary)
+  {
+    return Boundary - Float;
+  }
+
+  public static float FloatGreaterThanOrEqualTo(float Boundary)
+  {
+    return Boundary + Float;
+  }
+
+  public static float FloatLessThan(float Boundary)
+  {
+    float Candidate;
+
+    do
+    {
+      Candidate = Boundary - Float;
+    } while (Candidate >= Boundary);
+
+    return Candidate;
+  }
+
+  public static float FloatGreaterThan(float Boundary)
+  {
+    float Candidate;
+
+    do
+    {
+      Candidate = Boundary + Float;
+    } while (Candidate <= Boundary);
+
+    return Candidate;
+  }
+
+  public static float FloatWithin(float Target, float Epsilon)
+  {
+    var Range = 2 * Epsilon;
+    var Noise = Float * Range - Epsilon;
+
+    return Target + Noise;
+  }
+
+  public static float FloatOutsideOf(float Target, float Epsilon)
+  {
+    return Bool ? FloatGreaterThan(Target + Epsilon) : FloatLessThan(Target - Epsilon);
+  }
+
   public static long Long => Core.Next();
   public static bool Bool => Core.Next(2) == 1;
 
@@ -51,6 +98,18 @@ static class Any
   public static int Int()
   {
     return Int(1, 100);
+  }
+
+  public static int IntOtherThan(int Antagonist)
+  {
+    int Candidate;
+
+    do
+    {
+      Candidate = Int();
+    } while (Candidate == Antagonist);
+
+    return Candidate;
   }
 
   public static float[] FloatArray()

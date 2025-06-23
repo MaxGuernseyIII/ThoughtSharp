@@ -20,8 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios;
+using FluentAssertions;
+using ThoughtSharp.Runtime;
+using Assert = ThoughtSharp.Scenarios.Assert;
 
-public class AssertionFailedException(string Message) : Exception(Message)
+namespace Tests;
+
+[TestClass]
+public class AssertingValues : AssertingBase<int, int>
 {
+  [TestInitialize]
+  public void SetUp()
+  {
+    Payload = Any.Int();
+  }
+
+  [TestMethod]
+  public void PassedAssert()
+  {
+    var R = GivenCognitiveResult();
+
+    WhenAssertThatResultIs(R, Payload);
+
+    ThenAssertionDidNotThrowAnException();
+    ThenModelWasTrainedWith([Payload]);
+  }
+
+  [TestMethod]
+  public void FailedAssert()
+  {
+    var R = GivenCognitiveResult();
+    var Expected = Any.IntOtherThan(Payload);
+
+    WhenAssertThatResultIs(R, Expected);
+
+    ThenAssertionThrewAssertionFailedException($"Expected {Expected} but found {Payload}");
+    ThenModelWasTrainedWith([Expected]);
+  }
+
+  void WhenAssertThatResultIs(CognitiveResult<int, int> R, int Payload)
+  {
+    Action = FluentActions.Invoking(() => Assert.That(R).Is(Payload));
+  }
 }

@@ -27,7 +27,7 @@ using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
 
-[UsedImplicitly(ImplicitUseTargetFlags.WithMembers, Reason = "Public API")]
+[PublicAPI]
 public static class Assert
 {
   public static AccumulatedUseAssertionContext<TSurface> That<TSurface>(AccumulatedUseFeedback<TSurface> Subject)
@@ -41,10 +41,22 @@ public static class Assert
     return new(Subject);
   }
 
+  public static BatchCognitiveResultAssertionContext<TResultFeedback> That<TResultFeedback>(
+    CognitiveResult<IReadOnlyList<TResultFeedback>, IReadOnlyList<TResultFeedback>> Subject)
+  {
+    return new(Subject);
+  }
+
   public static void ShouldBe<T>(this T Actual, T Expected)
   {
+    Actual.ShouldBe(Expected, "Expected {0} but found {1}");
+  }
+
+  public static void ShouldBe<T>(this T Actual, T Expected, string Format)
+  {
     if (!Equals(Actual, Expected))
-      throw new AssertionFailedException($"Expected {Expected} but found {Actual}");
+      throw new AssertionFailedException(
+        string.Format(Format, Expected, Actual));
   }
 
   public static void ShouldBeApproximately<T>(this T Actual, T Expected, T Epsilon)
@@ -54,7 +66,7 @@ public static class Assert
       throw new AssertionFailedException($"Expected {Expected}±{Epsilon} but found {Actual}");
   }
 
-  public static void ShouldBeGreaterThan<T>(this T Actual, T Expected)
+  public static void ShouldBeMoreThan<T>(this T Actual, T Expected)
     where T : IComparisonOperators<T, T, bool>
   {
     if (Actual <= Expected)
@@ -68,14 +80,14 @@ public static class Assert
       throw new AssertionFailedException($"Expected <{Expected} but found {Actual}");
   }
 
-  public static void ShouldBeGreaterThanOrEqualTo<T>(this T Actual, T Expected)
+  public static void ShouldBeAtLeast<T>(this T Actual, T Expected)
     where T : IComparisonOperators<T, T, bool>
   {
     if (Actual < Expected)
       throw new AssertionFailedException($"Expected >={Expected} but found {Actual}");
   }
 
-  public static void ShouldBeLessThanOrEqualTo<T>(this T Actual, T Expected)
+  public static void ShouldBeAtMost<T>(this T Actual, T Expected)
     where T : IComparisonOperators<T, T, bool>
   {
     if (Actual > Expected)

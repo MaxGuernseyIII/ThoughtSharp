@@ -20,46 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using FluentAssertions;
-using FluentAssertions.Collections;
-using FluentAssertions.Primitives;
+using Tests.Mocks;
 using ThoughtSharp.Runtime;
+using ThoughtSharp.Scenarios;
 
 namespace Tests;
 
-static class AssertionExtensions
+public class AssertingBase<TPayload, TFeedback>
 {
-  public static GenericCollectionAssertions<T> MarshalToSameTensor<T>(this GenericCollectionAssertions<T> Assertions,
-    IEnumerable<T> Expected)
-    where T : CognitiveData<T>
+  protected TPayload Payload = default!;
+  protected MockFeedbackSink<TFeedback> FeedbackMock = null!;
+  protected Action? Action;
+
+  [TestInitialize]
+  public void BaseSetUp()
   {
-    var ActualBuffer = MarshalToBuffer(Assertions.Subject);
-    var ExpectedBuffer = MarshalToBuffer(Expected);
-
-    ActualBuffer.Should().Equal(ExpectedBuffer);
-
-    return Assertions;
-  }
-  public static ObjectAssertions MarshalToSameTensor<T>(this ObjectAssertions Assertions,
-    T Expected)
-    where T : CognitiveData<T>
-  {
-    var ActualBuffer = MarshalToBuffer<T>([(T)Assertions.Subject]);
-    var ExpectedBuffer = MarshalToBuffer([Expected]);
-
-    ActualBuffer.Should().Equal(ExpectedBuffer);
-
-    return Assertions;
+    FeedbackMock = new();
   }
 
-  static float[] MarshalToBuffer<T>(IEnumerable<T> CollectionSubject) where T : CognitiveData<T>
+  protected void ThenAssertionDidNotThrowAnException()
   {
-    var Items = CollectionSubject.ToImmutableArray();
-    var Buffer = new float[T.Length * Items.Length];
-    for (var I = 0; I < Items.Length; ++I)
-      Items[I].MarshalTo(Buffer[(I * T.Length)..((I + 1) * T.Length)]);
+    Action.Should().NotThrow();
+  }
 
-    return Buffer;
+  protected CognitiveResult<TPayload, TFeedback> GivenCognitiveResult()
+  {
+    return CognitiveResult.From(Payload, FeedbackMock);
+  }
+
+  protected void ThenModelWasTrainedWith(IEnumerable<TFeedback> Expected)
+  {
+    FeedbackMock.RecordedFeedback.Should().BeEquivalentTo(Expected, O => O.WithStrictOrdering());
+  }
+
+  protected void ThenAssertionThrewAssertionFailedException(string ExpectedMessage)
+  {
+    Action.Should().Throw<AssertionFailedException>().WithMessage(ExpectedMessage);
   }
 }
