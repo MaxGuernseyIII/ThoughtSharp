@@ -74,14 +74,14 @@ public sealed class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module
     return Children.Skip(1).Aggregate(Children.First(), (Previous, Current) => new ParallelModule(Previous, Current));
   }
 
-  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(
-    int InputFeatures, 
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateGRU(int InputFeatures,
     int OutputFeatures,
-    int GRULayers, 
+    int GRULayers,
+    bool Bidirectional,
     torch.Device Device)
   {
-    var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures, GRULayers, batchFirst:true);
-    var Adapter = new GRUAdapter(Underlying, OutputFeatures, GRULayers, Device);  
+    var Underlying = torch.nn.GRU(InputFeatures, OutputFeatures, GRULayers, bidirectional:Bidirectional, batchFirst:true);
+    var Adapter = new GRUAdapter(Underlying, OutputFeatures, GRULayers, Bidirectional ? 2 : 1, Device);  
     return Adapter;
   }
 

@@ -12,7 +12,7 @@ public interface BrainFactory<
   TModel CreateTimeAware(IEnumerable<TModel> Children, TModel Pooling);
 
   TModel CreateLinear(int InputFeatures, int OutputFeatures, bool WithBias);
-  TModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, TDevice Device);
+  TModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, bool Bidirectional, TDevice Device);
   TModel CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead);
 
   TModel CreateDropout(float Rate);

@@ -595,7 +595,22 @@ public class BrainBuilding
     ShouldBeAdaptedContainerFor(Actual, GRUFeatures,
       Device,
       Factory.CreateTimeAware([
-          Factory.CreateGRU(InputFeatures, GRUFeatures, GRULayers, Device)
+          Factory.CreateGRU(InputFeatures, GRUFeatures, GRULayers, false, Device)
+        ],
+        Factory.CreateLastTimeStep()));
+  }
+
+  [TestMethod]
+  public void AddTimeAwareWithBidirectionalGRU()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+    var GRUFeatures = Any.Int(100, 200);
+    var Actual = BrainBuilder.UsingSequence(S => S.AddTimeAware(A => A.AddGRU(GRUFeatures, Bidirectional:true))).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, GRUFeatures * 2,
+      Device,
+      Factory.CreateTimeAware([
+          Factory.CreateGRU(InputFeatures, GRUFeatures, 1, true, Device)
         ],
         Factory.CreateLastTimeStep()));
   }
@@ -610,7 +625,7 @@ public class BrainBuilding
     ShouldBeAdaptedContainerFor(Actual, GRUFeatures,
       Device,
       Factory.CreateTimeAware([
-          Factory.CreateGRU(InputFeatures, GRUFeatures, 1, Device)
+          Factory.CreateGRU(InputFeatures, GRUFeatures, 1, false, Device)
         ],
         Factory.CreateLastTimeStep()));
   }
@@ -734,9 +749,9 @@ public class BrainBuilding
       return new MockTimeAware(Children, Pooling);
     }
 
-    public MockBuiltModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, MockDevice Device)
+    public MockBuiltModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, bool Bidirectional, MockDevice Device)
     {
-      return new MockGRU(InputFeatures, OutputFeatures, GRULayers, Device);
+      return new MockGRU(InputFeatures, OutputFeatures, GRULayers, Bidirectional, Device);
     }
 
     public MockBuiltModel CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead)
@@ -794,7 +809,7 @@ public class BrainBuilding
       return new MockCUDADevice();
     }
 
-    record MockDropout(float Rate) : MockBuiltModel;
+    sealed record MockDropout(float Rate) : MockBuiltModel;
 
     sealed record MockLastTimeStepPooling : MockBuiltModel;
 
@@ -810,15 +825,15 @@ public class BrainBuilding
 
     sealed record MockSiLU : MockBuiltModel;
 
-    record MockReLU : MockBuiltModel;
+    sealed record MockReLU : MockBuiltModel;
 
     sealed record MockMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead) : MockBuiltModel;
 
-    record MockGRU(int InputFeatures, int OutputFeatures, int Layers, MockDevice Device) : MockBuiltModel;
+    sealed record MockGRU(int InputFeatures, int OutputFeatures, int Layers, bool Bidirectional, MockDevice Device) : MockBuiltModel;
 
-    record MockLinear(int InputFeatures, int OutputFeatures, bool HasBias) : MockBuiltModel;
+    sealed record MockLinear(int InputFeatures, int OutputFeatures, bool HasBias) : MockBuiltModel;
 
-    record MockTanh : MockBuiltModel;
+    sealed record MockTanh : MockBuiltModel;
 
     record MockSequence(IReadOnlyList<MockBuiltModel> Children) : MockBuiltModel
     {

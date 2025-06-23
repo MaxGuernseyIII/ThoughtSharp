@@ -234,9 +234,9 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
       return Host.Factory.CreateTimeAware(Constructors.Select(C => C.Build()), Pooling.Build());
     }
 
-    public TimeAwareConstructor AddGRU(int Features, int Layers = 1)
+    public TimeAwareConstructor AddGRU(int Features, int Layers = 1, bool Bidirectional = false)
     {
-      return Add(new GRUConstructor(Host, Tail, Features, Layers)).WithLastTimeStepPooling();
+      return Add(new GRUConstructor(Host, Tail, Features, Layers, Bidirectional)).WithLastTimeStepPooling();
     }
 
     public TimeAwareConstructor AddAttention(int Heads, int FeaturesPerHead)
@@ -421,14 +421,17 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
   sealed record GRUConstructor(
     BrainBuilder<TBrain, TModel, TDevice> Host,
     ModelConstructor Predecessor,
-    int OutputFeatures,
-    int Layers) : ModelConstructor
+    int HiddenSize,
+    int Layers,
+    bool Bidirectional) : ModelConstructor
   {
-    public string CompactDescriptiveText => $"s{OutputFeatures}";
+    public int OutputFeatures { get; } = HiddenSize * (Bidirectional ? 2 : 1);
+
+    public string CompactDescriptiveText => $"s{HiddenSize}";
 
     public TModel Build()
     {
-      return Host.Factory.CreateGRU(Predecessor.OutputFeatures, OutputFeatures, Layers, Host.Device);
+      return Host.Factory.CreateGRU(Predecessor.OutputFeatures, HiddenSize, Layers, Bidirectional, Host.Device);
     }
   }
 
