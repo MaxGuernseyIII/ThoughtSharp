@@ -22,6 +22,8 @@
 
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.Reflection;
+using Option = Google.Protobuf.WellKnownTypes.Option;
 
 namespace dotnet_train;
 
@@ -44,6 +46,26 @@ static class Commands
     };
     ProjectArgument.SetDefaultValueFactory(A => ParseProjectArgumentString(".", A));
     return ProjectArgument;
+  }
+
+  static Option<Assembly[]?> GetBindingOverrides()
+  {
+    return new(
+      "--binding-overrides", A =>
+      {
+        return A.Tokens.Select(T =>
+        {
+          try
+          {
+            return Assembly.LoadFile(T.Value);
+          }
+          catch
+          {
+            A.ErrorMessage = $"Could not load assembly {T.Value}";
+            return null!;
+          }
+        }).ToArray();
+      }) {Arity = ArgumentArity.ZeroOrMore};
   }
 
   static FileInfo ParseProjectArgumentString(string ProjectPath, ArgumentResult A)
@@ -98,13 +120,15 @@ static class Commands
     var NoBuildOption = GetNoBuildOption();
     var ExtraArgumentsOption = GetExtraArgumentsOption();
     var CurriculaConstraint = GetCurriculaConstraintOption();
+    var BindingOverrides = GetBindingOverrides();
     C.AddArgument(ProjectArgument);
     C.AddOption(NoBuildOption);
     C.AddOption(ExtraArgumentsOption);
     C.AddOption(CurriculaConstraint);
+    C.AddOption(BindingOverrides);
 
     C.SetHandler(DotnetTrain.Handle, new TargetAssemblyResolutionRequestBinder(
-      ProjectArgument, NoBuildOption, ExtraArgumentsOption), CurriculaConstraint);
+      ProjectArgument, NoBuildOption, ExtraArgumentsOption, BindingOverrides), CurriculaConstraint);
 
     return Root;
   }

@@ -41,7 +41,7 @@ public class BehaviorInvocation
     var ProjectRoot = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(AbsoluteAssemblyPath)!, @"../../..\"));
     var Relative = AbsoluteAssemblyPath[ProjectRoot.Length..];
     var LoadedAssemblyPath = Path.GetFullPath(Path.Combine(ProjectRoot, @"../Tests.SampleScenarios", Relative));
-    var Context = new ShapingAssemblyLoadContext(LoadedAssemblyPath);
+    var Context = new ShapingAssemblyLoadContext(LoadedAssemblyPath, []);
     LoadedAssembly = Context.LoadFromAssemblyPath(LoadedAssemblyPath);
     Model = new AssemblyParser().Parse(LoadedAssembly);
   }

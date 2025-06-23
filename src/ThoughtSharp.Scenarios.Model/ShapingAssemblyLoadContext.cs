@@ -5,7 +5,9 @@ using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class ShapingAssemblyLoadContext(string DependencyPath) : AssemblyLoadContext(isCollectible: false)
+public class ShapingAssemblyLoadContext(
+  string DependencyPath,
+  IReadOnlyList<Assembly> ExtraBindingOverrideAssemblies) : AssemblyLoadContext(isCollectible: false)
 {
   readonly AssemblyDependencyResolver Resolver = new(DependencyPath);
   protected override Assembly? Load(AssemblyName AssemblyName)
@@ -15,7 +17,8 @@ public class ShapingAssemblyLoadContext(string DependencyPath) : AssemblyLoadCon
     ImmutableArray<Assembly> InterfaceAssemblies =
     [
       typeof(CurriculumAttribute).Assembly,
-      typeof(MindAttribute).Assembly
+      typeof(MindAttribute).Assembly,
+      ..ExtraBindingOverrideAssemblies
     ];
 
     var InterfaceAssembly = InterfaceAssemblies.FirstOrDefault(A => A.GetName().Name == Name);

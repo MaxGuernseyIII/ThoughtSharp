@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
+using System.Reflection;
 
 namespace dotnet_train;
 
@@ -28,5 +29,6 @@ record TargetAssemblyResolutionRequest
 {
   public required FileInfo ProjectPath { get; set; }
   public required bool NoBuild { get; set; }
+  public required ImmutableArray<Assembly> ExtraBindingOverrides { get; set; }
   public required ImmutableArray<string> ExtraArguments { get; set; }
 }

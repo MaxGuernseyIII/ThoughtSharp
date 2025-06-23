@@ -39,7 +39,7 @@ public class TorchInference(
     get
     {
       var OutputTensor = Output.Payload;
-      var LastIndices = (Output.SequenceLengths - 1).unsqueeze(1).unsqueeze(2);
+      var LastIndices = (Output.SequenceLengths - 1).unsqueeze(1).unsqueeze(2).to(OutputTensor.device);
       var BatchSize = LastIndices.shape[0];
 
       var ExpandedIndices = LastIndices.expand([BatchSize, 1, OutputTensor.shape[2]]);

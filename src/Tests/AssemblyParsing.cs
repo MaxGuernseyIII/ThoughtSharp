@@ -55,7 +55,7 @@ public class AssemblyParsing
   {
     Model = null!;
     var Path = typeof(Anchor).Assembly.Location;
-    var Context = new ShapingAssemblyLoadContext(Path);
+    var Context = new ShapingAssemblyLoadContext(Path, []);
     LoadedAssembly = Context.LoadFromAssemblyPath(Path);
   }
 

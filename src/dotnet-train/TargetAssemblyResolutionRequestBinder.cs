@@ -22,13 +22,15 @@
 
 using System.CommandLine;
 using System.CommandLine.Binding;
+using System.Reflection;
 
 namespace dotnet_train;
 
 class TargetAssemblyResolutionRequestBinder(
   Argument<FileInfo> ProjectPath,
   Option<bool> NoBuild,
-  Option<string[]?> ExtraArguments) : BinderBase<TargetAssemblyResolutionRequest>
+  Option<string[]?> ExtraArguments,
+  Option<Assembly[]?> BindingOverrides) : BinderBase<TargetAssemblyResolutionRequest>
 {
   protected override TargetAssemblyResolutionRequest GetBoundValue(BindingContext BindingContext)
   {
@@ -36,7 +38,8 @@ class TargetAssemblyResolutionRequestBinder(
     {
       ProjectPath = BindingContext.ParseResult.GetValueForArgument(ProjectPath),
       NoBuild = BindingContext.ParseResult.GetValueForOption(NoBuild),
-      ExtraArguments = [..(BindingContext.ParseResult.GetValueForOption(ExtraArguments) ?? [])]
+      ExtraArguments = [..(BindingContext.ParseResult.GetValueForOption(ExtraArguments) ?? [])],
+      ExtraBindingOverrides = [..BindingContext.ParseResult.GetValueForOption(BindingOverrides) ?? []]
     };
   }
 }

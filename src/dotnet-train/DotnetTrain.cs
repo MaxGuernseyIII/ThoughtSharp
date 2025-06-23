@@ -41,7 +41,7 @@ static class DotnetTrain
     if (TargetPath is null)
       throw new ApplicationException("Could not locate target path for selected project.");
     Directory.SetCurrentDirectory(Path.GetDirectoryName(TargetPath)!);
-    var Assembly = new ShapingAssemblyLoadContext(TargetPath).LoadFromAssemblyPath(TargetPath);
+    var Assembly = new ShapingAssemblyLoadContext(TargetPath, Request.ExtraBindingOverrides).LoadFromAssemblyPath(TargetPath);
     var Parser = new AssemblyParser();
 
     var Model = Parser.Parse(Assembly);
