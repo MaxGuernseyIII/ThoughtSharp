@@ -49,8 +49,14 @@ public static class Assert
 
   public static void ShouldBe<T>(this T Actual, T Expected)
   {
+    Actual.ShouldBe(Expected, "Expected {0} but found {1}");
+  }
+
+  public static void ShouldBe<T>(this T Actual, T Expected, string Format)
+  {
     if (!Equals(Actual, Expected))
-      throw new AssertionFailedException($"Expected {Expected} but found {Actual}");
+      throw new AssertionFailedException(
+        string.Format(Format, Expected, Actual));
   }
 
   public static void ShouldBeApproximately<T>(this T Actual, T Expected, T Epsilon)

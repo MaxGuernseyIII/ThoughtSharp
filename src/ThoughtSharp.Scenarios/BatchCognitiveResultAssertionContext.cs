@@ -26,22 +26,20 @@ using ThoughtSharp.Runtime;
 namespace ThoughtSharp.Scenarios;
 
 [PublicAPI]
-public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TResultFeedback, TResultFeedback> Subject)
+public class BatchCognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<IReadOnlyList<TResultFeedback>, IReadOnlyList<TResultFeedback>> Subject)
 {
-  public void Is(TResultFeedback Expected)
+  public void Is(IReadOnlyList<TResultFeedback> Expected)
   {
-    Is(Expected, C => C.ShouldBe(Expected));
+    Is(Expected, C => C.ExpectEqual(D => D));
   }
 
-  public void Is(TResultFeedback Expected, Action<ObjectComparison<TResultFeedback>> Assertions)
-  {
-    Is(Expected, P => Assertions(new(Expected, P)));
-  }
-
-  public void Is(TResultFeedback Expected, Action<TResultFeedback> Assertion)
+  public void Is(IReadOnlyList<TResultFeedback> Expected, Action<ObjectComparison<TResultFeedback>> Assertion)
   {
     Subject.FeedbackSink.TrainWith(Expected);
 
-    Assertion(Subject.Payload);
+    Subject.Payload.Count.ShouldBe(Expected.Count, "Expected {0} batch(es) but found {1}");
+
+    foreach (var (ActualItem, ExpectedItem) in Subject.Payload.Zip(Expected)) 
+      Assertion(new(ExpectedItem, ActualItem));
   }
 }
