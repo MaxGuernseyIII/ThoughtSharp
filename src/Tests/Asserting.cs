@@ -27,7 +27,7 @@ using Assert = ThoughtSharp.Scenarios.Assert;
 namespace Tests;
 
 [TestClass]
-public class AssertingValues : AssertingBase<int>
+public class AssertingValues : AssertingBase<int, int>
 {
   [TestInitialize]
   public void SetUp()

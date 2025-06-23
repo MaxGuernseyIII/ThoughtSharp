@@ -24,14 +24,13 @@ using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
-using Assert = ThoughtSharp.Scenarios.Assert;
 
 namespace Tests;
 
-public class AssertingBase<T>
+public class AssertingBase<TPayload, TFeedback>
 {
-  protected T Payload = default!;
-  protected MockFeedbackSink<T> FeedbackMock = null!;
+  protected TPayload Payload = default!;
+  protected MockFeedbackSink<TFeedback> FeedbackMock = null!;
   protected Action? Action;
 
   [TestInitialize]
@@ -45,12 +44,12 @@ public class AssertingBase<T>
     Action.Should().NotThrow();
   }
 
-  protected CognitiveResult<T, T> GivenCognitiveResult()
+  protected CognitiveResult<TPayload, TFeedback> GivenCognitiveResult()
   {
     return CognitiveResult.From(Payload, FeedbackMock);
   }
 
-  protected void ThenModelWasTrainedWith(IEnumerable<T> Expected)
+  protected void ThenModelWasTrainedWith(IEnumerable<TFeedback> Expected)
   {
     FeedbackMock.RecordedFeedback.Should().BeEquivalentTo(Expected, O => O.WithStrictOrdering());
   }

@@ -28,7 +28,7 @@ using Assert = ThoughtSharp.Scenarios.Assert;
 namespace Tests;
 
 [TestClass]
-public class AssertingFuzzyValues : AssertingBase<float>
+public class AssertingFuzzyValues : AssertingBase<float, float>
 {
   float Epsilon;
   float TrainingValue;
