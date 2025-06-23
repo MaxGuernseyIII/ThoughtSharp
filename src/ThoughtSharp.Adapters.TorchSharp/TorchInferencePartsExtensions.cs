@@ -31,6 +31,6 @@ public static class TorchInferencePartsExtensions
     var Range = torch.arange(This.Payload.shape[1]).unsqueeze(0);
     var Lengths = This.SequenceLengths.unsqueeze(1);
 
-    return Range < Lengths;
+    return (Range < Lengths).to(This.Payload.device);
   }
 }
