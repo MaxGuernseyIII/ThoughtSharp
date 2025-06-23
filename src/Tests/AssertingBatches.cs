@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using DiffMatchPatch;
 using FluentAssertions;
 using ThoughtSharp.Runtime;
 using Assert = ThoughtSharp.Scenarios.Assert;
@@ -73,6 +74,25 @@ public class AssertingBatches : AssertingBase<IReadOnlyList<int>, IReadOnlyList<
 
     ThenAssertionThrewAssertionFailedException($"Expected {Expected.Count} batch(es) but found {Payload.Count}");
     ThenModelWasTrainedWith([Expected]);
+  }
+
+  [TestMethod]
+  public void AssertADifferingValue()
+  {
+    GivenPayloadIsConfiguredForBatches();
+    var R = GivenCognitiveResult();
+    var DifferingIndex = Any.Int(0, Payload.Count - 1);
+    var Expected = GivenArrayWithOneDifferentValue(DifferingIndex);
+
+    WhenAssertResultIs(R, Expected);
+
+    ThenAssertionThrewAssertionFailedException($"Expected {Expected[DifferingIndex]} but found {Payload[DifferingIndex]}");
+    ThenModelWasTrainedWith([Expected]);
+  }
+
+  IReadOnlyList<int> GivenArrayWithOneDifferentValue(int DifferingIndex)
+  {
+    return [..Payload.Select((V, I) => I == DifferingIndex ? Any.IntOtherThan(V) : V)];
   }
 
   IReadOnlyList<int> GivenExpectedListWithFewerItemsThan(int NumberOfBatches)
