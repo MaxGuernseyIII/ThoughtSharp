@@ -22,6 +22,7 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
+using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -108,5 +109,38 @@ public class ConvergenceTracking
   void WhenMeasureConvergence()
   {
     Convergence = Tracker.MeasureConvergence();
+  }
+}
+
+[TestClass]
+public class GradeComputing
+{
+  [TestMethod]
+  public void Equality()
+  {
+    var Scores = Any.FloatArray();
+    var Grade = new Grade([..Scores]);
+
+    Grade.Should().Be(new Grade([..Scores]));
+  }
+
+  [TestMethod]
+  public void NonEquality()
+  {
+    var Scores = Any.FloatArray();
+    var Grade = new Grade([..Scores]);
+    var DifferingIndex = Any.Int(0, Scores.Length - 1);
+
+    Grade.Should().NotBe(new Grade([..Scores.Select((V, I) => I == DifferingIndex ? Any.FloatOutsideOf(V, .01f) : V)]));
+  }
+
+  [TestMethod]
+  public void ScoresExposed()
+  {
+    var Scores = Any.FloatArray();
+
+    var Grade = new Grade([.. Scores]);
+
+    Grade.Scores.Should().BeEquivalentTo(Scores, O => O.WithStrictOrdering());
   }
 }
