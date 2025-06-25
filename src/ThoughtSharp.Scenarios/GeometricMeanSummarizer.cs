@@ -24,14 +24,14 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios;
 
-public sealed class MeanSummarizer : Summarizer
+public sealed class GeometricMeanSummarizer : Summarizer
 {
-  MeanSummarizer() { }
+  GeometricMeanSummarizer() { }
 
-  public static Summarizer Instance { get; } = new MeanSummarizer();
+  public static Summarizer Instance { get; } = new GeometricMeanSummarizer();
 
   public float Summarize(ImmutableArray<float> Values)
   {
-    return Values.Average();
+    return MathF.Exp(Values.Select(MathF.Log).Sum() / Values.Length);
   }
 }

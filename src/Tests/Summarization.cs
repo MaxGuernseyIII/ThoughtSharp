@@ -61,4 +61,15 @@ public class Summarization
 
     Summary.Should().Be(MathF.Exp(Values.Select(V => MathF.Log(V)).Sum() / Values.Length));
   }
+
+  [TestMethod]
+  public void HarmonicMean()
+  {
+    var Values = Any.FloatArray();
+    var Summarizer = HarmonicMeanSummarizer.Instance;
+
+    var Summary = Summarizer.Summarize([.. Values]);
+
+    Summary.Should().Be(Values.Length  / Values.Select(V => 1f / V).Sum());
+  }
 }

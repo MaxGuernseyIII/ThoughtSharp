@@ -24,14 +24,14 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios;
 
-public sealed class MeanSummarizer : Summarizer
+public sealed class HarmonicMeanSummarizer : Summarizer
 {
-  MeanSummarizer() { }
+  HarmonicMeanSummarizer() { }
 
-  public static Summarizer Instance { get; } = new MeanSummarizer();
-
+  public static Summarizer Instance { get; } = new HarmonicMeanSummarizer();
+ 
   public float Summarize(ImmutableArray<float> Values)
   {
-    return Values.Average();
+    return Values.Length / Values.Sum(V => 1 / V);
   }
 }
