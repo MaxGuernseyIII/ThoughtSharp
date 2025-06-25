@@ -2,8 +2,13 @@
 
 namespace ThoughtSharp.Scenarios;
 
-public class PowerMeanSummarizer(float Power) : Summarizer
+public sealed class PowerMeanSummarizer(float Power) : Summarizer
 {
+  public static Summarizer Create(float Power)
+  {
+    return new PowerMeanSummarizer(Power);
+  }
+
   public float Summarize(ImmutableArray<float> Values)
   {
     return 

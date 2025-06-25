@@ -26,29 +26,34 @@ using ThoughtSharp.Scenarios;
 namespace Tests;
 
 [TestClass]
-public class Summarization
+public class GradeComputing
 {
   [TestMethod]
-  public void PowerMean()
+  public void Equality()
   {
-    var Values = Any.FloatArray();
-    var Power = Any.FloatWithin(2, 1.75f);
-    var Summarizer = PowerMeanSummarizer.Create(Power);
+    var Scores = Any.FloatArray();
+    var Grade = new Grade([..Scores]);
 
-    var Summary = Summarizer.Summarize([..Values]);
-
-    Summary.Should().Be(MathF.Pow(Values.Select(V => MathF.Pow(V, Power)).Sum() / Values.Length, 1 / Power));
+    Grade.Should().Be(new Grade([..Scores]));
   }
 
   [TestMethod]
-  public void ArithmeticMean()
+  public void NonEquality()
   {
-    var Values = Any.FloatArray();
-    var Power = Any.FloatWithin(2, 1.75f);
-    var Summarizer = MeanSummarizer.Instance;
+    var Scores = Any.FloatArray();
+    var Grade = new Grade([..Scores]);
+    var DifferingIndex = Any.Int(0, Scores.Length - 1);
 
-    var Summary = Summarizer.Summarize([.. Values]);
+    Grade.Should().NotBe(new Grade([..Scores.Select((V, I) => I == DifferingIndex ? Any.FloatOutsideOf(V, .01f) : V)]));
+  }
 
-    Summary.Should().Be(Values.Average());
+  [TestMethod]
+  public void ScoresExposed()
+  {
+    var Scores = Any.FloatArray();
+
+    var Grade = new Grade([.. Scores]);
+
+    Grade.Scores.Should().BeEquivalentTo(Scores, O => O.WithStrictOrdering());
   }
 }

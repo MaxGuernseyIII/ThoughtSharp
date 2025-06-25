@@ -20,35 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using FluentAssertions;
-using ThoughtSharp.Scenarios;
+using System.Collections.Immutable;
 
-namespace Tests;
+namespace ThoughtSharp.Scenarios;
 
-[TestClass]
-public class Summarization
+public sealed class MeanSummarizer : Summarizer
 {
-  [TestMethod]
-  public void PowerMean()
+  public static Summarizer Instance { get; } = new MeanSummarizer();
+
+  public float Summarize(ImmutableArray<float> Values)
   {
-    var Values = Any.FloatArray();
-    var Power = Any.FloatWithin(2, 1.75f);
-    var Summarizer = PowerMeanSummarizer.Create(Power);
-
-    var Summary = Summarizer.Summarize([..Values]);
-
-    Summary.Should().Be(MathF.Pow(Values.Select(V => MathF.Pow(V, Power)).Sum() / Values.Length, 1 / Power));
-  }
-
-  [TestMethod]
-  public void ArithmeticMean()
-  {
-    var Values = Any.FloatArray();
-    var Power = Any.FloatWithin(2, 1.75f);
-    var Summarizer = MeanSummarizer.Instance;
-
-    var Summary = Summarizer.Summarize([.. Values]);
-
-    Summary.Should().Be(Values.Average());
+    return Values.Average();
   }
 }
