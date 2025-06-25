@@ -41,6 +41,16 @@ public class Summarization
   }
 
   [TestMethod]
+  public void PowerMeanEquivalence()
+  {
+    var Power = Any.FloatWithin(2, 1.75f);
+
+    var Summarizer = PowerMeanSummarizer.Create(Power);
+
+    Summarizer.Should().Be(PowerMeanSummarizer.Create(Power));
+  }
+
+  [TestMethod]
   public void ArithmeticMean()
   {
     var Values = Any.FloatArray();
