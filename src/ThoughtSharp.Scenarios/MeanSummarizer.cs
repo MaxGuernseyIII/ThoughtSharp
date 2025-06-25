@@ -33,3 +33,13 @@ public sealed class MeanSummarizer : Summarizer
     return Values.Average();
   }
 }
+
+public sealed class GeometricMeanSummarizer : Summarizer
+{
+  public static Summarizer Instance { get; } = new GeometricMeanSummarizer();
+
+  public float Summarize(ImmutableArray<float> Values)
+  {
+    return MathF.Exp(Values.Select(MathF.Log).Sum() / Values.Length);
+  }
+}

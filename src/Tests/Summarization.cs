@@ -44,11 +44,21 @@ public class Summarization
   public void ArithmeticMean()
   {
     var Values = Any.FloatArray();
-    var Power = Any.FloatWithin(2, 1.75f);
     var Summarizer = MeanSummarizer.Instance;
 
     var Summary = Summarizer.Summarize([.. Values]);
 
     Summary.Should().Be(Values.Average());
+  }
+
+  [TestMethod]
+  public void GeometricMean()
+  {
+    var Values = Any.FloatArray();
+    var Summarizer = GeometricMeanSummarizer.Instance;
+
+    var Summary = Summarizer.Summarize([.. Values]);
+
+    Summary.Should().Be(MathF.Exp(Values.Select(V => MathF.Log(V)).Sum() / Values.Length));
   }
 }
