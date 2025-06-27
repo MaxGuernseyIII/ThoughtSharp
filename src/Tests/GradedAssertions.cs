@@ -50,8 +50,6 @@ public class GradedAssertions
 
     var Grade = Actual.ShouldConvergeOn().BeingApproximately(Target, TotalSuccessRadius, TotalFailureRadius);
 
-    Console.WriteLine($"Target = {Target}, TSR = {TotalSuccessRadius}, TFR = {TotalFailureRadius}, Actual = {Actual}");
-
     Grade.Should().Be(new Grade([ConvergenceAssertions.TotalSuccess]));
   }
 
