@@ -58,9 +58,21 @@ public class GradedAssertions
     }
 
     [TestMethod]
-    public void TargetValueWithinRange()
+    public void TargetValueWithinSuccessRange()
     {
       GivenActualIs(Any.FloatWithin(Target, TotalSuccessRadius));
+
+      WhenAssertApproximateValue();
+
+      ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess);
+    }
+
+    [DataRow(-1f)]
+    [DataRow(1f)]
+    [TestMethod]
+    public void TargetAtEdgeOfSuccessRange(float TotalSuccessRadiusMultiplier)
+    {
+      GivenActualIs(Target + TotalSuccessRadius * TotalSuccessRadiusMultiplier);
 
       WhenAssertApproximateValue();
 
