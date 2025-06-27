@@ -38,6 +38,8 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
   {
     if (Subject < Target - TotalSuccessRadius)
       return new([ConvergenceAssertions.TotalFailure]);
+    if (Subject > Target + TotalSuccessRadius)
+      return new([ConvergenceAssertions.TotalFailure]);
 
     return new([ConvergenceAssertions.TotalSuccess]);
   }

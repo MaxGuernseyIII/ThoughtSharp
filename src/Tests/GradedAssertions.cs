@@ -43,12 +43,14 @@ public class GradedAssertions
   [TestMethod]
   public void TargetValueWithinRange()
   {
-    var TotalSuccessRadius = Any.FloatWithin(.1f, .2f);
+    var TotalSuccessRadius = Any.FloatWithin(.2f, .1f);
     var TotalFailureRadius = Any.FloatGreaterThan(TotalSuccessRadius);
     var Target = Any.Float;
-    var Actual = Any.FloatWithin(Target - TotalSuccessRadius, Target + TotalSuccessRadius);
+    var Actual = Any.FloatWithin(Target, TotalSuccessRadius);
 
     var Grade = Actual.ShouldConvergeOn().BeingApproximately(Target, TotalSuccessRadius, TotalFailureRadius);
+
+    Console.WriteLine($"Target = {Target}, TSR = {TotalSuccessRadius}, TFR = {TotalFailureRadius}, Actual = {Actual}");
 
     Grade.Should().Be(new Grade([ConvergenceAssertions.TotalSuccess]));
   }
@@ -60,6 +62,19 @@ public class GradedAssertions
     var TotalFailureRadius = Any.FloatGreaterThan(TotalSuccessRadius);
     var Target = Any.Float;
     var Actual = Any.FloatLessThanOrEqualTo(Target - TotalFailureRadius);
+
+    var Grade = Actual.ShouldConvergeOn().BeingApproximately(Target, TotalSuccessRadius, TotalFailureRadius);
+
+    Grade.Should().Be(new Grade([ConvergenceAssertions.TotalFailure]));
+  }
+
+  [TestMethod]
+  public void TargetValueAboveRange()
+  {
+    var TotalSuccessRadius = Any.FloatWithin(.1f, .2f);
+    var TotalFailureRadius = Any.FloatGreaterThan(TotalSuccessRadius);
+    var Target = Any.Float;
+    var Actual = Any.FloatGreaterThanOrEqualTo(Target + TotalFailureRadius);
 
     var Grade = Actual.ShouldConvergeOn().BeingApproximately(Target, TotalSuccessRadius, TotalFailureRadius);
 
