@@ -2,9 +2,9 @@
 
 namespace ThoughtSharp.Scenarios;
 
-public sealed record Grade(ImmutableArray<double> Scores)
+public sealed record Grade(ImmutableArray<float> Scores)
 {
-  public ImmutableArray<double> Scores { get; } = Scores;
+  public ImmutableArray<float> Scores { get; } = Scores;
 
   public bool Equals(Grade? Other)
   {

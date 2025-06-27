@@ -79,8 +79,22 @@ public class GradedAssertions
       ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess);
     }
 
+    [DataRow(0f)]
+    [DataRow(0.1f)]
+    [DataRow(0.9f)]
+    [DataRow(1f)]
     [TestMethod]
-    public void TargetValueBelowRange()
+    public void ActualValueInLowerDropOffZone(float FailureQuotient)
+    {
+      GivenActualIs(Target - (TotalSuccessRadius + (TotalFailureRadius - TotalSuccessRadius) * FailureQuotient));
+
+      WhenAssertApproximateValue();
+
+      ThenGradeShouldBe(1f - FailureQuotient);
+    }
+
+    [TestMethod]
+    public void ActualValueBelowTotalFailureRange()
     {
       GivenActualIs(Any.FloatLessThanOrEqualTo(Target - TotalFailureRadius));
 
@@ -90,7 +104,7 @@ public class GradedAssertions
     }
 
     [TestMethod]
-    public void TargetValueAboveRange()
+    public void TargetValueAboveTotalFailureRange()
     {
       GivenActualIs(Any.FloatGreaterThanOrEqualTo(Target + TotalFailureRadius));
 
@@ -109,7 +123,7 @@ public class GradedAssertions
       Grade = Actual.ShouldConvergeOn().Approximately(Target, TotalSuccessRadius, TotalFailureRadius);
     }
 
-    void ThenGradeShouldBe(double Expected)
+    void ThenGradeShouldBe(float Expected)
     {
       Grade.Should().Be(new Grade([Expected]));
     }

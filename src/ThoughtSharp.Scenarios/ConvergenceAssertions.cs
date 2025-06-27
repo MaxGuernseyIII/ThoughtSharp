@@ -36,11 +36,14 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
 {
   public Grade Approximately(T Target, T TotalSuccessRadius, T TotalFailureRadius)
   {
-    if (Subject < Target - TotalSuccessRadius)
+    if (Subject < Target - TotalFailureRadius)
       return new([ConvergenceAssertions.TotalFailure]);
-    if (Subject > Target + TotalSuccessRadius)
+    if (Subject > Target + TotalFailureRadius)
       return new([ConvergenceAssertions.TotalFailure]);
 
-    return new([ConvergenceAssertions.TotalSuccess]);
+    if (Subject <= Target + TotalSuccessRadius && Subject >= Target - TotalSuccessRadius)
+      return new([ConvergenceAssertions.TotalSuccess]);
+
+    return new([1f - float.CreateChecked((Target - TotalSuccessRadius - Subject) / (TotalFailureRadius - TotalSuccessRadius))]);
   }
 }
