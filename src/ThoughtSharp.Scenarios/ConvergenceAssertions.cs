@@ -34,7 +34,7 @@ public static class ConvergenceAssertions
 public readonly ref struct ConvergenceAssertions<T>(T Subject)
   where T : IFloatingPoint<T>
 {
-  public Grade BeingApproximately(T Target, T TotalSuccessRadius, T TotalFailureRadius)
+  public Grade Approximately(T Target, T TotalSuccessRadius, T TotalFailureRadius)
   {
     if (Subject < Target - TotalSuccessRadius)
       return new([ConvergenceAssertions.TotalFailure]);
