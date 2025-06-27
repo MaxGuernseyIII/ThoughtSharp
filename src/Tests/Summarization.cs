@@ -22,6 +22,7 @@
 
 using FluentAssertions;
 using ThoughtSharp.Scenarios;
+using static FluentAssertions.FluentActions;
 
 namespace Tests;
 
@@ -81,5 +82,43 @@ public class Summarization
     var Summary = Summarizer.Summarize([.. Values]);
 
     Summary.Should().Be(Values.Length  / Values.Select(V => 1f / V).Sum());
+  }
+}
+
+[TestClass]
+public class SoftLogicConstruction
+{
+  [TestMethod]
+  public void SoftOr()
+  {
+    var Laxness = Any.FloatGreaterThan(1f);
+
+    var SoftOr = SoftLogic.Or(Laxness);
+
+    SoftOr.Should().Be(PowerMeanSummarizer.Create(Laxness));
+  }
+
+  [TestMethod]
+  public void SoftOrCannotBeLessThanOne()
+  {
+    Invoking(() => SoftLogic.Or(Any.FloatLessThanOrEqualTo(1f))).Should().Throw<FatalErrorException>().WithMessage(
+      "Critical condition not met: soft OR cannot have laxness <= 1");
+  }
+
+  [TestMethod]
+  public void SoftAnd()
+  {
+    var Strictness = Any.FloatGreaterThan(1f);
+
+    var SoftAnd = SoftLogic.And(Strictness);
+
+    SoftAnd.Should().Be(PowerMeanSummarizer.Create(1 / Strictness));
+  }
+
+  [TestMethod]
+  public void SoftAndCannotBeLessThanOne()
+  {
+    Invoking(() => SoftLogic.And(Any.FloatLessThanOrEqualTo(1f))).Should().Throw<FatalErrorException>().WithMessage(
+      "Critical condition not met: soft AND cannot have strictness <= 1");
   }
 }
