@@ -26,39 +26,43 @@ using ThoughtSharp.Scenarios;
 namespace Tests;
 
 [TestClass]
-public class GradeComputing
+public class GradedAssertions
 {
   [TestMethod]
-  public void Equality()
+  public void TotalFailureGrade()
   {
-    var Scores = Any.FloatArray();
-    var Grade = new Grade([..Scores]);
-
-    Grade.Should().Be(new Grade([..Scores]));
+    ConvergenceAssertions.TotalFailure.Should().Be(0f);
   }
 
   [TestMethod]
-  public void NonEquality()
+  public void TotalSuccessGrade()
   {
-    var Scores = Any.FloatArray();
-    var Grade = new Grade([..Scores]);
-    var DifferingIndex = Any.Int(0, Scores.Length - 1);
-
-    Grade.Should().NotBe(new Grade([..Scores.Select((V, I) => I == DifferingIndex ? Any.FloatOutsideOf(V, .01f) : V)]));
+    ConvergenceAssertions.TotalSuccess.Should().Be(1f);
   }
 
   [TestMethod]
-  public void ScoresExposed()
+  public void TargetValueWithinRange()
   {
-    var Scores = Any.FloatArray();
+    var TotalSuccessRadius = Any.FloatWithin(.1f, .2f);
+    var TotalFailureRadius = Any.FloatGreaterThan(TotalSuccessRadius);
+    var Target = Any.Float;
+    var Actual = Any.FloatWithin(Target - TotalSuccessRadius, Target + TotalSuccessRadius);
 
-    var Grade = new Grade([.. Scores]);
+    var Grade = Actual.ShouldConvergeOn().BeingApproximately(Target, TotalSuccessRadius, TotalFailureRadius);
 
-    Grade.Scores.Should().BeEquivalentTo(Scores, O => O.WithStrictOrdering());
+    Grade.Should().Be(new Grade([ConvergenceAssertions.TotalSuccess]));
+  }
+
+  [TestMethod]
+  public void TargetValueBelowRange()
+  {
+    var TotalSuccessRadius = Any.FloatWithin(.1f, .2f);
+    var TotalFailureRadius = Any.FloatGreaterThan(TotalSuccessRadius);
+    var Target = Any.Float;
+    var Actual = Any.FloatLessThanOrEqualTo(Target - TotalFailureRadius);
+
+    var Grade = Actual.ShouldConvergeOn().BeingApproximately(Target, TotalSuccessRadius, TotalFailureRadius);
+
+    Grade.Should().Be(new Grade([ConvergenceAssertions.TotalFailure]));
   }
 }
-
-//[TestClass]
-//public class GradeBuilding
-//{
-//}

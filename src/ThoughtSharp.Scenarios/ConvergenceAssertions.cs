@@ -20,45 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using FluentAssertions;
-using ThoughtSharp.Scenarios;
+using System.Numerics;
 
-namespace Tests;
+namespace ThoughtSharp.Scenarios;
 
-[TestClass]
-public class GradeComputing
+public static class ConvergenceAssertions
 {
-  [TestMethod]
-  public void Equality()
-  {
-    var Scores = Any.FloatArray();
-    var Grade = new Grade([..Scores]);
+  public const float TotalSuccess = 1f;
 
-    Grade.Should().Be(new Grade([..Scores]));
-  }
-
-  [TestMethod]
-  public void NonEquality()
-  {
-    var Scores = Any.FloatArray();
-    var Grade = new Grade([..Scores]);
-    var DifferingIndex = Any.Int(0, Scores.Length - 1);
-
-    Grade.Should().NotBe(new Grade([..Scores.Select((V, I) => I == DifferingIndex ? Any.FloatOutsideOf(V, .01f) : V)]));
-  }
-
-  [TestMethod]
-  public void ScoresExposed()
-  {
-    var Scores = Any.FloatArray();
-
-    var Grade = new Grade([.. Scores]);
-
-    Grade.Scores.Should().BeEquivalentTo(Scores, O => O.WithStrictOrdering());
-  }
+  public const float TotalFailure = 0f;
 }
 
-//[TestClass]
-//public class GradeBuilding
-//{
-//}
+public readonly ref struct ConvergenceAssertions<T>(T Subject)
+  where T : IFloatingPoint<T>
+{
+  public Grade BeingApproximately(T Target, T TotalSuccessRadius, T TotalFailureRadius)
+  {
+    if (Subject < Target - TotalSuccessRadius)
+      return new([ConvergenceAssertions.TotalFailure]);
+
+    return new([ConvergenceAssertions.TotalSuccess]);
+  }
+}

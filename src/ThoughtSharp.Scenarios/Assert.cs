@@ -117,4 +117,10 @@ public static class Assert
     if (!ActualCondition)
       throw Fatal($"Critical condition not met: {ConditionDescription}");
   }
+
+  public static ConvergenceAssertions<T> ShouldConvergeOn<T>(this T This)
+    where T : IFloatingPoint<T>
+  {
+    return new(This);
+  }
 }
