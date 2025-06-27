@@ -46,7 +46,7 @@ public class GradedAssertions
     float TotalSuccessRadius;
     float TotalFailureRadius;
     float Target;
-    Grade Grade;
+    Grade Grade = null!;
     float Actual;
 
     [TestInitialize]
