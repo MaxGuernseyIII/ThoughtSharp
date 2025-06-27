@@ -37,9 +37,11 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
   public Grade Approximately(T Target, T TotalSuccessRadius, T TotalFailureRadius)
   {
     var DifferenceMagnitude = T.Abs(Target - Subject);
+    var DistanceIntoFailureZone = DifferenceMagnitude - TotalSuccessRadius;
+    var LengthOfGraduatedFailureZone = TotalFailureRadius - TotalSuccessRadius;
 
     return new([
-      1f - float.CreateChecked(T.Clamp((DifferenceMagnitude - TotalSuccessRadius) / (TotalFailureRadius - TotalSuccessRadius), T.Zero, T.One ))
+      1f - float.CreateChecked(T.Clamp(DistanceIntoFailureZone / LengthOfGraduatedFailureZone, T.Zero, T.One ))
     ]);
   }
 }
