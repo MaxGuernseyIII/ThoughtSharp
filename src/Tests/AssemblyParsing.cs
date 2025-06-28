@@ -55,11 +55,11 @@ public class AssemblyParsing
   {
     VisitCurriculumPhase = CurriculumPhase => CurriculumPhase.TrainingMetadata,
     VisitCurriculum = Curriculum => Curriculum.TrainingMetadata,
-    VisitBehavior = _ => AssemblyParser.StandardTrainingMetadata,
-    VisitCapability = _ => AssemblyParser.StandardTrainingMetadata,
-    VisitDirectory = _ => AssemblyParser.StandardTrainingMetadata,
-    VisitMindPlace = _ => AssemblyParser.StandardTrainingMetadata,
-    VisitModel = _ => AssemblyParser.StandardTrainingMetadata,
+    //VisitBehavior = _ => AssemblyParser.StandardTrainingMetadata,
+    //VisitCapability = _ => AssemblyParser.StandardTrainingMetadata,
+    //VisitDirectory = _ => AssemblyParser.StandardTrainingMetadata,
+    //VisitMindPlace = _ => AssemblyParser.StandardTrainingMetadata,
+    //VisitModel = _ => AssemblyParser.StandardTrainingMetadata,
   };
 
   [TestInitialize]
@@ -338,7 +338,7 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
+    ThenTrainingMetadataIsChangedAt(
       Original => Original,
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -352,8 +352,8 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
-      Original => Original with
+    ThenTrainingMetadataIsAt(
+      AssemblyParser.StandardTrainingMetadata with
       {
         MinimumDynamicWeight = DynamicWeightingSample.CurriculumWithExplicitWeight.MinimumWeight,
         MaximumDynamicWeight = DynamicWeightingSample.CurriculumWithExplicitWeight.MaximumWeight
@@ -369,7 +369,7 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
+    ThenTrainingMetadataIsChangedAt(
       Original => Original,
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -383,7 +383,7 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
+    ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
         MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMinimumWeight.MinimumWeight,
@@ -400,7 +400,7 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
+    ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
         MinimumDynamicWeight = .01,
@@ -418,7 +418,7 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
+    ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
         MaximumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMaximumWeight.MaximumWeight,
@@ -435,7 +435,7 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
+    ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
         MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMinimumWeight.OverriddenMinimumWeight,
@@ -453,7 +453,7 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
+    ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
         MaximumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMaximumWeight.OverriddenMaximumWeight,
@@ -471,7 +471,7 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
+    ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
         SuccessFraction = .6,
@@ -489,7 +489,7 @@ public class AssemblyParsing
   {
     WhenParseAssembly();
 
-    ThenTrainingMetadataIsIsChangedAt(
+    ThenTrainingMetadataIsChangedAt(
       Original => Original,
       RootNamespace,
       nameof(FizzBuzzTraining),
@@ -502,10 +502,8 @@ public class AssemblyParsing
   [TestMethod]
   public void DefaultTrainingMetadata()
   {
-    WhenParseAssembly();
-
-    ThenTrainingMetadataIsAt(
-      new()
+    AssemblyParser.StandardTrainingMetadata.Should().Be(
+      new TrainingMetadata
       {
         SuccessFraction = .95,
         SampleSize = 1000,
@@ -513,7 +511,16 @@ public class AssemblyParsing
         MinimumDynamicWeight = .75,
         MaximumDynamicWeight = 1,
         Metric = Summarizers.Convergence.PassRate(1f)
-      },
+      });
+  }
+
+  [TestMethod]
+  public void ImplicitTrainingMetadata()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsAt(
+      AssemblyParser.StandardTrainingMetadata,
       RootNamespace,
       nameof(CurriculumWithDefaultPhase),
       nameof(CurriculumWithDefaultPhase.SomePhase)
@@ -846,7 +853,7 @@ public class AssemblyParsing
     Actual.Should().Be(Expected);
   }
 
-  void ThenTrainingMetadataIsIsChangedAt(Func<TrainingMetadata, TrainingMetadata> GetExpected, params ImmutableArray<string?> Path)
+  void ThenTrainingMetadataIsChangedAt(Func<TrainingMetadata, TrainingMetadata> GetExpected, params ImmutableArray<string?> Path)
   {
     var ParentNode = GetNodeAtPath(Path[..^1]);
     var ParentMetadata = ParentNode.Query(FetchTrainingMetadata);
