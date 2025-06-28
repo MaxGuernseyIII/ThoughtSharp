@@ -28,5 +28,6 @@ public record TrainingMetadata
   public required int SampleSize { get; init; }
   public required int MaximumAttempts { get; init; }
   public required double MinimumDynamicWeight { get; init; }
-  public required double MaxinimumDynamicWeight { get; init; }
+  public required double MaximumDynamicWeight { get; init; }
+  public required Summarizer Metric { get; init; }
 }

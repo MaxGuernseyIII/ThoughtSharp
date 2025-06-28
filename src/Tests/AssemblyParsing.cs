@@ -333,7 +333,8 @@ public class AssemblyParsing
         SampleSize = 1,
         MaximumAttempts = 1,
         MinimumDynamicWeight = .75,
-        MaxinimumDynamicWeight = 1
+        MaximumDynamicWeight = 1,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -354,7 +355,8 @@ public class AssemblyParsing
         SampleSize = 1,
         MaximumAttempts = 1,
         MinimumDynamicWeight = DynamicWeightingSample.CurriculumWithExplicitWeight.MinimumWeight,
-        MaxinimumDynamicWeight = DynamicWeightingSample.CurriculumWithExplicitWeight.MaximumWeight
+        MaximumDynamicWeight = DynamicWeightingSample.CurriculumWithExplicitWeight.MaximumWeight,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -375,7 +377,8 @@ public class AssemblyParsing
         SampleSize = 1,
         MaximumAttempts = 1,
         MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMinimumWeight.MinimumWeight,
-        MaxinimumDynamicWeight = 1
+        MaximumDynamicWeight = 1,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -396,7 +399,8 @@ public class AssemblyParsing
         SampleSize = 1,
         MaximumAttempts = 1,
         MinimumDynamicWeight = .01,
-        MaxinimumDynamicWeight = .01
+        MaximumDynamicWeight = .01,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -417,7 +421,8 @@ public class AssemblyParsing
         SampleSize = 1,
         MaximumAttempts = 1,
         MinimumDynamicWeight = .75,
-        MaxinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMaximumWeight.MaximumWeight
+        MaximumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMaximumWeight.MaximumWeight,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -438,7 +443,8 @@ public class AssemblyParsing
         SampleSize = 1,
         MaximumAttempts = 1,
         MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMinimumWeight.OverriddenMinimumWeight,
-        MaxinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.HeritableMaximumWeight
+        MaximumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.HeritableMaximumWeight,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -460,7 +466,8 @@ public class AssemblyParsing
         SampleSize = 1,
         MaximumAttempts = 1,
         MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.HeritableMinimumWeight,
-        MaxinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMaximumWeight.OverriddenMaximumWeight
+        MaximumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMaximumWeight.OverriddenMaximumWeight,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -482,7 +489,8 @@ public class AssemblyParsing
         SampleSize = 200,
         MaximumAttempts = 200000,
         MinimumDynamicWeight = .75,
-        MaxinimumDynamicWeight = 1
+        MaximumDynamicWeight = 1,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(FizzBuzzTraining),
@@ -503,7 +511,8 @@ public class AssemblyParsing
         SampleSize = 500,
         MaximumAttempts = 80000,
         MinimumDynamicWeight = .75,
-        MaxinimumDynamicWeight = 1
+        MaximumDynamicWeight = 1,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(FizzBuzzTraining),
@@ -525,7 +534,8 @@ public class AssemblyParsing
         SampleSize = 1000,
         MaximumAttempts = 500,
         MinimumDynamicWeight = .75,
-        MaxinimumDynamicWeight = 1
+        MaximumDynamicWeight = 1,
+        Metric = Summarizers.Convergence.PassRate(1f)
       },
       RootNamespace,
       nameof(CurriculumWithDefaultPhase),

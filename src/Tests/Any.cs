@@ -186,7 +186,8 @@ static class Any
       SampleSize = Any.Int(1, 10),
       SuccessFraction = Any.Float,
       MinimumDynamicWeight = Any.Float,
-      MaxinimumDynamicWeight = Any.Float
+      MaximumDynamicWeight = Any.Float,
+      Metric = new MockSummarizer()
     };
   }
 

@@ -414,7 +414,7 @@ public class BehaviorRunning
             Runner = new DynamicWeightedRunnable(
               Tuple.Runner, 
               Scheme.Metadata.MinimumDynamicWeight, 
-              Scheme.Metadata.MaxinimumDynamicWeight, 
+              Scheme.Metadata.MaximumDynamicWeight, 
               Scheme.GetConvergenceTrackerFor(Tuple.Node), 
               Scheme.Metadata.SuccessFraction,
               new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts))

@@ -24,6 +24,7 @@ using System.Reflection;
 using Tests.SampleScenarios;
 using ThoughtSharp.Scenarios.Model;
 using FluentAssertions;
+using ThoughtSharp.Scenarios;
 
 namespace Tests.Integration;
 
@@ -64,7 +65,10 @@ static class Any
 {
   public static TrainingMetadata TrainingMetadata()
   {
-    return new() {MaximumAttempts = 1, SampleSize = 1, SuccessFraction = 1, MinimumDynamicWeight = 1, MaxinimumDynamicWeight = 1};
+    return new()
+    {
+      MaximumAttempts = 1, SampleSize = 1, SuccessFraction = 1, MinimumDynamicWeight = 1, MaximumDynamicWeight = 1, Metric = Summarizers.Convergence.PassRate(1)
+    };
   }
 }
 

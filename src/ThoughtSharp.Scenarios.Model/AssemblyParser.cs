@@ -32,7 +32,8 @@ public class AssemblyParser
     SampleSize = 1000,
     MaximumAttempts = 500,
     MinimumDynamicWeight = .75,
-    MaxinimumDynamicWeight = 1
+    MaximumDynamicWeight = 1,
+    Metric = Summarizers.Convergence.PassRate(1)
   };
 
   public ScenariosModel Parse(Assembly LoadedAssembly)
@@ -143,7 +144,7 @@ public class AssemblyParser
         Metadata = Metadata with {MinimumDynamicWeight = Math.Max(.01, DynamicWeighting.Minimum)};
 
       if (!double.IsNaN(DynamicWeighting.Maximum))
-        Metadata = Metadata with {MaxinimumDynamicWeight = Math.Max(.01, DynamicWeighting.Maximum)};
+        Metadata = Metadata with {MaximumDynamicWeight = Math.Max(.01, DynamicWeighting.Maximum)};
     }
 
     return Metadata;
