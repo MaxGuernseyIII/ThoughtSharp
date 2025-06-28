@@ -20,15 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-
 namespace ThoughtSharp.Scenarios;
 
 public static partial class Summarizers
 {
-  public static Summarizer HarmonicMean { get; } = new HarmonicMeanSummarizer();
+  public static class Means
+  {
+    public static Summarizer Harmonic { get; } = new HarmonicMeanSummarizer();
+    public static Summarizer Geometric { get; } = new GeometricMeanSummarizer();
+    public static Summarizer Arithmetic { get; } = new MeanSummarizer();
+  }
 
-  public static Summarizer GeometricMean { get; } = new GeometricMeanSummarizer();
+  public static class Quantiles
+  {
+    public static Summarizer Q1 { get; } = Percentile(25);
+    public static Summarizer Median { get; } = Percentile(50);
+    public static Summarizer Q3 { get; } = Percentile(75);
+  }
 
   public static Summarizer Quantile(float Quantile)
   {
@@ -42,11 +50,16 @@ public static partial class Summarizers
 
   public static Summarizer MeanMinusStandardDeviationTimesWeight(float StandardDeviationWeight)
   {
-    return SpreadPenalizedCenter(ArithmeticMean, PowerMean(2), StandardDeviationWeight);
+    return SpreadPenalizedCenter(Means.Arithmetic, PowerMean(2), StandardDeviationWeight);
   }
 
   public static Summarizer SpreadPenalizedCenter(Summarizer CenterMetric, Summarizer SpreadMetric, float SpreadWeight)
   {
     return new SpreadPenalizedCenterSummarizer(CenterMetric, SpreadMetric, SpreadWeight);
+  }
+
+  public static Summarizer Percentile(int Percent)
+  {
+    return Quantile(0.01f * Percent);
   }
 }

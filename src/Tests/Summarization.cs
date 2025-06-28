@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
+using System.Linq.Expressions;
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Scenarios;
@@ -68,7 +69,7 @@ public class Summarization
   public void ArithmeticMean()
   {
     var Values = Any.FloatArray();
-    var Summarizer = Summarizers.ArithmeticMean;
+    var Summarizer = Summarizers.Means.Arithmetic;
 
     var Summary = Summarizer.Summarize([.. Values]);
 
@@ -79,7 +80,7 @@ public class Summarization
   public void GeometricMean()
   {
     var Values = Any.FloatArray();
-    var Summarizer = Summarizers.GeometricMean;
+    var Summarizer = Summarizers.Means.Geometric;
 
     var Summary = Summarizer.Summarize([.. Values]);
 
@@ -90,7 +91,7 @@ public class Summarization
   public void HarmonicMean()
   {
     var Values = Any.FloatArray();
-    var Summarizer = Summarizers.HarmonicMean;
+    var Summarizer = Summarizers.Means.Harmonic;
 
     var Summary = Summarizer.Summarize([.. Values]);
 
@@ -186,7 +187,23 @@ public class Summarization
     var Summarizer = Summarizers.MeanMinusStandardDeviationTimesWeight(Weight);
 
     Summarizer.Should()
-      .Be(Summarizers.SpreadPenalizedCenter(Summarizers.ArithmeticMean, Summarizers.PowerMean(2), Weight));
+      .Be(Summarizers.SpreadPenalizedCenter(Summarizers.Means.Arithmetic, Summarizers.PowerMean(2), Weight));
+  }
+
+  [TestMethod]
+  public void PercentileAlias()
+  {
+    var I = Any.Int(0, 100);
+
+    Summarizers.Percentile(I).Should().Be(Summarizers.Quantile(0.01f * I));
+  }
+
+  [TestMethod]
+  public void PopularQuantiles()
+  {
+    Summarizers.Quantiles.Q1.Should().Be(Summarizers.Percentile(25));
+    Summarizers.Quantiles.Median.Should().Be(Summarizers.Percentile(50));
+    Summarizers.Quantiles.Q3.Should().Be(Summarizers.Percentile(75));
   }
 
   static float GivenSummaryValue(MockSummarizer CenterSummarizer, IReadOnlyList<float> Input)

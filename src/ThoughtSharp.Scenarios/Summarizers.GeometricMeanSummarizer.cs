@@ -26,8 +26,6 @@ namespace ThoughtSharp.Scenarios;
 
 public partial class Summarizers
 {
-  public static Summarizer ArithmeticMean { get; } = new MeanSummarizer();
-
   sealed record GeometricMeanSummarizer : Summarizer
   {
     public float Summarize(ImmutableArray<float> Values)
