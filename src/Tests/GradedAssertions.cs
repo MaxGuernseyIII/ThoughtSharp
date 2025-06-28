@@ -40,21 +40,99 @@ public class GradedAssertions
     ConvergenceAssertions.TotalSuccess.Should().Be(1f);
   }
 
+  public class GradedAssertionsTestBase
+  {
+    protected float Target;
+    protected float Actual;
+    protected Grade Grade = null!;
+
+    [TestInitialize]
+    public void SetUpBase()
+    {
+      Target = Any.Float;
+      Grade = null!;
+    }
+
+    protected void GivenActualIs(float Value)
+    {
+      Actual = Value;
+    }
+
+    protected void ThenGradeShouldBe(float ExpectedScore, string ExpectedReason)
+    {
+      Grade.ScoresAndReasons.Should().ContainSingle();
+      var Pair = Grade.ScoresAndReasons[0];
+      Pair.Score.Should().BeApproximately(ExpectedScore, 0.0001f);
+      Pair.Reason.Should()
+        .Be(ExpectedReason);
+    }
+  }
+
   [TestClass]
-  public class ShouldBeApproximately
+  public class AtLeast : GradedAssertionsTestBase
+  {
+    float TotalFailureRadius;
+
+    [TestInitialize]
+    public void SetUp()
+    {
+      TotalFailureRadius = Any.Float;
+    }
+
+    [TestMethod]
+    public void TargetValueWithinSuccessRange()
+    {
+      GivenActualIs(Any.FloatGreaterThanOrEqualTo(Target));
+
+      WhenAssertAtLeastValue();
+
+      ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess, ExpectedReason);
+    }
+
+    [TestMethod]
+    public void TargetValueAtBottomEdgeOfSuccessRange()
+    {
+      GivenActualIs(Any.FloatLessThanOrEqualTo(Target - TotalFailureRadius));
+
+      WhenAssertAtLeastValue();
+
+      ThenGradeShouldBe(ConvergenceAssertions.TotalFailure, ExpectedReason);
+    }
+
+    [DataRow(0f)]
+    [DataRow(0.1f)]
+    [DataRow(0.5f)]
+    [DataRow(0.9f)]
+    [DataRow(1f)]
+    [TestMethod]
+    public void TargetValueInGradedRange(float FailureQuotient)
+    {
+      GivenActualIs(Target - TotalFailureRadius * FailureQuotient);
+
+      WhenAssertAtLeastValue();
+
+      ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess - FailureQuotient, ExpectedReason);
+    }
+
+    void WhenAssertAtLeastValue()
+    {
+      Grade = Actual.ShouldConvergeOn().AtLeast(Target, TotalFailureRadius);
+    }
+
+    string ExpectedReason => $"Expected >= {Target} (total failure at <= {Target - TotalFailureRadius}) and found {Actual}";
+  }
+
+  [TestClass]
+  public class Approximately : GradedAssertionsTestBase
   {
     float TotalSuccessRadius;
     float TotalFailureRadius;
-    float Target;
-    Grade Grade = null!;
-    float Actual;
 
     [TestInitialize]
     public void SetUp()
     {
       TotalSuccessRadius = Any.FloatWithin(.2f, .1f);
       TotalFailureRadius = Any.FloatGreaterThan(TotalSuccessRadius);
-      Target = Any.Float;
     }
 
     [TestMethod]
@@ -64,7 +142,7 @@ public class GradedAssertions
 
       WhenAssertApproximateValue();
 
-      ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess);
+      ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess, ExpectedReason);
     }
 
     [DataRow(-1f)]
@@ -76,7 +154,7 @@ public class GradedAssertions
 
       WhenAssertApproximateValue();
 
-      ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess);
+      ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess, ExpectedReason);
     }
 
     [DataRow(0f)]
@@ -90,7 +168,7 @@ public class GradedAssertions
 
       WhenAssertApproximateValue();
 
-      ThenGradeShouldBe(1f - FailureQuotient);
+      ThenGradeShouldBe(1f - FailureQuotient, ExpectedReason);
     }
 
     [TestMethod]
@@ -100,7 +178,7 @@ public class GradedAssertions
 
       WhenAssertApproximateValue();
 
-      ThenGradeShouldBe(ConvergenceAssertions.TotalFailure);
+      ThenGradeShouldBe(ConvergenceAssertions.TotalFailure, ExpectedReason);
     }
 
     [DataRow(0f)]
@@ -114,7 +192,7 @@ public class GradedAssertions
 
       WhenAssertApproximateValue();
 
-      ThenGradeShouldBe(1f - FailureQuotient);
+      ThenGradeShouldBe(1f - FailureQuotient, ExpectedReason);
     }
 
     [TestMethod]
@@ -124,12 +202,7 @@ public class GradedAssertions
 
       WhenAssertApproximateValue();
 
-      ThenGradeShouldBe(ConvergenceAssertions.TotalFailure);
-    }
-
-    void GivenActualIs(float Value)
-    {
-      Actual = Value;
+      ThenGradeShouldBe(ConvergenceAssertions.TotalFailure, ExpectedReason);
     }
 
     void WhenAssertApproximateValue()
@@ -137,13 +210,6 @@ public class GradedAssertions
       Grade = Actual.ShouldConvergeOn().Approximately(Target, TotalSuccessRadius, TotalFailureRadius);
     }
 
-    void ThenGradeShouldBe(float Expected)
-    {
-      Grade.ScoresAndReasons.Should().ContainSingle();
-      var Pair = Grade.ScoresAndReasons[0];
-      Pair.Score.Should().BeApproximately(Expected, 0.0001f);
-      Pair.Reason.Should()
-        .Be($"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Actual}");
-    }
+    string ExpectedReason => $"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Actual}";
   }
 }
