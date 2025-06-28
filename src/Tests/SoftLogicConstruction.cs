@@ -26,60 +26,39 @@ using ThoughtSharp.Scenarios;
 namespace Tests;
 
 [TestClass]
-public class Summarization
+public class SoftLogicConstruction
 {
   [TestMethod]
-  public void PowerMean()
+  public void SoftOr()
   {
-    var Values = Any.FloatArray();
-    var Power = Any.FloatWithin(2, 1.75f);
-    var Summarizer = PowerMeanSummarizer.Create(Power);
+    var Laxness = Any.FloatGreaterThan(1f);
 
-    var Summary = Summarizer.Summarize([..Values]);
+    var SoftOr = SoftLogic.Or(Laxness);
 
-    Summary.Should().Be(MathF.Pow(Values.Select(V => MathF.Pow(V, Power)).Sum() / Values.Length, 1 / Power));
+    SoftOr.Should().Be(PowerMeanSummarizer.Create(Laxness));
   }
 
   [TestMethod]
-  public void PowerMeanEquivalence()
+  public void SoftOrCannotBeLessThanOne()
   {
-    var Power = Any.FloatWithin(2, 1.75f);
-
-    var Summarizer = PowerMeanSummarizer.Create(Power);
-
-    Summarizer.Should().Be(PowerMeanSummarizer.Create(Power));
+    FluentActions.Invoking(() => SoftLogic.Or(Any.FloatLessThanOrEqualTo(1f))).Should().Throw<FatalErrorException>().WithMessage(
+      "Critical condition not met: soft OR cannot have laxness <= 1");
   }
 
   [TestMethod]
-  public void ArithmeticMean()
+  public void SoftAnd()
   {
-    var Values = Any.FloatArray();
-    var Summarizer = MeanSummarizer.Instance;
+    var Strictness = Any.FloatGreaterThan(1f);
 
-    var Summary = Summarizer.Summarize([.. Values]);
+    var SoftAnd = SoftLogic.And(Strictness);
 
-    Summary.Should().Be(Values.Average());
+    SoftAnd.Should().Be(PowerMeanSummarizer.Create(1 / Strictness));
   }
 
   [TestMethod]
-  public void GeometricMean()
+  public void SoftAndCannotBeLessThanOne()
   {
-    var Values = Any.FloatArray();
-    var Summarizer = GeometricMeanSummarizer.Instance;
-
-    var Summary = Summarizer.Summarize([.. Values]);
-
-    Summary.Should().Be(MathF.Exp(Values.Select(V => MathF.Log(V)).Sum() / Values.Length));
-  }
-
-  [TestMethod]
-  public void HarmonicMean()
-  {
-    var Values = Any.FloatArray();
-    var Summarizer = HarmonicMeanSummarizer.Instance;
-
-    var Summary = Summarizer.Summarize([.. Values]);
-
-    Summary.Should().Be(Values.Length  / Values.Select(V => 1f / V).Sum());
+    FluentActions.Invoking(() => SoftLogic.And(Any.FloatLessThanOrEqualTo(1f))).Should().Throw<FatalErrorException>().WithMessage(
+      "Critical condition not met: soft AND cannot have strictness <= 1");
   }
 }
