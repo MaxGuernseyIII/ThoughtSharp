@@ -39,14 +39,19 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
     var DifferenceMagnitude = T.Abs(Target - Subject);
 
     return new([
-      (ComputeSuccessFraction(DifferenceMagnitude, TotalFailureRadius, TotalSuccessRadius),
+      (
+        ComputeSuccessFraction(DifferenceMagnitude, TotalFailureRadius, TotalSuccessRadius),
         $"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Subject}")
     ]);
   }
 
   public Grade AtLeast(T Target, T TotalFailureRadius)
   {
-    return new([(ComputeSuccessFraction(Subject, Target - TotalFailureRadius, Target), $"Expected >= {Target} (total failure at <= {Target - TotalFailureRadius}) and found {Subject}")]);
+    return new([
+      (
+        ComputeSuccessFraction(Subject, Target - TotalFailureRadius, Target),
+        $"Expected >= {Target} (total failure at <= {Target - TotalFailureRadius}) and found {Subject}")
+    ]);
   }
 
   static float ComputeSuccessFraction(T Actual, T TotalFailure, T TotalSuccess)
