@@ -31,7 +31,7 @@ public static partial class Summarizers
       return new SpreadPenalizedCenterSummarizer(CenterMetric, SpreadMetric, SpreadWeight);
     }
 
-    public static Summarizer TransformToAbsoluteValue(Summarizer Underlying)
+    public static Summarizer TransformInputsToAbsoluteValue(Summarizer Underlying)
     {
       return new TransformToAbsoluteValueSummarizer(Underlying);
     }

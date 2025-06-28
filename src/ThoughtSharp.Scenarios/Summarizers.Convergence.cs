@@ -35,5 +35,14 @@ public static partial class Summarizers
     {
       return Composables.SpreadPenalizedCenter(Means.Arithmetic, Means.PowerMean(2), StandardDeviationWeight);
     }
+
+    public static Summarizer MedianAbsoluteDeviation(float AbsoluteDeviationWeight)
+    {
+      return Composables.SpreadPenalizedCenter(
+        Quantiles.Median,
+        Composables.TransformInputsToAbsoluteValue(
+          Quantiles.Median),
+        AbsoluteDeviationWeight);
+    }
   }
 }

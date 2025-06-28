@@ -185,7 +185,7 @@ public class Summarization
     var Underlying = new MockSummarizer();
     var Input = Any.FloatArray();
     var Output = GivenSummaryValue(Underlying, [..Input.Select(MathF.Abs)]);
-    var Summarizer = Summarizers.Composables.TransformToAbsoluteValue(Underlying);
+    var Summarizer = Summarizers.Composables.TransformInputsToAbsoluteValue(Underlying);
 
     var Summary = Summarizer.Summarize([..Input]);
 
@@ -201,6 +201,22 @@ public class Summarization
 
     Summarizer.Should()
       .Be(Summarizers.Composables.SpreadPenalizedCenter(Summarizers.Means.Arithmetic, Summarizers.Means.PowerMean(2), Weight));
+  }
+
+  [TestMethod]
+  public void MedianAbsoluteDeviation()
+  {
+    var Weight = Any.Float;
+
+    var Summarizer = Summarizers.Convergence.MedianAbsoluteDeviation(Weight);
+
+    Summarizer.Should()
+      .Be(
+        Summarizers.Composables.SpreadPenalizedCenter(
+          Summarizers.Quantiles.Median,
+          Summarizers.Composables.TransformInputsToAbsoluteValue(
+            Summarizers.Quantiles.Median),
+          Weight));
   }
 
   [TestMethod]
