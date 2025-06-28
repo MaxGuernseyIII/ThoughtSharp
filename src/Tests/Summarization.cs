@@ -103,7 +103,7 @@ public class Summarization
   {
     var Values = Any.FloatArray(100);
     var Threshold = Any.Float;
-    var Summarizer = Summarizers.PercentWithSuccessOverThreshold(Threshold);
+    var Summarizer = Summarizers.Convergence.PassRate(Threshold);
 
     var Summary = Summarizer.Summarize([..Values]);
 
@@ -115,9 +115,9 @@ public class Summarization
   {
     var Threshold = Any.Float;
     
-    var Summarizer = Summarizers.PercentWithSuccessOverThreshold(Threshold);
+    var Summarizer = Summarizers.Convergence.PassRate(Threshold);
 
-    Summarizer.Should().Be(Summarizers.PercentWithSuccessOverThreshold(Threshold));
+    Summarizer.Should().Be(Summarizers.Convergence.PassRate(Threshold));
   }
 
   [TestMethod]
@@ -125,9 +125,9 @@ public class Summarization
   {
     var Threshold = Any.Float;
     
-    var Summarizer = Summarizers.PercentWithSuccessOverThreshold(Threshold);
+    var Summarizer = Summarizers.Convergence.PassRate(Threshold);
 
-    Summarizer.Should().NotBe(Summarizers.PercentWithSuccessOverThreshold(Any.FloatOutsideOf(Threshold, Epsilon)));
+    Summarizer.Should().NotBe(Summarizers.Convergence.PassRate(Any.FloatOutsideOf(Threshold, Epsilon)));
   }
 
   [TestMethod]
@@ -135,7 +135,7 @@ public class Summarization
   {
     var Values = Any.FloatArray(100);
     var Quantile = Any.Float;
-    var Summarizer = Summarizers.Quantile(Quantile);
+    var Summarizer = Summarizers.Quantiles.FromFraction(Quantile);
 
     var Summary = Summarizer.Summarize([..Values]);
 
@@ -147,9 +147,9 @@ public class Summarization
   {
     var Quantile = Any.Float;
 
-    var Summarizer = Summarizers.Quantile(Quantile);
+    var Summarizer = Summarizers.Quantiles.FromFraction(Quantile);
 
-    Summarizer.Should().Be(Summarizers.Quantile(Quantile));
+    Summarizer.Should().Be(Summarizers.Quantiles.FromFraction(Quantile));
   }
 
   [TestMethod]
@@ -157,9 +157,9 @@ public class Summarization
   {
     var Quantile = Any.Float;
 
-    var Summarizer = Summarizers.Quantile(Quantile);
+    var Summarizer = Summarizers.Quantiles.FromFraction(Quantile);
 
-    Summarizer.Should().NotBe(Summarizers.Quantile(Any.FloatOutsideOf(Quantile, Epsilon)));
+    Summarizer.Should().NotBe(Summarizers.Quantiles.FromFraction(Any.FloatOutsideOf(Quantile, Epsilon)));
   }
 
   [TestMethod]
@@ -172,7 +172,7 @@ public class Summarization
     var Variation = Input.Select(V => V - Center).ToImmutableArray();
     var Feature = GivenSummaryValue(FeatureSummarizer, Variation);
     var K = Any.Float;
-    var Summarizer = Summarizers.SpreadPenalizedCenter(CenterSummarizer, FeatureSummarizer, K);
+    var Summarizer = Summarizers.Composables.SpreadPenalizedCenter(CenterSummarizer, FeatureSummarizer, K);
 
     var Summary = Summarizer.Summarize([..Input]);
 
@@ -184,10 +184,10 @@ public class Summarization
   {
     var Weight = Any.Float;
 
-    var Summarizer = Summarizers.MeanMinusStandardDeviationTimesWeight(Weight);
+    var Summarizer = Summarizers.Convergence.PenalizedMean(Weight);
 
     Summarizer.Should()
-      .Be(Summarizers.SpreadPenalizedCenter(Summarizers.Means.Arithmetic, Summarizers.PowerMean(2), Weight));
+      .Be(Summarizers.Composables.SpreadPenalizedCenter(Summarizers.Means.Arithmetic, Summarizers.PowerMean(2), Weight));
   }
 
   [TestMethod]
@@ -195,15 +195,15 @@ public class Summarization
   {
     var I = Any.Int(0, 100);
 
-    Summarizers.Percentile(I).Should().Be(Summarizers.Quantile(0.01f * I));
+    Summarizers.Quantiles.FromPercent(I).Should().Be(Summarizers.Quantiles.FromFraction(0.01f * I));
   }
 
   [TestMethod]
   public void PopularQuantiles()
   {
-    Summarizers.Quantiles.Q1.Should().Be(Summarizers.Percentile(25));
-    Summarizers.Quantiles.Median.Should().Be(Summarizers.Percentile(50));
-    Summarizers.Quantiles.Q3.Should().Be(Summarizers.Percentile(75));
+    Summarizers.Quantiles.Q1.Should().Be(Summarizers.Quantiles.FromPercent(25));
+    Summarizers.Quantiles.Median.Should().Be(Summarizers.Quantiles.FromPercent(50));
+    Summarizers.Quantiles.Q3.Should().Be(Summarizers.Quantiles.FromPercent(75));
   }
 
   static float GivenSummaryValue(MockSummarizer CenterSummarizer, IReadOnlyList<float> Input)

@@ -33,33 +33,39 @@ public static partial class Summarizers
 
   public static class Quantiles
   {
-    public static Summarizer Q1 { get; } = Percentile(25);
-    public static Summarizer Median { get; } = Percentile(50);
-    public static Summarizer Q3 { get; } = Percentile(75);
+    public static Summarizer Q1 { get; } = FromPercent(25);
+    public static Summarizer Median { get; } = FromPercent(50);
+    public static Summarizer Q3 { get; } = FromPercent(75);
+
+    public static Summarizer FromFraction(float Quantile)
+    {
+      return new QuantileSummarizer(Quantile);
+    }
+
+    public static Summarizer FromPercent(int Percent)
+    {
+      return FromFraction(0.01f * Percent);
+    }
   }
 
-  public static Summarizer Quantile(float Quantile)
+  public static class Composables
   {
-    return new QuantileSummarizer(Quantile);
+    public static Summarizer SpreadPenalizedCenter(Summarizer CenterMetric, Summarizer SpreadMetric, float SpreadWeight)
+    {
+      return new SpreadPenalizedCenterSummarizer(CenterMetric, SpreadMetric, SpreadWeight);
+    }
   }
 
-  public static Summarizer PercentWithSuccessOverThreshold(float Threshold)
+  public static class Convergence
   {
-    return new SuccessOverThresholdSummarizer(Threshold);
-  }
+    public static Summarizer PassRate(float PassThreshold)
+    {
+      return new SuccessOverThresholdSummarizer(PassThreshold);
+    }
 
-  public static Summarizer MeanMinusStandardDeviationTimesWeight(float StandardDeviationWeight)
-  {
-    return SpreadPenalizedCenter(Means.Arithmetic, PowerMean(2), StandardDeviationWeight);
-  }
-
-  public static Summarizer SpreadPenalizedCenter(Summarizer CenterMetric, Summarizer SpreadMetric, float SpreadWeight)
-  {
-    return new SpreadPenalizedCenterSummarizer(CenterMetric, SpreadMetric, SpreadWeight);
-  }
-
-  public static Summarizer Percentile(int Percent)
-  {
-    return Quantile(0.01f * Percent);
+    public static Summarizer PenalizedMean(float StandardDeviationWeight)
+    {
+      return Composables.SpreadPenalizedCenter(Means.Arithmetic, PowerMean(2), StandardDeviationWeight);
+    }
   }
 }
