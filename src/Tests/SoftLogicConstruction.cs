@@ -35,7 +35,7 @@ public class SoftLogicConstruction
 
     var SoftOr = SoftLogic.Or(Laxness);
 
-    SoftOr.Should().Be(PowerMeanSummarizer.Create(Laxness));
+    SoftOr.Should().Be(Summarizers.PowerMean(Laxness));
   }
 
   [TestMethod]
@@ -52,7 +52,7 @@ public class SoftLogicConstruction
 
     var SoftAnd = SoftLogic.And(Strictness);
 
-    SoftAnd.Should().Be(PowerMeanSummarizer.Create(1 / Strictness));
+    SoftAnd.Should().Be(Summarizers.PowerMean(1 / Strictness));
   }
 
   [TestMethod]

@@ -20,30 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
-
 namespace ThoughtSharp.Scenarios;
 
-public sealed class QuantileSummarizer : Summarizer
+public static partial class Summarizers
 {
-  readonly float Quantile;
+  public static Summarizer HarmonicMean { get; } = new HarmonicMeanSummarizer();
 
-  QuantileSummarizer(float Quantile)
-  {
-    this.Quantile = Quantile;
-  }
-
-  public float Summarize(ImmutableArray<float> Values)
-  {
-    var MaximumIndex = Values.Length - 1;
-    var IndexWithFraction = Quantile * MaximumIndex;
-    var Sorted = Values.Sort();
-
-    return Sorted[(int) IndexWithFraction];
-  }
-
-  public static Summarizer Create(float Quantile)
+  public static Summarizer Quantile(float Quantile)
   {
     return new QuantileSummarizer(Quantile);
   }
+
+  public static Summarizer PercentWithSuccessOverThreshold(float Threshold)
+  {
+    return new SuccessOverThresholdSummarizer(Threshold);
+  }
+
+  public static Summarizer GeometricMean { get; } = new GeometricMeanSummarizer();
 }

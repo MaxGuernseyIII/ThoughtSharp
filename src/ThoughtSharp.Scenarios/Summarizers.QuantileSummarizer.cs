@@ -24,14 +24,17 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios;
 
-public sealed class MeanSummarizer : Summarizer
+public static partial class Summarizers
 {
-  MeanSummarizer() { }
-
-  public static Summarizer Instance { get; } = new MeanSummarizer();
-
-  public float Summarize(ImmutableArray<float> Values)
+  sealed class QuantileSummarizer(float Quantile) : Summarizer
   {
-    return Values.Average();
+    public float Summarize(ImmutableArray<float> Values)
+    {
+      var MaximumIndex = Values.Length - 1;
+      var IndexWithFraction = Quantile * MaximumIndex;
+      var Sorted = Values.Sort();
+
+      return Sorted[(int) IndexWithFraction];
+    }
   }
 }

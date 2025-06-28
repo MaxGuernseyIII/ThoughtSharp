@@ -33,7 +33,7 @@ public class Summarization
   {
     var Values = Any.FloatArray();
     var Power = Any.FloatWithin(2, 1.75f);
-    var Summarizer = PowerMeanSummarizer.Create(Power);
+    var Summarizer = Summarizers.PowerMean(Power);
 
     var Summary = Summarizer.Summarize([..Values]);
 
@@ -45,16 +45,26 @@ public class Summarization
   {
     var Power = Any.FloatWithin(2, 1.75f);
 
-    var Summarizer = PowerMeanSummarizer.Create(Power);
+    var Summarizer = Summarizers.PowerMean(Power);
 
-    Summarizer.Should().Be(PowerMeanSummarizer.Create(Power));
+    Summarizer.Should().Be(Summarizers.PowerMean(Power));
+  }
+
+  [TestMethod]
+  public void PowerMeanDifference()
+  {
+    var Power = Any.FloatWithin(2, 1.75f);
+
+    var Summarizer = Summarizers.PowerMean(Power);
+
+    Summarizer.Should().NotBe(Summarizers.PowerMean(Any.FloatOutsideOf(Power, .001f)));
   }
 
   [TestMethod]
   public void ArithmeticMean()
   {
     var Values = Any.FloatArray();
-    var Summarizer = MeanSummarizer.Instance;
+    var Summarizer = Summarizers.ArithmeticMean;
 
     var Summary = Summarizer.Summarize([.. Values]);
 
@@ -65,7 +75,7 @@ public class Summarization
   public void GeometricMean()
   {
     var Values = Any.FloatArray();
-    var Summarizer = GeometricMeanSummarizer.Instance;
+    var Summarizer = Summarizers.GeometricMean;
 
     var Summary = Summarizer.Summarize([.. Values]);
 
@@ -76,7 +86,7 @@ public class Summarization
   public void HarmonicMean()
   {
     var Values = Any.FloatArray();
-    var Summarizer = HarmonicMeanSummarizer.Instance;
+    var Summarizer = Summarizers.HarmonicMean;
 
     var Summary = Summarizer.Summarize([.. Values]);
 
@@ -88,7 +98,7 @@ public class Summarization
   {
     var Values = Any.FloatArray(100);
     var Threshold = Any.Float;
-    var Summarizer = SuccessOverThresholdSummarizer.Create(Threshold);
+    var Summarizer = Summarizers.PercentWithSuccessOverThreshold(Threshold);
 
     var Summary = Summarizer.Summarize([..Values]);
 
@@ -100,12 +110,24 @@ public class Summarization
   {
     var Values = Any.FloatArray(100);
     var Quantile = Any.Float;
-    var Summarizer = QuantileSummarizer.Create(Quantile);
+    var Summarizer = Summarizers.Quantile(Quantile);
 
     var Summary = Summarizer.Summarize([..Values]);
 
     Summary.Should().Be(Values.Order().ElementAt((int)(Quantile *(Values.Length - 1))));
   }
+
+  //[TestMethod]
+  //public void MeanMinusStandardDeviationTimesK()
+  //{
+  //  var Values = Any.FloatArray(100);
+  //  var K = Any.Float;
+  //  var Summarizer = Summarizers.MeanMinusStandardDeviationTimesK(K);
+
+  //  var Summary = Summarizer.Summarize([..Values]);
+
+  //  Summary.Should().Be()
+  //}
 
   // TODO:
   // [ ] metric - metric component

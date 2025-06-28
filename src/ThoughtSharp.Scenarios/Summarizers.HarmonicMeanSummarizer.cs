@@ -24,23 +24,18 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios;
 
-public sealed class SuccessOverThresholdSummarizer : Summarizer
+public static partial class Summarizers
 {
-  readonly float Threshold;
-
-  SuccessOverThresholdSummarizer(float Threshold)
+  sealed class HarmonicMeanSummarizer : Summarizer
   {
-    this.Threshold = Threshold;
+    public float Summarize(ImmutableArray<float> Values)
+    {
+      return Values.Length / Values.Sum(V => 1 / V);
+    }
   }
 
-  public float Summarize(ImmutableArray<float> Values)
+  public static Summarizer PowerMean(float Power)
   {
-    var Count = Values.Count(V => V >= Threshold);
-    return Count * 1f / Values.Length;
-  }
-
-  public static Summarizer Create(float Threshold)
-  {
-    return new SuccessOverThresholdSummarizer(Threshold);
+    return new PowerMeanSummarizer(Power);
   }
 }

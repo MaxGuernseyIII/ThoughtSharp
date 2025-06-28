@@ -20,21 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Scenarios;
 
-public static class SoftLogic
+public partial class Summarizers
 {
-  public static Summarizer Or(float Laxness)
+  sealed class GeometricMeanSummarizer : Summarizer
   {
-    Assert.Critical(Laxness > 1f, "soft OR cannot have laxness <= 1");
-
-    return Summarizers.PowerMean(Laxness);
+    public float Summarize(ImmutableArray<float> Values)
+    {
+      return MathF.Exp(Values.Select(MathF.Log).Sum() / Values.Length);
+    }
   }
 
-  public static Summarizer And(float Strictness)
-  {
-    Assert.Critical(Strictness > 1f, "soft AND cannot have strictness <= 1");
-    
-    return Summarizers.PowerMean(1/Strictness);
-  }
+  public static Summarizer ArithmeticMean { get; } = new MeanSummarizer();
 }
