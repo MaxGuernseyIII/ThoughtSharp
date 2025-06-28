@@ -500,6 +500,25 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void OverrideConvergenceStandard()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsChangedAt(
+      Original => Original with
+      {
+        MaximumAttempts = 80000,
+        SuccessFraction = .98,
+        SampleSize = 500
+      },
+      RootNamespace,
+      nameof(FizzBuzzTraining),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan),
+      nameof(FizzBuzzTraining.FizzBuzzTrainingPlan.FocusedTraining)
+    );
+  }
+
+  [TestMethod]
   public void DefaultTrainingMetadata()
   {
     AssemblyParser.StandardTrainingMetadata.Should().Be(
