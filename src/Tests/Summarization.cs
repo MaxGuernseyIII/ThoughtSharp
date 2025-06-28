@@ -20,7 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using FluentAssertions;
+using Tests.Mocks;
 using ThoughtSharp.Scenarios;
 
 namespace Tests;
@@ -159,17 +161,40 @@ public class Summarization
     Summarizer.Should().NotBe(Summarizers.Quantile(Any.FloatOutsideOf(Quantile, Epsilon)));
   }
 
-  //[TestMethod]
-  //public void MeanMinusStandardDeviationTimesK()
-  //{
-  //  var Values = Any.FloatArray(100);
-  //  var K = Any.Float;
-  //  var Summarizer = Summarizers.MeanMinusStandardDeviationTimesK(K);
+  [TestMethod]
+  public void SpreadPenalizedCenter()
+  {
+    var CenterSummarizer = new MockSummarizer();
+    var FeatureSummarizer = new MockSummarizer();
+    var Input = Any.FloatArray();
+    var Center = GivenSummaryValue(CenterSummarizer, Input);
+    var Variation = Input.Select(V => V - Center).ToImmutableArray();
+    var Feature = GivenSummaryValue(FeatureSummarizer, Variation);
+    var K = Any.Float;
+    var Summarizer = Summarizers.SpreadPenalizedCenter(CenterSummarizer, FeatureSummarizer, K);
 
-  //  var Summary = Summarizer.Summarize([..Values]);
+    var Summary = Summarizer.Summarize([..Input]);
 
-  //  Summary.Should().Be()
-  //}
+    Summary.Should().BeApproximately(Center - Feature * K, Epsilon);
+  }
+
+  [TestMethod]
+  public void MeanMinusStandardDeviationTimesWeight()
+  {
+    var Weight = Any.Float;
+
+    var Summarizer = Summarizers.MeanMinusStandardDeviationTimesWeight(Weight);
+
+    Summarizer.Should()
+      .Be(Summarizers.SpreadPenalizedCenter(Summarizers.ArithmeticMean, Summarizers.PowerMean(2), Weight));
+  }
+
+  static float GivenSummaryValue(MockSummarizer CenterSummarizer, IReadOnlyList<float> Input)
+  {
+    var Center = Any.Float;
+    CenterSummarizer.SetUpResponse([..Input], Center);
+    return Center;
+  }
 
   // TODO:
   // [ ] metric - metric component

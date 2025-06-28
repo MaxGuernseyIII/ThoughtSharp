@@ -26,27 +26,13 @@ namespace ThoughtSharp.Scenarios;
 
 public static partial class Summarizers
 {
-  public static Summarizer HarmonicMean { get; } = new HarmonicMeanSummarizer();
-
-  public static Summarizer GeometricMean { get; } = new GeometricMeanSummarizer();
-
-  public static Summarizer Quantile(float Quantile)
+  record SpreadPenalizedCenterSummarizer(Summarizer CenterMetric, Summarizer SpreadMetric, float SpreadWeight) : Summarizer
   {
-    return new QuantileSummarizer(Quantile);
-  }
+    public float Summarize(ImmutableArray<float> Values)
+    {
+      var Center = CenterMetric.Summarize(Values);
 
-  public static Summarizer PercentWithSuccessOverThreshold(float Threshold)
-  {
-    return new SuccessOverThresholdSummarizer(Threshold);
-  }
-
-  public static Summarizer MeanMinusStandardDeviationTimesWeight(float StandardDeviationWeight)
-  {
-    return SpreadPenalizedCenter(ArithmeticMean, PowerMean(2), StandardDeviationWeight);
-  }
-
-  public static Summarizer SpreadPenalizedCenter(Summarizer CenterMetric, Summarizer SpreadMetric, float SpreadWeight)
-  {
-    return new SpreadPenalizedCenterSummarizer(CenterMetric, SpreadMetric, SpreadWeight);
+      return Center - SpreadMetric.Summarize([..Values.Select(V => V - Center)]) * SpreadWeight;
+    }
   }
 }
