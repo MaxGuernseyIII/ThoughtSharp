@@ -69,6 +69,60 @@ public class GradedAssertions
   }
 
   [TestClass]
+  public class AtMost : GradedAssertionsTestBase
+  {
+    float TotalFailureRadius;
+
+    [TestInitialize]
+    public void SetUp()
+    {
+      TotalFailureRadius = Any.Float;
+    }
+
+    [TestMethod]
+    public void TargetValueWithinSuccessRange()
+    {
+      GivenActualIs(Any.FloatLessThanOrEqualTo(Target));
+
+      WhenAssertAtMostValue();
+
+      ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess, ExpectedReason);
+    }
+
+    [TestMethod]
+    public void TargetValueAtBottomEdgeOfSuccessRange()
+    {
+      GivenActualIs(Any.FloatGreaterThanOrEqualTo(Target + TotalFailureRadius));
+
+      WhenAssertAtMostValue();
+
+      ThenGradeShouldBe(ConvergenceAssertions.TotalFailure, ExpectedReason);
+    }
+
+    [DataRow(0f)]
+    [DataRow(0.1f)]
+    [DataRow(0.5f)]
+    [DataRow(0.9f)]
+    [DataRow(1f)]
+    [TestMethod]
+    public void TargetValueInGradedRange(float FailureQuotient)
+    {
+      GivenActualIs(Target + TotalFailureRadius * FailureQuotient);
+
+      WhenAssertAtMostValue();
+
+      ThenGradeShouldBe(ConvergenceAssertions.TotalSuccess - FailureQuotient, ExpectedReason);
+    }
+
+    void WhenAssertAtMostValue()
+    {
+      Grade = Actual.ShouldConvergeOn().AtMost(Target, TotalFailureRadius);
+    }
+
+    string ExpectedReason => $"Expected <= {Target} (total failure at >= {Target + TotalFailureRadius}) and found {Actual}";
+  }
+
+  [TestClass]
   public class AtLeast : GradedAssertionsTestBase
   {
     float TotalFailureRadius;

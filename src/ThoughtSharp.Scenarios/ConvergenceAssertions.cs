@@ -54,6 +54,15 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
     ]);
   }
 
+  public Grade AtMost(T Target, T TotalFailureRadius)
+  {
+    return new([
+      (
+        ComputeSuccessFraction(Subject, Target + TotalFailureRadius, Target),
+        $"Expected <= {Target} (total failure at >= {Target + TotalFailureRadius}) and found {Subject}")
+    ]);
+  }
+
   static float ComputeSuccessFraction(T Actual, T TotalFailure, T TotalSuccess)
   {
     var Offset = Actual - TotalFailure;
