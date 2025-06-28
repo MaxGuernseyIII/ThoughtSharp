@@ -243,15 +243,5 @@ public class Summarization
   }
 
   // TODO:
-  // [x] metric - metric component
-  // [x] transform deviations - use one summarizer to get the "center", subtract from originals, pass into another summarizer
-  // [ ] metric components:
-  //     [ ] mean of absolute deviation
-  //     [x] root-mean-square (for standard deviation) - this is really just PowerMean(2)
-  //     [ ] range (seems like the 0-100 quantile gap but maybe can be optimized)
-  //     [ ] Quantile gap
-  // [ ] semantic overlay (e.g., construct graph of summarizers for MAD or Standard Deviation)
-  //     [ ] comparability of summarizers
-  //     [ ] standard deviation
-  //     [ ] Interquartile range
+  // [ ] Quantile gap
 }
