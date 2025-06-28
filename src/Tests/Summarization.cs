@@ -28,6 +28,8 @@ namespace Tests;
 [TestClass]
 public class Summarization
 {
+  const float Epsilon = 0.0001f;
+
   [TestMethod]
   public void PowerMean()
   {
@@ -57,7 +59,7 @@ public class Summarization
 
     var Summarizer = Summarizers.PowerMean(Power);
 
-    Summarizer.Should().NotBe(Summarizers.PowerMean(Any.FloatOutsideOf(Power, .001f)));
+    Summarizer.Should().NotBe(Summarizers.PowerMean(Any.FloatOutsideOf(Power, Epsilon)));
   }
 
   [TestMethod]
@@ -106,6 +108,26 @@ public class Summarization
   }
 
   [TestMethod]
+  public void PercentOverSuccessThresholdEquivalence()
+  {
+    var Threshold = Any.Float;
+    
+    var Summarizer = Summarizers.PercentWithSuccessOverThreshold(Threshold);
+
+    Summarizer.Should().Be(Summarizers.PercentWithSuccessOverThreshold(Threshold));
+  }
+
+  [TestMethod]
+  public void PercentOverSuccessThresholdNonEquivalence()
+  {
+    var Threshold = Any.Float;
+    
+    var Summarizer = Summarizers.PercentWithSuccessOverThreshold(Threshold);
+
+    Summarizer.Should().NotBe(Summarizers.PercentWithSuccessOverThreshold(Any.FloatOutsideOf(Threshold, Epsilon)));
+  }
+
+  [TestMethod]
   public void Quantile()
   {
     var Values = Any.FloatArray(100);
@@ -115,6 +137,26 @@ public class Summarization
     var Summary = Summarizer.Summarize([..Values]);
 
     Summary.Should().Be(Values.Order().ElementAt((int)(Quantile *(Values.Length - 1))));
+  }
+
+  [TestMethod]
+  public void QuantileEquivalence()
+  {
+    var Quantile = Any.Float;
+
+    var Summarizer = Summarizers.Quantile(Quantile);
+
+    Summarizer.Should().Be(Summarizers.Quantile(Quantile));
+  }
+
+  [TestMethod]
+  public void QuantileNonEquivalence()
+  {
+    var Quantile = Any.Float;
+
+    var Summarizer = Summarizers.Quantile(Quantile);
+
+    Summarizer.Should().NotBe(Summarizers.Quantile(Any.FloatOutsideOf(Quantile, Epsilon)));
   }
 
   //[TestMethod]

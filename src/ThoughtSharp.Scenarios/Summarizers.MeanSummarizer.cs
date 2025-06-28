@@ -26,7 +26,7 @@ namespace ThoughtSharp.Scenarios;
 
 public partial class Summarizers
 {
-  sealed class MeanSummarizer : Summarizer
+  sealed record MeanSummarizer : Summarizer
   {
     public float Summarize(ImmutableArray<float> Values)
     {

@@ -26,7 +26,7 @@ namespace ThoughtSharp.Scenarios;
 
 public static partial class Summarizers
 {
-  sealed class QuantileSummarizer(float Quantile) : Summarizer
+  sealed record QuantileSummarizer(float Quantile) : Summarizer
   {
     public float Summarize(ImmutableArray<float> Values)
     {

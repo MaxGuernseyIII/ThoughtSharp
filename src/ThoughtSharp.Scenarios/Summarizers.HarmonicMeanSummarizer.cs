@@ -26,16 +26,16 @@ namespace ThoughtSharp.Scenarios;
 
 public static partial class Summarizers
 {
-  sealed class HarmonicMeanSummarizer : Summarizer
+  public static Summarizer PowerMean(float Power)
+  {
+    return new PowerMeanSummarizer(Power);
+  }
+
+  sealed record HarmonicMeanSummarizer : Summarizer
   {
     public float Summarize(ImmutableArray<float> Values)
     {
       return Values.Length / Values.Sum(V => 1 / V);
     }
-  }
-
-  public static Summarizer PowerMean(float Power)
-  {
-    return new PowerMeanSummarizer(Power);
   }
 }

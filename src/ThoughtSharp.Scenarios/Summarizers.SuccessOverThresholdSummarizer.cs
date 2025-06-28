@@ -26,8 +26,10 @@ namespace ThoughtSharp.Scenarios;
 
 public static partial class Summarizers
 {
-  sealed class SuccessOverThresholdSummarizer(float Threshold) : Summarizer
+  sealed record SuccessOverThresholdSummarizer(float Threshold) : Summarizer
   {
+    readonly float Threshold = Threshold;
+
     public float Summarize(ImmutableArray<float> Values)
     {
       var Count = Values.Count(V => V >= Threshold);

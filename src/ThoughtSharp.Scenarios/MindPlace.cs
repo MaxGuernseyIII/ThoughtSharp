@@ -36,10 +36,25 @@ public abstract class MindPlace<TMind, TBrain> : MindPlace
   where TMind : Mind<TMind>
   where TBrain : Brain
 {
-  Brain MindPlace.MakeNewBrain() => MakeNewBrain();
-  object MindPlace.MakeNewMind(Brain Brain) => TMind.Create(Brain);
-  void MindPlace.LoadSavedBrain(Brain ToLoad) => LoadSavedBrain((TBrain) ToLoad);
-  void MindPlace.SaveBrain(Brain ToSave) => SaveBrain((TBrain) ToSave);
+  Brain MindPlace.MakeNewBrain()
+  {
+    return MakeNewBrain();
+  }
+
+  object MindPlace.MakeNewMind(Brain Brain)
+  {
+    return TMind.Create(Brain);
+  }
+
+  void MindPlace.LoadSavedBrain(Brain ToLoad)
+  {
+    LoadSavedBrain((TBrain) ToLoad);
+  }
+
+  void MindPlace.SaveBrain(Brain ToSave)
+  {
+    SaveBrain((TBrain) ToSave);
+  }
 
   public abstract TBrain MakeNewBrain();
   public abstract void LoadSavedBrain(TBrain ToLoad);

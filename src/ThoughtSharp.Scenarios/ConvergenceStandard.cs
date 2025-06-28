@@ -20,8 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using JetBrains.Annotations;
-
 namespace ThoughtSharp.Scenarios;
 
 [AttributeUsage(AttributeTargets.Class)]

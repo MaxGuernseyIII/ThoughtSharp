@@ -26,6 +26,8 @@ public static partial class Summarizers
 {
   public static Summarizer HarmonicMean { get; } = new HarmonicMeanSummarizer();
 
+  public static Summarizer GeometricMean { get; } = new GeometricMeanSummarizer();
+
   public static Summarizer Quantile(float Quantile)
   {
     return new QuantileSummarizer(Quantile);
@@ -35,6 +37,4 @@ public static partial class Summarizers
   {
     return new SuccessOverThresholdSummarizer(Threshold);
   }
-
-  public static Summarizer GeometricMean { get; } = new GeometricMeanSummarizer();
 }

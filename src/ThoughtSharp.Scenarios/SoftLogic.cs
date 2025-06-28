@@ -34,7 +34,7 @@ public static class SoftLogic
   public static Summarizer And(float Strictness)
   {
     Assert.Critical(Strictness > 1f, "soft AND cannot have strictness <= 1");
-    
-    return Summarizers.PowerMean(1/Strictness);
+
+    return Summarizers.PowerMean(1 / Strictness);
   }
 }
