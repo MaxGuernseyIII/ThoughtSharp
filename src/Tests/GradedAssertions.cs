@@ -140,7 +140,10 @@ public class GradedAssertions
     void ThenGradeShouldBe(float Expected)
     {
       Grade.ScoresAndReasons.Should().ContainSingle();
-      Grade.ScoresAndReasons[0].Score.Should().BeApproximately(Expected, 0.0001f);
+      var Pair = Grade.ScoresAndReasons[0];
+      Pair.Score.Should().BeApproximately(Expected, 0.0001f);
+      Pair.Reason.Should()
+        .Be($"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Actual}");
     }
   }
 }

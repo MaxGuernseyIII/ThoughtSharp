@@ -41,7 +41,8 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
     var LengthOfGraduatedFailureZone = TotalFailureRadius - TotalSuccessRadius;
 
     return new([
-      1f - float.CreateChecked(T.Clamp(DistanceIntoFailureZone / LengthOfGraduatedFailureZone, T.Zero, T.One ))
+      (1f - float.CreateChecked(T.Clamp(DistanceIntoFailureZone / LengthOfGraduatedFailureZone, T.Zero, T.One )),
+        $"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Subject}")
     ]);
   }
 }
