@@ -2,17 +2,22 @@
 
 namespace ThoughtSharp.Scenarios;
 
-public sealed record Grade(ImmutableArray<float> Scores)
+public sealed record Grade(ImmutableArray<(float Score, string Reason)> ScoresAndReasons)
 {
-  public ImmutableArray<float> Scores { get; } = Scores;
+  public Grade(ImmutableArray<float> Scores)
+    : this([..Scores.Select(S => (S, ""))])
+  {
+  }
+
+  public ImmutableArray<(float Score, string Reason)> ScoresAndReasons { get; } = ScoresAndReasons;
 
   public bool Equals(Grade? Other)
   {
-    return Other != null && (ReferenceEquals(this, Other) || Scores.SequenceEqual(Other.Scores));
+    return Other != null && (ReferenceEquals(this, Other) || ScoresAndReasons.SequenceEqual(Other.ScoresAndReasons));
   }
 
   public override int GetHashCode()
   {
-    return Scores.Aggregate(0, HashCode.Combine);
+    return ScoresAndReasons.Aggregate(0, HashCode.Combine);
   }
 }

@@ -139,7 +139,8 @@ public class GradedAssertions
 
     void ThenGradeShouldBe(float Expected)
     {
-      Grade.Scores.Should().ContainSingle().Which.Should().BeApproximately(Expected, 0.0001f);
+      Grade.ScoresAndReasons.Should().ContainSingle();
+      Grade.ScoresAndReasons[0].Score.Should().BeApproximately(Expected, 0.0001f);
     }
   }
 }

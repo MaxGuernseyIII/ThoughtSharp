@@ -84,7 +84,7 @@ static class Any
   public static bool Bool => Core.Next(2) == 1;
 
   public static float PositiveOrNegativeFloat => Core.NextSingle() * 2 - 1;
-  public static string? NormalString => Guid.NewGuid().ToString("n");
+  public static string NormalString => Guid.NewGuid().ToString("n");
 
   public static int Int(int Boundary1, int Boundary2)
   {
@@ -203,4 +203,9 @@ static class Any
   }
 
   public static char Char => (char)Any.Int(0, char.MaxValue);
+
+  public static int IndexOf<T>(IReadOnlyList<T> List)
+  {
+    return Int(0, List.Count - 1);
+  }
 }
