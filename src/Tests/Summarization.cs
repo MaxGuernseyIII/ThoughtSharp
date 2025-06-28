@@ -94,4 +94,16 @@ public class Summarization
 
     Summary.Should().Be(Values.Count(V => V >= Threshold) * 1f / Values.Length);
   }
+
+  [TestMethod]
+  public void Quantile()
+  {
+    var Values = Any.FloatArray(100);
+    var Quantile = Any.Float;
+    var Summarizer = QuantileSummarizer.Create(Quantile);
+
+    var Summary = Summarizer.Summarize([..Values]);
+
+    Summary.Should().Be(Values.Order().ElementAt((int)(Quantile *(Values.Length - 1))));
+  }
 }
