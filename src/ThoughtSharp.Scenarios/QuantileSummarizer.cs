@@ -35,9 +35,11 @@ public sealed class QuantileSummarizer : Summarizer
 
   public float Summarize(ImmutableArray<float> Values)
   {
+    var MaximumIndex = Values.Length - 1;
+    var IndexWithFraction = Quantile * MaximumIndex;
     var Sorted = Values.Sort();
 
-    return Sorted[(int) (Quantile * (Sorted.Length - 1))];
+    return Sorted[(int) IndexWithFraction];
   }
 
   public static Summarizer Create(float Quantile)
