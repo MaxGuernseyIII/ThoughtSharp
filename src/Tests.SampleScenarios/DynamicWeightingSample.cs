@@ -82,8 +82,6 @@ public class DynamicWeightingSample
     public class PhaseWithLowMinimumAndMaximumWeights;
   }
 
-  [MaximumAttempts(1)]
-  [ConvergenceStandard(Fraction = 1, Of = 1)]
   [DynamicWeighting(Minimum = MinimumWeight, Maximum = MaximumWeight)]
   [Curriculum]
   public class CurriculumWithExplicitWeight

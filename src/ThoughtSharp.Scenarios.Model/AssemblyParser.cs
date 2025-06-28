@@ -26,7 +26,7 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public class AssemblyParser
 {
-  static readonly TrainingMetadata StandardTrainingMetadata = new()
+  public static readonly TrainingMetadata StandardTrainingMetadata = new()
   {
     SuccessFraction = .95,
     SampleSize = 1000,
@@ -89,7 +89,7 @@ public class AssemblyParser
   {
     var Metadata = UpdateTrainingMetadataUsingType(Type, ContextTrainingData);
 
-    return new CurriculumNode(Type, [..ParseTypes(Type, Metadata)]);
+    return new CurriculumNode(Type, Metadata, [..ParseTypes(Type, Metadata)]);
   }
 
   static MindPlaceNode ParseMindPlaceType(Type Type)
