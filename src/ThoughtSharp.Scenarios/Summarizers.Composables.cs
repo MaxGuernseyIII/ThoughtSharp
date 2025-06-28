@@ -22,19 +22,18 @@
 
 namespace ThoughtSharp.Scenarios;
 
-public static class SoftLogic
+public static partial class Summarizers
 {
-  public static Summarizer Or(float Laxness)
+  public static class Composables
   {
-    Assert.Critical(Laxness > 1f, "soft OR cannot have laxness <= 1");
+    public static Summarizer SpreadPenalizedCenter(Summarizer CenterMetric, Summarizer SpreadMetric, float SpreadWeight)
+    {
+      return new SpreadPenalizedCenterSummarizer(CenterMetric, SpreadMetric, SpreadWeight);
+    }
 
-    return Summarizers.Means.PowerMean(Laxness);
-  }
-
-  public static Summarizer And(float Strictness)
-  {
-    Assert.Critical(Strictness > 1f, "soft AND cannot have strictness <= 1");
-
-    return Summarizers.Means.PowerMean(1 / Strictness);
+    public static Summarizer TransformToAbsoluteValue(Summarizer Underlying)
+    {
+      return new TransformToAbsoluteValueSummarizer(Underlying);
+    }
   }
 }

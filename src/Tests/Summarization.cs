@@ -38,7 +38,7 @@ public class Summarization
   {
     var Values = Any.FloatArray();
     var Power = Any.FloatWithin(2, 1.75f);
-    var Summarizer = Summarizers.PowerMean(Power);
+    var Summarizer = Summarizers.Means.PowerMean(Power);
 
     var Summary = Summarizer.Summarize([..Values]);
 
@@ -50,9 +50,9 @@ public class Summarization
   {
     var Power = Any.FloatWithin(2, 1.75f);
 
-    var Summarizer = Summarizers.PowerMean(Power);
+    var Summarizer = Summarizers.Means.PowerMean(Power);
 
-    Summarizer.Should().Be(Summarizers.PowerMean(Power));
+    Summarizer.Should().Be(Summarizers.Means.PowerMean(Power));
   }
 
   [TestMethod]
@@ -60,9 +60,9 @@ public class Summarization
   {
     var Power = Any.FloatWithin(2, 1.75f);
 
-    var Summarizer = Summarizers.PowerMean(Power);
+    var Summarizer = Summarizers.Means.PowerMean(Power);
 
-    Summarizer.Should().NotBe(Summarizers.PowerMean(Any.FloatOutsideOf(Power, Epsilon)));
+    Summarizer.Should().NotBe(Summarizers.Means.PowerMean(Any.FloatOutsideOf(Power, Epsilon)));
   }
 
   [TestMethod]
@@ -180,6 +180,19 @@ public class Summarization
   }
 
   [TestMethod]
+  public void TransformToAbsoluteValue()
+  {
+    var Underlying = new MockSummarizer();
+    var Input = Any.FloatArray();
+    var Output = GivenSummaryValue(Underlying, [..Input.Select(MathF.Abs)]);
+    var Summarizer = Summarizers.Composables.TransformToAbsoluteValue(Underlying);
+
+    var Summary = Summarizer.Summarize([..Input]);
+
+    Summary.Should().Be(Output);
+  }
+
+  [TestMethod]
   public void MeanMinusStandardDeviationTimesWeight()
   {
     var Weight = Any.Float;
@@ -187,7 +200,7 @@ public class Summarization
     var Summarizer = Summarizers.Convergence.PenalizedMean(Weight);
 
     Summarizer.Should()
-      .Be(Summarizers.Composables.SpreadPenalizedCenter(Summarizers.Means.Arithmetic, Summarizers.PowerMean(2), Weight));
+      .Be(Summarizers.Composables.SpreadPenalizedCenter(Summarizers.Means.Arithmetic, Summarizers.Means.PowerMean(2), Weight));
   }
 
   [TestMethod]
@@ -206,16 +219,16 @@ public class Summarization
     Summarizers.Quantiles.Q3.Should().Be(Summarizers.Quantiles.FromPercent(75));
   }
 
-  static float GivenSummaryValue(MockSummarizer CenterSummarizer, IReadOnlyList<float> Input)
+  static float GivenSummaryValue(MockSummarizer Underlying, IReadOnlyList<float> Input)
   {
     var Center = Any.Float;
-    CenterSummarizer.SetUpResponse([..Input], Center);
+    Underlying.SetUpResponse([..Input], Center);
     return Center;
   }
 
   // TODO:
-  // [ ] metric - metric component
-  // [ ] transform deviations - use one summarizer to get the "center", subtract from originals, pass into another summarizer
+  // [x] metric - metric component
+  // [x] transform deviations - use one summarizer to get the "center", subtract from originals, pass into another summarizer
   // [ ] metric components:
   //     [ ] mean of absolute deviation
   //     [x] root-mean-square (for standard deviation) - this is really just PowerMean(2)

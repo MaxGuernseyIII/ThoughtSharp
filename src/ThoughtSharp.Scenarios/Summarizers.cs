@@ -24,48 +24,4 @@ namespace ThoughtSharp.Scenarios;
 
 public static partial class Summarizers
 {
-  public static class Means
-  {
-    public static Summarizer Harmonic { get; } = new HarmonicMeanSummarizer();
-    public static Summarizer Geometric { get; } = new GeometricMeanSummarizer();
-    public static Summarizer Arithmetic { get; } = new MeanSummarizer();
-  }
-
-  public static class Quantiles
-  {
-    public static Summarizer Q1 { get; } = FromPercent(25);
-    public static Summarizer Median { get; } = FromPercent(50);
-    public static Summarizer Q3 { get; } = FromPercent(75);
-
-    public static Summarizer FromFraction(float Quantile)
-    {
-      return new QuantileSummarizer(Quantile);
-    }
-
-    public static Summarizer FromPercent(int Percent)
-    {
-      return FromFraction(0.01f * Percent);
-    }
-  }
-
-  public static class Composables
-  {
-    public static Summarizer SpreadPenalizedCenter(Summarizer CenterMetric, Summarizer SpreadMetric, float SpreadWeight)
-    {
-      return new SpreadPenalizedCenterSummarizer(CenterMetric, SpreadMetric, SpreadWeight);
-    }
-  }
-
-  public static class Convergence
-  {
-    public static Summarizer PassRate(float PassThreshold)
-    {
-      return new SuccessOverThresholdSummarizer(PassThreshold);
-    }
-
-    public static Summarizer PenalizedMean(float StandardDeviationWeight)
-    {
-      return Composables.SpreadPenalizedCenter(Means.Arithmetic, PowerMean(2), StandardDeviationWeight);
-    }
-  }
 }
