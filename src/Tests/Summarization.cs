@@ -80,6 +80,18 @@ public class Summarization
 
     var Summary = Summarizer.Summarize([.. Values]);
 
-    Summary.Should().Be(Values.Length  / Values.Select(V => 1f / V).Sum());
+    Summary.Should().Be(Values.Length / Values.Select(V => 1f / V).Sum());
+  }
+
+  [TestMethod]
+  public void PercentOverSuccessThreshold()
+  {
+    var Values = Any.FloatArray(100);
+    var Threshold = Any.Float;
+    var Summarizer = SuccessOverThresholdSummarizer.Create(Threshold);
+
+    var Summary = Summarizer.Summarize([..Values]);
+
+    Summary.Should().Be(Values.Count(V => V >= Threshold) * 1f / Values.Length);
   }
 }

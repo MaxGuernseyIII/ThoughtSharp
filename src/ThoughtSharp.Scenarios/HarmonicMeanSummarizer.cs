@@ -35,3 +35,24 @@ public sealed class HarmonicMeanSummarizer : Summarizer
     return Values.Length / Values.Sum(V => 1 / V);
   }
 }
+
+public sealed class SuccessOverThresholdSummarizer : Summarizer
+{
+  readonly float Threshold;
+
+  SuccessOverThresholdSummarizer(float Threshold)
+  {
+    this.Threshold = Threshold;
+  }
+
+  public float Summarize(ImmutableArray<float> Values)
+  {
+    var Count = Values.Count(V => V >= Threshold);
+    return Count * 1f / Values.Length;
+  }
+
+  public static Summarizer Create(float Threshold)
+  {
+    return new SuccessOverThresholdSummarizer(Threshold);
+  }
+}
