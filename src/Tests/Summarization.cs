@@ -53,7 +53,7 @@ public class Summarization
   }
 
   [TestMethod]
-  public void PowerMeanDifference()
+  public void PowerMeanNonEquivalence()
   {
     var Power = Any.FloatWithin(2, 1.75f);
 
