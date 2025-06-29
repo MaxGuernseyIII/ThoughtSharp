@@ -26,10 +26,6 @@ public class ConvergenceTracker(int Length, Summarizer Summarizer)
 {
   readonly Summarizer Summarizer = Summarizer;
 
-  public ConvergenceTracker(int Length) : this(Length, Summarizers.Convergence.PassRate(1))
-  {
-  }
-
   readonly int Length = Length;
   readonly Queue<float> Results = new();
 
