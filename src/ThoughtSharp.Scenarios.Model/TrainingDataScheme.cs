@@ -36,13 +36,13 @@ public class TrainingDataScheme(ScenariosModelNode Node, TrainingMetadata Metada
   public Counter TimesSinceSaved { get; } = new();
   public Counter Attempts { get; } = new();
 
-  public IEnumerable<ScenariosModelNode> TrackedNodes => Trackers.Keys.ToImmutableArray();
+  public IEnumerable<ScenariosModelNode> TrackedNodes => [..Trackers.Keys];
 
   public IEnumerable<ScenariosModelNode> SubSchemeNodes => ChildSchemes.Keys;
 
   public ConvergenceTracker GetConvergenceTrackerFor(ScenariosModelNode Node)
   {
-    return Trackers.GetOrAdd(Node, _ => new(Metadata.SampleSize));
+    return Trackers.GetOrAdd(Node, _ => new(Metadata.SampleSize, Metadata.Metric));
   }
 
   protected bool Equals(TrainingDataScheme Other)
