@@ -29,35 +29,28 @@ static class TestDataExtensions
 {
   public static ImmutableArray<T> WithOneLess<T>(this ImmutableArray<T> Source)
   {
-    var IndexToRemove = Any.IndexOf(Source);
-
-    return Source.RemoveAt(IndexToRemove);
+    return Source.MutateUntilDifferent(S => S.RemoveAt(Any.IndexOf(Source)));
   }
 
   public static ImmutableArray<T> WithOneMore<T>(this ImmutableArray<T> Source, Func<T> GetNext)
   {
-    var Tries = 0;
-    var IndexToInsert = Any.Int(0, Source.Length);
-
-    ImmutableArray<T> Candidate;
-    do
-    {
-      Candidate = Source.Insert(IndexToInsert, GetNext());
-      (Tries++).Should().BeLessThan(100);
-    } while (Candidate.SequenceEqual(Source));
-
-    return Candidate;
+    return Source.MutateUntilDifferent(ToChange => ToChange.Insert(Any.Int(0, ToChange.Length), GetNext()));
   }
 
   public static ImmutableArray<T> WithOneReplaced<T>(this ImmutableArray<T> Source, Func<T> GetReplacement)
   {
+    return Source.MutateUntilDifferent(ToChange => ToChange.SetItem(Any.IndexOf(ToChange), GetReplacement()));
+  }
+
+  public static ImmutableArray<T> MutateUntilDifferent<T>(
+    this ImmutableArray<T> Source, Func<ImmutableArray<T>, ImmutableArray<T>> Mutate)
+  {
     var Tries = 0;
-    var IndexToReplace = Any.IndexOf(Source);
 
     ImmutableArray<T> Candidate;
     do
     {
-      Candidate = Source.SetItem(IndexToReplace, GetReplacement());
+      Candidate = Mutate(Source);
       (Tries++).Should().BeLessThan(100);
     } while (Candidate.SequenceEqual(Source));
 

@@ -63,9 +63,20 @@ public class ConvergenceTracker(int Length, Summarizer Summarizer)
 
   public void RecordResult(float Result)
   {
+    RecordResults([Result]);
+  }
+
+  public void RecordResult(Grade Grade)
+  {
+    RecordResults(Grade.ScoresAndReasons.Select(Pair => Pair.Score));
+  }
+
+  void RecordResults(IEnumerable<float> NewResults)
+  {
     lock (Results)
     {
-      Results.Enqueue(Result);
+      foreach (var NewResult in NewResults) 
+        Results.Enqueue(NewResult);
       while (Results.Count > Length)
         Results.Dequeue();
     }

@@ -100,6 +100,18 @@ public class ConvergenceTracking
   }
 
   [TestMethod]
+  public void DecomposesGradesIntoConstituentScores()
+  {
+    var History = Any.ConvergenceRecord(Any.Int(0, Length * 2));
+    var Grade = new Grade([..History]);
+    GivenTrackRecord(Grade);
+
+    WhenMeasureConvergence();
+
+    ThenConvergenceIsSameAsForHistory(History);
+  }
+
+  [TestMethod]
   public void OldResultsFallOff()
   {
     var OldHistory = Any.ConvergenceRecord(1);
@@ -144,7 +156,7 @@ public class ConvergenceTracking
   {
     var Length = Any.Int(20, 30);
     var Metric = GivenMetric();
-    var History = Any.ConvergenceRecord(Any.Int(0, Length));
+    var History = Any.ConvergenceRecord(Any.Int(1, Length));
     var Actual = GivenTrackerWith(Length, Metric, History.WithOneLess());
     var Expected = GivenTrackerWith(Length, Metric, History);
 
@@ -226,6 +238,11 @@ public class ConvergenceTracking
   void GivenTrackRecord(params ImmutableArray<float> Trials)
   {
     Tracker.ApplyHistory(Trials);
+  }
+
+  void GivenTrackRecord(Grade Grade)
+  {
+    Tracker.RecordResult(Grade);
   }
 
   void ThenConvergenceIs(double Expected)
