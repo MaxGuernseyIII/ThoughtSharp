@@ -14,6 +14,11 @@ class MockSummarizer : Summarizer
 
   public float Summarize(ImmutableArray<float> Values)
   {
-    return Conditions.Single(C => C.Argument.SequenceEqual(Values)).Response;
+    if (!Conditions.Any(C => C.Argument.SequenceEqual(Values)))
+      Conditions.Add((Values, Any.Float));
+
+    var (_, Response) = Conditions.Single(C => C.Argument.SequenceEqual(Values));
+
+    return Response;
   }
 }

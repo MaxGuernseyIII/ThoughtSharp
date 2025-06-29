@@ -31,7 +31,7 @@ public class ConvergenceTracker(int Length, Summarizer Summarizer)
   }
 
   readonly int Length = Length;
-  readonly Queue<bool> Results = new();
+  readonly Queue<float> Results = new();
 
   protected bool Equals(ConvergenceTracker Other)
   {
@@ -61,8 +61,7 @@ public class ConvergenceTracker(int Length, Summarizer Summarizer)
   {
     lock (Results)
     {
-      var Successes = Results.Count(B => B);
-      return 1d * Successes / Length;
+      return Summarizer.Summarize([..Results.Concat(Enumerable.Repeat(0f, Length - Results.Count))]);
     }
   }
 
@@ -70,7 +69,7 @@ public class ConvergenceTracker(int Length, Summarizer Summarizer)
   {
     lock (Results)
     {
-      Results.Enqueue(RunResult);
+      Results.Enqueue(RunResult ? 1f : 0f);
       while (Results.Count > Length)
         Results.Dequeue();
     }

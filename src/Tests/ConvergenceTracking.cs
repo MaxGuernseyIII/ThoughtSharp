@@ -44,34 +44,59 @@ public class ConvergenceTracking
     Tracker = new(Length, Summarizer);
   }
 
+  //[TestMethod]
+  //public void StartsOffAtZero()
+  //{
+  //  WhenMeasureConvergence();
+
+  //  ThenConvergenceIs(0);
+  //}
+
+  //[TestMethod]
+  //public void ComputesBasedOnTotalSuccessesWhenNotFull()
+  //{
+  //  var Amount = Any.Int(1, Length - 1);
+  //  GivenTrackRecord((Amount, true));
+
+  //  WhenMeasureConvergence();
+
+  //  ThenConvergenceIs(1d * Amount / Length);
+  //}
+
+  //[TestMethod]
+  //public void DoesNotIncludeFailuresAsConvergence()
+  //{
+  //  var Amount = Any.Int(1, Length - 1);
+  //  GivenTrackRecord((Amount, true), (1, false));
+
+  //  WhenMeasureConvergence();
+
+  //  ThenConvergenceIs(1d * Amount / Length);
+  //}
+
   [TestMethod]
-  public void StartsOffAtZero()
+  public void UsesMetricToComputeHistory()
   {
+    var History = Any.ConvergenceRecord(Length);
+    var ExpectedSummary = Summarizer.Summarize([..History.Select(V => V ? 1f : 0f)]);
+    GivenTrackRecord(History);
+
     WhenMeasureConvergence();
 
-    ThenConvergenceIs(0);
+    ThenConvergenceIs(ExpectedSummary);
   }
 
   [TestMethod]
-  public void ComputesBasedOnTotalSuccessesWhenNotFull()
+  public void MetricIsComputedBasedOnFullLength()
   {
-    var Amount = Any.Int(1, Length - 1);
-    GivenTrackRecord((Amount, true));
+    var History = Any.ConvergenceRecord(Any.Int(0, Length - 1));
+    var EffectiveHistory = History.Concat(Enumerable.Repeat(false, Length - History.Length));
+    var ExpectedSummary = Summarizer.Summarize([..EffectiveHistory.Select(V => V ? 1f : 0f)]);
+    GivenTrackRecord(History);
 
     WhenMeasureConvergence();
 
-    ThenConvergenceIs(1d * Amount / Length);
-  }
-
-  [TestMethod]
-  public void DoesNotIncludeFailuresAsConvergence()
-  {
-    var Amount = Any.Int(1, Length - 1);
-    GivenTrackRecord((Amount, true), (1, false));
-
-    WhenMeasureConvergence();
-
-    ThenConvergenceIs(1d * Amount / Length);
+    ThenConvergenceIs(ExpectedSummary);
   }
 
   [TestMethod]
