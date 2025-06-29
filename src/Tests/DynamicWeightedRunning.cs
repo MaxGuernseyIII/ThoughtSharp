@@ -35,6 +35,7 @@ public class DynamicWeightedRunning
   MockRunnable Underlying = null!;
   ConvergenceTracker Tracker = null!;
   Counter TrialCounter = null!;
+  MockSummarizer Summarizer = null!;
   RunResult Result = null!;
 
   [TestInitialize]
@@ -50,7 +51,8 @@ public class DynamicWeightedRunning
         return Task.FromResult(RunResult);
       }
     };
-    Tracker = new(ConvergenceTrackerLength);
+    Summarizer = new();
+    Tracker = new(ConvergenceTrackerLength, Summarizer);
     TrialCounter = new();
     Result = null!;
   }
@@ -69,6 +71,7 @@ public class DynamicWeightedRunning
   [TestMethod]
   public async Task SupportsConvergenceThresholdOfOneHundredPercent()
   {
+    GivenConvergence(0f);
     var Runner = GivenWeightedRunnable(1, 1, 1);
 
     await WhenRun(Runner);
@@ -80,6 +83,7 @@ public class DynamicWeightedRunning
   [TestMethod]
   public async Task WithPartialWeightAndNoConvergenceDoesNotRunRightAway()
   {
+    GivenConvergence(0f);
     var Runner = GivenWeightedRunnable(.25, .5, .5);
 
     await WhenRun(Runner);
@@ -91,6 +95,7 @@ public class DynamicWeightedRunning
   [TestMethod]
   public async Task WithPartialWeightAndNoConvergenceTakesMultipleTries()
   {
+    GivenConvergence(0f);
     var Runner = GivenWeightedRunnable(.25, .5, .5);
     await GivenPreviousRuns(Runner, 1);
 
@@ -103,7 +108,7 @@ public class DynamicWeightedRunning
   [TestMethod]
   public async Task WithPartialWeightAndFullConvergenceDoesNotRunRightAway()
   {
-    GivenSuccesses(ConvergenceTrackerLength);
+    GivenConvergence(1f);
     var Runner = GivenWeightedRunnable(.25, .5, .5);
 
     await WhenRun(Runner);
@@ -115,7 +120,7 @@ public class DynamicWeightedRunning
   [TestMethod]
   public async Task WithPartialWeightAndFullConvergenceTakesMultipleTries()
   {
-    GivenSuccesses(ConvergenceTrackerLength);
+    GivenConvergence(1f);
     var Runner = GivenWeightedRunnable(.25, .5, .5);
     await GivenPreviousRuns(Runner, 3);
 
@@ -129,7 +134,7 @@ public class DynamicWeightedRunning
   public async Task WithPartialWeightsAndPartialConvergenceTakesMultipleTries()
   {
     var Runner = GivenWeightedRunnable(.25, .5, .5);
-    GivenSuccesses((int) (ConvergenceTrackerLength * .5 + ConvergenceTrackerLength * .5 * .6));
+    GivenConvergence(.8f);
     await GivenPreviousRuns(Runner, 2);
 
     await WhenRun(Runner);
@@ -142,7 +147,7 @@ public class DynamicWeightedRunning
   public async Task KeepsCounterUpToDate()
   {
     var Runner = GivenWeightedRunnable(.25, .5, .5);
-    GivenSuccesses(Any.Int(0, ConvergenceTrackerLength));
+    GivenConvergence(Any.Float);
     await GivenPreviousRuns(Runner, Any.Int(0, 10));
 
     await WhenRun(Runner);
@@ -150,10 +155,12 @@ public class DynamicWeightedRunning
     ThenCounterHasSameValueAsNumberOfRuns();
   }
 
-  void GivenSuccesses(int I)
+  void GivenConvergence(float Convergence)
   {
-    foreach (var _ in Enumerable.Range(0, I)) 
-      Tracker.RecordResult(true);
+    Tracker.RecordResult(true);
+    Tracker.RecordResult(false);
+    Tracker.RecordResult(true);
+    Summarizer.SetUpResponse([1f, 0f, 1f, ..Enumerable.Repeat(0f, ConvergenceTrackerLength - 3)], Convergence);
   }
 
   static async Task GivenPreviousRuns(DynamicWeightedRunnable Runner, int Count)
