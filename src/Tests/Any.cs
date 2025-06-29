@@ -100,14 +100,14 @@ static class Any
     return Int(1, 100);
   }
 
-  public static int IntOtherThan(int Antagonist)
+  public static int IntOtherThan(params ImmutableArray<int> Antagonists)
   {
     int Candidate;
 
     do
     {
       Candidate = Int();
-    } while (Candidate == Antagonist);
+    } while (Antagonists.Any(Antagonist => Antagonist == Candidate));
 
     return Candidate;
   }
@@ -157,20 +157,9 @@ static class Any
     return Result;
   }
 
-  public static ImmutableArray<(int Amount, bool Result)> ConvergenceRecord(int Amount)
+  public static ImmutableArray<bool> ConvergenceRecord(int Amount)
   {
-    var Result = new List<(int, bool)>();
-
-    while (Amount > 0)
-    {
-      var ChunkSize = Any.Int(1, Amount);
-
-      Result.Add((ChunkSize, Any.Bool));
-
-      Amount -= ChunkSize;
-    }
-
-    return [..Result];
+    return [..ListOf(() => Bool, Amount, Amount)];
   }
 
   public static ImmutableArray<MockRunnable> MockRunnables()

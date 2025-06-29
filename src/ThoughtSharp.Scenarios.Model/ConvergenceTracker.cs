@@ -22,8 +22,14 @@
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class ConvergenceTracker(int Length)
+public class ConvergenceTracker(int Length, Summarizer Summarizer)
 {
+  readonly Summarizer Summarizer = Summarizer;
+
+  public ConvergenceTracker(int Length) : this(Length, null!)
+  {
+  }
+
   readonly int Length = Length;
   readonly Queue<bool> Results = new();
 
@@ -31,7 +37,7 @@ public class ConvergenceTracker(int Length)
   {
     lock (Results)
     {
-      return Results.SequenceEqual(Other.Results) && Length == Other.Length;
+      return Results.SequenceEqual(Other.Results) && Length == Other.Length && Equals(Summarizer, Other.Summarizer);
     }
   }
 
@@ -47,7 +53,7 @@ public class ConvergenceTracker(int Length)
   {
     lock (Results)
     {
-      return HashCode.Combine(Results, Length);
+      return HashCode.Combine(Results.Aggregate(0, HashCode.Combine), Length);
     }
   }
 

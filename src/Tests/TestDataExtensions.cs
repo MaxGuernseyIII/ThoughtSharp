@@ -21,16 +21,46 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
-using ThoughtSharp.Scenarios.Model;
+using FluentAssertions;
 
 namespace Tests;
 
-static class ConvergenceTrackerExtensions
+static class TestDataExtensions
 {
-  public static void ApplyHistory(this ConvergenceTracker ConvergenceTracker,
-    ImmutableArray<bool> Trials)
+  public static ImmutableArray<T> WithOneLess<T>(this ImmutableArray<T> Source)
   {
-    foreach (var Result in Trials) 
-      ConvergenceTracker.RecordResult(Result);
+    var IndexToRemove = Any.IndexOf(Source);
+
+    return Source.RemoveAt(IndexToRemove);
+  }
+
+  public static ImmutableArray<T> WithOneMore<T>(this ImmutableArray<T> Source, Func<T> GetNext)
+  {
+    var Tries = 0;
+    var IndexToInsert = Any.Int(0, Source.Length);
+
+    ImmutableArray<T> Candidate;
+    do
+    {
+      Candidate = Source.Insert(IndexToInsert, GetNext());
+      (Tries++).Should().BeLessThan(100);
+    } while (Candidate.SequenceEqual(Source));
+
+    return Candidate;
+  }
+
+  public static ImmutableArray<T> WithOneReplaced<T>(this ImmutableArray<T> Source, Func<T> GetReplacement)
+  {
+    var Tries = 0;
+    var IndexToReplace = Any.IndexOf(Source);
+
+    ImmutableArray<T> Candidate;
+    do
+    {
+      Candidate = Source.SetItem(IndexToReplace, GetReplacement());
+      (Tries++).Should().BeLessThan(100);
+    } while (Candidate.SequenceEqual(Source));
+
+    return Candidate;
   }
 }
