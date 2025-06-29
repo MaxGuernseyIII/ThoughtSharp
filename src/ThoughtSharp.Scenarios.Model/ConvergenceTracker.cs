@@ -53,7 +53,7 @@ public class ConvergenceTracker(int Length, Summarizer Summarizer)
   {
     lock (Results)
     {
-      return HashCode.Combine(Results.Aggregate(0, HashCode.Combine), Length);
+      return HashCode.Combine(Results.Aggregate(0, HashCode.Combine), Length, Summarizer);
     }
   }
 
