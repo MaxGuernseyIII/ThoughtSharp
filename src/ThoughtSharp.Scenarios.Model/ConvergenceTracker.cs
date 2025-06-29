@@ -61,11 +61,11 @@ public class ConvergenceTracker(int Length, Summarizer Summarizer)
     }
   }
 
-  public void RecordResult(bool RunResult)
+  public void RecordResult(float Result)
   {
     lock (Results)
     {
-      Results.Enqueue(RunResult ? 1f : 0f);
+      Results.Enqueue(Result);
       while (Results.Count > Length)
         Results.Dequeue();
     }

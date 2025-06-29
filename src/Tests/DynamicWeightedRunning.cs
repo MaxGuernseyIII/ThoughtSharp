@@ -157,10 +157,9 @@ public class DynamicWeightedRunning
 
   void GivenConvergence(float Convergence)
   {
-    Tracker.RecordResult(true);
-    Tracker.RecordResult(false);
-    Tracker.RecordResult(true);
-    Summarizer.SetUpResponse([1f, 0f, 1f, ..Enumerable.Repeat(0f, ConvergenceTrackerLength - 3)], Convergence);
+    IReadOnlyList<float> History = Any.FloatArray(Any.Int(1, 5));
+    Tracker.ApplyHistory(History);
+    Summarizer.SetUpResponse([..History, ..Enumerable.Repeat(0f, ConvergenceTrackerLength - History.Count)], Convergence);
   }
 
   static async Task GivenPreviousRuns(DynamicWeightedRunnable Runner, int Count)

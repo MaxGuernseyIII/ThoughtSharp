@@ -163,7 +163,7 @@ public class AutomationPasses
     var Tracker = Scheme.GetConvergenceTrackerFor(Node);
 
     foreach (var _ in Enumerable.Range(0, Metadata.SampleSize))
-      Tracker.RecordResult(true);
+      Tracker.RecordResult(1f);
   }
 
   void ThenConvergenceIsGreaterThan0For(ScenariosModelNode Node)
@@ -178,7 +178,7 @@ public class AutomationPasses
     var Tracker = Scheme.GetConvergenceTrackerFor(Node);
 
     foreach (var _ in Enumerable.Range(0, Metadata.SampleSize))
-      Tracker.RecordResult(false);
+      Tracker.RecordResult(0f);
   }
 
   void GivenSaveGateStateIs(bool State)

@@ -31,6 +31,12 @@ static class ConvergenceTrackerExtensions
     ImmutableArray<bool> Trials)
   {
     foreach (var Result in Trials) 
-      ConvergenceTracker.RecordResult(Result);
+      ConvergenceTracker.RecordResult(Result ? 1f : 0f);
+  }
+
+  public static void ApplyHistory(this ConvergenceTracker ConvergenceTracker, IReadOnlyList<float> History)
+  {
+    foreach (var Value in History) 
+      ConvergenceTracker.RecordResult(Value);
   }
 }
