@@ -162,10 +162,21 @@ public class ConvergenceTracking
     ThenTrackersAreNotEquivalent(Actual, Expected);
   }
 
+  [TestMethod]
+  public void DefaultMetric()
+  {
+    var Length = Any.Int(1, 20);
+    var History = Any.ConvergenceRecord(Any.Int(0, 10));
+    var Actual = GivenTrackerWith(Length, History);
+    var Expected = GivenTrackerWith(Length, Summarizers.Convergence.PassRate(1), History);
+
+    ThenTrackersAreEquivalent(Actual, Expected);
+  }
+
   static void ThenTrackersAreEquivalent(ConvergenceTracker Actual, ConvergenceTracker Expected)
   {
-    Actual.GetHashCode().Should().Be(Expected.GetHashCode());
     Actual.Should().Be(Expected);
+    Actual.GetHashCode().Should().Be(Expected.GetHashCode());
   }
 
   static void ThenTrackersAreNotEquivalent(ConvergenceTracker Actual, ConvergenceTracker Expected)
@@ -179,6 +190,16 @@ public class ConvergenceTracking
     params ImmutableArray<bool> History)
   {
     var Tracker = new ConvergenceTracker(Length, Metric);
+    Tracker.ApplyHistory(History);
+
+    return Tracker;
+  }
+
+  static ConvergenceTracker GivenTrackerWith(
+    int Length,
+    params ImmutableArray<bool> History)
+  {
+    var Tracker = new ConvergenceTracker(Length);
     Tracker.ApplyHistory(History);
 
     return Tracker;

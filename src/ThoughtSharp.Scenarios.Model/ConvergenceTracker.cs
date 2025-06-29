@@ -26,7 +26,7 @@ public class ConvergenceTracker(int Length, Summarizer Summarizer)
 {
   readonly Summarizer Summarizer = Summarizer;
 
-  public ConvergenceTracker(int Length) : this(Length, null!)
+  public ConvergenceTracker(int Length) : this(Length, Summarizers.Convergence.PassRate(1))
   {
   }
 
