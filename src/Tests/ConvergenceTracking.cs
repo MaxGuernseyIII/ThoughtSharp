@@ -78,7 +78,7 @@ public class ConvergenceTracking
   public void UsesMetricToComputeHistory()
   {
     var History = Any.ConvergenceRecord(Length);
-    var ExpectedSummary = Summarizer.Summarize([..History.Select(V => V ? 1f : 0f)]);
+    var ExpectedSummary = Summarizer.Summarize([..History]);
     GivenTrackRecord(History);
 
     WhenMeasureConvergence();
@@ -90,8 +90,8 @@ public class ConvergenceTracking
   public void MetricIsComputedBasedOnFullLength()
   {
     var History = Any.ConvergenceRecord(Any.Int(0, Length - 1));
-    var EffectiveHistory = History.Concat(Enumerable.Repeat(false, Length - History.Length));
-    var ExpectedSummary = Summarizer.Summarize([..EffectiveHistory.Select(V => V ? 1f : 0f)]);
+    var EffectiveHistory = History.Concat(Enumerable.Repeat(0f, Length - History.Length));
+    var ExpectedSummary = Summarizer.Summarize([..EffectiveHistory]);
     GivenTrackRecord(History);
 
     WhenMeasureConvergence();
@@ -157,7 +157,7 @@ public class ConvergenceTracking
     var Length = Any.Int(20, 30);
     var Metric = GivenMetric();
     var History = Any.ConvergenceRecord(Any.Int(0, Length));
-    var Actual = GivenTrackerWith(Length, Metric, History.WithOneMore(() => Any.Bool));
+    var Actual = GivenTrackerWith(Length, Metric, History.WithOneMore(() => Any.Float));
     var Expected = GivenTrackerWith(Length, Metric, History);
 
     ThenTrackersAreNotEquivalent(Actual, Expected);
@@ -169,7 +169,7 @@ public class ConvergenceTracking
     var Length = Any.Int(20, 100);
     var Metric = GivenMetric();
     var History = Any.ConvergenceRecord(Any.Int(0, Length));
-    var Actual = GivenTrackerWith(Length, Metric, History.WithOneReplaced(() => Any.Bool));
+    var Actual = GivenTrackerWith(Length, Metric, History.WithOneReplaced(() => Any.Float));
     var Expected = GivenTrackerWith(Length, Metric, History);
 
     ThenTrackersAreNotEquivalent(Actual, Expected);
@@ -201,7 +201,7 @@ public class ConvergenceTracking
   static ConvergenceTracker GivenTrackerWith(
     int Length,
     Summarizer Metric,
-    params ImmutableArray<bool> History)
+    params ImmutableArray<float> History)
   {
     var Tracker = new ConvergenceTracker(Length, Metric);
     Tracker.ApplyHistory(History);
@@ -214,29 +214,16 @@ public class ConvergenceTracking
     return new MockSummarizer();
   }
 
-  void ThenConvergenceIsSameAsForHistory(ImmutableArray<bool> RecentHistory)
+  void ThenConvergenceIsSameAsForHistory(ImmutableArray<float> ReferenceHistory)
   {
     var Tracker = new ConvergenceTracker(Length, Summarizer);
 
-    Tracker.ApplyHistory(RecentHistory);
+    Tracker.ApplyHistory(ReferenceHistory);
 
     ThenConvergenceIs(Tracker.MeasureConvergence());
   }
 
-  void GivenTrackRecord(params ImmutableArray<(int Amount, bool Result)> Trials)
-  {
-    var IndividualTrials = new List<bool>();
-
-    foreach (var (Amount, Result) in Trials)
-    foreach (var _ in Enumerable.Range(0, Amount))
-    {
-      IndividualTrials.Add(Result); 
-    }
-
-    Tracker.ApplyHistory([..IndividualTrials]);
-  }
-
-  void GivenTrackRecord(params ImmutableArray<bool> Trials)
+  void GivenTrackRecord(params ImmutableArray<float> Trials)
   {
     Tracker.ApplyHistory(Trials);
   }

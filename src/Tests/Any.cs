@@ -157,9 +157,9 @@ static class Any
     return Result;
   }
 
-  public static ImmutableArray<bool> ConvergenceRecord(int Amount)
+  public static ImmutableArray<float> ConvergenceRecord(int Amount)
   {
-    return [..ListOf(() => Bool, Amount, Amount)];
+    return [..ListOf(() => Float, Amount, Amount)];
   }
 
   public static ImmutableArray<MockRunnable> MockRunnables()
