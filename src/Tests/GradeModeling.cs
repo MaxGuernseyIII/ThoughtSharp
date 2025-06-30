@@ -40,13 +40,13 @@ public class GradeModeling
   }
 
   [TestMethod]
-  public void DefaultReason()
+  public void NoAnnotationsByDefaul()
   {
     var Scores = Any.FloatArray();
     
     var Grade = new Grade([..Scores]);
 
-    Grade.Should().Be(new Grade([..Scores.Select(S => new AnnotatedScore { Score = S, Annotations = [""] })]));
+    Grade.Should().Be(new Grade([..Scores.Select(S => new AnnotatedScore { Score = S, Annotations = [] })]));
   }
 
   [TestMethod]

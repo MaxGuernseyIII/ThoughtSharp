@@ -30,7 +30,7 @@ public sealed record Grade(ImmutableArray<AnnotatedScore> ScoresAndReasons)
     : this([..Scores.Select(S => new AnnotatedScore
     {
       Score = S,
-      Annotations = [""]
+      Annotations = []
     })])
   {
   }
