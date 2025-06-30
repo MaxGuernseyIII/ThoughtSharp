@@ -44,13 +44,13 @@ public class GradedAssertions
   {
     protected float Target;
     protected float Actual;
-    protected Transcript Transcript = null!;
+    protected Grade Grade = null!;
 
     [TestInitialize]
     public void SetUpBase()
     {
       Target = Any.Float;
-      Transcript = null!;
+      Grade = null!;
     }
 
     protected void GivenActualIs(float Value)
@@ -60,10 +60,8 @@ public class GradedAssertions
 
     protected void ThenGradeShouldBe(float ExpectedScore, string ExpectedReason)
     {
-      Transcript.Grades.Should().ContainSingle();
-      var Pair = Transcript.Grades[0];
-      Pair.Score.Should().BeApproximately(ExpectedScore, 0.0001f);
-      Pair.Annotations.Should()
+      Grade.Score.Should().BeApproximately(ExpectedScore, 0.0001f);
+      Grade.Annotations.Should()
         .BeEquivalentTo(ExpectedReason);
     }
   }
@@ -116,7 +114,7 @@ public class GradedAssertions
 
     void WhenAssertAtMostValue()
     {
-      Transcript = Actual.ShouldConvergeOn().AtMost(Target, TotalFailureRadius);
+      Grade = Actual.ShouldConvergeOn().AtMost(Target, TotalFailureRadius);
     }
 
     string ExpectedReason => $"Expected <= {Target} (total failure at >= {Target + TotalFailureRadius}) and found {Actual}";
@@ -170,7 +168,7 @@ public class GradedAssertions
 
     void WhenAssertAtLeastValue()
     {
-      Transcript = Actual.ShouldConvergeOn().AtLeast(Target, TotalFailureRadius);
+      Grade = Actual.ShouldConvergeOn().AtLeast(Target, TotalFailureRadius);
     }
 
     string ExpectedReason => $"Expected >= {Target} (total failure at <= {Target - TotalFailureRadius}) and found {Actual}";
@@ -261,7 +259,7 @@ public class GradedAssertions
 
     void WhenAssertApproximateValue()
     {
-      Transcript = Actual.ShouldConvergeOn().Approximately(Target, TotalSuccessRadius, TotalFailureRadius);
+      Grade = Actual.ShouldConvergeOn().Approximately(Target, TotalSuccessRadius, TotalFailureRadius);
     }
 
     string ExpectedReason => $"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Actual}";
