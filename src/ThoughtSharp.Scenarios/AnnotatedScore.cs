@@ -38,6 +38,10 @@ public sealed record AnnotatedScore
 
   public override int GetHashCode()
   {
-    return HashCode.Combine(Score, Annotations);
+    var HashCode = new HashCode();
+    HashCode.Add(Score);
+    foreach (var Annotation in Annotations) 
+      HashCode.Add(Annotation);
+    return HashCode.ToHashCode();
   }
 }
