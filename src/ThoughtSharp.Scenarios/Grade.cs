@@ -44,4 +44,13 @@ public sealed record Grade
       HashCode.Add(Annotation);
     return HashCode.ToHashCode();
   }
+
+  public static Grade Merge(Summarizer Summarizer, IEnumerable<Grade> Grades)
+  {
+    return new()
+    {
+      Score = Summarizer.Summarize([..Grades.Select(G => G.Score)]), 
+      Annotations = [..Grades.SelectMany(G => G.Annotations)]
+    };
+  }
 }
