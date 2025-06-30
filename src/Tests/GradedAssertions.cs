@@ -60,8 +60,8 @@ public class GradedAssertions
 
     protected void ThenGradeShouldBe(float ExpectedScore, string ExpectedReason)
     {
-      Grade.ScoresAndReasons.Should().ContainSingle();
-      var Pair = Grade.ScoresAndReasons[0];
+      Grade.AnnotatedScores.Should().ContainSingle();
+      var Pair = Grade.AnnotatedScores[0];
       Pair.Score.Should().BeApproximately(ExpectedScore, 0.0001f);
       Pair.Annotations.Should()
         .BeEquivalentTo(ExpectedReason);

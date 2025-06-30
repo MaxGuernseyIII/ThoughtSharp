@@ -24,7 +24,7 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios;
 
-public sealed record Grade(ImmutableArray<AnnotatedScore> ScoresAndReasons)
+public sealed record Grade(ImmutableArray<AnnotatedScore> AnnotatedScores)
 {
   public Grade(ImmutableArray<float> Scores)
     : this([..Scores.Select(S => new AnnotatedScore
@@ -35,15 +35,20 @@ public sealed record Grade(ImmutableArray<AnnotatedScore> ScoresAndReasons)
   {
   }
 
-  public ImmutableArray<AnnotatedScore> ScoresAndReasons { get; } = ScoresAndReasons;
+  public ImmutableArray<AnnotatedScore> AnnotatedScores { get; } = AnnotatedScores;
 
   public bool Equals(Grade? Other)
   {
-    return Other != null && (ReferenceEquals(this, Other) || ScoresAndReasons.SequenceEqual(Other.ScoresAndReasons));
+    return Other != null && (ReferenceEquals(this, Other) || AnnotatedScores.SequenceEqual(Other.AnnotatedScores));
   }
 
   public override int GetHashCode()
   {
-    return ScoresAndReasons.Aggregate(0, HashCode.Combine);
+    return AnnotatedScores.Aggregate(0, HashCode.Combine);
+  }
+
+  public static Grade Join(IEnumerable<Grade> Grades)
+  {
+    return new([..Grades.SelectMany(G => G.AnnotatedScores)]);
   }
 }

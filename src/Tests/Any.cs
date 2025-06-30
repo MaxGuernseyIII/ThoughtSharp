@@ -205,4 +205,6 @@ static class Any
     Score = Any.Float,
     Annotations = [..Any.ListOf(() => NormalString, 1, 3)]
   };
+
+  public static Grade Grade => new([..Any.ListOf(() => AnnotatedScore, 1, 3)]);
 }

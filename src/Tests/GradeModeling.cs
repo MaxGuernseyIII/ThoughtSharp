@@ -104,7 +104,17 @@ public class GradeModeling
     
     var Grade = new Grade(ScoresAndReasons);
 
-    Grade.ScoresAndReasons.Should().BeEquivalentTo(ScoresAndReasons, O => O.WithStrictOrdering());
+    Grade.AnnotatedScores.Should().BeEquivalentTo(ScoresAndReasons, O => O.WithStrictOrdering());
+  }
+
+  [TestMethod]
+  public void JoinGrades()
+  {
+    var Grades = Any.ListOf(() => Any.Grade, 1, 3);
+
+    var Joined = Grade.Join(Grades);
+
+    Joined.Should().Be(new Grade([..Grades.SelectMany(G => G.AnnotatedScores)]));
   }
 
   ImmutableArray<AnnotatedScore> GivenOneDifferentReason(ImmutableArray<AnnotatedScore> ScoresAndReasons)
