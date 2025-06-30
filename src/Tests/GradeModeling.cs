@@ -34,9 +34,9 @@ public class GradeModeling
   {
     var ScoresAndReasons = AnyAnnotatedScores();
     
-    var Grade = new Grade(ScoresAndReasons);
+    var Grade = new Transcript(ScoresAndReasons);
 
-    Grade.Should().Be(new Grade(ScoresAndReasons));
+    Grade.Should().Be(new Transcript(ScoresAndReasons));
   }
 
   [TestMethod]
@@ -44,19 +44,19 @@ public class GradeModeling
   {
     var Scores = Any.FloatArray();
     
-    var Grade = new Grade([..Scores]);
+    var Grade = new Transcript([..Scores]);
 
-    Grade.Should().Be(new Grade([..Scores.Select(S => new AnnotatedScore { Score = S, Annotations = [] })]));
+    Grade.Should().Be(new Transcript([..Scores.Select(S => new Grade { Score = S, Annotations = [] })]));
   }
 
   [TestMethod]
   public void InequalityBecauseOfDifferingScore()
   {
     var ScoresAndReasons = AnyAnnotatedScores();
-    var Grade = new Grade(ScoresAndReasons);
+    var Grade = new Transcript(ScoresAndReasons);
     var Altered = GivenOneDifferentScore(ScoresAndReasons);
 
-    var Other = new Grade(Altered);
+    var Other = new Transcript(Altered);
 
     Grade.Should().NotBe(Other);
   }
@@ -65,10 +65,10 @@ public class GradeModeling
   public void InequalityBecauseOfDifferingReason()
   {
     var ScoresAndReasons = AnyAnnotatedScores();
-    var Grade = new Grade(ScoresAndReasons);
+    var Grade = new Transcript(ScoresAndReasons);
     var Altered = GivenOneDifferentReason(ScoresAndReasons);
 
-    var Other = new Grade(Altered);
+    var Other = new Transcript(Altered);
 
     Grade.Should().NotBe(Other);
   }
@@ -77,10 +77,10 @@ public class GradeModeling
   public void InequalityBecauseOfMissingScoreReasonPair()
   {
     var ScoresAndReasons = AnyAnnotatedScores();
-    var Grade = new Grade(ScoresAndReasons);
+    var Grade = new Transcript(ScoresAndReasons);
     var Altered = GivenOneLessScore(ScoresAndReasons);
 
-    var Other = new Grade(Altered);
+    var Other = new Transcript(Altered);
 
     Grade.Should().NotBe(Other);
   }
@@ -89,10 +89,10 @@ public class GradeModeling
   public void InequalityBecauseOfExtraScoreReasonPair()
   {
     var ScoresAndReasons = AnyAnnotatedScores();
-    var Grade = new Grade(ScoresAndReasons);
+    var Grade = new Transcript(ScoresAndReasons);
     var Altered = GivenOneExtraScore(ScoresAndReasons);
 
-    var Other = new Grade(Altered);
+    var Other = new Transcript(Altered);
 
     Grade.Should().NotBe(Other);
   }
@@ -102,43 +102,43 @@ public class GradeModeling
   {
     var ScoresAndReasons = AnyAnnotatedScores();
     
-    var Grade = new Grade(ScoresAndReasons);
+    var Grade = new Transcript(ScoresAndReasons);
 
-    Grade.AnnotatedScores.Should().BeEquivalentTo(ScoresAndReasons, O => O.WithStrictOrdering());
+    Grade.Grades.Should().BeEquivalentTo(ScoresAndReasons, O => O.WithStrictOrdering());
   }
 
   [TestMethod]
   public void JoinGrades()
   {
-    var Grades = Any.ListOf(() => Any.Grade, 1, 3);
+    var Grades = Any.ListOf(() => Any.Transcript, 1, 3);
 
-    var Joined = Grade.Join(Grades);
+    var Joined = Transcript.Join(Grades);
 
-    Joined.Should().Be(new Grade([..Grades.SelectMany(G => G.AnnotatedScores)]));
+    Joined.Should().Be(new Transcript([..Grades.SelectMany(G => G.Grades)]));
   }
 
-  ImmutableArray<AnnotatedScore> GivenOneDifferentReason(ImmutableArray<AnnotatedScore> ScoresAndReasons)
+  ImmutableArray<Grade> GivenOneDifferentReason(ImmutableArray<Grade> ScoresAndReasons)
   {
     return ScoresAndReasons.WithOneReplaced(V => V with { Annotations = [..Any.ListOf(() => Any.NormalString, 1, 3)] });
   }
 
-  static ImmutableArray<AnnotatedScore> GivenOneDifferentScore(ImmutableArray<AnnotatedScore> ScoresAndReasons)
+  static ImmutableArray<Grade> GivenOneDifferentScore(ImmutableArray<Grade> ScoresAndReasons)
   {
     return ScoresAndReasons.WithOneReplaced(V => V with { Score = Any.Float});
   }
 
-  static ImmutableArray<AnnotatedScore> GivenOneLessScore(ImmutableArray<AnnotatedScore> ScoresAndReasons)
+  static ImmutableArray<Grade> GivenOneLessScore(ImmutableArray<Grade> ScoresAndReasons)
   {
     return ScoresAndReasons.WithOneLess();
   }
 
-  static ImmutableArray<AnnotatedScore> GivenOneExtraScore(ImmutableArray<AnnotatedScore> ScoresAndReasons)
+  static ImmutableArray<Grade> GivenOneExtraScore(ImmutableArray<Grade> ScoresAndReasons)
   {
-    return ScoresAndReasons.WithOneMore(() => Any.AnnotatedScore);
+    return ScoresAndReasons.WithOneMore(() => Any.Grade);
   }
 
-  static ImmutableArray<AnnotatedScore> AnyAnnotatedScores()
+  static ImmutableArray<Grade> AnyAnnotatedScores()
   {
-    return [..Any.ListOf(() => Any.AnnotatedScore, 1, 3)];
+    return [..Any.ListOf(() => Any.Grade, 1, 3)];
   }
 }

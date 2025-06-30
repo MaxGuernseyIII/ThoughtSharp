@@ -34,12 +34,12 @@ public static class ConvergenceAssertions
 public readonly ref struct ConvergenceAssertions<T>(T Subject)
   where T : IFloatingPoint<T>
 {
-  public Grade Approximately(T Target, T TotalSuccessRadius, T TotalFailureRadius)
+  public Transcript Approximately(T Target, T TotalSuccessRadius, T TotalFailureRadius)
   {
     var DifferenceMagnitude = T.Abs(Target - Subject);
 
     return new([
-      new AnnotatedScore
+      new Grade
       {
         Score = ComputeSuccessFraction(DifferenceMagnitude, TotalFailureRadius, TotalSuccessRadius),
         Annotations = [$"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Subject}"]
@@ -47,10 +47,10 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
     ]);
   }
 
-  public Grade AtLeast(T Target, T TotalFailureRadius)
+  public Transcript AtLeast(T Target, T TotalFailureRadius)
   {
     return new([
-      new AnnotatedScore
+      new Grade
       {
         Score = ComputeSuccessFraction(Subject, Target - TotalFailureRadius, Target),
         Annotations = [$"Expected >= {Target} (total failure at <= {Target - TotalFailureRadius}) and found {Subject}"]
@@ -58,10 +58,10 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
     ]);
   }
 
-  public Grade AtMost(T Target, T TotalFailureRadius)
+  public Transcript AtMost(T Target, T TotalFailureRadius)
   {
     return new([
-      new AnnotatedScore
+      new Grade
       {
         Score = ComputeSuccessFraction(Subject, Target + TotalFailureRadius, Target),
         Annotations = [$"Expected <= {Target} (total failure at >= {Target + TotalFailureRadius}) and found {Subject}"]

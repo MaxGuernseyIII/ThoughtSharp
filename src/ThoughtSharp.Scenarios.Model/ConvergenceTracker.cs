@@ -66,9 +66,9 @@ public class ConvergenceTracker(int Length, Summarizer Summarizer)
     RecordResults([Result]);
   }
 
-  public void RecordResult(Grade Grade)
+  public void RecordResult(Transcript Transcript)
   {
-    RecordResults(Grade.AnnotatedScores.Select(Pair => Pair.Score));
+    RecordResults(Transcript.Grades.Select(Pair => Pair.Score));
   }
 
   void RecordResults(IEnumerable<float> NewResults)

@@ -200,11 +200,11 @@ static class Any
     return Int(0, List.Count - 1);
   }
 
-  public static AnnotatedScore AnnotatedScore => new()
+  public static Grade Grade => new()
   {
     Score = Any.Float,
     Annotations = [..Any.ListOf(() => NormalString, 1, 3)]
   };
 
-  public static Grade Grade => new([..Any.ListOf(() => AnnotatedScore, 1, 3)]);
+  public static Transcript Transcript => new([..Any.ListOf(() => Grade, 1, 3)]);
 }
