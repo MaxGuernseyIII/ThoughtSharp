@@ -23,6 +23,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Tests.Mocks;
+using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -198,4 +199,10 @@ static class Any
   {
     return Int(0, List.Count - 1);
   }
+
+  public static AnnotatedScore AnnotatedScore => new()
+  {
+    Score = Any.Float,
+    Annotations = [..Any.ListOf(() => NormalString, 1, 3)]
+  };
 }

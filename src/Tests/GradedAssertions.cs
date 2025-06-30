@@ -63,8 +63,8 @@ public class GradedAssertions
       Grade.ScoresAndReasons.Should().ContainSingle();
       var Pair = Grade.ScoresAndReasons[0];
       Pair.Score.Should().BeApproximately(ExpectedScore, 0.0001f);
-      Pair.Reason.Should()
-        .Be(ExpectedReason);
+      Pair.Annotations.Should()
+        .BeEquivalentTo(ExpectedReason);
     }
   }
 

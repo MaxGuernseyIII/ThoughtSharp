@@ -46,7 +46,7 @@ public class GradeModeling
     
     var Grade = new Grade([..Scores]);
 
-    Grade.Should().Be(new Grade([..Scores.Select(S => new AnnotatedScore { Score = S, Reason = "" })]));
+    Grade.Should().Be(new Grade([..Scores.Select(S => new AnnotatedScore { Score = S, Annotations = [""] })]));
   }
 
   [TestMethod]
@@ -109,7 +109,7 @@ public class GradeModeling
 
   ImmutableArray<AnnotatedScore> GivenOneDifferentReason(ImmutableArray<AnnotatedScore> ScoresAndReasons)
   {
-    return ScoresAndReasons.WithOneReplaced(V => V with { Reason = Any.NormalString });
+    return ScoresAndReasons.WithOneReplaced(V => V with { Annotations = [..Any.ListOf(() => Any.NormalString, 1, 3)] });
   }
 
   static ImmutableArray<AnnotatedScore> GivenOneDifferentScore(ImmutableArray<AnnotatedScore> ScoresAndReasons)
@@ -124,20 +124,11 @@ public class GradeModeling
 
   static ImmutableArray<AnnotatedScore> GivenOneExtraScore(ImmutableArray<AnnotatedScore> ScoresAndReasons)
   {
-    return ScoresAndReasons.WithOneMore(() => new()
-    {
-      Score = Any.Float, 
-      Reason = Any.NormalString
-    });
+    return ScoresAndReasons.WithOneMore(() => Any.AnnotatedScore);
   }
 
   static ImmutableArray<AnnotatedScore> AnyAnnotatedScores()
   {
-    return [..Any.FloatArray().Select(Score => new AnnotatedScore { Score = Score, Reason = Any.NormalString })];
+    return [..Any.ListOf(() => Any.AnnotatedScore, 1, 3)];
   }
 }
-
-//[TestClass]
-//public class GradeBuilding
-//{
-//}

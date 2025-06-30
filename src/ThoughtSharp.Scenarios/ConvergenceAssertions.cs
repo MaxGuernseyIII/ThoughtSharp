@@ -42,7 +42,7 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
       new AnnotatedScore
       {
         Score = ComputeSuccessFraction(DifferenceMagnitude, TotalFailureRadius, TotalSuccessRadius),
-        Reason = $"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Subject}"
+        Annotations = [$"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Subject}"]
       }
     ]);
   }
@@ -53,7 +53,7 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
       new AnnotatedScore
       {
         Score = ComputeSuccessFraction(Subject, Target - TotalFailureRadius, Target),
-        Reason = $"Expected >= {Target} (total failure at <= {Target - TotalFailureRadius}) and found {Subject}"
+        Annotations = [$"Expected >= {Target} (total failure at <= {Target - TotalFailureRadius}) and found {Subject}"]
       }
     ]);
   }
@@ -64,7 +64,7 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
       new AnnotatedScore
       {
         Score = ComputeSuccessFraction(Subject, Target + TotalFailureRadius, Target),
-        Reason = $"Expected <= {Target} (total failure at >= {Target + TotalFailureRadius}) and found {Subject}"
+        Annotations = [$"Expected <= {Target} (total failure at >= {Target + TotalFailureRadius}) and found {Subject}"]
       }
     ]);
   }
