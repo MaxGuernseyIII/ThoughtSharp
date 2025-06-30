@@ -37,9 +37,13 @@ static class TestDataExtensions
     return Source.MutateUntilDifferent(ToChange => ToChange.Insert(Any.Int(0, ToChange.Length), GetNext()));
   }
 
-  public static ImmutableArray<T> WithOneReplaced<T>(this ImmutableArray<T> Source, Func<T> GetReplacement)
+  public static ImmutableArray<T> WithOneReplaced<T>(this ImmutableArray<T> Source, Func<T, T> GetReplacement)
   {
-    return Source.MutateUntilDifferent(ToChange => ToChange.SetItem(Any.IndexOf(ToChange), GetReplacement()));
+    return Source.MutateUntilDifferent(ToChange =>
+    {
+      var Index = Any.IndexOf(ToChange);
+      return ToChange.SetItem(Index, GetReplacement(ToChange[Index]));
+    });
   }
 
   public static ImmutableArray<T> MutateUntilDifferent<T>(

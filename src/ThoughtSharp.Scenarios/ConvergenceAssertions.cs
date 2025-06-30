@@ -39,27 +39,33 @@ public readonly ref struct ConvergenceAssertions<T>(T Subject)
     var DifferenceMagnitude = T.Abs(Target - Subject);
 
     return new([
-      (
-        ComputeSuccessFraction(DifferenceMagnitude, TotalFailureRadius, TotalSuccessRadius),
-        $"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Subject}")
+      new AnnotatedScore
+      {
+        Score = ComputeSuccessFraction(DifferenceMagnitude, TotalFailureRadius, TotalSuccessRadius),
+        Reason = $"Expected {Target}±{TotalSuccessRadius} (total failure at ±{TotalFailureRadius}) and got {Subject}"
+      }
     ]);
   }
 
   public Grade AtLeast(T Target, T TotalFailureRadius)
   {
     return new([
-      (
-        ComputeSuccessFraction(Subject, Target - TotalFailureRadius, Target),
-        $"Expected >= {Target} (total failure at <= {Target - TotalFailureRadius}) and found {Subject}")
+      new AnnotatedScore
+      {
+        Score = ComputeSuccessFraction(Subject, Target - TotalFailureRadius, Target),
+        Reason = $"Expected >= {Target} (total failure at <= {Target - TotalFailureRadius}) and found {Subject}"
+      }
     ]);
   }
 
   public Grade AtMost(T Target, T TotalFailureRadius)
   {
     return new([
-      (
-        ComputeSuccessFraction(Subject, Target + TotalFailureRadius, Target),
-        $"Expected <= {Target} (total failure at >= {Target + TotalFailureRadius}) and found {Subject}")
+      new AnnotatedScore
+      {
+        Score = ComputeSuccessFraction(Subject, Target + TotalFailureRadius, Target),
+        Reason = $"Expected <= {Target} (total failure at >= {Target + TotalFailureRadius}) and found {Subject}"
+      }
     ]);
   }
 

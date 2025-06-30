@@ -24,14 +24,18 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios;
 
-public sealed record Grade(ImmutableArray<(float Score, string Reason)> ScoresAndReasons)
+public sealed record Grade(ImmutableArray<AnnotatedScore> ScoresAndReasons)
 {
   public Grade(ImmutableArray<float> Scores)
-    : this([..Scores.Select(S => (S, ""))])
+    : this([..Scores.Select(S => new AnnotatedScore
+    {
+      Score = S,
+      Reason = ""
+    })])
   {
   }
 
-  public ImmutableArray<(float Score, string Reason)> ScoresAndReasons { get; } = ScoresAndReasons;
+  public ImmutableArray<AnnotatedScore> ScoresAndReasons { get; } = ScoresAndReasons;
 
   public bool Equals(Grade? Other)
   {
@@ -42,4 +46,10 @@ public sealed record Grade(ImmutableArray<(float Score, string Reason)> ScoresAn
   {
     return ScoresAndReasons.Aggregate(0, HashCode.Combine);
   }
+}
+
+public record struct AnnotatedScore
+{
+  public required float Score { get; init; }
+  public required string Reason { get; init; }
 }
