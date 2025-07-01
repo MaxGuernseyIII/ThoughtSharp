@@ -22,6 +22,11 @@
 
 namespace ThoughtSharp.Runtime;
 
+/// <summary>
+/// Trains a single asynchronous use operation. This is an adapter over a batch feedback sink (typically <see cref="AsyncBatchUseFeedbackSink{TSurface}"/>) and trains with a batch size of 1.
+/// </summary>
+/// <param name="Core"></param>
+/// <typeparam name="TSurface"></typeparam>
 public class AsyncUseFeedbackSink<TSurface>(FeedbackSink<IReadOnlyList<AsyncUseFeedbackMethod<TSurface>>> Core)
   : FeedbackSink<AsyncUseFeedbackMethod<TSurface>>
 {
@@ -32,6 +37,12 @@ public class AsyncUseFeedbackSink<TSurface>(FeedbackSink<IReadOnlyList<AsyncUseF
   }
 }
 
+/// <summary>
+/// Trains a parallel set of use outcomes.
+/// </summary>
+/// <param name="TimeSequences">The training operation for each of the parallel operations taken in separate time sequences.</param>
+/// <param name="CommitBatch">The operation that triggers training of the entire batch.</param>
+/// <typeparam name="TSurface"></typeparam>
 public class AsyncBatchUseFeedbackSink<TSurface>(
   IReadOnlyList<(TSurface Mock, Action<bool> CommitOne)> TimeSequences,
   Action CommitBatch)
