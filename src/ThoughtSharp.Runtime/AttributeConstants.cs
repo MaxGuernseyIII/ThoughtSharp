@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-public static class AttributeConstants
+static class AttributeConstants
 {
   public const AttributeTargets ValueTargets =
     AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter;
