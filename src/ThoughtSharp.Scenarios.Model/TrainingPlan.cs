@@ -40,12 +40,14 @@ public record TrainingPlan(
         if ((await SubJob.Run()).Status == BehaviorRunStatus.Failure)
           return new()
           {
-            Status = BehaviorRunStatus.Failure
+            Status = BehaviorRunStatus.Failure,
+            Transcript = new([]),
           };
 
       return new()
       {
-        Status = BehaviorRunStatus.Success
+        Status = BehaviorRunStatus.Success,
+        Transcript = new([])
       };
     }
     finally

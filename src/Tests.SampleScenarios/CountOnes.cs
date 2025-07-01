@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using System.Collections.Immutable;
-using Google.Protobuf.WellKnownTypes;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;

@@ -27,50 +27,120 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMethod) : Runnable
 {
+  readonly struct ConsoleCapture(
+    TextWriter OldOutput, 
+    TextWriter OldError,
+    StringWriter Output) : IDisposable
+  {
+    public StringWriter Output { get; } = Output;
+
+    public static ConsoleCapture Start()
+    {
+      var OldOutput = Console.Out;
+      var OldError = Console.Error;
+      var OutputCapture = new StringWriter();
+
+      Console.SetOut(OutputCapture);
+      Console.SetError(OutputCapture);
+
+      return new(OldOutput, OldError, OutputCapture);
+    }
+
+    public void Dispose()
+    {
+      Console.SetOut(OldOutput);
+      Console.SetError(OldError);
+    }
+  }
+
   public async Task<RunResult> Run()
   {
-    var OldOutput = Console.Out;
-    var OldError = Console.Error;
-    var OutputCapture = new StringWriter();
-    Console.SetOut(OutputCapture);
-    Console.SetError(OutputCapture);
+    using var Captured = ConsoleCapture.Start();
 
     try
     {
-      var Constructor = HostType.GetConstructors().Single();
-      var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
-      var Instance = Constructor.Invoke(Minds);
-      var Result = BehaviorMethod.Invoke(Instance, []);
+      var Result = Execute();
+
+      Result = await PreProcessResult(Result);
+
+      if (Result is Transcript ResultTranscript)
+        return CreateGradedResult(ResultTranscript, Captured.Output);
+
       if (Result is Task T)
         await T;
     }
     catch (Exception Exception)
     {
-      var ProcessedException = Exception;
-
-      while (ProcessedException is TargetInvocationException or TypeInitializationException) 
-        ProcessedException = ProcessedException.InnerException;
-
-      if (ProcessedException is FatalErrorException)
-        ExceptionDispatchInfo.Throw(ProcessedException);
-
-      return new()
-      {
-        Status = BehaviorRunStatus.Failure,
-        Exception = ProcessedException,
-        Output = OutputCapture.ToString()
-      };
-    }
-    finally
-    {
-      Console.SetOut(OldOutput);
-      Console.SetError(OldError);
+      return CreateExceptionResult(Exception, Captured.Output);
     }
 
+    return CreateCompletionResult(Captured.Output);
+  }
+
+  static async Task<object?> PreProcessResult(object? Result)
+  {
+    if (Result is Task<Grade> GradeTask)
+      Result = await GradeTask;
+
+    if (Result is Task<Transcript> TranscriptTask)
+      Result = await TranscriptTask;
+
+    if (Result is Grade G)
+      Result = new Transcript([G]);
+
+    return Result;
+  }
+
+  static RunResult CreateCompletionResult(StringWriter OutputCapture)
+  {
     return new()
     {
       Status = BehaviorRunStatus.Success,
+      Transcript = new([new() {Score = 1f, Annotations = []}]),
       Output = OutputCapture.ToString()
     };
+  }
+
+  static RunResult CreateExceptionResult(Exception Exception, StringWriter OutputCapture)
+  {
+    var ProcessedException = Exception;
+
+    while (ProcessedException is TargetInvocationException or TypeInitializationException)
+      ProcessedException = ProcessedException.InnerException;
+
+    if (ProcessedException is FatalErrorException)
+      ExceptionDispatchInfo.Throw(ProcessedException);
+
+    var RunResult = new RunResult()
+    {
+      Status = BehaviorRunStatus.Failure,
+      Transcript = new([
+        new() {Score = 0f, Annotations = [$"unexpected exception of type {ProcessedException!.GetType().Name}"]}
+      ]),
+      Exception = ProcessedException,
+      Output = OutputCapture.ToString()
+    };
+    return RunResult;
+  }
+
+  static RunResult CreateGradedResult(Transcript ResultTranscript, StringWriter OutputCapture)
+  {
+    return new()
+    {
+      Status = ResultTranscript.Grades.All(ResultGrade => ResultGrade.Score >= 1f)
+        ? BehaviorRunStatus.Success
+        : BehaviorRunStatus.Failure,
+      Transcript = ResultTranscript,
+      Output = OutputCapture.ToString()
+    };
+  }
+
+  object? Execute()
+  {
+    var Constructor = HostType.GetConstructors().Single();
+    var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
+    var Instance = Constructor.Invoke(Minds);
+    var Result = BehaviorMethod.Invoke(Instance, []);
+    return Result;
   }
 }

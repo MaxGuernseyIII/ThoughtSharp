@@ -54,7 +54,14 @@ public class AutomationLoopCreation
     var MinimumWeight = Any.Float;
     var MaximumWeight = Any.Float;
     var TrainingMetadata = new TrainingMetadata
-      {SampleSize = SampleSize, SuccessFraction = SuccessFraction, MaximumAttempts = MaximumAttempts, MinimumDynamicWeight = MinimumWeight, MaxinimumDynamicWeight = MaximumWeight};
+    {
+      SampleSize = SampleSize, 
+      SuccessFraction = SuccessFraction, 
+      MaximumAttempts = MaximumAttempts, 
+      MinimumDynamicWeight = MinimumWeight, 
+      MaximumDynamicWeight = MaximumWeight,
+      Metric = new MockSummarizer()
+    };
     var PhaseNode = new CurriculumPhaseNode(null!, Any.Float,
       TrainingMetadata, [],
       [

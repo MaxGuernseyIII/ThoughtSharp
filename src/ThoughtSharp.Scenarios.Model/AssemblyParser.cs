@@ -26,13 +26,14 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public class AssemblyParser
 {
-  static readonly TrainingMetadata StandardTrainingMetadata = new()
+  public static readonly TrainingMetadata StandardTrainingMetadata = new()
   {
     SuccessFraction = .95,
     SampleSize = 1000,
     MaximumAttempts = 500,
     MinimumDynamicWeight = .75,
-    MaxinimumDynamicWeight = 1
+    MaximumDynamicWeight = 1,
+    Metric = Summarizers.Convergence.PassRate(1)
   };
 
   public ScenariosModel Parse(Assembly LoadedAssembly)
@@ -88,7 +89,7 @@ public class AssemblyParser
   {
     var Metadata = UpdateTrainingMetadataUsingType(Type, ContextTrainingData);
 
-    return new CurriculumNode(Type, [..ParseTypes(Type, Metadata)]);
+    return new CurriculumNode(Type, Metadata, [..ParseTypes(Type, Metadata)]);
   }
 
   static MindPlaceNode ParseMindPlaceType(Type Type)
@@ -124,7 +125,7 @@ public class AssemblyParser
 
   static TrainingMetadata UpdateTrainingMetadataUsingType(Type Type, TrainingMetadata Metadata)
   {
-    if (Type.GetCustomAttribute<ConvergenceStandard>() is { } Standard)
+    if (Type.GetCustomAttribute<ConvergenceStandardAttribute>() is { } Standard)
       Metadata = Metadata with
       {
         SuccessFraction = Standard.Fraction,
@@ -137,14 +138,20 @@ public class AssemblyParser
         MaximumAttempts = MaxAttempts.Count
       };
 
-    if (Type.GetCustomAttribute<DynamicWeighting>() is { } DynamicWeighting)
+    if (Type.GetCustomAttribute<DynamicWeightingAttribute>() is { } DynamicWeighting)
     {
       if (!double.IsNaN(DynamicWeighting.Minimum))
         Metadata = Metadata with {MinimumDynamicWeight = Math.Max(.01, DynamicWeighting.Minimum)};
 
       if (!double.IsNaN(DynamicWeighting.Maximum))
-        Metadata = Metadata with {MaxinimumDynamicWeight = Math.Max(.01, DynamicWeighting.Maximum)};
+        Metadata = Metadata with {MaximumDynamicWeight = Math.Max(.01, DynamicWeighting.Maximum)};
     }
+
+    if (Type.GetCustomAttribute<ConvergenceMetricAttribute>() is { } ConvergenceMetric)
+      Metadata = Metadata with
+      {
+        Metric = ((Metric)Activator.CreateInstance(ConvergenceMetric.Metric)!).CreateSummarizer()
+      };
 
     return Metadata;
   }
@@ -171,7 +178,13 @@ public class AssemblyParser
   static bool IsValidBehaviorMethod(MethodInfo M)
   {
     return M is {IsStatic: false, IsPublic: true} &&
-           (M.ReturnType == typeof(void) || M.ReturnType == typeof(Task)) &&
+           (
+             M.ReturnType == typeof(void) || 
+             M.ReturnType == typeof(Task) ||
+             M.ReturnType == typeof(Grade) ||
+             M.ReturnType == typeof(Task<Grade>) ||
+             M.ReturnType == typeof(Transcript) ||
+             M.ReturnType == typeof(Task<Transcript>)) &&
            HasAttribute<BehaviorAttribute>(M);
   }
 

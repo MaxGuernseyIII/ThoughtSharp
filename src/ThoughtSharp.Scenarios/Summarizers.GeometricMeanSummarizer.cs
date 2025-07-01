@@ -20,13 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using static System.Double;
+using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios;
 
-[AttributeUsage(AttributeTargets.Class)]
-public class DynamicWeighting : Attribute
+public partial class Summarizers
 {
-  public double Minimum { get; init; } = NaN;
-  public double Maximum { get; init; } = NaN;
+  sealed record GeometricMeanSummarizer : Summarizer
+  {
+    public float Summarize(ImmutableArray<float> Values)
+    {
+      return MathF.Exp(Values.Select(MathF.Log).Sum() / Values.Length);
+    }
+  }
 }

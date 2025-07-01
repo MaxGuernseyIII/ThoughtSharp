@@ -97,7 +97,7 @@ public static class ScenariosModelNodeExtensions
       Runner = new DynamicWeightedRunnable(
         T.Runner, 
         Scheme.Metadata.MinimumDynamicWeight, 
-        Scheme.Metadata.MaxinimumDynamicWeight, 
+        Scheme.Metadata.MaximumDynamicWeight, 
         Scheme.GetConvergenceTrackerFor(T.Node), 
         Scheme.Metadata.SuccessFraction, 
         new CompoundIncrementable(Scheme.TimesSinceSaved, Scheme.Attempts))

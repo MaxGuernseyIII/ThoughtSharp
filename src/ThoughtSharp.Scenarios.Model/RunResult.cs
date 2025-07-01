@@ -25,6 +25,7 @@ namespace ThoughtSharp.Scenarios.Model;
 public record RunResult
 {
   public required BehaviorRunStatus Status { get; init; }
+  public required Transcript Transcript { get; init; }
   public Exception? Exception { get; init; }
   public string Output { get; init; } = "";
 }

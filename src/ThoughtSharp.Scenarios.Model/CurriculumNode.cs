@@ -24,10 +24,14 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Scenarios.Model;
 
-public class CurriculumNode(Type Wrapped, ImmutableArray<ScenariosModelNode> ChildNodes) : ScenariosModelNode
+public class CurriculumNode(
+  Type Wrapped, 
+  TrainingMetadata TrainingMetadata,
+  ImmutableArray<ScenariosModelNode> ChildNodes) : ScenariosModelNode
 {
   public string Name => Wrapped.Name;
 
+  public TrainingMetadata TrainingMetadata { get; } = TrainingMetadata;
   public IEnumerable<ScenariosModelNode> ChildNodes { get; } = ChildNodes;
 
   public TResult Query<TResult>(ScenariosModelNodeVisitor<TResult> Visitor)

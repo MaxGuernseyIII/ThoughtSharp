@@ -23,3 +23,5 @@
 namespace ThoughtSharp.Scenarios;
 
 public delegate void Assertion<in T>(T Actual, T Expected);
+
+public delegate Grade GradedAssertion<in T>(T Actual, T Expected);

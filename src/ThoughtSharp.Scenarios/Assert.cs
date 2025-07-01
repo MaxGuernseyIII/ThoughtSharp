@@ -95,7 +95,7 @@ public static class Assert
   }
 
   /// <summary>
-  /// Terminates training or test execution.
+  ///   Terminates training or test execution.
   /// </summary>
   /// <param name="Message">The message to be given as the reason for termination</param>
   /// <returns>An exception you can use in a throw clause for clean code-termination analysis</returns>
@@ -107,7 +107,7 @@ public static class Assert
   }
 
   /// <summary>
-  /// Terminates the training or test execution if a condition is not met.
+  ///   Terminates the training or test execution if a condition is not met.
   /// </summary>
   /// <param name="ActualCondition">The condition that must be met</param>
   /// <param name="ConditionDescription">A description of the condition that must be met</param>
@@ -116,5 +116,11 @@ public static class Assert
   {
     if (!ActualCondition)
       throw Fatal($"Critical condition not met: {ConditionDescription}");
+  }
+
+  public static ConvergenceAssertions<T> ShouldConvergeOn<T>(this T This)
+    where T : IFloatingPoint<T>
+  {
+    return new(This);
   }
 }

@@ -113,7 +113,11 @@ public class TrainingPlans
       RunBehavior = delegate
       {
         Reporter.ReportEnterBehavior = delegate { Assert.Fail("This cannot happen after a sub-job is run."); };
-        return Task.FromResult(new RunResult {Status = Any.EnumValue<BehaviorRunStatus>()});
+        return Task.FromResult(new RunResult
+        {
+          Status = Any.EnumValue<BehaviorRunStatus>(),
+          Transcript = new([])
+        });
       }
     };
     var Plan = GivenTrainingPlanForJobs([Runnable]);
@@ -152,7 +156,7 @@ public class TrainingPlans
 
   TrainingPlan GivenTrainingPlanForJobs(IReadOnlyList<MockRunnable> SubJobs)
   {
-    return new(PlanNode, [..SubJobs], new((ScenariosModelNode) new MockNode(), Any.TrainingMetadata()), Reporter);
+    return new(PlanNode, [..SubJobs], new(new MockNode(), Any.TrainingMetadata()), Reporter);
   }
 
   IReadOnlyList<MockRunnable> GivenAnySelfTrackingRunnables(BehaviorRunStatus RunStatus, int Minimum = 1,
@@ -167,7 +171,7 @@ public class TrainingPlans
     Job.RunBehavior = () =>
     {
       ActuallyRunJobs.Add(Job);
-      return Task.FromResult(new RunResult {Status = RunStatus});
+      return Task.FromResult(new RunResult {Status = RunStatus, Transcript = new([])});
     };
     return Job;
   }

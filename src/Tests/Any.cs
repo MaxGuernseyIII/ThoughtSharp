@@ -23,6 +23,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Tests.Mocks;
+using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -84,7 +85,7 @@ static class Any
   public static bool Bool => Core.Next(2) == 1;
 
   public static float PositiveOrNegativeFloat => Core.NextSingle() * 2 - 1;
-  public static string? NormalString => Guid.NewGuid().ToString("n");
+  public static string NormalString => Guid.NewGuid().ToString("n");
 
   public static int Int(int Boundary1, int Boundary2)
   {
@@ -100,14 +101,14 @@ static class Any
     return Int(1, 100);
   }
 
-  public static int IntOtherThan(int Antagonist)
+  public static int IntOtherThan(params ImmutableArray<int> Antagonists)
   {
     int Candidate;
 
     do
     {
       Candidate = Int();
-    } while (Candidate == Antagonist);
+    } while (Antagonists.Any(Antagonist => Antagonist == Candidate));
 
     return Candidate;
   }
@@ -157,20 +158,9 @@ static class Any
     return Result;
   }
 
-  public static ImmutableArray<(int Amount, bool Result)> ConvergenceRecord(int Amount)
+  public static ImmutableArray<float> ConvergenceRecord(int Amount)
   {
-    var Result = new List<(int, bool)>();
-
-    while (Amount > 0)
-    {
-      var ChunkSize = Any.Int(1, Amount);
-
-      Result.Add((ChunkSize, Any.Bool));
-
-      Amount -= ChunkSize;
-    }
-
-    return [..Result];
+    return [..ListOf(() => Float, Amount, Amount)];
   }
 
   public static ImmutableArray<MockRunnable> MockRunnables()
@@ -186,7 +176,8 @@ static class Any
       SampleSize = Any.Int(1, 10),
       SuccessFraction = Any.Float,
       MinimumDynamicWeight = Any.Float,
-      MaxinimumDynamicWeight = Any.Float
+      MaximumDynamicWeight = Any.Float,
+      Metric = new MockSummarizer()
     };
   }
 
@@ -203,4 +194,29 @@ static class Any
   }
 
   public static char Char => (char)Any.Int(0, char.MaxValue);
+
+  public static int IndexOf<T>(IReadOnlyList<T> List)
+  {
+    return Int(0, List.Count - 1);
+  }
+
+  public static Grade Grade => new()
+  {
+    Score = Any.Float,
+    Annotations = [..Any.ListOf(() => NormalString, 1, 3)]
+  };
+
+  public static Transcript Transcript => new([..Any.ListOf(() => Grade, 1, 3)]);
+
+  public static Grade GradeOfAtLeast(float Floor)
+  {
+    var Original = Grade;
+    return Original with { Score = Original.Score + Floor };
+  }
+
+  public static Grade GradeOfAtMost(float Ceiling)
+  {
+    var Original = Grade;
+    return Original with { Score = Original.Score - (1f - Ceiling) };
+  }
 }

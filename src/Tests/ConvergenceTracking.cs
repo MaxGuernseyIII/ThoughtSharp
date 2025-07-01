@@ -22,6 +22,8 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
+using Tests.Mocks;
+using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -31,43 +33,82 @@ public class ConvergenceTracking
 {
   double Convergence;
   int Length;
+  MockSummarizer Summarizer = null!;
   ConvergenceTracker Tracker = null!;
 
   [TestInitialize]
   public void SetUp()
   {
     Length = Any.Int(10, 100);
-    Tracker = new(Length);
+    Summarizer = new();
+    Tracker = new(Length, Summarizer);
+  }
+
+  //[TestMethod]
+  //public void StartsOffAtZero()
+  //{
+  //  WhenMeasureConvergence();
+
+  //  ThenConvergenceIs(0);
+  //}
+
+  //[TestMethod]
+  //public void ComputesBasedOnTotalSuccessesWhenNotFull()
+  //{
+  //  var Amount = Any.Int(1, Length - 1);
+  //  GivenTrackRecord((Amount, true));
+
+  //  WhenMeasureConvergence();
+
+  //  ThenConvergenceIs(1d * Amount / Length);
+  //}
+
+  //[TestMethod]
+  //public void DoesNotIncludeFailuresAsConvergence()
+  //{
+  //  var Amount = Any.Int(1, Length - 1);
+  //  GivenTrackRecord((Amount, true), (1, false));
+
+  //  WhenMeasureConvergence();
+
+  //  ThenConvergenceIs(1d * Amount / Length);
+  //}
+
+  [TestMethod]
+  public void UsesMetricToComputeHistory()
+  {
+    var History = Any.ConvergenceRecord(Length);
+    var ExpectedSummary = Summarizer.Summarize([..History]);
+    GivenTrackRecord(History);
+
+    WhenMeasureConvergence();
+
+    ThenConvergenceIs(ExpectedSummary);
   }
 
   [TestMethod]
-  public void StartsOffAtZero()
+  public void MetricIsComputedBasedOnFullLength()
   {
+    var History = Any.ConvergenceRecord(Any.Int(0, Length - 1));
+    var EffectiveHistory = History.Concat(Enumerable.Repeat(0f, Length - History.Length));
+    var ExpectedSummary = Summarizer.Summarize([..EffectiveHistory]);
+    GivenTrackRecord(History);
+
     WhenMeasureConvergence();
 
-    ThenConvergenceIs(0);
+    ThenConvergenceIs(ExpectedSummary);
   }
 
   [TestMethod]
-  public void ComputesBasedOnTotalSuccessesWhenNotFull()
+  public void DecomposesGradesIntoConstituentScores()
   {
-    var Amount = Any.Int(1, Length - 1);
-    GivenTrackRecord((Amount, true));
+    var History = Any.ConvergenceRecord(Any.Int(0, Length * 2));
+    var Grade = new Transcript([..History.Select(S => new Grade() { Score = S, Annotations = [] })]);
+    GivenTrackRecord(Grade);
 
     WhenMeasureConvergence();
 
-    ThenConvergenceIs(1d * Amount / Length);
-  }
-
-  [TestMethod]
-  public void DoesNotIncludeFailuresAsConvergence()
-  {
-    var Amount = Any.Int(1, Length - 1);
-    GivenTrackRecord((Amount, true), (1, false));
-
-    WhenMeasureConvergence();
-
-    ThenConvergenceIs(1d * Amount / Length);
+    ThenConvergenceIsSameAsForHistory(History);
   }
 
   [TestMethod]
@@ -86,18 +127,122 @@ public class ConvergenceTracking
     ThenConvergenceIsSameAsForHistory(RecentHistory);
   }
 
-  void ThenConvergenceIsSameAsForHistory(ImmutableArray<(int Amount, bool Result)> RecentHistory)
+  [TestMethod]
+  public void Equivalence()
   {
-    var Tracker = new ConvergenceTracker(Length);
+    var Length = Any.Int(1, 20);
+    var Metric = GivenMetric();
+    var History = Any.ConvergenceRecord(Any.Int(0, 10));
+    var Tracker1 = GivenTrackerWith(Length, Metric, History);
+    var Tracker2 = GivenTrackerWith(Length, Metric, History);
 
-    Tracker.ApplyHistory(RecentHistory);
+    ThenTrackersAreEquivalent(Tracker1, Tracker2);
+  }
+
+  [TestMethod]
+  public void NonEquivalenceByLength()
+  {
+    var Length = Any.Int(1, 20);
+    var Metric = GivenMetric();
+    var History = Any.ConvergenceRecord(Any.Int(0, Length));
+    var Actual = GivenTrackerWith(Any.IntOtherThan(Length), Metric, History);
+    var Expected = GivenTrackerWith(Length, Metric, History);
+
+    ThenTrackersAreNotEquivalent(Actual, Expected);
+  }
+
+  [TestMethod]
+  public void NonEquivalenceMissingHistory()
+  {
+    var Length = Any.Int(20, 30);
+    var Metric = GivenMetric();
+    var History = Any.ConvergenceRecord(Any.Int(1, Length));
+    var Actual = GivenTrackerWith(Length, Metric, History.WithOneLess());
+    var Expected = GivenTrackerWith(Length, Metric, History);
+
+    ThenTrackersAreNotEquivalent(Actual, Expected);
+  }
+
+  [TestMethod]
+  public void NonEquivalenceExtraHistory()
+  {
+    var Length = Any.Int(20, 30);
+    var Metric = GivenMetric();
+    var History = Any.ConvergenceRecord(Any.Int(0, Length));
+    var Actual = GivenTrackerWith(Length, Metric, History.WithOneMore(() => Any.Float));
+    var Expected = GivenTrackerWith(Length, Metric, History);
+
+    ThenTrackersAreNotEquivalent(Actual, Expected);
+  }
+
+  [TestMethod]
+  public void NonEquivalenceSwappedHistory()
+  {
+    var Length = Any.Int(20, 100);
+    var Metric = GivenMetric();
+    var History = Any.ConvergenceRecord(Any.Int(1, Length));
+    var Actual = GivenTrackerWith(Length, Metric, History.WithOneReplaced(_ => Any.Float));
+    var Expected = GivenTrackerWith(Length, Metric, History);
+
+    ThenTrackersAreNotEquivalent(Actual, Expected);
+  }
+
+  [TestMethod]
+  public void NonEquivalenceMetric()
+  {
+    var Length = Any.Int(1, 20);
+    var Metric = GivenMetric();
+    var History = Any.ConvergenceRecord(Any.Int(0, Length));
+    var Actual = GivenTrackerWith(Length, GivenMetric(), History);
+    var Expected = GivenTrackerWith(Length, Metric, History);
+
+    ThenTrackersAreNotEquivalent(Actual, Expected);
+  }
+
+  static void ThenTrackersAreEquivalent(ConvergenceTracker Actual, ConvergenceTracker Expected)
+  {
+    Actual.Should().Be(Expected);
+    Actual.GetHashCode().Should().Be(Expected.GetHashCode());
+  }
+
+  static void ThenTrackersAreNotEquivalent(ConvergenceTracker Actual, ConvergenceTracker Expected)
+  {
+    Actual.Should().NotBe(Expected);
+  }
+
+  static ConvergenceTracker GivenTrackerWith(
+    int Length,
+    Summarizer Metric,
+    params ImmutableArray<float> History)
+  {
+    var Tracker = new ConvergenceTracker(Length, Metric);
+    Tracker.ApplyHistory(History);
+
+    return Tracker;
+  }
+
+  Summarizer GivenMetric()
+  {
+    return new MockSummarizer();
+  }
+
+  void ThenConvergenceIsSameAsForHistory(ImmutableArray<float> ReferenceHistory)
+  {
+    var Tracker = new ConvergenceTracker(Length, Summarizer);
+
+    Tracker.ApplyHistory(ReferenceHistory);
 
     ThenConvergenceIs(Tracker.MeasureConvergence());
   }
 
-  void GivenTrackRecord(params ImmutableArray<(int Amount, bool Result)> Trials)
+  void GivenTrackRecord(params ImmutableArray<float> Trials)
   {
     Tracker.ApplyHistory(Trials);
+  }
+
+  void GivenTrackRecord(Transcript Transcript)
+  {
+    Tracker.RecordResult(Transcript);
   }
 
   void ThenConvergenceIs(double Expected)

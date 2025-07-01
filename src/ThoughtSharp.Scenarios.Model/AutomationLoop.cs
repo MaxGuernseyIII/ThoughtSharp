@@ -33,6 +33,10 @@ public sealed record AutomationLoop(
     while (ContinueGate.IsOpen)
       await Pass.Run();
 
-    return new() {Status = Success.IsOpen ? BehaviorRunStatus.Success : BehaviorRunStatus.Failure};
+    return new()
+    {
+      Status = Success.IsOpen ? BehaviorRunStatus.Success : BehaviorRunStatus.Failure,
+      Transcript = new([])
+    };
   }
 }

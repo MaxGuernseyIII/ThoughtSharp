@@ -22,6 +22,7 @@
 
 using FluentAssertions;
 using Tests.Mocks;
+using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
@@ -33,7 +34,7 @@ public class Gating
   public void BasedOnTrackerAndThresholdFailsWhenConvergenceTooLow()
   {
     var Length = Any.Int(1, 10);
-    var Tracker = new ConvergenceTracker(Length);
+    var Tracker = new ConvergenceTracker(Length, Summarizers.Convergence.PassRate(1));
     Tracker.ApplyHistory(Any.ConvergenceRecord(Length));
     var Gate = ThoughtSharp.Scenarios.Model.Gate.ForConvergenceTrackerAndThreshold(Tracker,
       Tracker.MeasureConvergence() + ConvergenceConstants.Precision);
@@ -47,7 +48,7 @@ public class Gating
   public void BasedOnTrackerAndThresholdSucceedsWhenConvergenceIsHighEnough()
   {
     var Length = Any.Int(1, 10);
-    var Tracker = new ConvergenceTracker(Length);
+    var Tracker = new ConvergenceTracker(Length, Summarizers.Convergence.PassRate(1));
     Tracker.ApplyHistory(Any.ConvergenceRecord(Length));
     var Gate = ThoughtSharp.Scenarios.Model.Gate.ForConvergenceTrackerAndThreshold(Tracker,
       Tracker.MeasureConvergence());

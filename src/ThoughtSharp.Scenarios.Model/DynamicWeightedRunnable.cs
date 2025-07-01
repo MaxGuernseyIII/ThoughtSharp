@@ -43,7 +43,11 @@ public record DynamicWeightedRunnable(
     Error += Delta;
 
     if (Error < 1)
-      return new() {Status = BehaviorRunStatus.NotRun};
+      return new()
+      {
+        Status = BehaviorRunStatus.NotRun,
+        Transcript = new([])
+      };
 
     try
     {

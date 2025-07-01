@@ -26,7 +26,8 @@ using ThoughtSharp.Runtime;
 namespace ThoughtSharp.Scenarios;
 
 [PublicAPI]
-public class BatchCognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<IReadOnlyList<TResultFeedback>, IReadOnlyList<TResultFeedback>> Subject)
+public class BatchCognitiveResultAssertionContext<TResultFeedback>(
+  CognitiveResult<IReadOnlyList<TResultFeedback>, IReadOnlyList<TResultFeedback>> Subject)
 {
   public void Is(IReadOnlyList<TResultFeedback> Expected)
   {
@@ -39,7 +40,12 @@ public class BatchCognitiveResultAssertionContext<TResultFeedback>(CognitiveResu
 
     Subject.Payload.Count.ShouldBe(Expected.Count, "Expected {0} batch(es) but found {1}");
 
-    foreach (var (ActualItem, ExpectedItem) in Subject.Payload.Zip(Expected)) 
+    foreach (var (ActualItem, ExpectedItem) in Subject.Payload.Zip(Expected))
       Assertion(new(ExpectedItem, ActualItem));
+  }
+
+  public ObjectBatchConvergenceAssertionContext<TResultFeedback> ConvergesOn()
+  {
+    return new(Subject);
   }
 }

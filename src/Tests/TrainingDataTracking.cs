@@ -82,7 +82,7 @@ public class TrainingDataTracking
 
     var Tracker = Scheme.GetConvergenceTrackerFor(Node);
 
-    Tracker.Should().Be(new ConvergenceTracker(Metadata.SampleSize));
+    Tracker.Should().Be(new ConvergenceTracker(Metadata.SampleSize, Metadata.Metric));
   }
 
   [TestMethod]

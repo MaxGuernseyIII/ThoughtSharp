@@ -20,17 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
 using ThoughtSharp.Scenarios.Model;
 
 namespace Tests;
 
 static class ConvergenceTrackerExtensions
 {
-  public static void ApplyHistory(this ConvergenceTracker ConvergenceTracker,
-    ImmutableArray<(int Amount, bool Result)> Trials)
+  public static void ApplyHistory(this ConvergenceTracker ConvergenceTracker, IReadOnlyList<float> History)
   {
-    foreach (var Run in from Run in Trials from _ in Enumerable.Range(0, Run.Amount) select Run)
-      ConvergenceTracker.RecordResult(Run.Result);
+    foreach (var Value in History) 
+      ConvergenceTracker.RecordResult(Value);
   }
 }

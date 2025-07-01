@@ -22,6 +22,7 @@
 
 using CliWrap;
 using CliWrap.Buffered;
+using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
 namespace dotnet_train;
@@ -51,21 +52,29 @@ static class DotnetTrain
       }
     );
 
-    var Scheme = new TrainingDataScheme(Model, new() {MaximumAttempts = 0, SampleSize = 1, SuccessFraction = 1, MinimumDynamicWeight = 1, MaxinimumDynamicWeight = 1});
+    var Scheme = new TrainingDataScheme(Model, new()
+    {
+      MaximumAttempts = 0, 
+      SampleSize = 1, 
+      SuccessFraction = 1, 
+      MinimumDynamicWeight = 1, 
+      MaximumDynamicWeight = 1,
+      Metric = Summarizers.Convergence.PassRate(1)
+    });
     var ConsoleReporter = new ConsoleReporter(Scheme);
+    var Pool = new MindPool(Model.MindPlaceIndex);
+
+    AppDomain.CurrentDomain.DomainUnload += delegate
+    {
+      Pool.Save();
+    };
+
     foreach (var Curriculum in CurriculumNodes)
     {
       if (!SelectNode(Curriculum))
         continue;
 
       Console.WriteLine($"Training curriculum: {Curriculum.Name}");
-
-      var Pool = new MindPool(Model.MindPlaceIndex);
-
-      AppDomain.CurrentDomain.DomainUnload += delegate
-      {
-        Pool.Save();
-      };
 
       var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme, ConsoleReporter);
       await Plan.Run();
