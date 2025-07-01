@@ -37,15 +37,4 @@ public static class SoftLogic
 
     return Summarizers.Means.PowerMean(1 / Strictness);
   }
-
-  public static class Metrics
-  {
-    public class And2 : Metric
-    {
-      public Summarizer CreateSummarizer()
-      {
-        return And(2);
-      }
-    }
-  }
 }

@@ -31,11 +31,6 @@ public static partial class Summarizers
       return new SuccessOverThresholdSummarizer(PassThreshold);
     }
 
-    public static Summarizer PenalizedMean(float StandardDeviationWeight)
-    {
-      return Composables.SpreadPenalizedCenter(Means.Arithmetic, Means.PowerMean(2), StandardDeviationWeight);
-    }
-
     public static Summarizer MedianAbsoluteDeviation(float AbsoluteDeviationWeight)
     {
       return Composables.SpreadPenalizedCenter(

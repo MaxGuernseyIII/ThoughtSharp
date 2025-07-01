@@ -61,10 +61,4 @@ public class SoftLogicConstruction
     FluentActions.Invoking(() => SoftLogic.And(Any.FloatLessThanOrEqualTo(1f))).Should().Throw<FatalErrorException>().WithMessage(
       "Critical condition not met: soft AND cannot have strictness <= 1");
   }
-
-  [TestMethod]
-  public void And2Metric()
-  {
-    new SoftLogic.Metrics.And2().CreateSummarizer().Should().Be(SoftLogic.And(2));
-  }
 }

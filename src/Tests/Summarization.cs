@@ -197,7 +197,7 @@ public class Summarization
   {
     var Weight = Any.Float;
 
-    var Summarizer = Summarizers.Convergence.PenalizedMean(Weight);
+    var Summarizer = Summarizers.Means.Penalized(Weight);
 
     Summarizer.Should()
       .Be(Summarizers.Composables.SpreadPenalizedCenter(Summarizers.Means.Arithmetic, Summarizers.Means.PowerMean(2), Weight));
