@@ -22,6 +22,12 @@
 
 namespace ThoughtSharp.Runtime;
 
+/// <summary>
+/// A <see cref="FeedbackSink{TFeedback}"/> for the creation of an object with a make operation.
+/// </summary>
+/// <param name="Underlying">The inference to train.</param>
+/// <param name="WriteLossRules">A method for transforming a made object into a set <see cref="LossRule"/> instances.</param>
+/// <typeparam name="TMade">The type of object that was made.</typeparam>
 public class BatchMakeFeedbackSink<TMade>(
   InferenceFeedback Underlying,
   Action<TMade, LossRuleWriter> WriteLossRules
@@ -29,6 +35,7 @@ public class BatchMakeFeedbackSink<TMade>(
   : FeedbackSink<IReadOnlyList<TMade>>
   where TMade : CognitiveData<TMade>
 {
+  /// <inheritdoc />
   public void TrainWith(IReadOnlyList<TMade> Feedback)
   {
     var Writer = new LossRuleWriter();
