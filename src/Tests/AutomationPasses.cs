@@ -25,7 +25,6 @@ using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
-using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace Tests;
 
