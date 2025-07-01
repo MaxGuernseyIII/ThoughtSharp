@@ -21,11 +21,46 @@
 // SOFTWARE.
 
 using FluentAssertions;
+using Tests.Mocks;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 using Assert = ThoughtSharp.Scenarios.Assert;
 
 namespace Tests;
+
+[TestClass]
+public class AssertingFuzzyObjects : AssertingBase<MockData, MockData>
+{
+  MockSummarizer Summarizer = null!;
+  MockData Target = null!;
+
+  [TestInitialize]
+  public void SetUp()
+  {
+    Summarizer = new();
+    Payload = new() { Value1 = Any.Float, Value2 = Any.Int() };
+    Target = new() {Value1 = Any.Float, Value2 = Any.Int()};
+  }
+
+  [TestMethod]
+  public void GradesAreSummarized()
+  {
+    var Result = GivenCognitiveResult();
+
+    var Grade1 = Any.Grade;
+    var Grade2 = Any.Grade;
+
+    var FinalGrade = Assert.That(Result)
+      .ConvergesOn()
+      .WithSummarizer(Summarizer)
+      .Target(Target, 
+      C => C
+        .Expect(D => D.Value1, (_, _) => Grade1)
+        .Expect(D => D.Value2, (_, _) => Grade2));
+
+    FinalGrade.Should().Be(Grade.Merge(Summarizer, [Grade1, Grade2]));
+  }
+}
 
 [TestClass]
 public class AssertingFuzzyValues : AssertingBase<float, float>

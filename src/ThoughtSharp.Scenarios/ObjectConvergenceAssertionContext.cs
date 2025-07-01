@@ -20,8 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using ThoughtSharp.Runtime;
+
 namespace ThoughtSharp.Scenarios;
 
-public delegate void Assertion<in T>(T Actual, T Expected);
+public sealed record ObjectConvergenceAssertionContext<TSubject>(CognitiveResult<TSubject, TSubject> Subject)
+{
+  public ObjectConvergenceAssertionContext<TSubject> WithSummarizer(Summarizer Summarizer)
+  {
+    return this with { Summarizer = Summarizer };
+  }
 
-public delegate Grade GradedAssertion<in T>(T Actual, T Expected);
+  public Grade Target(TSubject Target, Func<ObjectConvergenceComparison<TSubject>, ObjectConvergenceComparison<TSubject>> SetExpectations)
+  {
+    var Comparison = SetExpectations(new(Subject.Payload, Target));
+
+    return Grade.Merge(Summarizer, Comparison.Grades);
+  }
+
+  CognitiveResult<TSubject, TSubject> Subject { get; } = Subject;
+  Summarizer Summarizer { get; init; } = null!;
+}

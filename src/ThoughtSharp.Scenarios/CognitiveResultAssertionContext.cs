@@ -44,4 +44,6 @@ public class CognitiveResultAssertionContext<TResultFeedback>(CognitiveResult<TR
 
     Assertion(Subject.Payload);
   }
+
+  public ObjectConvergenceAssertionContext<TResultFeedback> ConvergesOn() => new(Subject);
 }

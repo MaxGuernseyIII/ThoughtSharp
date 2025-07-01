@@ -22,6 +22,15 @@
 
 namespace ThoughtSharp.Scenarios;
 
-public delegate void Assertion<in T>(T Actual, T Expected);
+public record ObjectConvergenceComparison<TSubject>(
+  TSubject Actual, TSubject Expected)
+{
+  public ObjectConvergenceComparison<TSubject> Expect<TDataPoint>(Func<TSubject, TDataPoint> GetDataPoint, GradedAssertion<TDataPoint> GradeDataPoint)
+  {
+    return this with { Grades = [..Grades, GradeDataPoint(GetDataPoint(Actual), GetDataPoint(Expected))] };
+  }
 
-public delegate Grade GradedAssertion<in T>(T Actual, T Expected);
+  TSubject Actual { get; } = Actual;
+  TSubject Expected { get; } = Expected;
+  internal IEnumerable<Grade> Grades { get; init; } = [];
+}
