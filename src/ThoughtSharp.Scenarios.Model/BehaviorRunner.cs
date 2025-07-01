@@ -34,7 +34,7 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
     var OutputCapture = new StringWriter();
     Console.SetOut(OutputCapture);
     Console.SetError(OutputCapture);
-    var Transcript = new Transcript([new() { Score = 1f, Annotations = [] }]);
+    var Transcript = new Transcript([new() {Score = 1f, Annotations = []}]);
     var BehaviorRunStatus = Model.BehaviorRunStatus.Success;
 
     try
@@ -50,14 +50,18 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
       if (Result is Task<Transcript> TranscriptTask)
         Result = await TranscriptTask;
 
-      if (Result is Grade G) 
+      if (Result is Grade G)
         Result = new Transcript([G]);
 
       if (Result is Transcript ResultTranscript)
-      {
-        Transcript = ResultTranscript;
-        BehaviorRunStatus = Transcript.Grades.All(ResultGrade => ResultGrade.Score >= 1f) ? BehaviorRunStatus.Success : BehaviorRunStatus.Failure;
-      }
+        return new()
+        {
+          Status = ResultTranscript.Grades.All(ResultGrade => ResultGrade.Score >= 1f)
+            ? BehaviorRunStatus.Success
+            : BehaviorRunStatus.Failure,
+          Transcript = ResultTranscript,
+          Output = OutputCapture.ToString()
+        };
 
       if (Result is Task T)
         await T;
@@ -66,7 +70,7 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
     {
       var ProcessedException = Exception;
 
-      while (ProcessedException is TargetInvocationException or TypeInitializationException) 
+      while (ProcessedException is TargetInvocationException or TypeInitializationException)
         ProcessedException = ProcessedException.InnerException;
 
       if (ProcessedException is FatalErrorException)
@@ -75,7 +79,9 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
       return new()
       {
         Status = BehaviorRunStatus.Failure,
-        Transcript = new([new() { Score = 0f, Annotations = [$"unexpected exception of type {ProcessedException!.GetType().Name}"] }]),
+        Transcript = new([
+          new() {Score = 0f, Annotations = [$"unexpected exception of type {ProcessedException!.GetType().Name}"]}
+        ]),
         Exception = ProcessedException,
         Output = OutputCapture.ToString()
       };
