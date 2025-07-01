@@ -103,7 +103,7 @@ public class ConvergenceTracking
   public void DecomposesGradesIntoConstituentScores()
   {
     var History = Any.ConvergenceRecord(Any.Int(0, Length * 2));
-    var Grade = new Transcript([..History]);
+    var Grade = new Transcript([..History.Select(S => new Grade() { Score = S, Annotations = [] })]);
     GivenTrackRecord(Grade);
 
     WhenMeasureConvergence();

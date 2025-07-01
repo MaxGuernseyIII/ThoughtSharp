@@ -40,16 +40,6 @@ public class TranscriptModeling
   }
 
   [TestMethod]
-  public void NoAnnotationsByDefault()
-  {
-    var Scores = Any.FloatArray();
-    
-    var Grade = new Transcript([..Scores]);
-
-    Grade.Should().Be(new Transcript([..Scores.Select(S => new Grade { Score = S, Annotations = [] })]));
-  }
-
-  [TestMethod]
   public void InequalityBecauseOfDifferingScore()
   {
     var ScoresAndReasons = AnyAnnotatedScores();

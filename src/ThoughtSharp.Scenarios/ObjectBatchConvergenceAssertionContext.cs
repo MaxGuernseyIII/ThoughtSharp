@@ -20,26 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Immutable;
+using ThoughtSharp.Runtime;
 
 namespace ThoughtSharp.Scenarios;
 
-public sealed record Transcript(ImmutableArray<Grade> Grades)
+public sealed record ObjectBatchConvergenceAssertionContext<TSubject>(CognitiveResult<IReadOnlyList<TSubject>, IReadOnlyList<TSubject>> Subject)
 {
-  public ImmutableArray<Grade> Grades { get; } = Grades;
+  CognitiveResult<IReadOnlyList<TSubject>, IReadOnlyList<TSubject>> Subject { get; } = Subject;
 
-  public bool Equals(Transcript? Other)
+  public ObjectBatchConvergenceAssertionContext<TSubject> WithSummarizer(Summarizer Summarizer)
   {
-    return Other != null && (ReferenceEquals(this, Other) || Grades.SequenceEqual(Other.Grades));
+    return this with {Summarizer = Summarizer};
   }
 
-  public override int GetHashCode()
-  {
-    return Grades.Aggregate(0, HashCode.Combine);
-  }
+  Summarizer Summarizer { get; init; } = null!;
 
-  public static Transcript Join(IEnumerable<Transcript> Grades)
+  public Transcript Target(
+    IReadOnlyList<TSubject> Targets, 
+    Func<ObjectConvergenceComparison<TSubject>, ObjectConvergenceComparison<TSubject>> SetExpectations)
   {
-    return new([..Grades.SelectMany(G => G.Grades)]);
+    Subject.FeedbackSink.TrainWith(Targets);
+
+    var Grades = new List<Grade>();
+
+    foreach (var (Actual, Expected) in Subject.Payload.Zip(Targets))
+    {
+      var Comparison = SetExpectations(new(Actual, Expected));
+      Grades.Add(Grade.Merge(Summarizer, Comparison.Grades));
+    }
+
+    return new([..Grades]);
   }
 }

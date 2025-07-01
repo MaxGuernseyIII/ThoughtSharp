@@ -43,4 +43,9 @@ public class BatchCognitiveResultAssertionContext<TResultFeedback>(
     foreach (var (ActualItem, ExpectedItem) in Subject.Payload.Zip(Expected))
       Assertion(new(ExpectedItem, ActualItem));
   }
+
+  public ObjectBatchConvergenceAssertionContext<TResultFeedback> ConvergesOn()
+  {
+    return new(Subject);
+  }
 }

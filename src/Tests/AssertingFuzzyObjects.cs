@@ -107,3 +107,66 @@ public class AssertingFuzzyObjects : AssertingBase<MockData, MockData>
     ThenModelWasTrainedWith([Target]);
   }
 }
+
+[TestClass]
+public class AssertingFuzzyObjectBatches : AssertingBase<IReadOnlyList<MockData>, IReadOnlyList<MockData>>
+{
+  MockSummarizer Summarizer = null!;
+  IReadOnlyList<MockData> Target = null!;
+
+  [TestInitialize]
+  public void SetUp()
+  {
+    Summarizer = new();
+    Payload = [new() { Value1 = Any.Float, Value2 = Any.Int() }, new() { Value1 = Any.Float, Value2 = Any.Int() } ];
+    Target = [new() { Value1 = Any.Float, Value2 = Any.Int()  }, new() { Value1 = Any.Float, Value2 = Any.Int() } ];
+  }
+
+  [TestMethod]
+  public void GradesAreSummarized()
+  {
+    var Result = GivenCognitiveResult();
+
+    var Grade1 = Any.Grade;
+    var Grade2 = Any.Grade;
+    var Grade3 = Any.Grade;
+    var Grade4 = Any.Grade;
+
+    var Grades = new Dictionary<(object, object), Grade>
+    {
+      [(Payload[0].Value1, Target[0].Value1)] = Grade1,
+      [(Payload[0].Value2, Target[0].Value2)] = Grade2,
+      [(Payload[1].Value1, Target[1].Value1)] = Grade3,
+      [(Payload[1].Value2, Target[1].Value2)] = Grade4,
+    };
+
+    var FinalGrade = Assert.That(Result)
+      .ConvergesOn()
+      .WithSummarizer(Summarizer)
+      .Target(Target, 
+        C => C
+          .Expect(D => D.Value1, (Actual, Expected) => Grades[(Actual, Expected)])
+          .Expect(D => D.Value2, (Actual, Expected) => Grades[(Actual, Expected)]));
+
+    FinalGrade.Should().Be(
+      new Transcript(
+        [
+          Grade.Merge(Summarizer, [Grade1, Grade2]),
+          Grade.Merge(Summarizer, [Grade3, Grade4])
+        ])
+      );
+  }
+
+  [TestMethod]
+  public void TargetIsUsedForTraining()
+  {
+    var Result = GivenCognitiveResult();
+
+    Assert.That(Result)
+      .ConvergesOn()
+      .WithSummarizer(Summarizer)
+      .Target(Target, C => C);
+
+    ThenModelWasTrainedWith([Target]);
+  }
+}
