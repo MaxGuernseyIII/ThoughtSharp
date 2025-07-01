@@ -20,7 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using JetBrains.Annotations;
+
 namespace ThoughtSharp.Runtime;
 
+/// <summary>
+/// Indicates that target should be encoded as (and decoded from) a vector of features which represent 0s as -1f and 1s 1f.
+/// </summary>
+[PublicAPI]
 [AttributeUsage(AttributeConstants.ValueTargets)]
 public class BitwiseAttribute : Attribute;

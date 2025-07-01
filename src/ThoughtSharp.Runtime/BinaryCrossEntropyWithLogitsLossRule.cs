@@ -22,8 +22,13 @@
 
 namespace ThoughtSharp.Runtime;
 
+/// <summary>
+/// Used to instruct a brain to apply the "binary cross-entropy with logits" loss rule to a set of features.
+/// </summary>
+/// <param name="Target"></param>
 public class BinaryCrossEntropyWithLogitsLossRule(float[] Target) : OneDimensionalTarget(Target), LossRule
 {
+  /// <inheritdoc />
   public U Accept<T, U>(T Prediction, LossRuleVisitor<T, U> Visitor)
   {
     return Visitor.Visit(this, Prediction);
