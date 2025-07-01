@@ -107,7 +107,7 @@ public class BehaviorRunning
   }
 
   [TestMethod]
-  public async Task RunSynchronousSoftFailWithGrade()
+  public async Task RunSynchronousFailureWithGrade()
   {
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
     var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
@@ -119,6 +119,51 @@ public class BehaviorRunning
 
     Result.Status.Should().Be(BehaviorRunStatus.Failure);
     Result.Transcript.Should().Be(new Transcript([Grade]));
+  }
+
+  [TestMethod]
+  public async Task RunSynchronousSuccessWithGrade()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
+      typeof(SoftFailHost).GetMethod(nameof(SoftFailHost.ReturnGrade))!);
+    var Grade = Any.GradeOfAtLeast(0.99f);
+    SoftFailHost.SetGrade(Grade);
+    
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Success);
+    Result.Transcript.Should().Be(new Transcript([Grade]));
+  }
+
+  [TestMethod]
+  public async Task RunSynchronousFailureWithTranscript()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
+      typeof(SoftFailHost).GetMethod(nameof(SoftFailHost.ReturnTranscript))!);
+    var Transcript = new Transcript([Any.GradeOfAtMost(0.99f)]); 
+    SoftFailHost.SetTranscript(Transcript);
+
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Failure);
+    Result.Transcript.Should().Be(Transcript);
+  }
+
+  [TestMethod]
+  public async Task RunSynchronousSuccessWithTranscript()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
+      typeof(SoftFailHost).GetMethod(nameof(SoftFailHost.ReturnTranscript))!);
+    var Transcript = new Transcript([Any.GradeOfAtLeast(1f)]);
+    SoftFailHost.SetTranscript(Transcript);
+    
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Success);
+    Result.Transcript.Should().Be(Transcript);
   }
 
   [TestMethod]
@@ -257,6 +302,37 @@ public class BehaviorRunning
 
     Result.Status.Should().Be(BehaviorRunStatus.Success);
     Result.Transcript.Should().Be(new Transcript([Grade]));
+  }
+
+  [TestMethod]
+  public async Task RunAsynchronousFailureWithTranscript()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
+      typeof(SoftFailHost).GetMethod(nameof(SoftFailHost.ReturnTranscriptAsync))!);
+
+    var Transcript = new Transcript([Any.GradeOfAtMost(.999f)]);
+    SoftFailHost.SetTranscript(Transcript);
+
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Failure);
+    Result.Transcript.Should().Be(Transcript);
+  }
+
+  [TestMethod]
+  public async Task RunAsynchronousSuccessWithTranscript()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
+      typeof(SoftFailHost).GetMethod(nameof(SoftFailHost.ReturnTranscriptAsync))!);
+    var Transcript = new Transcript([Any.GradeOfAtLeast(1f)]);
+    SoftFailHost.SetTranscript(Transcript);
+
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Success);
+    Result.Transcript.Should().Be(Transcript);
   }
 
   [TestMethod]

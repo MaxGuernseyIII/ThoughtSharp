@@ -47,12 +47,18 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
       if (Result is Task<Grade> GradeTask)
         Result = await GradeTask;
 
-      if (Result is Grade G)
+      if (Result is Task<Transcript> TranscriptTask)
+        Result = await TranscriptTask;
+
+      if (Result is Grade G) 
+        Result = new Transcript([G]);
+
+      if (Result is Transcript ResultTranscript)
       {
-        Transcript = new([G]);
-        BehaviorRunStatus = G.Score >= 1f ? BehaviorRunStatus.Success : BehaviorRunStatus.Failure;
+        Transcript = ResultTranscript;
+        BehaviorRunStatus = Transcript.Grades.All(ResultGrade => ResultGrade.Score >= 1f) ? BehaviorRunStatus.Success : BehaviorRunStatus.Failure;
       }
-      
+
       if (Result is Task T)
         await T;
     }
