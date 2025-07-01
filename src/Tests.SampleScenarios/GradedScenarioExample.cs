@@ -66,7 +66,7 @@ public class GradedScenarioExample
   public class GradedCurriculum
   {
     [Phase(0)]
-    [ConvergenceStandard(Fraction = .2, Of = 100)]
+    [ConvergenceStandard(Fraction = .7, Of = 100)]
     [ConvergenceMetric(typeof(SoftLogic.Metrics.And2))]
     [Include(typeof(Graded))]
     public class GradedPhase0;
