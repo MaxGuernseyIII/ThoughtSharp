@@ -27,4 +27,5 @@ public class ConvergenceStandard : Attribute
 {
   public required double Fraction { get; init; }
   public required int Of { get; init; }
+  public Type? Metric { get; init; }
 }

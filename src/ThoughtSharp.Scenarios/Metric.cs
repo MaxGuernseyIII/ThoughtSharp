@@ -22,30 +22,7 @@
 
 namespace ThoughtSharp.Scenarios;
 
-public static class SoftLogic
+public interface Metric
 {
-  public static Summarizer Or(float Laxness)
-  {
-    Assert.Critical(Laxness > 1f, "soft OR cannot have laxness <= 1");
-
-    return Summarizers.Means.PowerMean(Laxness);
-  }
-
-  public static Summarizer And(float Strictness)
-  {
-    Assert.Critical(Strictness > 1f, "soft AND cannot have strictness <= 1");
-
-    return Summarizers.Means.PowerMean(1 / Strictness);
-  }
-
-  public static class Metrics
-  {
-    public class And2 : Metric
-    {
-      public Summarizer CreateSummarizer()
-      {
-        return And(1.1f);
-      }
-    }
-  }
+  Summarizer CreateSummarizer();
 }
