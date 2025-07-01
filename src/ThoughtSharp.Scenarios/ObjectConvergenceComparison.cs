@@ -31,6 +31,6 @@ public record ObjectConvergenceComparison<TSubject>(
   }
 
   TSubject Actual { get; } = Actual;
-  TSubject Expected { get; } = Expected;
+  TSubject Expected { get; } = Expected;  
   internal IEnumerable<Grade> Grades { get; init; } = [];
 }
