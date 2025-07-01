@@ -33,7 +33,7 @@ public sealed record ObjectBatchConvergenceAssertionContext<TSubject>(CognitiveR
     return this with {Summarizer = Summarizer};
   }
 
-  Summarizer Summarizer { get; init; } = null!;
+  Summarizer Summarizer { get; init; } = SoftLogic.And(2);
 
   public Transcript Target(
     IReadOnlyList<TSubject> Targets, 

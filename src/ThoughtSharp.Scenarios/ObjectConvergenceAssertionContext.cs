@@ -41,5 +41,5 @@ public sealed record ObjectConvergenceAssertionContext<TSubject>(CognitiveResult
   }
 
   CognitiveResult<TSubject, TSubject> Subject { get; } = Subject;
-  Summarizer Summarizer { get; init; } = null!;
+  Summarizer Summarizer { get; init; } = SoftLogic.And(2);
 }
