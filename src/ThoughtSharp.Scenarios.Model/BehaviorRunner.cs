@@ -27,44 +27,68 @@ namespace ThoughtSharp.Scenarios.Model;
 
 public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo BehaviorMethod) : Runnable
 {
+  readonly struct ConsoleCapture(
+    TextWriter OldOutput, 
+    TextWriter OldError,
+    StringWriter Output) : IDisposable
+  {
+    public StringWriter Output { get; } = Output;
+
+    public static ConsoleCapture Start()
+    {
+      var OldOutput = Console.Out;
+      var OldError = Console.Error;
+      var OutputCapture = new StringWriter();
+
+      Console.SetOut(OutputCapture);
+      Console.SetError(OutputCapture);
+
+      return new(OldOutput, OldError, OutputCapture);
+    }
+
+    public void Dispose()
+    {
+      Console.SetOut(OldOutput);
+      Console.SetError(OldError);
+    }
+  }
+
   public async Task<RunResult> Run()
   {
-    var OldOutput = Console.Out;
-    var OldError = Console.Error;
-    var OutputCapture = new StringWriter();
-    Console.SetOut(OutputCapture);
-    Console.SetError(OutputCapture);
+    using var Captured = ConsoleCapture.Start();
 
     try
     {
       var Result = Execute();
 
-      if (Result is Task<Grade> GradeTask)
-        Result = await GradeTask;
-
-      if (Result is Task<Transcript> TranscriptTask)
-        Result = await TranscriptTask;
-
-      if (Result is Grade G)
-        Result = new Transcript([G]);
+      Result = await PreProcessResult(Result);
 
       if (Result is Transcript ResultTranscript)
-        return CreateGradedResult(ResultTranscript, OutputCapture);
+        return CreateGradedResult(ResultTranscript, Captured.Output);
 
       if (Result is Task T)
         await T;
     }
     catch (Exception Exception)
     {
-      return CreateExceptionResult(Exception, OutputCapture);
-    }
-    finally
-    {
-      Console.SetOut(OldOutput);
-      Console.SetError(OldError);
+      return CreateExceptionResult(Exception, Captured.Output);
     }
 
-    return CreateCompletionResult(OutputCapture);
+    return CreateCompletionResult(Captured.Output);
+  }
+
+  static async Task<object?> PreProcessResult(object? Result)
+  {
+    if (Result is Task<Grade> GradeTask)
+      Result = await GradeTask;
+
+    if (Result is Task<Transcript> TranscriptTask)
+      Result = await TranscriptTask;
+
+    if (Result is Grade G)
+      Result = new Transcript([G]);
+
+    return Result;
   }
 
   static RunResult CreateCompletionResult(StringWriter OutputCapture)
@@ -117,20 +141,6 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
     var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
     var Instance = Constructor.Invoke(Minds);
     var Result = BehaviorMethod.Invoke(Instance, []);
-    return Result;
-  }
-
-  static async Task<object?> PreProcessResult(object? Result)
-  {
-    if (Result is Task<Grade> GradeTask)
-      Result = await GradeTask;
-
-    if (Result is Task<Transcript> TranscriptTask)
-      Result = await TranscriptTask;
-
-    if (Result is Grade G)
-      Result = new Transcript([G]);
-
     return Result;
   }
 }
