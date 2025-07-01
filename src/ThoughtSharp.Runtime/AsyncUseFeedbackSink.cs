@@ -25,6 +25,7 @@ namespace ThoughtSharp.Runtime;
 public class AsyncUseFeedbackSink<TSurface>(FeedbackSink<IReadOnlyList<AsyncUseFeedbackMethod<TSurface>>> Core)
   : FeedbackSink<AsyncUseFeedbackMethod<TSurface>>
 {
+  /// <inheritdoc />
   public void TrainWith(AsyncUseFeedbackMethod<TSurface> Configure)
   {
     Core.TrainWith([Configure]);
@@ -36,6 +37,7 @@ public class AsyncBatchUseFeedbackSink<TSurface>(
   Action CommitBatch)
   : FeedbackSink<IReadOnlyList<AsyncUseFeedbackMethod<TSurface>>>
 {
+  /// <inheritdoc />
   public void TrainWith(IReadOnlyList<AsyncUseFeedbackMethod<TSurface>> ConfigureAll)
   {
     foreach (var ((Mock, CommitOne), Configure) in TimeSequences.Zip(ConfigureAll))

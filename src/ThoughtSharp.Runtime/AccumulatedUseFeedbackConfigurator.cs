@@ -22,7 +22,7 @@
 
 namespace ThoughtSharp.Runtime;
 
-public class AccumulatedUseFeedbackConfigurator<TSurface>
+class AccumulatedUseFeedbackConfigurator<TSurface>
 {
   readonly List<FeedbackSink<UseFeedbackMethod<TSurface>>> Steps = [];
 

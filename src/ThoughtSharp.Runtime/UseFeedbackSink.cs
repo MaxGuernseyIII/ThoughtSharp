@@ -22,20 +22,33 @@
 
 namespace ThoughtSharp.Runtime;
 
+/// <summary>
+/// Trains a single use operation. Adapts a batch feedback sink (typically <see cref="BatchUseFeedbackSink{TSurface}" />) with a batch size of 1.
+/// </summary>
+/// <param name="Core">The adapted sink.</param>
+/// <typeparam name="TSurface">The type of action surface that was acted upon in the use operation.</typeparam>
 public class UseFeedbackSink<TSurface>(FeedbackSink<IReadOnlyList<UseFeedbackMethod<TSurface>>> Core)
   : FeedbackSink<UseFeedbackMethod<TSurface>>
 {
+  /// <inheritdoc />
   public void TrainWith(UseFeedbackMethod<TSurface> Configure)
   {
     Core.TrainWith([Configure]);
   }
 }
 
+/// <summary>
+/// Trains a set of parallel use outcomes.
+/// </summary>
+/// <param name="TimeSequences">The individual use outcomes to be trained.</param>
+/// <param name="CommitBatch">The action that forces training of the entire batch.</param>
+/// <typeparam name="TSurface">The type of action surface that was acted upon.</typeparam>
 public class BatchUseFeedbackSink<TSurface>(
   IReadOnlyList<(TSurface Mock, Action<bool> CommitOne)> TimeSequences,
   Action CommitBatch)
   : FeedbackSink<IReadOnlyList<UseFeedbackMethod<TSurface>>>
 {
+  /// <inheritdoc />
   public void TrainWith(IReadOnlyList<UseFeedbackMethod<TSurface>> ConfigureAll)
   {
     foreach (var ((Mock, CommitOne), Configure) in TimeSequences.Zip(ConfigureAll))
