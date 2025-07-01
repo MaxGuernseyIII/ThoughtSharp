@@ -26,39 +26,51 @@ using ThoughtSharp.Scenarios;
 namespace Tests;
 
 [TestClass]
-public class SoftLogicConstruction
+public class BundledMetrics
 {
-  [TestMethod]
-  public void SoftOr()
+  void MetricTest<T>(Summarizer Expected)
+    where T : Metric, new()
   {
-    var Laxness = Any.FloatGreaterThan(1f);
+    var Metric = new T();
 
-    var SoftOr = SoftLogic.Or(Laxness);
+    var Actual = Metric.CreateSummarizer();
 
-    SoftOr.Should().Be(Summarizers.Means.PowerMean(Laxness));
+    Actual.Should().Be(Expected);
   }
 
   [TestMethod]
-  public void SoftOrCannotBeLessThanOne()
+  public void SoftAnd2()
   {
-    FluentActions.Invoking(() => SoftLogic.Or(Any.FloatLessThanOrEqualTo(1f))).Should().Throw<FatalErrorException>().WithMessage(
-      "Critical condition not met: soft OR cannot have laxness <= 1");
+    MetricTest<Metrics.SoftAnd2>(SoftLogic.And(2));
   }
 
   [TestMethod]
-  public void SoftAnd()
+  public void SoftAnd3()
   {
-    var Strictness = Any.FloatGreaterThan(1f);
-
-    var SoftAnd = SoftLogic.And(Strictness);
-
-    SoftAnd.Should().Be(Summarizers.Means.PowerMean(1 / Strictness));
+    MetricTest<Metrics.SoftAnd3>(SoftLogic.And(3));
   }
 
   [TestMethod]
-  public void SoftAndCannotBeLessThanOne()
+  public void SoftAnd4()
   {
-    FluentActions.Invoking(() => SoftLogic.And(Any.FloatLessThanOrEqualTo(1f))).Should().Throw<FatalErrorException>().WithMessage(
-      "Critical condition not met: soft AND cannot have strictness <= 1");
+    MetricTest<Metrics.SoftAnd4>(SoftLogic.And(4));
+  }
+
+  [TestMethod]
+  public void SoftOr2()
+  {
+    MetricTest<Metrics.SoftOr2>(SoftLogic.Or(2));
+  }
+
+  [TestMethod]
+  public void SoftOr3()
+  {
+    MetricTest<Metrics.SoftOr3>(SoftLogic.Or(3));
+  }
+
+  [TestMethod]
+  public void SoftOr4()
+  {
+    MetricTest<Metrics.SoftOr4>(SoftLogic.Or(4));
   }
 }

@@ -37,15 +37,55 @@ public static class SoftLogic
 
     return Summarizers.Means.PowerMean(1 / Strictness);
   }
+}
 
-  public static class Metrics
+public static class Metrics
+{
+  public class SoftAnd2 : Metric
   {
-    public class And2 : Metric
+    public Summarizer CreateSummarizer()
     {
-      public Summarizer CreateSummarizer()
-      {
-        return And(2);
-      }
+      return SoftLogic.And(2);
+    }
+  }
+
+  public class SoftAnd3 : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return SoftLogic.And(3);
+    }
+  }
+
+  public class SoftAnd4 : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return SoftLogic.And(4);
+    }
+  }
+
+  public class SoftOr2 : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return SoftLogic.Or(2);
+    }
+  }
+
+  public class SoftOr3 : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return SoftLogic.Or(3);
+    }
+  }
+
+  public class SoftOr4 : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return SoftLogic.Or(4);
     }
   }
 }
