@@ -91,4 +91,52 @@ public class BundledMetrics
   {
     MetricTest<ConvergenceMetrics.SuccessRate095>(Summarizers.Convergence.PassRate(.95f));
   }
+
+  [TestMethod]
+  public void Percentile01()
+  {
+    MetricTest<ConvergenceMetrics.Percentile01>(Summarizers.Quantiles.FromPercent(01));
+  }
+
+  [TestMethod]
+  public void Percentile02()
+  {
+    MetricTest<ConvergenceMetrics.Percentile02>(Summarizers.Quantiles.FromPercent(02));
+  }
+
+  [TestMethod]
+  public void Percentile05()
+  {
+    MetricTest<ConvergenceMetrics.Percentile05>(Summarizers.Quantiles.FromPercent(05));
+  }
+
+  [TestMethod]
+  public void Percentile10()
+  {
+    MetricTest<ConvergenceMetrics.Percentile10>(Summarizers.Quantiles.FromPercent(10));
+  }
+
+  [TestMethod]
+  public void Percentile90()
+  {
+    MetricTest<ConvergenceMetrics.Percentile90>(Summarizers.Quantiles.FromPercent(90));
+  }
+
+  [TestMethod]
+  public void Percentile95()
+  {
+    MetricTest<ConvergenceMetrics.Percentile95>(Summarizers.Quantiles.FromPercent(95));
+  }
+
+  [TestMethod]
+  public void Percentile98()
+  {
+    MetricTest<ConvergenceMetrics.Percentile98>(Summarizers.Quantiles.FromPercent(98));
+  }
+
+  [TestMethod]
+  public void Percentile99()
+  {
+    MetricTest<ConvergenceMetrics.Percentile99>(Summarizers.Quantiles.FromPercent(99));
+  }
 }

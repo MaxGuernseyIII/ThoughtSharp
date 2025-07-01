@@ -127,7 +127,7 @@ public class BehaviorRunning
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
     var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
       typeof(SoftFailHost).GetMethod(nameof(SoftFailHost.ReturnGrade))!);
-    var Grade = Any.GradeOfAtLeast(0.99f);
+    var Grade = Any.GradeOfAtLeast(1);
     SoftFailHost.SetGrade(Grade);
     
     var Result = await Runner.Run();
