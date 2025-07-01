@@ -41,75 +41,45 @@ public static class SoftLogic
 
 public static class ConvergenceMetrics
 {
-  public class SoftAnd2 : Metric
+  public class SoftAndBase(float Strictness) : Metric
   {
     public Summarizer CreateSummarizer()
     {
-      return SoftLogic.And(2);
+      return SoftLogic.And(Strictness);
     }
   }
 
-  public class SoftAnd3 : Metric
+  public class SoftOrBase(float Laxness) : Metric
   {
     public Summarizer CreateSummarizer()
     {
-      return SoftLogic.And(3);
+      return SoftLogic.Or(Laxness);
     }
   }
 
-  public class SoftAnd4 : Metric
+  public class SuccessRateBase(float SuccessThreshold) : Metric
   {
     public Summarizer CreateSummarizer()
     {
-      return SoftLogic.And(4);
+      return Summarizers.Convergence.PassRate(SuccessThreshold);
     }
   }
 
-  public class SoftOr2 : Metric
-  {
-    public Summarizer CreateSummarizer()
-    {
-      return SoftLogic.Or(2);
-    }
-  }
+  public class SoftAnd2() : SoftAndBase(2);
 
-  public class SoftOr3 : Metric
-  {
-    public Summarizer CreateSummarizer()
-    {
-      return SoftLogic.Or(3);
-    }
-  }
+  public class SoftAnd3() : SoftAndBase(3);
 
-  public class SoftOr4 : Metric
-  {
-    public Summarizer CreateSummarizer()
-    {
-      return SoftLogic.Or(4);
-    }
-  }
+  public class SoftAnd4() : SoftAndBase(4);
 
-  public class SuccessRate100 : Metric
-  {
-    public Summarizer CreateSummarizer()
-    {
-      return Summarizers.Convergence.PassRate(1f);
-    }
-  }
+  public class SoftOr2() : SoftOrBase(2);
 
-  public class SuccessRate099 : Metric
-  {
-    public Summarizer CreateSummarizer()
-    {
-      return Summarizers.Convergence.PassRate(.99f);
-    }
-  }
+  public class SoftOr3() : SoftOrBase(3);
 
-  public class SuccessRate095 : Metric
-  {
-    public Summarizer CreateSummarizer()
-    {
-      return Summarizers.Convergence.PassRate(.95f);
-    }
-  }
+  public class SoftOr4() : SoftOrBase(4);
+
+  public class SuccessRate100() : SuccessRateBase(1f);
+
+  public class SuccessRate099() : SuccessRateBase(0.99f);
+
+  public class SuccessRate095() : SuccessRateBase(0.95f);
 }
