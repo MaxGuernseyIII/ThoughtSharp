@@ -34,15 +34,10 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
     var OutputCapture = new StringWriter();
     Console.SetOut(OutputCapture);
     Console.SetError(OutputCapture);
-    var Transcript = new Transcript([new() {Score = 1f, Annotations = []}]);
-    var BehaviorRunStatus = Model.BehaviorRunStatus.Success;
 
     try
     {
-      var Constructor = HostType.GetConstructors().Single();
-      var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
-      var Instance = Constructor.Invoke(Minds);
-      var Result = BehaviorMethod.Invoke(Instance, []);
+      var Result = Execute();
 
       if (Result is Task<Grade> GradeTask)
         Result = await GradeTask;
@@ -54,37 +49,14 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
         Result = new Transcript([G]);
 
       if (Result is Transcript ResultTranscript)
-        return new()
-        {
-          Status = ResultTranscript.Grades.All(ResultGrade => ResultGrade.Score >= 1f)
-            ? BehaviorRunStatus.Success
-            : BehaviorRunStatus.Failure,
-          Transcript = ResultTranscript,
-          Output = OutputCapture.ToString()
-        };
+        return CreateGradedResult(ResultTranscript, OutputCapture);
 
       if (Result is Task T)
         await T;
     }
     catch (Exception Exception)
     {
-      var ProcessedException = Exception;
-
-      while (ProcessedException is TargetInvocationException or TypeInitializationException)
-        ProcessedException = ProcessedException.InnerException;
-
-      if (ProcessedException is FatalErrorException)
-        ExceptionDispatchInfo.Throw(ProcessedException);
-
-      return new()
-      {
-        Status = BehaviorRunStatus.Failure,
-        Transcript = new([
-          new() {Score = 0f, Annotations = [$"unexpected exception of type {ProcessedException!.GetType().Name}"]}
-        ]),
-        Exception = ProcessedException,
-        Output = OutputCapture.ToString()
-      };
+      return CreateExceptionResult(Exception, OutputCapture);
     }
     finally
     {
@@ -92,11 +64,73 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
       Console.SetError(OldError);
     }
 
+    return CreateCompletionResult(OutputCapture);
+  }
+
+  static RunResult CreateCompletionResult(StringWriter OutputCapture)
+  {
     return new()
     {
-      Status = BehaviorRunStatus,
-      Transcript = Transcript,
+      Status = BehaviorRunStatus.Success,
+      Transcript = new([new() {Score = 1f, Annotations = []}]),
       Output = OutputCapture.ToString()
     };
+  }
+
+  static RunResult CreateExceptionResult(Exception Exception, StringWriter OutputCapture)
+  {
+    var ProcessedException = Exception;
+
+    while (ProcessedException is TargetInvocationException or TypeInitializationException)
+      ProcessedException = ProcessedException.InnerException;
+
+    if (ProcessedException is FatalErrorException)
+      ExceptionDispatchInfo.Throw(ProcessedException);
+
+    var RunResult = new RunResult()
+    {
+      Status = BehaviorRunStatus.Failure,
+      Transcript = new([
+        new() {Score = 0f, Annotations = [$"unexpected exception of type {ProcessedException!.GetType().Name}"]}
+      ]),
+      Exception = ProcessedException,
+      Output = OutputCapture.ToString()
+    };
+    return RunResult;
+  }
+
+  static RunResult CreateGradedResult(Transcript ResultTranscript, StringWriter OutputCapture)
+  {
+    return new()
+    {
+      Status = ResultTranscript.Grades.All(ResultGrade => ResultGrade.Score >= 1f)
+        ? BehaviorRunStatus.Success
+        : BehaviorRunStatus.Failure,
+      Transcript = ResultTranscript,
+      Output = OutputCapture.ToString()
+    };
+  }
+
+  object? Execute()
+  {
+    var Constructor = HostType.GetConstructors().Single();
+    var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
+    var Instance = Constructor.Invoke(Minds);
+    var Result = BehaviorMethod.Invoke(Instance, []);
+    return Result;
+  }
+
+  static async Task<object?> PreProcessResult(object? Result)
+  {
+    if (Result is Task<Grade> GradeTask)
+      Result = await GradeTask;
+
+    if (Result is Task<Transcript> TranscriptTask)
+      Result = await TranscriptTask;
+
+    if (Result is Grade G)
+      Result = new Transcript([G]);
+
+    return Result;
   }
 }
