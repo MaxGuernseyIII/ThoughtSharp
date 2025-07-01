@@ -107,6 +107,21 @@ public class BehaviorRunning
   }
 
   [TestMethod]
+  public async Task RunSynchronousSoftFailWithGrade()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
+      typeof(SoftFailHost).GetMethod(nameof(SoftFailHost.ReturnGrade))!);
+    var Grade = Any.GradeOfAtMost(0.99f);
+    SoftFailHost.SetGrade(Grade);
+    
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Failure);
+    Result.Transcript.Should().Be(new Transcript([Grade]));
+  }
+
+  [TestMethod]
   public async Task RunAsynchronous()
   {
     var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
@@ -210,6 +225,38 @@ public class BehaviorRunning
       new() {Score = 0, Annotations = [$"unexpected exception of type {Exception.GetType().Name}"]}
     ]));
     Result.Exception.Should().Be(Exception);
+  }
+
+  [TestMethod]
+  public async Task RunAsynchronousFailureWithGrade()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
+      typeof(SoftFailHost).GetMethod(nameof(SoftFailHost.ReturnGradeAsync))!);
+
+    var Grade = Any.GradeOfAtMost(0.999f);
+    SoftFailHost.SetGrade(Grade);
+
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Failure);
+    Result.Transcript.Should().Be(new Transcript([Grade]));
+  }
+
+  [TestMethod]
+  public async Task RunAsynchronousSuccessWithGrade()
+  {
+    var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+    var Runner = new BehaviorRunner(Pool, typeof(SoftFailHost),
+      typeof(SoftFailHost).GetMethod(nameof(SoftFailHost.ReturnGradeAsync))!);
+
+    var Grade = Any.GradeOfAtLeast(1f);
+    SoftFailHost.SetGrade(Grade);
+
+    var Result = await Runner.Run();
+
+    Result.Status.Should().Be(BehaviorRunStatus.Success);
+    Result.Transcript.Should().Be(new Transcript([Grade]));
   }
 
   [TestMethod]
@@ -533,6 +580,42 @@ public class BehaviorRunning
     {
       Assert.Critical(false, CriticalCondition);
       return Task.CompletedTask;
+    }
+  }
+
+  public class SoftFailHost
+  {
+    static readonly AsyncLocal<Grade> GradeContainer = new();
+    static readonly AsyncLocal<Transcript> TranscriptContainer = new();
+
+    public static void SetGrade(Grade Grade)
+    {
+      GradeContainer.Value = Grade;
+    }
+
+    public static void SetTranscript(Transcript Transcript)
+    {
+      TranscriptContainer.Value = Transcript;
+    }
+
+    public Grade ReturnGrade()
+    {
+      return GradeContainer.Value!;
+    }
+
+    public Task<Grade> ReturnGradeAsync()
+    {
+      return Task.FromResult(GradeContainer.Value!);
+    }
+
+    public Transcript ReturnTranscript()
+    {
+      return TranscriptContainer.Value!;
+    }
+
+    public Task<Transcript> ReturnTranscriptAsync()
+    {
+      return Task.FromResult(TranscriptContainer.Value!);
     }
   }
 

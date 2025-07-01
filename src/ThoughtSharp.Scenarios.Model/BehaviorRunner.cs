@@ -34,6 +34,8 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
     var OutputCapture = new StringWriter();
     Console.SetOut(OutputCapture);
     Console.SetError(OutputCapture);
+    var Transcript = new Transcript([new() { Score = 1f, Annotations = [] }]);
+    var BehaviorRunStatus = Model.BehaviorRunStatus.Success;
 
     try
     {
@@ -41,6 +43,16 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
       var Minds = Constructor.GetParameters().Select(P => Pool.GetMind(P.ParameterType)).ToArray();
       var Instance = Constructor.Invoke(Minds);
       var Result = BehaviorMethod.Invoke(Instance, []);
+
+      if (Result is Task<Grade> GradeTask)
+        Result = await GradeTask;
+
+      if (Result is Grade G)
+      {
+        Transcript = new([G]);
+        BehaviorRunStatus = G.Score >= 1f ? BehaviorRunStatus.Success : BehaviorRunStatus.Failure;
+      }
+      
       if (Result is Task T)
         await T;
     }
@@ -70,8 +82,8 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
 
     return new()
     {
-      Status = BehaviorRunStatus.Success,
-      Transcript = new([new() { Score = 1f, Annotations = [] }]),
+      Status = BehaviorRunStatus,
+      Transcript = Transcript,
       Output = OutputCapture.ToString()
     };
   }
