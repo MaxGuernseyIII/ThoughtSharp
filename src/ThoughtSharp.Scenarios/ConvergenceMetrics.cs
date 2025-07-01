@@ -84,4 +84,24 @@ public static class ConvergenceMetrics
   public class Percentile95() : PercentileBase(95);
   public class Percentile98() : PercentileBase(98);
   public class Percentile99() : PercentileBase(99);
+
+  public class Mean : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return Summarizers.Means.Arithmetic;
+    }
+  }
+
+  public class PenalizedMeanBase(float StandardDeviationWeight) : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return Summarizers.Means.Penalized(StandardDeviationWeight);
+    }
+  };
+
+  public class PenalizedMean1() : PenalizedMeanBase(1);
+
+  public class PenalizedMean2() : PenalizedMeanBase(2);
 }

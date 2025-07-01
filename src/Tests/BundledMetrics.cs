@@ -139,4 +139,22 @@ public class BundledMetrics
   {
     MetricTest<ConvergenceMetrics.Percentile99>(Summarizers.Quantiles.FromPercent(99));
   }
+
+  [TestMethod]
+  public void Mean()
+  {
+    MetricTest<ConvergenceMetrics.Mean>(Summarizers.Means.Arithmetic);
+  }
+
+  [TestMethod]
+  public void PenalizedMean1()
+  {
+    MetricTest<ConvergenceMetrics.PenalizedMean1>(Summarizers.Means.Penalized(1));
+  }
+
+  [TestMethod]
+  public void PenalizedMean2()
+  {
+    MetricTest<ConvergenceMetrics.PenalizedMean2>(Summarizers.Means.Penalized(2));
+  }
 }

@@ -34,5 +34,10 @@ public static partial class Summarizers
     {
       return new PowerMeanSummarizer(Power);
     }
+
+    public static Summarizer Penalized(float StandardDeviationWeight)
+    {
+      return Composables.SpreadPenalizedCenter(Means.Arithmetic, Means.PowerMean(2), StandardDeviationWeight);
+    }
   }
 }
