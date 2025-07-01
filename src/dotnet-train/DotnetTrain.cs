@@ -62,19 +62,19 @@ static class DotnetTrain
       Metric = Summarizers.Convergence.PassRate(1)
     });
     var ConsoleReporter = new ConsoleReporter(Scheme);
+    var Pool = new MindPool(Model.MindPlaceIndex);
+
+    AppDomain.CurrentDomain.DomainUnload += delegate
+    {
+      Pool.Save();
+    };
+
     foreach (var Curriculum in CurriculumNodes)
     {
       if (!SelectNode(Curriculum))
         continue;
 
       Console.WriteLine($"Training curriculum: {Curriculum.Name}");
-
-      var Pool = new MindPool(Model.MindPlaceIndex);
-
-      AppDomain.CurrentDomain.DomainUnload += delegate
-      {
-        Pool.Save();
-      };
 
       var Plan = Model.BuildTrainingPlanFor(Curriculum, Pool, Scheme, ConsoleReporter);
       await Plan.Run();

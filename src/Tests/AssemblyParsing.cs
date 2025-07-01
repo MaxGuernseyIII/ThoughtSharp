@@ -227,6 +227,54 @@ public class AssemblyParsing
   }
 
   [TestMethod]
+  public void FindsBehaviorsThatReturnGrades()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(GradedScenarioExample),
+      nameof(GradedScenarioExample.Graded),
+      nameof(GradedScenarioExample.Graded.PseudoTraining));
+  }
+
+  [TestMethod]
+  public void FindsBehaviorsThatReturnTranscripts()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(GradedScenarioExample),
+      nameof(GradedScenarioExample.Graded),
+      nameof(GradedScenarioExample.Graded.PseudoTrainingWithTranscript));
+  }
+
+  [TestMethod]
+  public void FindsBehaviorsThatReturnAsyncGrades()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(GradedScenarioExample),
+      nameof(GradedScenarioExample.Graded),
+      nameof(GradedScenarioExample.Graded.PseudoTrainingAsync));
+  }
+
+  [TestMethod]
+  public void FindsBehaviorsThatReturnAsyncTranscripts()
+  {
+    WhenParseAssembly();
+
+    ThenStructureContainsBehavior(
+      RootNamespace,
+      nameof(GradedScenarioExample),
+      nameof(GradedScenarioExample.Graded),
+      nameof(GradedScenarioExample.Graded.PseudoTrainingWithTranscriptAsync));
+  }
+
+  [TestMethod]
   public void FindsInheritedBehaviors()
   {
     WhenParseAssembly();

@@ -172,7 +172,13 @@ public class AssemblyParser
   static bool IsValidBehaviorMethod(MethodInfo M)
   {
     return M is {IsStatic: false, IsPublic: true} &&
-           (M.ReturnType == typeof(void) || M.ReturnType == typeof(Task)) &&
+           (
+             M.ReturnType == typeof(void) || 
+             M.ReturnType == typeof(Task) ||
+             M.ReturnType == typeof(Grade) ||
+             M.ReturnType == typeof(Task<Grade>) ||
+             M.ReturnType == typeof(Transcript) ||
+             M.ReturnType == typeof(Task<Transcript>)) &&
            HasAttribute<BehaviorAttribute>(M);
   }
 
