@@ -125,7 +125,7 @@ public class AssemblyParser
 
   static TrainingMetadata UpdateTrainingMetadataUsingType(Type Type, TrainingMetadata Metadata)
   {
-    if (Type.GetCustomAttribute<ConvergenceStandard>() is { } Standard)
+    if (Type.GetCustomAttribute<ConvergenceStandardAttribute>() is { } Standard)
       Metadata = Metadata with
       {
         SuccessFraction = Standard.Fraction,
@@ -138,7 +138,7 @@ public class AssemblyParser
         MaximumAttempts = MaxAttempts.Count
       };
 
-    if (Type.GetCustomAttribute<DynamicWeighting>() is { } DynamicWeighting)
+    if (Type.GetCustomAttribute<DynamicWeightingAttribute>() is { } DynamicWeighting)
     {
       if (!double.IsNaN(DynamicWeighting.Minimum))
         Metadata = Metadata with {MinimumDynamicWeight = Math.Max(.01, DynamicWeighting.Minimum)};
@@ -146,6 +146,12 @@ public class AssemblyParser
       if (!double.IsNaN(DynamicWeighting.Maximum))
         Metadata = Metadata with {MaximumDynamicWeight = Math.Max(.01, DynamicWeighting.Maximum)};
     }
+
+    if (Type.GetCustomAttribute<ConvergenceMetricAttribute>() is { } ConvergenceMetric)
+      Metadata = Metadata with
+      {
+        Metric = ((Metric)Activator.CreateInstance(ConvergenceMetric.Metric)!).CreateSummarizer()
+      };
 
     return Metadata;
   }

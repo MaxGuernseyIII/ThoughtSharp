@@ -24,7 +24,6 @@ using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
 using FluentAssertions;
-using Google.Protobuf.Reflection;
 using Tests.SampleScenarios;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
@@ -47,20 +46,21 @@ public class AssemblyParsing
   }
 
   static readonly string RootNamespace = typeof(Anchor).Namespace!;
-  Assembly LoadedAssembly = null!;
-
-  ScenariosModel Model = null!;
 
   static readonly FetchDataFromNode<TrainingMetadata> FetchTrainingMetadata = new()
   {
     VisitCurriculumPhase = CurriculumPhase => CurriculumPhase.TrainingMetadata,
-    VisitCurriculum = Curriculum => Curriculum.TrainingMetadata,
+    VisitCurriculum = Curriculum => Curriculum.TrainingMetadata
     //VisitBehavior = _ => AssemblyParser.StandardTrainingMetadata,
     //VisitCapability = _ => AssemblyParser.StandardTrainingMetadata,
     //VisitDirectory = _ => AssemblyParser.StandardTrainingMetadata,
     //VisitMindPlace = _ => AssemblyParser.StandardTrainingMetadata,
     //VisitModel = _ => AssemblyParser.StandardTrainingMetadata,
   };
+
+  Assembly LoadedAssembly = null!;
+
+  ScenariosModel Model = null!;
 
   [TestInitialize]
   public void SetUp()
@@ -434,7 +434,7 @@ public class AssemblyParsing
     ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
-        MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMinimumWeight.MinimumWeight,
+        MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMinimumWeight.MinimumWeight
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -469,7 +469,7 @@ public class AssemblyParsing
     ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
-        MaximumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMaximumWeight.MaximumWeight,
+        MaximumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithExplicitMaximumWeight.MaximumWeight
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -486,7 +486,8 @@ public class AssemblyParsing
     ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
-        MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMinimumWeight.OverriddenMinimumWeight,
+        MinimumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights
+          .PhaseWithOverriddenMinimumWeight.OverriddenMinimumWeight
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -504,7 +505,8 @@ public class AssemblyParsing
     ThenTrainingMetadataIsChangedAt(
       Original => Original with
       {
-        MaximumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights.PhaseWithOverriddenMaximumWeight.OverriddenMaximumWeight,
+        MaximumDynamicWeight = DynamicWeightingSample.Curriculum.PhaseWithHeritableWeights
+          .PhaseWithOverriddenMaximumWeight.OverriddenMaximumWeight
       },
       RootNamespace,
       nameof(DynamicWeightingSample),
@@ -523,7 +525,7 @@ public class AssemblyParsing
       Original => Original with
       {
         SuccessFraction = .6,
-        SampleSize = 200,
+        SampleSize = 200
       },
       RootNamespace,
       nameof(FizzBuzzTraining),
@@ -622,6 +624,22 @@ public class AssemblyParsing
         nameof(CurriculumWithNumerousPhases.PhaseZ.PhaseZA),
         nameof(CurriculumWithNumerousPhases.PhaseZ.Phase0)
       ]
+    );
+  }
+
+  [TestMethod]
+  public void OverrideTrainingDataMetric()
+  {
+    WhenParseAssembly();
+
+    ThenTrainingMetadataIsChangedAt(O => O with
+      {
+        Metric = new MetricOverrideExample.ArbitraryMetric().CreateSummarizer()
+      },
+      RootNamespace,
+      nameof(MetricOverrideExample),
+      nameof(MetricOverrideExample.MetricOverrideCurriculum),
+      nameof(MetricOverrideExample.MetricOverrideCurriculum.MetricOverridePhase)
     );
   }
 
@@ -920,7 +938,8 @@ public class AssemblyParsing
     Actual.Should().Be(Expected);
   }
 
-  void ThenTrainingMetadataIsChangedAt(Func<TrainingMetadata, TrainingMetadata> GetExpected, params ImmutableArray<string?> Path)
+  void ThenTrainingMetadataIsChangedAt(Func<TrainingMetadata, TrainingMetadata> GetExpected,
+    params ImmutableArray<string?> Path)
   {
     var ParentNode = GetNodeAtPath(Path[..^1]);
     var ParentMetadata = ParentNode.Query(FetchTrainingMetadata);

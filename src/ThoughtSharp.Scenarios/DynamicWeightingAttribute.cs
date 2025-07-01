@@ -20,32 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using static System.Double;
+
 namespace ThoughtSharp.Scenarios;
 
-public static class SoftLogic
+[AttributeUsage(AttributeTargets.Class)]
+public class DynamicWeightingAttribute : Attribute
 {
-  public static Summarizer Or(float Laxness)
-  {
-    Assert.Critical(Laxness > 1f, "soft OR cannot have laxness <= 1");
-
-    return Summarizers.Means.PowerMean(Laxness);
-  }
-
-  public static Summarizer And(float Strictness)
-  {
-    Assert.Critical(Strictness > 1f, "soft AND cannot have strictness <= 1");
-
-    return Summarizers.Means.PowerMean(1 / Strictness);
-  }
-
-  public static class Metrics
-  {
-    public class And2 : Metric
-    {
-      public Summarizer CreateSummarizer()
-      {
-        return And(2);
-      }
-    }
-  }
+  public double Minimum { get; init; } = NaN;
+  public double Maximum { get; init; } = NaN;
 }

@@ -20,13 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using static System.Double;
-
 namespace ThoughtSharp.Scenarios;
 
 [AttributeUsage(AttributeTargets.Class)]
-public class DynamicWeighting : Attribute
+public class ConvergenceStandardAttribute : Attribute
 {
-  public double Minimum { get; init; } = NaN;
-  public double Maximum { get; init; } = NaN;
+  public required double Fraction { get; init; }
+  public required int Of { get; init; }
+}
+
+[AttributeUsage(AttributeTargets.Class)]
+public class ConvergenceMetricAttribute(Type Metric) : Attribute
+{
+  public Type Metric { get; } = Metric;
 }

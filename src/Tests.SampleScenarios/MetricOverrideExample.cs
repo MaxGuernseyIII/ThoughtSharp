@@ -20,12 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-namespace ThoughtSharp.Scenarios;
+using ThoughtSharp.Scenarios;
 
-[AttributeUsage(AttributeTargets.Class)]
-public class ConvergenceStandard : Attribute
+namespace Tests.SampleScenarios;
+
+public class MetricOverrideExample
 {
-  public required double Fraction { get; init; }
-  public required int Of { get; init; }
-  public Type? Metric { get; init; }
+  public class ArbitraryMetric : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return SoftLogic.And(9);
+    }
+  }
+
+  [Curriculum]
+  public class MetricOverrideCurriculum
+  {
+    [Phase(0)]
+    [ConvergenceMetric(typeof(ArbitraryMetric))]
+    public class MetricOverridePhase;
+  }
 }
