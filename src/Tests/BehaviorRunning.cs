@@ -221,6 +221,40 @@ public class BehaviorRunning
   }
 
   [TestMethod]
+  public async Task CaptureOutputWithGrade()
+  {
+    await Isolated(async () =>
+    {
+      var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+      var Runner = new BehaviorRunner(Pool, typeof(ConsoleCatchingHost),
+        typeof(ConsoleCatchingHost).GetMethod(nameof(ConsoleCatchingHost.PrintItAndReturnGrade))!);
+      var Expected = Any.NormalString;
+      ConsoleCatchingHost.ToPrint = Expected;
+
+      var Result = await Runner.Run();
+
+      Result.Output.Should().Be(Expected);
+    });
+  }
+
+  [TestMethod]
+  public async Task CaptureOutputWithTranscript()
+  {
+    await Isolated(async () =>
+    {
+      var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+      var Runner = new BehaviorRunner(Pool, typeof(ConsoleCatchingHost),
+        typeof(ConsoleCatchingHost).GetMethod(nameof(ConsoleCatchingHost.PrintItAndReturnTranscript))!);
+      var Expected = Any.NormalString;
+      ConsoleCatchingHost.ToPrint = Expected;
+
+      var Result = await Runner.Run();
+
+      Result.Output.Should().Be(Expected);
+    });
+  }
+
+  [TestMethod]
   public async Task CaptureError()
   {
     await Isolated(async () =>
@@ -228,6 +262,40 @@ public class BehaviorRunning
       var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
       var Runner = new BehaviorRunner(Pool, typeof(ConsoleCatchingHost),
         typeof(ConsoleCatchingHost).GetMethod(nameof(ConsoleCatchingHost.PrintItToError))!);
+      var Expected = Any.NormalString;
+      ConsoleCatchingHost.ToPrint = Expected;
+
+      var Result = await Runner.Run();
+
+      Result.Output.Should().Be(Expected);
+    });
+  }
+
+  [TestMethod]
+  public async Task CaptureErrorWithGrade()
+  {
+    await Isolated(async () =>
+    {
+      var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+      var Runner = new BehaviorRunner(Pool, typeof(ConsoleCatchingHost),
+        typeof(ConsoleCatchingHost).GetMethod(nameof(ConsoleCatchingHost.PrintItToErrorGrade))!);
+      var Expected = Any.NormalString;
+      ConsoleCatchingHost.ToPrint = Expected;
+
+      var Result = await Runner.Run();
+
+      Result.Output.Should().Be(Expected);
+    });
+  }
+
+  [TestMethod]
+  public async Task CaptureErrorWithTranscript()
+  {
+    await Isolated(async () =>
+    {
+      var Pool = new MindPool(ImmutableDictionary<Type, MindPlace>.Empty);
+      var Runner = new BehaviorRunner(Pool, typeof(ConsoleCatchingHost),
+        typeof(ConsoleCatchingHost).GetMethod(nameof(ConsoleCatchingHost.PrintItToErrorTranscript))!);
       var Expected = Any.NormalString;
       ConsoleCatchingHost.ToPrint = Expected;
 
@@ -577,9 +645,37 @@ public class BehaviorRunning
       Console.Write(ToPrint);
     }
 
+    public Grade PrintItAndReturnGrade()
+    {
+      Console.Write(ToPrint);
+
+      return Any.Grade;
+    }
+
+    public Transcript PrintItAndReturnTranscript()
+    {
+      Console.Write(ToPrint);
+
+      return new([Any.Grade]);
+    }
+
     public Task PrintItToError()
     {
       return Console.Error.WriteAsync(ToPrint);
+    }
+
+    public async Task<Grade> PrintItToErrorGrade()
+    {
+      await Console.Error.WriteAsync(ToPrint);
+
+      return Any.Grade;
+    }
+
+    public async Task<Transcript> PrintItToErrorTranscript()
+    {
+      await Console.Error.WriteAsync(ToPrint);
+
+      return new([Any.Grade]);
     }
 
     public void PrintAndFail()
@@ -661,6 +757,7 @@ public class BehaviorRunning
 
   public class SoftFailHost
   {
+
     static readonly AsyncLocal<Grade> GradeContainer = new();
     static readonly AsyncLocal<Transcript> TranscriptContainer = new();
 
