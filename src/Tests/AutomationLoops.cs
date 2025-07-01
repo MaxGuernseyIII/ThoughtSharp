@@ -78,12 +78,20 @@ public class AutomationLoops
 
   static void ThenResultShouldBeSuccess(RunResult Result)
   {
-    Result.Should().Be(new RunResult() {Status = BehaviorRunStatus.Success});
+    Result.Should().Be(new RunResult()
+    {
+      Status = BehaviorRunStatus.Success,
+      Transcript = new([])
+    });
   }
 
   static void ThenResultShouldBeFailure(RunResult Result)
   {
-    Result.Should().Be(new RunResult() {Status = BehaviorRunStatus.Failure});
+    Result.Should().Be(new RunResult()
+    {
+      Status = BehaviorRunStatus.Failure,
+      Transcript = new([])
+    });
   }
 
   void GivenSuccessGateIsOpen()

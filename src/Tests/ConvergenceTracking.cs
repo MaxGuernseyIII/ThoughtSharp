@@ -180,7 +180,7 @@ public class ConvergenceTracking
   {
     var Length = Any.Int(20, 100);
     var Metric = GivenMetric();
-    var History = Any.ConvergenceRecord(Any.Int(0, Length));
+    var History = Any.ConvergenceRecord(Any.Int(1, Length));
     var Actual = GivenTrackerWith(Length, Metric, History.WithOneReplaced(_ => Any.Float));
     var Expected = GivenTrackerWith(Length, Metric, History);
 

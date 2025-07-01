@@ -33,8 +33,6 @@ namespace Tests;
 [TestClass]
 public class BehaviorRunning
 {
-  static readonly SemaphoreSlim ConsoleLock = new(1, 1);
-  
   [TestInitialize]
   public void SetUp()
   {
@@ -84,6 +82,9 @@ public class BehaviorRunning
     var Result = await Runner.Run();
 
     Result.Status.Should().Be(BehaviorRunStatus.Success);
+    Result.Transcript.Should().Be(new Transcript([
+      new() {Score = 1f, Annotations = []}
+    ]));
   }
 
   [TestMethod]
@@ -99,6 +100,9 @@ public class BehaviorRunning
     var Result = await Runner.Run();
 
     Result.Status.Should().Be(BehaviorRunStatus.Failure);
+    Result.Transcript.Should().Be(new Transcript([
+      new() {Score = 0, Annotations = [$"unexpected exception of type {Exception.GetType().Name}"]}
+    ]));
     Result.Exception.Should().Be(Exception);
   }
 
@@ -134,6 +138,9 @@ public class BehaviorRunning
     var Result = await Runner.Run();
 
     Result.Status.Should().Be(BehaviorRunStatus.Success);
+    Result.Transcript.Should().Be(new Transcript([
+      new() {Score = 1f, Annotations = []}
+    ]));
   }
 
   [TestMethod]
@@ -199,6 +206,9 @@ public class BehaviorRunning
     var Result = await Runner.Run();
 
     Result.Status.Should().Be(BehaviorRunStatus.Failure);
+    Result.Transcript.Should().Be(new Transcript([
+      new() {Score = 0, Annotations = [$"unexpected exception of type {Exception.GetType().Name}"]}
+    ]));
     Result.Exception.Should().Be(Exception);
   }
 

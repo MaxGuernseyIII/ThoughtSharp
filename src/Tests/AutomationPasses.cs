@@ -23,7 +23,9 @@
 using System.Collections.Immutable;
 using FluentAssertions;
 using Tests.Mocks;
+using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
+using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
 
 namespace Tests;
 
@@ -45,7 +47,7 @@ public class AutomationPasses
     Saver = new();
     Reporter = new();
     Metadata = Any.TrainingMetadata();
-    Scheme = new((ScenariosModelNode) new MockNode(), Metadata);
+    Scheme = new(new MockNode(), Metadata);
   }
 
   [TestMethod]
@@ -101,6 +103,7 @@ public class AutomationPasses
     GivenRunnableWillReturnResult(Runnable, new()
     {
       Status = BehaviorRunStatus.Failure,
+      Transcript = new([Any.GradeOfAtMost(0.99f)]),
       Exception = null
     });
 
@@ -118,6 +121,7 @@ public class AutomationPasses
     GivenRunnableWillReturnResult(Runnable, new()
     {
       Status = BehaviorRunStatus.Success,
+      Transcript = new([Any.GradeOfAtLeast(0.01f)]),
       Exception = null
     });
 
@@ -131,11 +135,15 @@ public class AutomationPasses
   {
     var Pass = GivenAutomationPass();
     foreach (var Step in Steps)
-      Step.Runnable.Result = new() { Status = BehaviorRunStatus.Success };
+      Step.Runnable.Result = new()
+      {
+        Status = BehaviorRunStatus.Success,
+        Transcript= new([])
+      };
 
     var Result = await Pass.Run();
 
-    Result.Should().Be(new RunResult() { Status = BehaviorRunStatus.Success });
+    Result.Should().Be(new RunResult() { Status = BehaviorRunStatus.Success, Transcript = new([])});
   }
 
   [TestMethod]
@@ -143,12 +151,29 @@ public class AutomationPasses
   {
     var Pass = GivenAutomationPass();
     foreach (var Step in Steps)
-      Step.Runnable.Result = new() { Status = BehaviorRunStatus.Success };
-    Any.Of(Steps).Runnable.Result = new() {Status = BehaviorRunStatus.Failure};
+      Step.Runnable.Result = new() { Status = BehaviorRunStatus.Success, Transcript = new([])};
+    Any.Of(Steps).Runnable.Result = new() {Status = BehaviorRunStatus.Failure, Transcript = new([])};
 
     var Result = await Pass.Run();
 
-    Result.Should().Be(new RunResult() { Status = BehaviorRunStatus.Failure });
+    Result.Should().Be(new RunResult() { Status = BehaviorRunStatus.Failure, Transcript = new([])});
+  }
+
+  [TestMethod]
+  public async Task CumulativeTranscriptIsJoinedResults()
+  {
+    var Pass = GivenAutomationPass();
+    var Transcripts = new List<Transcript>();
+    foreach (var Step in Steps)
+    {
+      var Transcript = new Transcript([..Any.ListOf(() => Any.Grade, 1, 3)]);
+      Transcripts.Add(Transcript);
+      Step.Runnable.Result = new() { Status = BehaviorRunStatus.Success, Transcript = Transcript};
+    }
+
+    var Result = await Pass.Run();
+
+    Result.Should().Be(new RunResult() { Status = BehaviorRunStatus.Success, Transcript = Transcript.Join(Transcripts)});
   }
 
   void ThenConvergenceIsLessThan1For(ScenariosModelNode Node)
@@ -202,6 +227,7 @@ public class AutomationPasses
     var Result = new RunResult
     {
       Status = Any.EnumValue<BehaviorRunStatus>(),
+      Transcript = new([Any.Grade]),
       Exception = new()
     };
     GivenRunnableWillReturnResult(Runnable, Result);

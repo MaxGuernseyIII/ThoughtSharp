@@ -40,6 +40,7 @@ public sealed class AutomationPass(
   public async Task<RunResult> Run()
   {
     var AnyFailed = false;
+    var PartialTranscripts = new List<Transcript>();
 
     foreach (var (Node, Runnable) in Steps)
     {
@@ -48,6 +49,7 @@ public sealed class AutomationPass(
       var WasSuccessful = Result.Status == BehaviorRunStatus.Success;
       Scheme.GetConvergenceTrackerFor(Node).RecordResult(WasSuccessful ? 1f : 0f);
       AnyFailed = AnyFailed || Result.Status == BehaviorRunStatus.Failure;
+      PartialTranscripts.Add(Result.Transcript);
     }
 
     if (SaveGate.IsOpen)
@@ -55,7 +57,8 @@ public sealed class AutomationPass(
 
     return new()
     {
-      Status = AnyFailed ? BehaviorRunStatus.Failure : BehaviorRunStatus.Success
+      Status = AnyFailed ? BehaviorRunStatus.Failure : BehaviorRunStatus.Success,
+      Transcript = Transcript.Join(PartialTranscripts)
     };
   }
 

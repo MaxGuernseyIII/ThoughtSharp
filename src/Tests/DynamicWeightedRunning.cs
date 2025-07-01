@@ -42,7 +42,7 @@ public class DynamicWeightedRunning
   public void SetUp()
   {
     RunCount = 0;
-    RunResult = new() { Status = BehaviorRunStatus.Success };
+    RunResult = new() { Status = BehaviorRunStatus.Success, Transcript = new([new() { Score = 1, Annotations = [] }])};
     Underlying = new()
     {
       RunBehavior = () =>
@@ -185,7 +185,7 @@ public class DynamicWeightedRunning
 
   void ThenResultIsNotRun()
   {
-    Result.Should().Be(new RunResult { Status = BehaviorRunStatus.NotRun});
+    Result.Should().Be(new RunResult { Status = BehaviorRunStatus.NotRun, Transcript = new([])});
   }
 
   void ThenRunCountIs(int Expected)

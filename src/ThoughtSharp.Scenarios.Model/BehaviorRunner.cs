@@ -57,6 +57,7 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
       return new()
       {
         Status = BehaviorRunStatus.Failure,
+        Transcript = new([new() { Score = 0f, Annotations = [$"unexpected exception of type {ProcessedException!.GetType().Name}"] }]),
         Exception = ProcessedException,
         Output = OutputCapture.ToString()
       };
@@ -70,6 +71,7 @@ public sealed record BehaviorRunner(MindPool Pool, Type HostType, MethodInfo Beh
     return new()
     {
       Status = BehaviorRunStatus.Success,
+      Transcript = new([new() { Score = 1f, Annotations = [] }]),
       Output = OutputCapture.ToString()
     };
   }

@@ -207,4 +207,16 @@ static class Any
   };
 
   public static Transcript Transcript => new([..Any.ListOf(() => Grade, 1, 3)]);
+
+  public static Grade GradeOfAtLeast(float Floor)
+  {
+    var Original = Grade;
+    return Original with { Score = Original.Score + Floor };
+  }
+
+  public static Grade GradeOfAtMost(float Ceiling)
+  {
+    var Original = Grade;
+    return Original with { Score = Original.Score - (1f - Ceiling) };
+  }
 }
