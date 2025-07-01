@@ -39,7 +39,7 @@ public static class SoftLogic
   }
 }
 
-public static class Metrics
+public static class ConvergenceMetrics
 {
   public class SoftAnd2 : Metric
   {
@@ -86,6 +86,30 @@ public static class Metrics
     public Summarizer CreateSummarizer()
     {
       return SoftLogic.Or(4);
+    }
+  }
+
+  public class SuccessRate100 : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return Summarizers.Convergence.PassRate(1f);
+    }
+  }
+
+  public class SuccessRate099 : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return Summarizers.Convergence.PassRate(.99f);
+    }
+  }
+
+  public class SuccessRate095 : Metric
+  {
+    public Summarizer CreateSummarizer()
+    {
+      return Summarizers.Convergence.PassRate(.95f);
     }
   }
 }

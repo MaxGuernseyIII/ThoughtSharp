@@ -41,36 +41,54 @@ public class BundledMetrics
   [TestMethod]
   public void SoftAnd2()
   {
-    MetricTest<Metrics.SoftAnd2>(SoftLogic.And(2));
+    MetricTest<ConvergenceMetrics.SoftAnd2>(SoftLogic.And(2));
   }
 
   [TestMethod]
   public void SoftAnd3()
   {
-    MetricTest<Metrics.SoftAnd3>(SoftLogic.And(3));
+    MetricTest<ConvergenceMetrics.SoftAnd3>(SoftLogic.And(3));
   }
 
   [TestMethod]
   public void SoftAnd4()
   {
-    MetricTest<Metrics.SoftAnd4>(SoftLogic.And(4));
+    MetricTest<ConvergenceMetrics.SoftAnd4>(SoftLogic.And(4));
   }
 
   [TestMethod]
   public void SoftOr2()
   {
-    MetricTest<Metrics.SoftOr2>(SoftLogic.Or(2));
+    MetricTest<ConvergenceMetrics.SoftOr2>(SoftLogic.Or(2));
   }
 
   [TestMethod]
   public void SoftOr3()
   {
-    MetricTest<Metrics.SoftOr3>(SoftLogic.Or(3));
+    MetricTest<ConvergenceMetrics.SoftOr3>(SoftLogic.Or(3));
   }
 
   [TestMethod]
   public void SoftOr4()
   {
-    MetricTest<Metrics.SoftOr4>(SoftLogic.Or(4));
+    MetricTest<ConvergenceMetrics.SoftOr4>(SoftLogic.Or(4));
+  }
+
+  [TestMethod]
+  public void SuccessRate100()
+  {
+    MetricTest<ConvergenceMetrics.SuccessRate100>(Summarizers.Convergence.PassRate(1f));
+  }
+
+  [TestMethod]
+  public void SuccessRate099()
+  {
+    MetricTest<ConvergenceMetrics.SuccessRate099>(Summarizers.Convergence.PassRate(.99f));
+  }
+
+  [TestMethod]
+  public void SuccessRate095()
+  {
+    MetricTest<ConvergenceMetrics.SuccessRate095>(Summarizers.Convergence.PassRate(.95f));
   }
 }
