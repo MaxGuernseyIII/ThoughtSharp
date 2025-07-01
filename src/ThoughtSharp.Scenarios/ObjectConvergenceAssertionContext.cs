@@ -33,6 +33,8 @@ public sealed record ObjectConvergenceAssertionContext<TSubject>(CognitiveResult
 
   public Grade Target(TSubject Target, Func<ObjectConvergenceComparison<TSubject>, ObjectConvergenceComparison<TSubject>> SetExpectations)
   {
+    Subject.FeedbackSink.TrainWith(Target);
+
     var Comparison = SetExpectations(new(Subject.Payload, Target));
 
     return Grade.Merge(Summarizer, Comparison.Grades);

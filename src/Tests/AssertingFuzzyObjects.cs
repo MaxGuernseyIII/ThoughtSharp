@@ -93,4 +93,17 @@ public class AssertingFuzzyObjects : AssertingBase<MockData, MockData>
             return new() {Score = 0, Annotations = []};
           }));
   }
+
+  [TestMethod]
+  public void TargetIsUsedForTraining()
+  {
+    var Result = GivenCognitiveResult();
+
+    Assert.That(Result)
+      .ConvergesOn()
+      .WithSummarizer(Summarizer)
+      .Target(Target, C => C);
+
+    ThenModelWasTrainedWith([Target]);
+  }
 }
