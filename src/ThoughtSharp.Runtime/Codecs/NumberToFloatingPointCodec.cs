@@ -28,7 +28,7 @@ public class NumberToFloatingPointCodec<T, U>(CognitiveDataCodec<U> Inner) : Cog
   where T : INumber<T>
   where U : IFloatingPoint<U>
 {
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

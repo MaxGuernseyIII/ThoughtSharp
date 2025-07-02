@@ -42,7 +42,7 @@ class MockInference<TInput, TOutput>(params ImmutableArray<TOutput> ResultOutput
       var Result = new List<float[]>();
       foreach (var ResultOutput in ResultOutputs)
       {
-        var Buffer = new float[TOutput.Length];
+        var Buffer = new float[TOutput.FloatLength];
         ResultOutput.MarshalTo(Buffer);
         Result.Add(Buffer);
       }

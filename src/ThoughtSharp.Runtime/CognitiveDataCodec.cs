@@ -24,7 +24,7 @@ namespace ThoughtSharp.Runtime;
 
 public interface CognitiveDataCodec<T>
 {
-  int Length { get; }
+  int FloatLength { get; }
 
   void EncodeTo(T ObjectToEncode, Span<float> Target);
 
@@ -38,7 +38,7 @@ public static class CognitiveDataCodecExtensions
 {
   public static void WriteStandardLossRulesFor<T>(this CognitiveDataCodec<T> Codec, T Target, LossRuleWriter Writer)
   {
-    var TargetBuffer = new float[Codec.Length];
+    var TargetBuffer = new float[Codec.FloatLength];
     Codec.EncodeTo(Target, TargetBuffer);
     Writer.WriteLossRule(0, new BinaryCrossEntropyWithLogitsLossRule(TargetBuffer));
   }

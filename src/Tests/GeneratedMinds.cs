@@ -952,7 +952,7 @@ public partial class GeneratedMinds
 
     S.Boundaries.Should().BeEquivalentTo([
       Offset + HasIsolationBoundaries.P3Index,
-      Offset + HasIsolationBoundaries.P3Index + HasIsolationBoundaries.P3Codec.Length
+      Offset + HasIsolationBoundaries.P3Index + HasIsolationBoundaries.P3Codec.FloatLength
     ]);
   }
 

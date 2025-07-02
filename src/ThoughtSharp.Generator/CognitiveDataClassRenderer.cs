@@ -66,7 +66,7 @@ class CognitiveDataClassRenderer
       LastParameter = Parameter;
     }
 
-    W.Write("public static int Length { get; } = ");
+    W.Write("public static int FloatLength { get; } = ");
     WriteIndexValue(W, LastValue, LastParameter);
 
     W.WriteLine("public void MarshalTo(Span<float> Target)");
@@ -76,9 +76,9 @@ class CognitiveDataClassRenderer
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
       var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
-                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.FloatLength" : "0") + ")";
       W.WriteLine(
-        $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo({Parameter.Name}{Subscript}, Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
+        $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo({Parameter.Name}{Subscript}, Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.FloatLength)]);");
     }
 
     W.WriteLine("}");
@@ -94,9 +94,9 @@ class CognitiveDataClassRenderer
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
       var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
-                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.FloatLength" : "0") + ")";
       W.WriteLine(
-        $"  Result.{Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
+        $"  Result.{Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.FloatLength)]);");
     }
 
     W.WriteLine("  return Result;");
@@ -113,7 +113,7 @@ class CognitiveDataClassRenderer
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I.ToLiteralExpression()}]" : "";
       var CodecFieldNameForParameter = GetCodecFieldNameFor(Parameter);
       var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
-                   (Parameter.ExplicitCount.HasValue ? $"{I} * {CodecFieldNameForParameter}.Length" : "0") + ")";
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {CodecFieldNameForParameter}.FloatLength" : "0") + ")";
       W.WriteLine(
         $"{CodecFieldNameForParameter}.WriteLossRulesFor({Parameter.Name}{Subscript}, Writer.ForOffset({Offset}));");
     }
@@ -131,7 +131,7 @@ class CognitiveDataClassRenderer
   {
     Target.Write($"{LastValue}");
     if (LastParameter is not null)
-      Target.Write($" + {GetCodecFieldNameFor(LastParameter)}.Length * {LastParameter.EffectiveCount}");
+      Target.Write($" + {GetCodecFieldNameFor(LastParameter)}.FloatLength * {LastParameter.EffectiveCount}");
     Target.WriteLine(";");
   }
 

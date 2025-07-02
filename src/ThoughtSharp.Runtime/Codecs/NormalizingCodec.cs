@@ -28,7 +28,7 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
   where T : IFloatingPoint<T>, ISubtractionOperators<T, T, T>, IAdditionOperators<T, T, T>, IMultiplyOperators<T, T, T>
 {
   readonly T Size = Maximum - Minimum;
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

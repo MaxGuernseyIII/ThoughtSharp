@@ -38,7 +38,7 @@ public class BitwiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
         $"Cannot one-hot encode type {typeof(T)} to {typeof(U)} because its underlying type is {Enum.GetUnderlyingType(typeof(T))}");
   }
 
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

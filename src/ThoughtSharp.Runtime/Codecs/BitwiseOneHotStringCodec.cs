@@ -29,7 +29,7 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
 
   // ReSharper disable once ReplaceWithPrimaryConstructorParameter
   readonly int MaximumCharacters = Length;
-  public int Length { get; } = Length * Inner.Length;
+  public int FloatLength { get; } = Length * Inner.FloatLength;
 
   public void EncodeTo(string ObjectToEncode, Span<float> Target)
   {
@@ -38,8 +38,8 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
 
     foreach (var C in Padded)
     {
-      Inner.EncodeTo(C, Target[Index..(Index + Inner.Length)]);
-      Index += Inner.Length;
+      Inner.EncodeTo(C, Target[Index..(Index + Inner.FloatLength)]);
+      Index += Inner.FloatLength;
     }
   }
 
@@ -57,7 +57,7 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
     var ResultBuffer = new char[MaximumCharacters];
 
     foreach (var I in Enumerable.Range(0, MaximumCharacters))
-      ResultBuffer[I] = Inner.DecodeFrom(Source[(I * Inner.Length)..((I + 1) * Inner.Length)]);
+      ResultBuffer[I] = Inner.DecodeFrom(Source[(I * Inner.FloatLength)..((I + 1) * Inner.FloatLength)]);
 
     return new string(ResultBuffer).TrimEnd((char) 0);
   }

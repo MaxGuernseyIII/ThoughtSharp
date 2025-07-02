@@ -26,7 +26,7 @@ namespace Tests.Mocks;
 
 public class MockLengthCodec<T>(int Length) : CognitiveDataCodec<T>
 {
-  public int Length { get; } = Length;
+  public int FloatLength { get; } = Length;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

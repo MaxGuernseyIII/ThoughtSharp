@@ -26,7 +26,7 @@ namespace ThoughtSharp.Runtime.Codecs;
 public class SubDataCodec<T> : CognitiveDataCodec<T>
   where T : CognitiveData<T>
 {
-  public int Length => T.Length;
+  public int FloatLength => T.FloatLength;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

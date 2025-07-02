@@ -28,7 +28,7 @@ namespace ThoughtSharp.Runtime.Codecs;
 public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
   where T : unmanaged, INumber<T>, IBitwiseOperators<T, T, T>, IShiftOperators<T, int, T>
 {
-  public int Length { get; } = typeof(T) switch
+  public int FloatLength { get; } = typeof(T) switch
   {
     var T when T == typeof(byte) => 8,
     var T when T == typeof(sbyte) => 8,
@@ -44,7 +44,7 @@ public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
-    for (var I = 0; I < Length; I++)
+    for (var I = 0; I < FloatLength; I++)
     {
       var BitMask = T.One << I;
       var BitSet = (ObjectToEncode & BitMask) != T.Zero;
@@ -65,7 +65,7 @@ public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
   {
     var Result = T.Zero;
 
-    for (var Index = 0; Index < Length; Index++)
+    for (var Index = 0; Index < FloatLength; Index++)
       if (Source[Index] >= 0.5f)
         Result |= T.One << Index;
 

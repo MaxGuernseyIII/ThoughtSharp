@@ -52,7 +52,7 @@ public class PackTokenCodec(string ValidCharacters, int MaximumLength) : Cogniti
     throw new NotSupportedException("This is an input-only codec");
   }
 
-  public int Length => MaximumLength * LogitsPerCharacter;
+  public int FloatLength => MaximumLength * LogitsPerCharacter;
 
   int LogitsPerCharacter { get; } = (int)Math.Ceiling(Math.Log2(ValidCharacters.Length + 1));
 }

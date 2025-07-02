@@ -24,12 +24,12 @@ namespace ThoughtSharp.Runtime.Codecs;
 
 public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T> Second) : CognitiveDataCodec<T>
 {
-  public int Length => First.Length + Second.Length;
+  public int FloatLength => First.FloatLength + Second.FloatLength;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
-    First.EncodeTo(ObjectToEncode, Target[..First.Length]);
-    Second.EncodeTo(ObjectToEncode, Target[First.Length..]);
+    First.EncodeTo(ObjectToEncode, Target[..First.FloatLength]);
+    Second.EncodeTo(ObjectToEncode, Target[First.FloatLength..]);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -40,11 +40,11 @@ public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T
   public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
   {
     First.WriteIsolationBoundaries(Writer);
-    Second.WriteIsolationBoundaries(Writer.AddOffset(First.Length));
+    Second.WriteIsolationBoundaries(Writer.AddOffset(First.FloatLength));
   }
 
   public T DecodeFrom(ReadOnlySpan<float> Source)
   {
-    return First.DecodeFrom(Source[..First.Length]);
+    return First.DecodeFrom(Source[..First.FloatLength]);
   }
 }

@@ -50,7 +50,7 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     {
       return Batch.Steps.Select(StepInput =>
       {
-        StepInput.Length.Should().Be(TInput.Length);
+        StepInput.Length.Should().Be(TInput.FloatLength);
         var Input = TInput.UnmarshalFrom(StepInput);
         return Input;
       }).ToImmutableArray();

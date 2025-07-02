@@ -33,16 +33,16 @@ public partial class GeneratedCognitiveData
   [TestMethod]
   public void LengthTest()
   {
-    EmptyMockThoughtData.Length.Should().Be(0);
-    SingleFloatMockThoughtData.Length.Should().Be(1);
-    FloatArrayMockThoughtData.Length.Should().Be(4);
-    CodecMockThoughtData.Length.Should().Be(9);
+    EmptyMockThoughtData.FloatLength.Should().Be(0);
+    SingleFloatMockThoughtData.FloatLength.Should().Be(1);
+    FloatArrayMockThoughtData.FloatLength.Should().Be(4);
+    CodecMockThoughtData.FloatLength.Should().Be(9);
   }
 
   [TestMethod]
   public void MarshalSingleFloat()
   {
-    var Values = new float[SingleFloatMockThoughtData.Length];
+    var Values = new float[SingleFloatMockThoughtData.FloatLength];
     var Expected = Any.Float;
     var Data = new SingleFloatMockThoughtData
     {
@@ -76,7 +76,7 @@ public partial class GeneratedCognitiveData
     {
       P2 = [Expected0, Expected1, Expected2, Expected3]
     };
-    var Values = new float[FloatArrayMockThoughtData.Length];
+    var Values = new float[FloatArrayMockThoughtData.FloatLength];
 
     Data.MarshalTo(Values);
 
@@ -104,9 +104,9 @@ public partial class GeneratedCognitiveData
   {
     RoundTripTest(new ThreeStringsMockThoughtData
     {
-      S1 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S1Codec.Length).TrimEnd((char) 0),
-      S2 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S2Codec.Length).TrimEnd((char) 0),
-      S3 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S3Codec.Length).TrimEnd((char) 0)
+      S1 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S1Codec.FloatLength).TrimEnd((char) 0),
+      S2 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S2Codec.FloatLength).TrimEnd((char) 0),
+      S3 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S3Codec.FloatLength).TrimEnd((char) 0)
     });
   }
 
@@ -115,7 +115,7 @@ public partial class GeneratedCognitiveData
   {
     RoundTripTest(new ComplexDataStructureMockThoughtData
     {
-      EncodedString = Any.StringWithBitsLength(ComplexDataStructureMockThoughtData.EncodedStringCodec.Length),
+      EncodedString = Any.StringWithBitsLength(ComplexDataStructureMockThoughtData.EncodedStringCodec.FloatLength),
       SomeEnum = Any.EnumValue<MockPrivateEnum>(),
       SomeFlag = Any.Bool,
       SomeFloat = Any.Float,
@@ -148,7 +148,7 @@ public partial class GeneratedCognitiveData
   void RoundTripTest<T>(T ToTest)
     where T : CognitiveData<T>, new()
   {
-    var Buffer = new float[T.Length];
+    var Buffer = new float[T.FloatLength];
     ToTest.MarshalTo(Buffer);
     var Actual = T.UnmarshalFrom(Buffer);
 
@@ -163,7 +163,7 @@ public partial class GeneratedCognitiveData
       ToNormalize = Any.Float * 5 + 1
     };
 
-    var Target = new float[DeclarativelyNormalizedMockThoughtData.Length];
+    var Target = new float[DeclarativelyNormalizedMockThoughtData.FloatLength];
     Data.MarshalTo(Target);
 
     Target[0].Should().BeApproximately((Data.ToNormalize - 1f) / 5f, 0.01f);
@@ -172,7 +172,7 @@ public partial class GeneratedCognitiveData
   [TestMethod]
   public void DenormalizeData()
   {
-    var Target = new float[DeclarativelyNormalizedMockThoughtData.Length];
+    var Target = new float[DeclarativelyNormalizedMockThoughtData.FloatLength];
     Target[0] = Any.Float;
     var Data = DeclarativelyNormalizedMockThoughtData.UnmarshalFrom(Target);
 
@@ -220,7 +220,7 @@ public partial class GeneratedCognitiveData
 
   void BoundsMarshallingTest(DefaultNormalizationMockThoughtData Data, float Expected)
   {
-    var Buffer = new float[DefaultNormalizationMockThoughtData.Length];
+    var Buffer = new float[DefaultNormalizationMockThoughtData.FloatLength];
     Data.MarshalTo(Buffer);
 
     foreach (var F in Buffer)
@@ -229,7 +229,7 @@ public partial class GeneratedCognitiveData
 
   void BoundsUnmarshallingTest(DefaultNormalizationMockThoughtData Data, float Value)
   {
-    var Buffer = new float[DefaultNormalizationMockThoughtData.Length];
+    var Buffer = new float[DefaultNormalizationMockThoughtData.FloatLength];
     for (var I = 0; I < Buffer.Length; ++I)
       Buffer[I] = Value;
 

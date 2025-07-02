@@ -24,7 +24,7 @@ namespace ThoughtSharp.Runtime;
 
 public interface CognitiveData<out T> where T : CognitiveData<T>
 {
-  static abstract int Length { get; }
+  static abstract int FloatLength { get; }
 
   void MarshalTo(Span<float> Target);
   void WriteAsLossRules(LossRuleWriter Target);

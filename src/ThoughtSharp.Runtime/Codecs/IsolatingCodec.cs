@@ -24,7 +24,7 @@ namespace ThoughtSharp.Runtime.Codecs;
 
 public class IsolatingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<T>
 {
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
@@ -40,7 +40,7 @@ public class IsolatingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec
   {
     Writer.Write(0);
     Inner.WriteIsolationBoundaries(Writer);
-    Writer.Write(Length);
+    Writer.Write(FloatLength);
   }
 
   public T DecodeFrom(ReadOnlySpan<float> Source)

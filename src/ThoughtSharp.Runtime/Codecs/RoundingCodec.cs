@@ -27,7 +27,7 @@ namespace ThoughtSharp.Runtime.Codecs;
 public class RoundingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<T>
   where T : IFloatingPoint<T>
 {
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
