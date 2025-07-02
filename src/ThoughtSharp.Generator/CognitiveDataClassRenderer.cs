@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 using System.CodeDom.Compiler;
+using System.Reflection.Metadata;
 
 namespace ThoughtSharp.Generator;
 
@@ -66,7 +67,10 @@ class CognitiveDataClassRenderer
       LastParameter = Parameter;
     }
 
-    W.WriteLine("public static ImmutableArray<long> EncodedTokenClassCounts { get; } = [];");
+    W.WriteLine("public static ImmutableArray<long> EncodedTokenClassCounts => [");
+    foreach (var Parameter in CognitiveDataClass.Parameters)
+      W.WriteLine($"..{GetCodecFieldNameFor(Parameter)}.EncodedTokenClassCounts,");
+    W.WriteLine("];");
 
     W.Write("public static int FloatLength { get; } = ");
     WriteIndexValue(W, LastValue, LastParameter);

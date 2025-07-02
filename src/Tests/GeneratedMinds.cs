@@ -24,6 +24,7 @@ using System.Collections.Immutable;
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
+using ThoughtSharp.Runtime.Codecs;
 
 namespace Tests;
 
@@ -1119,4 +1120,20 @@ public partial class GeneratedMinds
 
   [CognitiveCategory<MockSelectable, MockDescriptor>(3)]
   partial class MockCategory;
+
+  [TestMethod]
+  public void TokenLayout()
+  {
+    TokenContainer.EncodedTokenClassCounts.Should().BeEquivalentTo([100, 900], O => O.WithStrictOrdering());
+  }
+
+  [CognitiveData]
+  partial class TokenContainer
+  {
+    public long Token1;
+    public static readonly TokenCodec<long> Token1Codec = new(100);
+
+    public int Token2;
+    public static readonly TokenCodec<int> Token2Codec = new(900);
+  }
 }
