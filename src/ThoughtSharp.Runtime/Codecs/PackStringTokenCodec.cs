@@ -50,7 +50,7 @@ public class PackStringTokenCodec(string ValidCharacters, int MaximumLength) : C
   {
   }
 
-  public string DecodeFrom(ReadOnlySpan<float> Source)
+  public string DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     throw new NotSupportedException("This is an input-only codec");
   }

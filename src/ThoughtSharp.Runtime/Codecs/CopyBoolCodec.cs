@@ -45,7 +45,7 @@ public class CopyBoolCodec(float Threshold = .5f) : CognitiveDataCodec<bool>
   {
   }
 
-  public bool DecodeFrom(ReadOnlySpan<float> Source)
+  public bool DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     return Source[0] > Threshold;
   }

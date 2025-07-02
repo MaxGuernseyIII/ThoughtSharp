@@ -45,7 +45,7 @@ public class CopyFloatCodec : CognitiveDataCodec<float>
   {
   }
 
-  public float DecodeFrom(ReadOnlySpan<float> Source)
+  public float DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     return Source[0];
   }

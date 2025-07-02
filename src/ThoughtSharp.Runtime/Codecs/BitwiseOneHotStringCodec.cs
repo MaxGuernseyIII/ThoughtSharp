@@ -56,12 +56,12 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
   {
   }
 
-  public string DecodeFrom(ReadOnlySpan<float> Source)
+  public string DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     var ResultBuffer = new char[MaximumCharacters];
 
     foreach (var I in Enumerable.Range(0, MaximumCharacters))
-      ResultBuffer[I] = Inner.DecodeFrom(Source[(I * Inner.FloatLength)..((I + 1) * Inner.FloatLength)]);
+      ResultBuffer[I] = Inner.DecodeFrom(Source[(I * Inner.FloatLength)..((I + 1) * Inner.FloatLength)], []);
 
     return new string(ResultBuffer).TrimEnd((char) 0);
   }

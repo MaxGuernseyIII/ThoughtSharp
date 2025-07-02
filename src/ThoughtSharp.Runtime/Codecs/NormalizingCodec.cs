@@ -48,7 +48,7 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
     Inner.WriteIsolationBoundaries(Writer);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     var Normalized = Inner.DecodeFrom(Source);
 

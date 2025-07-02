@@ -60,9 +60,9 @@ public class ValueWiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
     Inner.WriteIsolationBoundaries(Writer);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
-    var Index = int.CreateChecked(Inner.DecodeFrom(Source));
+    var Index = int.CreateChecked(Inner.DecodeFrom(Source, []));
     return ValuesInOrder[Index];
   }
 }

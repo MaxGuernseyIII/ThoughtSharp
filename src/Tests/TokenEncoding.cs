@@ -249,6 +249,33 @@ public class TokenEncoding
     SecondSlice.Should().BeEquivalentTo(InitialTokens[ClassCounts1.Count..], O => O.WithStrictOrdering());
   }
 
+  [TestMethod]
+  public void CompositeCodecTokenDecoding()
+  {
+    var ClassCounts1 = Any.ListOf(() => (long) Any.Int(), 0, 4);
+    var ClassCounts2 = Any.ListOf(() => (long) Any.Int(), 0, 4);
+    var InitialTokens = Any.ListOf(() => Any.Long, 
+      ClassCounts1.Count + ClassCounts2.Count,
+      ClassCounts1.Count + ClassCounts2.Count).ToArray();
+    var Expected = Any.Int(); 
+    var Codec1 = new MockTokenClassCountsCodec<int>(ClassCounts1)
+    {
+      OnDecode = (_, Tokens) =>
+      {
+        IReadOnlyList<long> TheTokens = [..Tokens];
+        TheTokens.Should().BeEquivalentTo(InitialTokens[..ClassCounts1.Count]);
+
+        return Expected;
+      }
+    };
+    var Codec2 = new MockTokenClassCountsCodec<int>(ClassCounts2);
+    var Codec = new CompositeCodec<int>(Codec1, Codec2);
+
+    var Actual = Codec.DecodeFrom([], InitialTokens);
+
+    Actual.Should().Be(Expected);
+  }
+
   enum DummyEnum
   {
   }

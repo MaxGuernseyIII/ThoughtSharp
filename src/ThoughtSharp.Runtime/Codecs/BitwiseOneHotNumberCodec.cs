@@ -64,7 +64,7 @@ public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
   {
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     var Result = T.Zero;
 

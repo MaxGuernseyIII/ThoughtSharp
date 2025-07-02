@@ -58,7 +58,7 @@ public class BitwiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
   }
 
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     return (T)(object)Inner.DecodeFrom(Source);
   }

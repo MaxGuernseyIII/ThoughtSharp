@@ -29,11 +29,14 @@ public class MockCodec<T> : CognitiveDataCodec<T>
 {
   public delegate void EncodeAction(T ObjectToEncode, Span<float> Target, Span<long> Tokens);
 
+  public delegate T DecodeAction(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens);
+
   public int FloatLength { get; set; }
 
   public ImmutableArray<long> EncodedTokenClassCounts { get; set; } = [];
 
   public EncodeAction OnEncode = delegate { };
+  public DecodeAction OnDecode = delegate { return default!; };
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
@@ -50,9 +53,9 @@ public class MockCodec<T> : CognitiveDataCodec<T>
     throw new NotImplementedException();
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    throw new NotImplementedException();
+    return OnDecode(Source, Tokens);
   }
 }
 

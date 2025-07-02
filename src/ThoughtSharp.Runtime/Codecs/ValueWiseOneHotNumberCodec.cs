@@ -51,7 +51,7 @@ public class ValueWiseOneHotNumberCodec<T>(T Bound1, T Bound2) : CognitiveDataCo
   {
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     var LargestScale = Source[0];
     var Largest = 0;
