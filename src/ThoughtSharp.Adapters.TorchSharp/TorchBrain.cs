@@ -88,9 +88,9 @@ public class TorchBrain(
     return Model.forward(Input);
   }
 
-  public Inference MakeInference(Batch<float[]> JaggedTensor)
+  public Inference MakeInference(Batch<float[]> Features, Batch<long[]> Tokens)
   {
-    return ExecuteInference(null, ConvertFloatsToInput(JaggedTensor));
+    return ExecuteInference(null, ConvertFloatsToInput(Features));
   }
 
   internal Inference ExecuteInference(TorchInference? Predecessor, TorchInferenceParts Input)

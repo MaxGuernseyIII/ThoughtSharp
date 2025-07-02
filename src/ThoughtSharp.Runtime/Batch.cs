@@ -99,4 +99,9 @@ public static class Batch
   {
     public static Batch<float[]>.Builder Builder => new();
   }
+
+  public static class OfTokenSets
+  {
+    public static Batch<long[]>.Builder Builder => new();
+  }
 }

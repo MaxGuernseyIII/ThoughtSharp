@@ -96,10 +96,10 @@ public class TorchInference(
     });
   }
 
-  public Inference MakeInference(Batch<float[]> JaggedTensor)
+  public Inference MakeInference(Batch<float[]> Features, Batch<long[]> Tokens)
   {
     return Brain.ExecuteInference(this, 
-      Brain.ConvertFloatsToInput(JaggedTensor) with
+      Brain.ConvertFloatsToInput(Features) with
       {
         State = Output.State
       });
