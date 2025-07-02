@@ -66,6 +66,8 @@ class CognitiveDataClassRenderer
       LastParameter = Parameter;
     }
 
+    W.WriteLine("public static ImmutableArray<long> EncodedTokenClassCounts { get; } = [];");
+
     W.Write("public static int FloatLength { get; } = ");
     WriteIndexValue(W, LastValue, LastParameter);
 
@@ -162,6 +164,7 @@ class CognitiveDataClassRenderer
           {
             W.WriteLine("using ThoughtSharp.Runtime;");
             W.WriteLine("using ThoughtSharp.Runtime.Codecs;");
+            W.WriteLine("using System.Collections.Immutable;");
             W.WriteLine();
           },
           WriteBeforeTypeDeclaration = W =>

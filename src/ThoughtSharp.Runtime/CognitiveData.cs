@@ -20,11 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime;
 
 public interface CognitiveData<out T> where T : CognitiveData<T>
 {
   static abstract int FloatLength { get; }
+  static abstract ImmutableArray<long> EncodedTokenClassCounts { get; }
 
   void MarshalTo(Span<float> Target);
   void WriteAsLossRules(LossRuleWriter Target);
