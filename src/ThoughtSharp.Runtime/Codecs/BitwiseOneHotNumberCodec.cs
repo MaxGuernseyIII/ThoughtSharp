@@ -43,7 +43,7 @@ public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
     _ => throw new NotSupportedException($"Unsupported type {typeof(T)}")
   };
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

@@ -28,7 +28,7 @@ public class IsolatingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec
 {
   public int FloatLength => Inner.FloatLength;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts => Inner.EncodedTokenClassCounts;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

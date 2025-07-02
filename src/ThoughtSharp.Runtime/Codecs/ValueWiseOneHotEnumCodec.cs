@@ -41,7 +41,7 @@ public class ValueWiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
 
   public int FloatLength => Inner.FloatLength;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

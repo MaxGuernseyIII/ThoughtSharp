@@ -28,7 +28,7 @@ namespace ThoughtSharp.Runtime.Codecs;
 [PublicAPI]
 public class PackStringTokenCodec(string ValidCharacters, int MaximumLength) : CognitiveDataCodec<string>
 {
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
 
   public void EncodeTo(string ObjectToEncode, Span<float> Target)
   {

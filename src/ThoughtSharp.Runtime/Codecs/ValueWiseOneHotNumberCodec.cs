@@ -34,7 +34,7 @@ public class ValueWiseOneHotNumberCodec<T>(T Bound1, T Bound2) : CognitiveDataCo
 
   public int FloatLength => int.CreateChecked(Maximum) - int.CreateChecked(Minimum) + 1;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

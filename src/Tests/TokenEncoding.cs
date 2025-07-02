@@ -116,7 +116,7 @@ public class TokenEncoding
     var ClassCounts = Any.ListOf(() => (long) Any.Int(), 0, 4);
     var Codec = new IsolatingCodec<int>(new MockTokenClassCountsCodec<int>(ClassCounts));
 
-    var Actual = Codec;
+    var Actual = Codec.EncodedTokenClassCounts;
 
     Actual.Should().BeEquivalentTo(ClassCounts, O => O.WithStrictOrdering());
   }

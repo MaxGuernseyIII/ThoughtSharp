@@ -33,7 +33,7 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
   readonly int MaximumCharacters = Length;
   public int FloatLength { get; } = Length * Inner.FloatLength;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts => Inner.EncodedTokenClassCounts;
 
   public void EncodeTo(string ObjectToEncode, Span<float> Target)
   {

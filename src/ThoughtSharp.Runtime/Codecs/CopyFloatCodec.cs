@@ -29,7 +29,7 @@ public class CopyFloatCodec : CognitiveDataCodec<float>
 {
   public int FloatLength => 1;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
 
   public void EncodeTo(float ObjectToEncode, Span<float> Target)
   {

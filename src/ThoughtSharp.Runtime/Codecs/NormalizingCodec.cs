@@ -31,7 +31,7 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
   readonly T Size = Maximum - Minimum;
   public int FloatLength => Inner.FloatLength;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

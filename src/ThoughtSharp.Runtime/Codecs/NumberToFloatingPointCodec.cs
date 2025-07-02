@@ -31,7 +31,7 @@ public class NumberToFloatingPointCodec<T, U>(CognitiveDataCodec<U> Inner) : Cog
 {
   public int FloatLength => Inner.FloatLength;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

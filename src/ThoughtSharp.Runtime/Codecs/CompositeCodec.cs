@@ -28,7 +28,8 @@ public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T
 {
   public int FloatLength => First.FloatLength + Second.FloatLength;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public ImmutableArray<long> EncodedTokenClassCounts =>
+    [..First.EncodedTokenClassCounts, ..Second.EncodedTokenClassCounts];
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
