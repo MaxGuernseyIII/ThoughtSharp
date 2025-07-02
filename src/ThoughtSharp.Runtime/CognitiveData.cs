@@ -29,7 +29,7 @@ public interface CognitiveData<out T> where T : CognitiveData<T>
   static abstract int FloatLength { get; }
   static abstract ImmutableArray<long> EncodedTokenClassCounts { get; }
 
-  void MarshalTo(Span<float> Target);
+  void MarshalTo(Span<float> Target, Span<long> Tokens);
   void WriteAsLossRules(LossRuleWriter Target);
 
   static abstract T UnmarshalFrom(ReadOnlySpan<float> Source);

@@ -34,7 +34,7 @@ public class SubDataCodec<T> : CognitiveDataCodec<T>
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    ObjectToEncode.MarshalTo(Target);
+    ObjectToEncode.MarshalTo(Target, Tokens);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)

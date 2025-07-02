@@ -131,12 +131,22 @@ public class TokenEncoding
   [TestMethod]
   public void SubDataCodecDelegatesToDataTypeForEncoding()
   {
-    Assert.Fail("This test needs to be written.");
+    var ToMarshal = Any.ListOf(() => Any.Long, MockCognitiveData.EncodedTokenClassCounts.Length,
+      MockCognitiveData.EncodedTokenClassCounts.Length);
+    var Data = new MockCognitiveData
+    {
+      OnMarshalTo = (Target, Tokens) =>
+      {
+        foreach (var I in Enumerable.Range(0, ToMarshal.Count))
+          Tokens[I] = ToMarshal[I];
+      }
+    };
     var Codec = new SubDataCodec<MockCognitiveData>();
+    var Tokens = new long[Codec.EncodedTokenClassCounts.Length];
 
-    var Actual = Codec.EncodedTokenClassCounts;
+    Codec.EncodeTo(Data, [], Tokens);
 
-    Actual.Should().BeEquivalentTo(MockCognitiveData.EncodedTokenClassCounts, O => O.WithStrictOrdering());
+    Tokens.Should().BeEquivalentTo(ToMarshal, O => O.WithStrictOrdering());
   }
 
   [TestMethod]
@@ -246,13 +256,17 @@ public class TokenEncoding
   // ReSharper disable once ClassNeverInstantiated.Local
   class MockCognitiveData : CognitiveData<MockCognitiveData>
   {
-    public static int FloatLength => throw new NotImplementedException();
+    public static int FloatLength => 0;
 
     public static ImmutableArray<long> EncodedTokenClassCounts { get; } = [..Any.ListOf(() => (long) Any.Int(), 1, 5)];
 
-    public void MarshalTo(Span<float> Target)
+    public delegate void MarshalToAction(Span<float> Target, Span<long> Tokens);
+
+    public MarshalToAction OnMarshalTo { get; set; }= delegate { };
+
+    public void MarshalTo(Span<float> Target, Span<long> Tokens)
     {
-      throw new NotImplementedException();
+      OnMarshalTo(Target, Tokens);
     }
 
     public void WriteAsLossRules(LossRuleWriter Target)

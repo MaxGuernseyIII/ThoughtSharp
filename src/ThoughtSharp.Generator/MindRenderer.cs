@@ -127,7 +127,7 @@ static class MindRenderer
         W.WriteLine($"InputObject.Parameters.{TellOperation.Name}.{TellOperation.ParameterName} = Item;");
 
         W.WriteLine("var InputBuffer = new float[Input.FloatLength];");
-        W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+        W.WriteLine("InputObject.MarshalTo(InputBuffer, []);");
         W.WriteLine("InputBuffers.Add(InputBuffer);");
       }
 
@@ -195,7 +195,7 @@ static class MindRenderer
         }
 
         W.WriteLine("var InputBuffer = new float[Input.FloatLength];");
-        W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+        W.WriteLine("InputObject.MarshalTo(InputBuffer, []);");
         W.WriteLine("InputBuffers.Add(InputBuffer);");
       }
 
@@ -400,7 +400,7 @@ static class MindRenderer
         W.WriteLine($"InputObject.Parameters.{UseOperation.Name}.{Parameter.Name} = __TIME_SEQUENCE__.{Parameter.Name};");
 
       W.WriteLine("var InputBuffer = new float[Input.FloatLength];");
-      W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+      W.WriteLine("InputObject.MarshalTo(InputBuffer, []);");
       W.WriteLine("InputBuffers.Add([InputBuffer]);");
 
       W.WriteLine();
@@ -499,7 +499,7 @@ static class MindRenderer
   static void RenderMakeInference(IndentedTextWriter W, MindModel Model)
   {
     W.WriteLine("var InputBuffer = new float[Input.FloatLength];");
-    W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+    W.WriteLine("InputObject.MarshalTo(InputBuffer, []);");
     W.WriteLine();
     W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfFeatureSets.Builder.AddSequence(S => S.AddStep(InputBuffer)).Build());");
     W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");

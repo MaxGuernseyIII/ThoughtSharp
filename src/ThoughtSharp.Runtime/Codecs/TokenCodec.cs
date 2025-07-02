@@ -25,12 +25,12 @@ using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
 
-public class TokenCodec<T>(T NumberOfTokenClasses) : CognitiveDataCodec<T>
+public class TokenCodec<T>(long NumberOfTokenClasses) : CognitiveDataCodec<T>
   where T : INumber<T>
 {
   public int FloatLength => 0;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => [long.CreateChecked(NumberOfTokenClasses)];
+  public ImmutableArray<long> EncodedTokenClassCounts => [NumberOfTokenClasses];
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {

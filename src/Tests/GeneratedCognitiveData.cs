@@ -49,7 +49,7 @@ public partial class GeneratedCognitiveData
       P1 = Expected
     };
 
-    Data.MarshalTo(Values);
+    Data.MarshalTo(Values, []);
 
     Values.Should().Equal(Expected);
   }
@@ -78,7 +78,7 @@ public partial class GeneratedCognitiveData
     };
     var Values = new float[FloatArrayMockThoughtData.FloatLength];
 
-    Data.MarshalTo(Values);
+    Data.MarshalTo(Values, []);
 
     Values.Should().Equal(Expected0, Expected1, Expected2, Expected3);
   }
@@ -149,7 +149,7 @@ public partial class GeneratedCognitiveData
     where T : CognitiveData<T>, new()
   {
     var Buffer = new float[T.FloatLength];
-    ToTest.MarshalTo(Buffer);
+    ToTest.MarshalTo(Buffer, []);
     var Actual = T.UnmarshalFrom(Buffer);
 
     Actual.Should().BeEquivalentTo(ToTest);
@@ -164,7 +164,7 @@ public partial class GeneratedCognitiveData
     };
 
     var Target = new float[DeclarativelyNormalizedMockThoughtData.FloatLength];
-    Data.MarshalTo(Target);
+    Data.MarshalTo(Target, []);
 
     Target[0].Should().BeApproximately((Data.ToNormalize - 1f) / 5f, 0.01f);
   }
@@ -218,10 +218,26 @@ public partial class GeneratedCognitiveData
     }, 0.9999999f);
   }
 
+  [TestMethod]
+  public void CopyTokens()
+  {
+    var TokenContainer = new TokenContainingData()
+    {
+      Token1 = (byte) Any.Int(0, 100),
+      Token2 = Any.Long
+    };
+    var Tokens = new long[TokenContainingData.EncodedTokenClassCounts.Length];
+
+    TokenContainer.MarshalTo(new float[TokenContainingData.FloatLength], Tokens);
+
+    Tokens[TokenContainingData.Token1TokenIndex].Should().Be(TokenContainer.Token1);
+    Tokens[TokenContainingData.Token2TokenIndex].Should().Be(TokenContainer.Token2);
+  }
+
   void BoundsMarshallingTest(DefaultNormalizationMockThoughtData Data, float Expected)
   {
     var Buffer = new float[DefaultNormalizationMockThoughtData.FloatLength];
-    Data.MarshalTo(Buffer);
+    Data.MarshalTo(Buffer, []);
 
     foreach (var F in Buffer)
       F.Should().BeApproximately(Expected, 0.01f);
@@ -301,6 +317,16 @@ public partial class GeneratedCognitiveData
 
     [CognitiveDataLength(ImplicitlyEncodedStringLength)]
     public string ImplicitlyEncodedString { get; set; } = "";
+  }
+
+  [CognitiveData]
+  public partial class TokenContainingData
+  {
+    public byte Token1 { get; set; }
+    public static CognitiveDataCodec<byte> Token1Codec = new TokenCodec<byte>(byte.MaxValue + 1);
+
+    public long Token2 { get; set; }
+    public static CognitiveDataCodec<long> Token2Codec = new TokenCodec<long>(2000);
   }
 
   [CognitiveData]
