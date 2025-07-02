@@ -32,7 +32,7 @@ public class TokenCodec<T>(T NumberOfTokenClasses) : CognitiveDataCodec<T>
 
   public ImmutableArray<long> EncodedTokenClassCounts => [long.CreateChecked(NumberOfTokenClasses)];
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
     throw new NotImplementedException();
   }

@@ -33,10 +33,10 @@ public class NumberToFloatingPointCodec<T, U>(CognitiveDataCodec<U> Inner) : Cog
 
   public ImmutableArray<long> EncodedTokenClassCounts => [];
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
     var ObjectOfInnerType = U.CreateChecked(ObjectToEncode);
-    Inner.EncodeTo(ObjectOfInnerType, Target);
+    Inner.EncodeTo(ObjectOfInnerType, Target, []);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)

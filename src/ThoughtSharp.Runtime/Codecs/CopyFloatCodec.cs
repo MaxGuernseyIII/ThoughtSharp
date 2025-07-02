@@ -31,7 +31,7 @@ public class CopyFloatCodec : CognitiveDataCodec<float>
 
   public ImmutableArray<long> EncodedTokenClassCounts => [];
 
-  public void EncodeTo(float ObjectToEncode, Span<float> Target)
+  public void EncodeTo(float ObjectToEncode, Span<float> Target, Span<long> _)
   {
     Target[0] = ObjectToEncode;
   }

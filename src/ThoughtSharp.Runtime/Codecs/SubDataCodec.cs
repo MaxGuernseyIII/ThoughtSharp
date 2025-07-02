@@ -32,7 +32,7 @@ public class SubDataCodec<T> : CognitiveDataCodec<T>
 
   public ImmutableArray<long> EncodedTokenClassCounts => T.EncodedTokenClassCounts;
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
     ObjectToEncode.MarshalTo(Target);
   }

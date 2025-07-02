@@ -43,9 +43,9 @@ public class BitwiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
 
   public ImmutableArray<long> EncodedTokenClassCounts => [];
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> _)
   {
-    Inner.EncodeTo((U)(object)ObjectToEncode, Target);
+    Inner.EncodeTo((U)(object)ObjectToEncode, Target, []);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)

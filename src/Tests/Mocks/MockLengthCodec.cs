@@ -25,15 +25,19 @@ using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-public class MockLengthCodec<T>(int Length) : CognitiveDataCodec<T>
+public class MockCodec<T> : CognitiveDataCodec<T>
 {
-  public int FloatLength { get; } = Length;
+  public delegate void EncodeAction(T ObjectToEncode, Span<float> Target, Span<long> Tokens);
 
-  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+  public int FloatLength { get; set; }
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts { get; set; } = [];
+
+  public EncodeAction OnEncode = delegate { };
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    throw new NotImplementedException();
+    OnEncode(ObjectToEncode, Target, Tokens);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -52,29 +56,18 @@ public class MockLengthCodec<T>(int Length) : CognitiveDataCodec<T>
   }
 }
 
-public class MockTokenClassCountsCodec<T>(IEnumerable<long> TokenClassCounts) : CognitiveDataCodec<T>
+public class MockLengthCodec<T> : MockCodec<T>
 {
-  public int FloatLength { get; }
-
-  public ImmutableArray<long> EncodedTokenClassCounts { get; } = [..TokenClassCounts];
-
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public MockLengthCodec(int Length)
   {
-    throw new NotImplementedException();
+    FloatLength = Length;
   }
+}
 
-  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+public class MockTokenClassCountsCodec<T> : MockCodec<T>
+{
+  public MockTokenClassCountsCodec(IEnumerable<long> TokenClassCounts)
   {
-    throw new NotImplementedException();
-  }
-
-  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
-  {
-    throw new NotImplementedException();
-  }
-
-  public T DecodeFrom(ReadOnlySpan<float> Source)
-  {
-    throw new NotImplementedException();
+    EncodedTokenClassCounts = [..TokenClassCounts];
   }
 }

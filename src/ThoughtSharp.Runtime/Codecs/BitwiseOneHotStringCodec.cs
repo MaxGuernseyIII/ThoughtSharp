@@ -35,14 +35,14 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
 
   public ImmutableArray<long> EncodedTokenClassCounts => Inner.EncodedTokenClassCounts;
 
-  public void EncodeTo(string ObjectToEncode, Span<float> Target)
+  public void EncodeTo(string ObjectToEncode, Span<float> Target, Span<long> _)
   {
     var Padded = ObjectToEncode.PadRight(MaximumCharacters, (char) 0);
     var Index = 0;
 
     foreach (var C in Padded)
     {
-      Inner.EncodeTo(C, Target[Index..(Index + Inner.FloatLength)]);
+      Inner.EncodeTo(C, Target[Index..(Index + Inner.FloatLength)], []);
       Index += Inner.FloatLength;
     }
   }

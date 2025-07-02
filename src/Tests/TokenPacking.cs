@@ -65,7 +65,7 @@ public class TokenPacking
   float[] WhenPackBuffer(string Content)
   {
     var Buffer = new float[Codec.FloatLength];
-    Codec.EncodeTo(Content, Buffer);
+    Codec.EncodeTo(Content, Buffer, []);
     return Buffer;
   }
 

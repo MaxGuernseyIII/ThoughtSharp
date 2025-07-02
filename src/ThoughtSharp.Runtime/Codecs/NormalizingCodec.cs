@@ -33,9 +33,9 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
 
   public ImmutableArray<long> EncodedTokenClassCounts => [];
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    Inner.EncodeTo(GetNormalized(ObjectToEncode), Target);
+    Inner.EncodeTo(GetNormalized(ObjectToEncode), Target, []);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)

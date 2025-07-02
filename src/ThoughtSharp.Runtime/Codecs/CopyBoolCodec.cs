@@ -31,7 +31,7 @@ public class CopyBoolCodec(float Threshold = .5f) : CognitiveDataCodec<bool>
 
   public ImmutableArray<long> EncodedTokenClassCounts => [];
 
-  public void EncodeTo(bool ObjectToEncode, Span<float> Target)
+  public void EncodeTo(bool ObjectToEncode, Span<float> Target, Span<long> _)
   {
     Target[0] = ObjectToEncode ? 1 : 0;
   }

@@ -29,7 +29,7 @@ public interface CognitiveDataCodec<T>
   int FloatLength { get; }
   ImmutableArray<long> EncodedTokenClassCounts { get; }
 
-  void EncodeTo(T ObjectToEncode, Span<float> Target);
+  void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens);
 
   void WriteLossRulesFor(T Target, LossRuleWriter Writer);
   void WriteIsolationBoundaries(IsolationBoundariesWriter Writer);
@@ -42,7 +42,8 @@ public static class CognitiveDataCodecExtensions
   public static void WriteStandardLossRulesFor<T>(this CognitiveDataCodec<T> Codec, T Target, LossRuleWriter Writer)
   {
     var TargetBuffer = new float[Codec.FloatLength];
-    Codec.EncodeTo(Target, TargetBuffer);
+    var TokenDiscard = new long[Codec.EncodedTokenClassCounts.Length];
+    Codec.EncodeTo(Target, TargetBuffer, TokenDiscard);
     Writer.WriteLossRule(0, new BinaryCrossEntropyWithLogitsLossRule(TargetBuffer));
   }
 }

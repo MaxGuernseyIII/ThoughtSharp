@@ -31,10 +31,10 @@ public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T
   public ImmutableArray<long> EncodedTokenClassCounts =>
     [..First.EncodedTokenClassCounts, ..Second.EncodedTokenClassCounts];
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    First.EncodeTo(ObjectToEncode, Target[..First.FloatLength]);
-    Second.EncodeTo(ObjectToEncode, Target[First.FloatLength..]);
+    First.EncodeTo(ObjectToEncode, Target[..First.FloatLength], []);
+    Second.EncodeTo(ObjectToEncode, Target[First.FloatLength..], []);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)

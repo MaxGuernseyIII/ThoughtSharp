@@ -21,7 +21,6 @@
 // SOFTWARE.
 
 using System.CodeDom.Compiler;
-using System.Reflection.Metadata;
 
 namespace ThoughtSharp.Generator;
 
@@ -84,7 +83,7 @@ class CognitiveDataClassRenderer
       var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
                    (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.FloatLength" : "0") + ")";
       W.WriteLine(
-        $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo({Parameter.Name}{Subscript}, Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.FloatLength)]);");
+        $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo({Parameter.Name}{Subscript}, Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.FloatLength)], []);");
     }
 
     W.WriteLine("}");

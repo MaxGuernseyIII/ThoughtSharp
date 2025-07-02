@@ -43,10 +43,10 @@ public class ValueWiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
 
   public ImmutableArray<long> EncodedTokenClassCounts => [];
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> _)
   {
     var Index = ValuesInOrder.IndexOf(ObjectToEncode);
-    Inner.EncodeTo(U.CreateChecked(Index), Target);
+    Inner.EncodeTo(U.CreateChecked(Index), Target, []);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)

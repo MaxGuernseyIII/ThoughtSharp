@@ -45,7 +45,7 @@ public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
 
   public ImmutableArray<long> EncodedTokenClassCounts => [];
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> _)
   {
     for (var I = 0; I < FloatLength; I++)
     {

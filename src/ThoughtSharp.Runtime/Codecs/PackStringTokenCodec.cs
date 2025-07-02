@@ -30,7 +30,7 @@ public class PackStringTokenCodec(string ValidCharacters, int MaximumLength) : C
 {
   public ImmutableArray<long> EncodedTokenClassCounts => [];
 
-  public void EncodeTo(string ObjectToEncode, Span<float> Target)
+  public void EncodeTo(string ObjectToEncode, Span<float> Target, Span<long> _)
   {
     foreach (var I in Enumerable.Range(0, Math.Min(ObjectToEncode.Length, MaximumLength)))
     {
