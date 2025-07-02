@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
@@ -32,6 +33,8 @@ class MockMind : MockDisposable, Mind<MockMind>
   {
     return GetNextChainedReasoningMind();
   }
+
+  public static ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
 
   public static int InputLength => throw new NotImplementedException();
 

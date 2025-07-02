@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime;
 
 public interface Mind<out T>
@@ -27,6 +29,7 @@ public interface Mind<out T>
 {
   T WithChainedReasoning();
 
+  public static abstract ImmutableArray<long> EncodedTokenClassCounts { get; }
   public static abstract int InputLength { get; }
   public static abstract int OutputLength { get; }
 

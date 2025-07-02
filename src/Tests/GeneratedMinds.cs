@@ -1127,6 +1127,13 @@ public partial class GeneratedMinds
     TokenContainer.EncodedTokenClassCounts.Should().BeEquivalentTo([100, 900], O => O.WithStrictOrdering());
   }
 
+  [TestMethod]
+  public void TokenLayoutForMind()
+  {
+    TokenUsingMind.EncodedTokenClassCounts.Should()
+      .BeEquivalentTo(TokenUsingMind.Input.EncodedTokenClassCounts, O => O.WithStrictOrdering());
+  }
+
   [CognitiveData]
   partial class TokenContainer
   {
@@ -1135,5 +1142,18 @@ public partial class GeneratedMinds
 
     public int Token2;
     public static readonly TokenCodec<int> Token2Codec = new(900);
+  }
+
+  [CognitiveData]
+  public partial class DummyData
+  {
+
+  }
+
+  [Mind]
+  partial class TokenUsingMind
+  {
+    [Make]
+    public partial CognitiveResult<DummyData, DummyData> Make(TokenContainer ContainsToken);
   }
 }

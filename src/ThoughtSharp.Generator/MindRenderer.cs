@@ -33,6 +33,7 @@ static class MindRenderer
       WriteHeader = W =>
       {
         W.WriteLine("using ThoughtSharp.Runtime;");
+        W.WriteLine("using System.Collections.Immutable;");
         W.WriteLine();
       },
       WriteAfterTypeName = W => { W.Write($" : Mind<{M.TypeName.FullName}>"); },
@@ -72,6 +73,7 @@ static class MindRenderer
     W.WriteLine(
       $"public {M.TypeName.FullName} WithChainedReasoning() => new {M.TypeName.FullName}(Brain, CognitionMode.EnterChainedLineOfReasoning());");
 
+    W.WriteLine($"public static ImmutableArray<long> EncodedTokenClassCounts => Input.EncodedTokenClassCounts;");
     W.WriteLine($"public static int InputLength {{ get; }} = {M.TypeName.FullName}.Input.FloatLength;");
     W.WriteLine($"public static int OutputLength {{ get; }} = {M.TypeName.FullName}.Output.FloatLength;");
     W.WriteLine();
