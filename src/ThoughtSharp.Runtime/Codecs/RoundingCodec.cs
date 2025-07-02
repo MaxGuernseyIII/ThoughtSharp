@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -28,6 +29,8 @@ public class RoundingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<
   where T : IFloatingPoint<T>
 {
   public int FloatLength => Inner.FloatLength;
+
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

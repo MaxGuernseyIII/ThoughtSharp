@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -39,6 +40,8 @@ public class ValueWiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
   }
 
   public int FloatLength => Inner.FloatLength;
+
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

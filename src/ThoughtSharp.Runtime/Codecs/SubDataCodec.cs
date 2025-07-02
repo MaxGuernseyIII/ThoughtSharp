@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
@@ -27,6 +29,8 @@ public class SubDataCodec<T> : CognitiveDataCodec<T>
   where T : CognitiveData<T>
 {
   public int FloatLength => T.FloatLength;
+
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
@@ -30,6 +32,8 @@ public class BitwiseOneHotStringCodec(int Length) : CognitiveDataCodec<string>
   // ReSharper disable once ReplaceWithPrimaryConstructorParameter
   readonly int MaximumCharacters = Length;
   public int FloatLength { get; } = Length * Inner.FloatLength;
+
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
 
   public void EncodeTo(string ObjectToEncode, Span<float> Target)
   {

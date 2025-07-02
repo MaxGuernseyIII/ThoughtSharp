@@ -20,11 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime;
 
 public interface CognitiveDataCodec<T>
 {
   int FloatLength { get; }
+  ImmutableArray<long> EncodedTokenClassCounts { get; }
 
   void EncodeTo(T ObjectToEncode, Span<float> Target);
 

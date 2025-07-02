@@ -20,12 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
 public class CopyBoolCodec(float Threshold = .5f) : CognitiveDataCodec<bool>
 {
   public int FloatLength => 1;
+
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
 
   public void EncodeTo(bool ObjectToEncode, Span<float> Target)
   {

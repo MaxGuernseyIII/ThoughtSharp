@@ -20,13 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using JetBrains.Annotations;
 
 namespace ThoughtSharp.Runtime.Codecs;
 
 [PublicAPI]
-public class PackTokenCodec(string ValidCharacters, int MaximumLength) : CognitiveDataCodec<string>
+public class PackStringTokenCodec(string ValidCharacters, int MaximumLength) : CognitiveDataCodec<string>
 {
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+
   public void EncodeTo(string ObjectToEncode, Span<float> Target)
   {
     foreach (var I in Enumerable.Range(0, Math.Min(ObjectToEncode.Length, MaximumLength)))

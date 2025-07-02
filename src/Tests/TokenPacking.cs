@@ -29,7 +29,7 @@ namespace Tests;
 public class TokenPacking
 {
   int BitCountPerCharacter;
-  PackTokenCodec Codec = null!;
+  PackStringTokenCodec Codec = null!;
   string ValidCharacters = null!;
   int Width;
 

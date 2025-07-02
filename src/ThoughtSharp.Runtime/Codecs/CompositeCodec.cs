@@ -20,11 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime.Codecs;
 
 public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T> Second) : CognitiveDataCodec<T>
 {
   public int FloatLength => First.FloatLength + Second.FloatLength;
+
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

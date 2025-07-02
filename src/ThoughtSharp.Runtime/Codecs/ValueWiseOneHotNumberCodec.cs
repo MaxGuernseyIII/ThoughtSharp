@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -32,6 +33,8 @@ public class ValueWiseOneHotNumberCodec<T>(T Bound1, T Bound2) : CognitiveDataCo
   readonly T Maximum = T.MaxNumber(Bound1, Bound2);
 
   public int FloatLength => int.CreateChecked(Maximum) - int.CreateChecked(Minimum) + 1;
+
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

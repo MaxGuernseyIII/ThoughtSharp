@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
@@ -27,6 +28,35 @@ namespace Tests.Mocks;
 public class MockLengthCodec<T>(int Length) : CognitiveDataCodec<T>
 {
   public int FloatLength { get; } = Length;
+
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  {
+    throw new NotImplementedException();
+  }
+
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
+  {
+    throw new NotImplementedException();
+  }
+
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+    throw new NotImplementedException();
+  }
+
+  public T DecodeFrom(ReadOnlySpan<float> Source)
+  {
+    throw new NotImplementedException();
+  }
+}
+
+public class MockTokenClassCountsCodec<T>(IEnumerable<long> TokenClassCounts) : CognitiveDataCodec<T>
+{
+  public int FloatLength { get; }
+
+  public ImmutableArray<long> EncodedTokenClassCounts { get; } = [..TokenClassCounts];
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {

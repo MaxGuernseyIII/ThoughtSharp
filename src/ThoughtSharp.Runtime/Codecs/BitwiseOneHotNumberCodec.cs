@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -41,6 +42,8 @@ public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
     var T when T == typeof(char) => 16,
     _ => throw new NotSupportedException($"Unsupported type {typeof(T)}")
   };
+
+  public ImmutableArray<long> EncodedTokenClassCounts => throw new NotImplementedException();
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target)
   {
