@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
@@ -106,7 +107,39 @@ public class TokenEncoding
   [TestMethod]
   public void SubDataCodecDelegatesToDataType()
   {
-    Assert.Fail("This test is not implemented, yet.");
+    var Codec = new SubDataCodec<MockCognitiveData>();
+
+    var Actual = Codec.EncodedTokenClassCounts;
+
+    Actual.Should().BeEquivalentTo(MockCognitiveData.EncodedTokenClassCounts, O => O.WithStrictOrdering());
+  }
+
+  // ReSharper disable once ClassNeverInstantiated.Local
+  class MockCognitiveData : CognitiveData<MockCognitiveData>
+  {
+    public static int FloatLength => throw new NotImplementedException();
+
+    public static ImmutableArray<long> EncodedTokenClassCounts { get; } = [..Any.ListOf(() => (long) Any.Int(), 1, 5)];
+
+    public void MarshalTo(Span<float> Target)
+    {
+      throw new NotImplementedException();
+    }
+
+    public void WriteAsLossRules(LossRuleWriter Target)
+    {
+      throw new NotImplementedException();
+    }
+
+    public static MockCognitiveData UnmarshalFrom(ReadOnlySpan<float> Source)
+    {
+      throw new NotImplementedException();
+    }
+
+    public static void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+    {
+      throw new NotImplementedException();
+    }
   }
 
   [TestMethod]
