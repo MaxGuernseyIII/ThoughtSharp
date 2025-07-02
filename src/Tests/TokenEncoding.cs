@@ -24,7 +24,6 @@ using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Runtime.Codecs;
-using static TorchSharp.torch;
 
 namespace Tests;
 
@@ -131,5 +130,26 @@ public class TokenEncoding
     var Actual = Codec.EncodedTokenClassCounts;
 
     Actual.Should().BeEquivalentTo([..ClassCounts1, ..ClassCounts2], O => O.WithStrictOrdering());
+  }
+
+  [TestMethod]
+  public void TokenCodecAsksForASingleToken()
+  {
+    var NumberOfTokenClasses = Any.Int();
+    var Codec = new TokenCodec<int>(NumberOfTokenClasses);
+
+    var Actual = Codec.EncodedTokenClassCounts;
+
+    Actual.Should().BeEquivalentTo([NumberOfTokenClasses]);
+  }
+
+  [TestMethod]
+  public void TokenCodecHasNoFloats()
+  {
+    var Codec = new TokenCodec<int>(Any.Int());
+
+    var Actual = Codec.FloatLength;
+
+    Actual.Should().Be(0);
   }
 }
