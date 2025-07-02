@@ -68,7 +68,7 @@ public class TokenEncoding
   }
 
   [TestMethod]
-  public void NormalizingCodecDoesNotSupportTokens()
+  public void NormalizingCodecDefersTokenLayoutToInner()
   {
     var Inner = new MockTokenClassCountsCodec<float>(Any.ListOf(() => Any.Long, 1, 3));
     var Codec = new NormalizingCodec<float>(Inner, 0, 1);
@@ -79,7 +79,7 @@ public class TokenEncoding
   }
 
   [TestMethod]
-  public void NumberToFloatingPointCodecDoesNotSupportTokens()
+  public void NumberToFloatingPointCodecDefersTokenLayoutToInner()
   {
     var Inner = new MockTokenClassCountsCodec<float>(Any.ListOf(() => Any.Long, 1, 3));
     var Codec = new NumberToFloatingPointCodec<int, float>(Inner);
@@ -96,7 +96,7 @@ public class TokenEncoding
   }
 
   [TestMethod]
-  public void RoundingCodecDoesNotSupportTokens()
+  public void RoundingCodecDefersTokenLayoutToInner()
   {
     var Inner = new MockTokenClassCountsCodec<float>(Any.ListOf(() => Any.Long, 1, 3));
     var Codec = new RoundingCodec<float>(Inner);

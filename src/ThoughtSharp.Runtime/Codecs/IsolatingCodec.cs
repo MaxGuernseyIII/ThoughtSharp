@@ -32,7 +32,7 @@ public class IsolatingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    Inner.EncodeTo(ObjectToEncode, Target, []);
+    Inner.EncodeTo(ObjectToEncode, Target, Tokens);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)

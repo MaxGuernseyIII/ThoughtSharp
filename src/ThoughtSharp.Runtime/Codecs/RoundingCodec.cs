@@ -30,11 +30,11 @@ public class RoundingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<
 {
   public int FloatLength => Inner.FloatLength;
 
-  public ImmutableArray<long> EncodedTokenClassCounts => [];
+  public ImmutableArray<long> EncodedTokenClassCounts => Inner.EncodedTokenClassCounts;
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    Inner.EncodeTo(ObjectToEncode, Target, []);
+    Inner.EncodeTo(ObjectToEncode, Target, Tokens);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)

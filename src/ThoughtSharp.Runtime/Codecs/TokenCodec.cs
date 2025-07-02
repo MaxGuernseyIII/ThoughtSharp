@@ -34,7 +34,7 @@ public class TokenCodec<T>(T NumberOfTokenClasses) : CognitiveDataCodec<T>
 
   public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    throw new NotImplementedException();
+    Tokens[0] = long.CreateChecked(ObjectToEncode);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
