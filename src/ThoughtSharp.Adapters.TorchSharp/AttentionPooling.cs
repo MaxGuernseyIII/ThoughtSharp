@@ -40,15 +40,15 @@ sealed class AttentionPooling : torch.nn.Module<TorchInferenceParts, TorchInfere
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
     var Mask = Input.GetMask().unsqueeze(-1);
-    var Scores = Weighting.forward(Input.Payload);
+    var Scores = Weighting.forward(Input.Features);
     var MinusInfinity = torch.full_like(Scores, float.NegativeInfinity, dtype:torch.ScalarType.Float32).to(Scores.device);
     var MaskedScores = torch.where(Mask, Scores, MinusInfinity);
     var Weights = MaskedScores.softmax(1);
-    var Weighted = Weights * Input.Payload;
+    var Weighted = Weights * Input.Features;
 
     return Input with
     {
-      Payload = Weighted.sum(dim: 1).unsqueeze(1),
+      Features = Weighted.sum(dim: 1).unsqueeze(1),
       SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0], dtype:torch.ScalarType.Int64) + 1
     };
   }

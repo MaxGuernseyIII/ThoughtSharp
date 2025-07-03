@@ -42,7 +42,7 @@ sealed class MultiHeadedAttentionAdapter : torch.nn.Module<TorchInferenceParts, 
 
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var Adapted = Adapter.forward(Input.Payload);
+    var Adapted = Adapter.forward(Input.Features);
 
     var TimeFirst = Adapted.transpose(0, 1);
 
@@ -50,6 +50,6 @@ sealed class MultiHeadedAttentionAdapter : torch.nn.Module<TorchInferenceParts, 
 
     var BatchFirst = Attended.transpose(0, 1);
 
-    return Input with {Payload = BatchFirst};
+    return Input with {Features = BatchFirst};
   }
 }

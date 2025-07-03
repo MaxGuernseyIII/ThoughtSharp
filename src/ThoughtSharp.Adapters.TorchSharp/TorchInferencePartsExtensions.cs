@@ -28,9 +28,9 @@ public static class TorchInferencePartsExtensions
 {
   public static torch.Tensor GetMask(this TorchInferenceParts This)
   {
-    var Range = torch.arange(This.Payload.shape[1]).unsqueeze(0);
+    var Range = torch.arange(This.Features.shape[1]).unsqueeze(0);
     var Lengths = This.SequenceLengths.unsqueeze(1);
 
-    return (Range < Lengths).to(This.Payload.device);
+    return (Range < Lengths).to(This.Features.device);
   }
 }

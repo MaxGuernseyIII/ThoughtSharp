@@ -29,7 +29,7 @@ class MeanOverTimeStepsPooling(string Name = "_unnamed") : torch.nn.Module<Torch
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
     var Mask = Input.GetMask().unsqueeze(-1);
-    var Masked = Input.Payload * Mask;
+    var Masked = Input.Features * Mask;
     var Sum = Masked.sum(1);
     var Count = Mask.sum(1).clamp_min(1);
 
@@ -37,7 +37,7 @@ class MeanOverTimeStepsPooling(string Name = "_unnamed") : torch.nn.Module<Torch
 
     return Input with
     {
-      Payload = Mean.unsqueeze(1),
+      Features = Mean.unsqueeze(1),
       SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0], dtype: torch.ScalarType.Int64) + 1
     };
   }

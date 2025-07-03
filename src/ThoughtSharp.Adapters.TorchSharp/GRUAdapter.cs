@@ -51,13 +51,13 @@ public class GRUAdapter : torch.nn.Module<TorchInferenceParts, TorchInferencePar
 
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var InputTensor = Input.Payload;
+    var InputTensor = Input.Features;
 
     var Output = Underlying.forward(InputTensor, Input.State?.Value.FirstOrDefault() ?? torch.zeros(new[] { GRULayers * GRUDirections, InputTensor.shape[0], OutputFeatures, }, torch.ScalarType.Float32, Device));
 
     return Input with
     {
-      Payload = Output.Payload,
+      Features = Output.Payload,
       State = new(Output.State)
     };
   }

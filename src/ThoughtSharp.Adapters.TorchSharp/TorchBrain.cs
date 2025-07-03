@@ -78,9 +78,9 @@ public class TorchBrain(
     Optimizer.Dispose();
   }
 
-  internal Tensor ConvertFloatsToTensor(Batch<TensorData> JaggedTensor)
+  internal Tensor ConvertBatchToFeaturesTensor(Batch<TensorData> JaggedTensor)
   {
-    return ConvertFloatsToInput(JaggedTensor).Payload;
+    return ConvertFloatsToInput(JaggedTensor).Features;
   }
 
   internal TorchInferenceParts Forward(TorchInferenceParts Input)
@@ -129,7 +129,7 @@ public class TorchBrain(
 
     return new()
     {
-      Payload= tensor(TensorShaped, ScalarType.Float32).to(Device),
+      Features= tensor(TensorShaped, ScalarType.Float32).to(Device),
       SequenceLengths = tensor(Sequences.Select(S => S.TimeSequence.Steps.Count).ToArray(), dtype: int64),
       State = EmptyState
     };

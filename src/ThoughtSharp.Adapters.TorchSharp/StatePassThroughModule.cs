@@ -37,9 +37,9 @@ public sealed class StatePassThroughModule : torch.nn.Module<TorchInferenceParts
 
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    //Console.WriteLine($"Final input shape before Linear: [{string.Join(", ", Input.Payload.shape)}]");
+    //Console.WriteLine($"Final input shape before Linear: [{string.Join(", ", Input.Features.shape)}]");
 
-    return Input with {Payload = Transformer.forward(Input.Payload)};
+    return Input with {Features = Transformer.forward(Input.Features)};
   }
 }
 

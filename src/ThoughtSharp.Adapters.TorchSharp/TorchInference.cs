@@ -38,7 +38,7 @@ public class TorchInference(
   {
     get
     {
-      var OutputTensor = Output.Payload;
+      var OutputTensor = Output.Features;
       var LastIndices = (Output.SequenceLengths - 1).unsqueeze(1).unsqueeze(2).to(OutputTensor.device);
       var BatchSize = LastIndices.shape[0];
 
@@ -61,13 +61,13 @@ public class TorchInference(
   public void Dispose()
   {
     OriginalInput.State?.Dispose();
-    Output.Payload.Dispose();
+    Output.Features.Dispose();
   }
 
   public void Train(params IReadOnlyList<(int, int, LossRule)> LossRules)
   {
     var Visitor = new TorchLossRuleVisitor(Brain);
-    var TensorForBackPropagation = Replay().Payload;
+    var TensorForBackPropagation = Replay().Features;
 
     var CumulativeLoss = torch.tensor(0.0f, requires_grad: true);
 

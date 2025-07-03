@@ -28,7 +28,7 @@ class LastTimeStepPooling(string Name = "_unnamed") : torch.nn.Module<TorchInfer
 {
   public override TorchInferenceParts forward(TorchInferenceParts Input)
   {
-    var AllTimeSteps = Input.Payload;
+    var AllTimeSteps = Input.Features;
     var LastIndices = (Input.SequenceLengths - 1).unsqueeze(1).unsqueeze(2);
     var BatchSize = LastIndices.shape[0];
 
@@ -37,7 +37,7 @@ class LastTimeStepPooling(string Name = "_unnamed") : torch.nn.Module<TorchInfer
 
     return Input with
     {
-      Payload = LastTimeStep,
+      Features = LastTimeStep,
       SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0], dtype: torch.ScalarType.Int64) + 1
     };
   }
