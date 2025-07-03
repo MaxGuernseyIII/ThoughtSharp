@@ -277,6 +277,25 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
+  public void UseActionWithTokenTriggersOperation1()
+  {
+    var ExpectedSomeData = Any.Float;
+
+    TestSynchronousUseMethodWithTokens(new()
+    {
+      ActionCode = 1,
+      MoreActions = false,
+      Parameters =
+      {
+        DoSomething1 =
+        {
+          SomeData = ExpectedSomeData
+        }
+      }
+    }, ExpectedSomeData, null);
+  }
+
+  [TestMethod]
   public void UseSynchronousActionSurfaceOperation2()
   {
     var ExpectedSomeOtherDataData = Any.Float;
@@ -823,6 +842,45 @@ public partial class GeneratedMinds
           _ => throw new InvalidOperationException("Should not get here.")
       };
     }
+  }
+
+  static void TestSynchronousUseMethodWithTokens(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,
+    float? ExpectedSomeOtherData)
+  {
+    var Surface = new MockSynchronousSurface();
+    var Brain = new MockBrain<TokenMindWithAllOperations.Input, TokenMindWithAllOperations.Output>();
+    var ExpectedInput = new TokenMindWithAllOperations.Input
+    {
+      OperationCode = 2,
+      Parameters =
+      {
+        UseWithTokenBucket = 
+        {
+          Inputs =
+          {
+            Token = Any.Int(0, 100)
+          }
+        }
+      }
+    };
+
+    var StipulatedOutput = new TokenMindWithAllOperations.Output
+    {
+      Parameters =
+      {
+        UseWithTokenBucket =
+        {
+          ToUse = Selection
+        }
+      }
+    };
+    Brain.SetOutputForOnlyInput([ExpectedInput], StipulatedOutput);
+    new TokenMindWithAllOperations(Brain).UseWithTokenBucket(
+      ExpectedInput.Parameters.UseWithTokenBucket.Inputs,
+      Surface);
+
+    Surface.SomeData.Should().Be(ExpectedSomeData);
+    Surface.SomeOtherData.Should().Be(ExpectedSomeOtherData);
   }
 
   static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,

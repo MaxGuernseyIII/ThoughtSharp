@@ -34,7 +34,7 @@ public class TorchInference(
   internal TorchInferenceParts Output { get; } = Output;
   internal TorchInferenceParts OriginalInput { get; } = OriginalInput;
 
-  public float[][] Result
+  public Batch<TensorData> Result
   {
     get
     {
@@ -46,13 +46,22 @@ public class TorchInference(
 
       var FinalItems = OutputTensor.gather(1, ExpandedIndices);
 
-      return FinalItems
+      var AllFeatureSets = FinalItems
         .to(torch.CPU)
         .data<float>()
         .ToArray()
         .Chunk((int)OutputTensor.shape[2])
         .Select(Chunk => Chunk.ToArray())
         .ToArray();
+
+      return AllFeatureSets.Aggregate(Batch.OfTensorData.Builder, (Builder, Tensor) =>
+      {
+        return Builder.AddSequence(S => S.AddStep(new()
+        {
+          Features = Tensor,
+          Tokens = []
+        }));
+      }).Build();
     }
   }
 
