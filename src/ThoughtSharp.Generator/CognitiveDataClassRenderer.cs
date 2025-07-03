@@ -104,7 +104,7 @@ class CognitiveDataClassRenderer
     W.WriteLine("}");
     W.WriteLine();
     W.WriteLine(
-      $"public static {CognitiveDataClass.Address.TypeName.FullName} UnmarshalFrom(ReadOnlySpan<float> __SOURCE__)");
+      $"public static {CognitiveDataClass.Address.TypeName.FullName} UnmarshalFrom(ReadOnlySpan<float> __SOURCE__, ReadOnlySpan<long> __TOKENS__)");
     W.WriteLine("{");
     W.WriteLine($"  var Result = new {CognitiveDataClass.Address.TypeName.FullName}();");
     W.WriteLine();
@@ -116,7 +116,11 @@ class CognitiveDataClassRenderer
       var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
                    (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.FloatLength" : "0") + ")";
       W.WriteLine(
-        $"  Result.{Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(__SOURCE__[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.FloatLength)]);");
+        $"  Result.{Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(");
+      W.WriteLine(
+        $"    __SOURCE__[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.FloatLength)],");
+      W.WriteLine(
+        $"    []);");
     }
 
     W.WriteLine("  return Result;");

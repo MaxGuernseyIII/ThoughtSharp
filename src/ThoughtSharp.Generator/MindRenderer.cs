@@ -133,7 +133,7 @@ static class MindRenderer
 
       W.WriteLine();
       W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfFeatureSets.Builder.AddSequence(S => InputBuffers.Aggregate(S, (Previous, Step) => Previous.AddStep(Step))).Build(), Batch.OfTokenSets.Builder.Build());");
-      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
+      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0], []);");
       W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
     }
   }
@@ -208,7 +208,7 @@ static class MindRenderer
     W.WriteLine($"var ReturnObjects = new List<{MakeOperation.ReturnType}>();");
     using (W.DeclareWithBlock("foreach (var Result in Inference.Result)"))
     {
-      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Result);");
+      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Result, []);");
       W.WriteLine($"ReturnObjects.Add(OutputObject.Parameters.{MakeOperation.Name}.Value);");
     }
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
@@ -410,7 +410,7 @@ static class MindRenderer
 
     W.WriteLine();
     W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(__BATCH__, Batch.OfTokenSets.Builder.Build());");
-    W.WriteLine("var OutputObjects = Inference.Result.Select(R => Output.UnmarshalFrom(R)).ToList();");
+    W.WriteLine("var OutputObjects = Inference.Result.Select(R => Output.UnmarshalFrom(R, [])).ToList();");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
 
     W.WriteLine($"var FeedbackOutputs = new List<Output>(OutputObjects);");
@@ -502,7 +502,7 @@ static class MindRenderer
     W.WriteLine("InputObject.MarshalTo(InputBuffer, []);");
     W.WriteLine();
     W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfFeatureSets.Builder.AddSequence(S => S.AddStep(InputBuffer)).Build(), Batch.OfTokenSets.Builder.Build());");
-    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
+    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0], []);");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
   }
 }

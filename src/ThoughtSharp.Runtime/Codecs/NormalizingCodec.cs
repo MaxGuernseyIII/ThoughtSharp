@@ -50,7 +50,7 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
 
   public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
-    var Normalized = Inner.DecodeFrom(Source);
+    var Normalized = Inner.DecodeFrom(Source, []);
 
     var Scaled = Normalized * Size;
 

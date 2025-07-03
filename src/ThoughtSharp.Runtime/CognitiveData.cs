@@ -32,6 +32,6 @@ public interface CognitiveData<out T> where T : CognitiveData<T>
   void MarshalTo(Span<float> Target, Span<long> Tokens);
   void WriteAsLossRules(LossRuleWriter Target);
 
-  static abstract T UnmarshalFrom(ReadOnlySpan<float> Source);
+  static abstract T UnmarshalFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens);
   static abstract void WriteIsolationBoundaries(IsolationBoundariesWriter Writer);
 }

@@ -47,8 +47,8 @@ public class RoundingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<
     Inner.WriteIsolationBoundaries(Writer);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    return T.Round(Inner.DecodeFrom(Source));
+    return T.Round(Inner.DecodeFrom(Source, Tokens));
   }
 }

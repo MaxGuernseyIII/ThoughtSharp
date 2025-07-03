@@ -47,8 +47,8 @@ public class SubDataCodec<T> : CognitiveDataCodec<T>
     T.WriteIsolationBoundaries(Writer);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    return T.UnmarshalFrom(Source);
+    return T.UnmarshalFrom(Source, []);
   }
 }

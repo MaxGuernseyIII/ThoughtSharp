@@ -47,8 +47,8 @@ public class TokenCodec<T>(long NumberOfTokenClasses) : CognitiveDataCodec<T>
     throw new NotImplementedException();
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    throw new NotImplementedException();
+    return T.CreateChecked(Tokens[0]);
   }
 }

@@ -22,7 +22,6 @@
 
 using System.Collections.Immutable;
 using FluentAssertions;
-using Microsoft.Testing.Platform.Extensions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Runtime.Codecs;
@@ -90,6 +89,70 @@ public class TokenEncoding
   }
 
   [TestMethod]
+  public void NumberToFloatingPointCodecDefersEncodingToInner()
+  {
+    TokenEncodingPassThroughSpecification<int, float>(
+      Inner => new NumberToFloatingPointCodec<int, float>(Inner),
+      () => Any.Int(0, 1),
+      F => F);
+  }
+
+  [TestMethod]
+  public void NumberToFloatingPointCodecDefersDecodingToInner()
+  {
+    TokenDecodingPassThroughSpecification<int, float>(
+      Inner => new NumberToFloatingPointCodec<int, float>(Inner),
+      () => Any.Int(),
+      I => (int) I
+    );
+  }
+
+  static void TokenEncodingPassThroughSpecification<TOuter, TInner>(
+    Func<CognitiveDataCodec<TInner>, CognitiveDataCodec<TOuter>> WrapInner,
+    Func<TOuter> MakeToEncode,
+    Func<TOuter, TInner> ConvertToInnerEncodable)
+  {
+    var Inner = new MockTokenClassCountsCodec<TInner>(Any.ListOf(() => Any.Long, 1, 3));
+    var ExpectedTokens = Any.ListOf(() => Any.Long, Inner.EncodedTokenClassCounts.Length,
+      Inner.EncodedTokenClassCounts.Length);
+    var ActualTokens = new long[Inner.EncodedTokenClassCounts.Length];
+    var OuterToEncode = MakeToEncode();
+    Inner.OnEncode = (ToEncode, _, TargetTokens) =>
+    {
+      ToEncode.Should().Be(ConvertToInnerEncodable(OuterToEncode));
+      foreach (var (T, I) in ExpectedTokens.Select((T, I) => (T, I))) TargetTokens[I] = T;
+    };
+    var Codec = WrapInner(Inner);
+
+    Codec.EncodeTo(OuterToEncode, [], ActualTokens);
+
+    ActualTokens.Should().BeEquivalentTo(ExpectedTokens, O => O.WithStrictOrdering());
+  }
+
+  static void TokenDecodingPassThroughSpecification<TOuter, TInner>(
+    Func<CognitiveDataCodec<TInner>, CognitiveDataCodec<TOuter>> CreateWrapper,
+    Func<TInner> MakeSample,
+    Func<TInner, TOuter> ConvertToExpected)
+  {
+    var Inner = new MockTokenClassCountsCodec<TInner>(Any.ListOf(() => Any.Long, 1, 3));
+    var TokensToDecode = Any.ListOf(() => Any.Long, Inner.EncodedTokenClassCounts.Length,
+      Inner.EncodedTokenClassCounts.Length);
+    var ReturnedByInner = MakeSample();
+    Inner.OnDecode = (_, Tokens) =>
+    {
+      long[] TheTokens = [..Tokens];
+      TheTokens.Should().BeEquivalentTo(TokensToDecode, O => O.WithStrictOrdering());
+
+      return ReturnedByInner;
+    };
+    var Codec = CreateWrapper(Inner);
+
+    var Actual = Codec.DecodeFrom([], [..TokensToDecode]);
+
+    Actual.Should().Be(ConvertToExpected(ReturnedByInner));
+  }
+
+  [TestMethod]
   public void PackStringTokenCodecDoesNotSupportTokens()
   {
     CodecDoesNotSupportTokens(new PackStringTokenCodec("", 1));
@@ -104,6 +167,24 @@ public class TokenEncoding
     var Actual = Codec.EncodedTokenClassCounts;
 
     Actual.Should().BeEquivalentTo(Inner.EncodedTokenClassCounts, O => O.WithStrictOrdering());
+  }
+
+  [TestMethod]
+  public void RoundingCodecDefersEncodingToInner()
+  {
+    TokenEncodingPassThroughSpecification(
+      Inner => new RoundingCodec<float>(Inner),
+      ()=> Any.Float,
+      F => F);
+  }
+
+  [TestMethod]
+  public void RoundingCodecDefersDecodingToInner()
+  {
+    TokenDecodingPassThroughSpecification(
+      Inner => new RoundingCodec<float>(Inner),
+      ()=> Any.Float,
+      MathF.Round);
   }
 
   [TestMethod]
@@ -150,6 +231,24 @@ public class TokenEncoding
   }
 
   [TestMethod]
+  public void SubDataCodecDelegatesToDataTypeForDecoding()
+  {
+    var SourceTokens = Any.ListOf(() => Any.Long, MockCognitiveData.EncodedTokenClassCounts.Length,
+      MockCognitiveData.EncodedTokenClassCounts.Length).ToImmutableArray();
+    var Expected = new MockCognitiveData();
+    MockCognitiveData.OnUnmarshalFrom = (_, Tokens) =>
+    {
+      long[] TheTokens = [..Tokens];
+      TheTokens.Should().BeEquivalentTo(SourceTokens, O => O.WithStrictOrdering());
+      return Expected;
+    };
+
+    var Actual = MockCognitiveData.UnmarshalFrom([], [..SourceTokens]);
+
+    Actual.Should().BeSameAs(Expected);
+  }
+
+  [TestMethod]
   public void IsolatingCodecPassesThroughLayout()
   {
     var ClassCounts = Any.ListOf(() => (long) Any.Int(), 0, 4);
@@ -163,18 +262,19 @@ public class TokenEncoding
   [TestMethod]
   public void IsolatingCodecPassesThroughTokenEncoding()
   {
-    var ClassCounts = Any.ListOf(() => (long) Any.Int(), 0, 4);
-    ImmutableArray<long> EncodedTokens = [];
-    var Inner = new MockTokenClassCountsCodec<int>(ClassCounts)
-    {
-      OnEncode = (_, _, Tokens) => EncodedTokens = [..Tokens]
-    };
-    var Codec = new IsolatingCodec<int>(Inner);
-    var Tokens = Any.ListOf(() => Any.Long, ClassCounts.Count, ClassCounts.Count).ToArray();
+    TokenEncodingPassThroughSpecification(
+      Inner => new IsolatingCodec<int>(Inner),
+      () => Any.Int(0, 10),
+      I => I);
+  }
 
-    Codec.EncodeTo(0, new float[Codec.FloatLength], Tokens);
-
-    EncodedTokens.Should().BeEquivalentTo(Tokens, O => O.WithStrictOrdering());
+  [TestMethod]
+  public void IsolatingCodecPassesThroughTokenDecoding()
+  {
+    TokenDecodingPassThroughSpecification(
+      Inner => new IsolatingCodec<int>(Inner),
+      () => Any.Int(0, 10),
+      I => I);
   }
 
   [TestMethod]
@@ -202,7 +302,7 @@ public class TokenEncoding
   }
 
   [TestMethod]
-  public void TokenCodecCopiesToken()
+  public void TokenCodecCopiesTokenDuringEncoding()
   {
     var NumberOfTokenClasses = Any.Int();
     var Codec = new TokenCodec<int>(NumberOfTokenClasses);
@@ -212,6 +312,19 @@ public class TokenEncoding
     Codec.EncodeTo(Token, [], Tokens);
 
     Tokens.Should().BeEquivalentTo([Token], O => O.WithStrictOrdering());
+  }
+
+  [TestMethod]
+  public void TokenCodecCopiesTokenDuringDecoding()
+  {
+    var NumberOfTokenClasses = Any.Int();
+    var Codec = new TokenCodec<int>(NumberOfTokenClasses);
+    var Token = Any.Int();
+    var Tokens = new long[] { Token };
+
+    var Actual = Codec.DecodeFrom([], Tokens);
+
+    Actual.Should().Be(Token);
   }
 
   [TestMethod]
@@ -254,10 +367,10 @@ public class TokenEncoding
   {
     var ClassCounts1 = Any.ListOf(() => (long) Any.Int(), 0, 4);
     var ClassCounts2 = Any.ListOf(() => (long) Any.Int(), 0, 4);
-    var InitialTokens = Any.ListOf(() => Any.Long, 
+    var InitialTokens = Any.ListOf(() => Any.Long,
       ClassCounts1.Count + ClassCounts2.Count,
       ClassCounts1.Count + ClassCounts2.Count).ToArray();
-    var Expected = Any.Int(); 
+    var Expected = Any.Int();
     var Codec1 = new MockTokenClassCountsCodec<int>(ClassCounts1)
     {
       OnDecode = (_, Tokens) =>
@@ -283,13 +396,16 @@ public class TokenEncoding
   // ReSharper disable once ClassNeverInstantiated.Local
   class MockCognitiveData : CognitiveData<MockCognitiveData>
   {
+    public delegate void MarshalToAction(Span<float> Target, Span<long> Tokens);
+
+    public delegate MockCognitiveData UnmarshalFromAction(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens);
+
+    public MarshalToAction OnMarshalTo { get; init; } = delegate { };
+    public static UnmarshalFromAction OnUnmarshalFrom { get; set; } = delegate { return new(); };
+
     public static int FloatLength => 0;
 
     public static ImmutableArray<long> EncodedTokenClassCounts { get; } = [..Any.ListOf(() => (long) Any.Int(), 1, 5)];
-
-    public delegate void MarshalToAction(Span<float> Target, Span<long> Tokens);
-
-    public MarshalToAction OnMarshalTo { get; set; }= delegate { };
 
     public void MarshalTo(Span<float> Target, Span<long> Tokens)
     {
@@ -301,9 +417,9 @@ public class TokenEncoding
       throw new NotImplementedException();
     }
 
-    public static MockCognitiveData UnmarshalFrom(ReadOnlySpan<float> Source)
+    public static MockCognitiveData UnmarshalFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
     {
-      throw new NotImplementedException();
+      return OnUnmarshalFrom(Source, Tokens);
     }
 
     public static void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)

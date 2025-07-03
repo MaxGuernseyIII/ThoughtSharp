@@ -47,8 +47,8 @@ public class IsolatingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec
     Writer.Write(FloatLength);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    return Inner.DecodeFrom(Source);
+    return Inner.DecodeFrom(Source, Tokens);
   }
 }

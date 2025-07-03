@@ -50,6 +50,6 @@ public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T
 
   public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    return First.DecodeFrom(Source[..First.FloatLength], []);
+    return First.DecodeFrom(Source[..First.FloatLength], Tokens[..First.EncodedTokenClassCounts.Length]);
   }
 }
