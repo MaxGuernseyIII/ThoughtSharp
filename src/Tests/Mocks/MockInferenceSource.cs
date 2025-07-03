@@ -51,7 +51,8 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
       return Timeline.Steps.Select(StepInput =>
       {
         StepInput.Features.Length.Should().Be(TInput.FloatLength);
-        var Input = TInput.UnmarshalFrom(StepInput.Features, []);
+        StepInput.Tokens.Length.Should().Be(TInput.EncodedTokenClassCounts.Length);
+        var Input = TInput.UnmarshalFrom(StepInput.Features, StepInput.Tokens);
         return Input;
       }).ToImmutableArray();
     }).ToImmutableArray();
