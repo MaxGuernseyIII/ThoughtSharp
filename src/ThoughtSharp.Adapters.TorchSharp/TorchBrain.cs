@@ -123,7 +123,7 @@ public class TorchBrain(
     var TensorShapedTokens = new long[
       JaggedTensor.Sequences.Length,
       JaggedTensor.Sequences.Max(B => B.Steps.Count),
-      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Features.Length)
+      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Tokens.Length)
     ];
 
     var Sequences = JaggedTensor.Sequences.Select((TimeSequence, TimeSequenceNumber) => (TimeSequence, TimeSequenceNumber)).ToImmutableArray();
