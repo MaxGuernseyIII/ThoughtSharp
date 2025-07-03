@@ -20,14 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using JetBrains.Annotations;
 
 namespace ThoughtSharp.Runtime.Codecs;
 
 [PublicAPI]
-public class PackTokenCodec(string ValidCharacters, int MaximumLength) : CognitiveDataCodec<string>
+public class PackStringTokenCodec(string ValidCharacters, int MaximumLength) : CognitiveDataCodec<string>
 {
-  public void EncodeTo(string ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
+
+  public void EncodeTo(string ObjectToEncode, Span<float> Target, Span<long> _)
   {
     foreach (var I in Enumerable.Range(0, Math.Min(ObjectToEncode.Length, MaximumLength)))
     {
@@ -47,12 +50,12 @@ public class PackTokenCodec(string ValidCharacters, int MaximumLength) : Cogniti
   {
   }
 
-  public string DecodeFrom(ReadOnlySpan<float> Source)
+  public string DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     throw new NotSupportedException("This is an input-only codec");
   }
 
-  public int Length => MaximumLength * LogitsPerCharacter;
+  public int FloatLength => MaximumLength * LogitsPerCharacter;
 
   int LogitsPerCharacter { get; } = (int)Math.Ceiling(Math.Log2(ValidCharacters.Length + 1));
 }

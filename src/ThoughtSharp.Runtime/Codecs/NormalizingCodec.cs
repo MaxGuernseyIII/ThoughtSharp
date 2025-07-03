@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -28,11 +29,13 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
   where T : IFloatingPoint<T>, ISubtractionOperators<T, T, T>, IAdditionOperators<T, T, T>, IMultiplyOperators<T, T, T>
 {
   readonly T Size = Maximum - Minimum;
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => Inner.EncodedTokenClassCounts;
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    Inner.EncodeTo(GetNormalized(ObjectToEncode), Target);
+    Inner.EncodeTo(GetNormalized(ObjectToEncode), Target, []);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -45,9 +48,9 @@ public class NormalizingCodec<T>(CognitiveDataCodec<T> Inner, T Minimum, T Maxim
     Inner.WriteIsolationBoundaries(Writer);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
-    var Normalized = Inner.DecodeFrom(Source);
+    var Normalized = Inner.DecodeFrom(Source, []);
 
     var Scaled = Normalized * Size;
 

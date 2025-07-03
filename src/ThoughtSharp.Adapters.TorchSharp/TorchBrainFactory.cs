@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using ThoughtSharp.Runtime;
 using TorchSharp;
 
@@ -90,6 +91,11 @@ public sealed class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module
     return new MultiHeadedAttentionAdapter(InputFeatures, Heads, FeaturesPerHead);
   }
 
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateEmbedding(ImmutableArray<(long Count, int Dimensions)> Configuration)
+  {
+    return new EmbedMultipleTokens(Configuration);
+  }
+
   public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateDropout(float Rate)
   {
     return new StatePassThroughModule(torch.nn.Dropout(Rate));
@@ -100,7 +106,7 @@ public sealed class TorchBrainFactory : BrainFactory<TorchBrain, torch.nn.Module
     return new StatePassThroughModule(torch.nn.LayerNorm(InputFeatures));
   }
 
-  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLastTimeStep()
+  public torch.nn.Module<TorchInferenceParts, TorchInferenceParts> CreateLastTimeStepPooling()
   {
     return new LastTimeStepPooling();
   }

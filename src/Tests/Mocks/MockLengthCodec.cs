@@ -20,17 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-public class MockLengthCodec<T>(int Length) : CognitiveDataCodec<T>
+public class MockCodec<T> : CognitiveDataCodec<T>
 {
-  public int Length { get; } = Length;
+  public delegate void EncodeAction(T ObjectToEncode, Span<float> Target, Span<long> Tokens);
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public delegate T DecodeAction(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens);
+
+  public int FloatLength { get; set; }
+
+  public ImmutableArray<long> EncodedTokenClassCounts { get; set; } = [];
+
+  public EncodeAction OnEncode = delegate { };
+  public DecodeAction OnDecode = delegate { return default!; };
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    throw new NotImplementedException();
+    OnEncode(ObjectToEncode, Target, Tokens);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -43,8 +53,24 @@ public class MockLengthCodec<T>(int Length) : CognitiveDataCodec<T>
     throw new NotImplementedException();
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    throw new NotImplementedException();
+    return OnDecode(Source, Tokens);
+  }
+}
+
+public class MockLengthCodec<T> : MockCodec<T>
+{
+  public MockLengthCodec(int Length)
+  {
+    FloatLength = Length;
+  }
+}
+
+public class MockTokenClassCountsCodec<T> : MockCodec<T>
+{
+  public MockTokenClassCountsCodec(IEnumerable<long> TokenClassCounts)
+  {
+    EncodedTokenClassCounts = [..TokenClassCounts];
   }
 }

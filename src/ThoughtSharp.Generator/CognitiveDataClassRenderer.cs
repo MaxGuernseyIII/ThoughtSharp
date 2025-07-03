@@ -45,6 +45,7 @@ class CognitiveDataClassRenderer
     }
 
     var LastValue = "0";
+    var LastTokenValue = "0";
     CognitiveParameter? LastParameter = null;
 
     foreach (var Parameter in CognitiveDataClass.Parameters)
@@ -59,32 +60,51 @@ class CognitiveDataClassRenderer
       }
 
       var ParameterIndexField = GetIndexFieldNameFor(Parameter);
+      var ParameterTokenIndexField = GetTokenIndexFieldNameFor(Parameter);
       W.Write($"internal static readonly int {ParameterIndexField} = ");
-      WriteIndexValue(W, LastValue, LastParameter);
+      WriteIndexValue(W, LastValue, LastParameter, "FloatLength");
+      W.WriteLine();
+      W.Write($"internal static readonly int {ParameterTokenIndexField} = ");
+      WriteIndexValue(W, LastTokenValue, LastParameter, "EncodedTokenClassCounts.Length");
+      W.WriteLine();
 
       LastValue = ParameterIndexField;
+      LastTokenValue = ParameterTokenIndexField;
       LastParameter = Parameter;
     }
 
-    W.Write("public static int Length { get; } = ");
-    WriteIndexValue(W, LastValue, LastParameter);
+    W.WriteLine("public static ImmutableArray<long> EncodedTokenClassCounts => [");
+    foreach (var Parameter in CognitiveDataClass.Parameters)
+      W.WriteLine($"..{GetCodecFieldNameFor(Parameter)}.EncodedTokenClassCounts,");
+    W.WriteLine("];");
 
-    W.WriteLine("public void MarshalTo(Span<float> Target)");
+    W.Write("public static int FloatLength { get; } = ");
+    WriteIndexValue(W, LastValue, LastParameter, "FloatLength");
+
+    W.WriteLine("public void MarshalTo(Span<float> __TARGET__, Span<long> __TOKENS__)");
     W.WriteLine("{");
     foreach (var Parameter in CognitiveDataClass.Parameters)
     foreach (var I in Enumerable.Range(0, Parameter.EffectiveCount))
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
       var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
-                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.FloatLength" : "0") + ")";
+      var TokenOffset = "(" + GetTokenIndexFieldNameFor(Parameter) + " + " +
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.EncodedTokenClassCounts.Length" : "0") + ")";
       W.WriteLine(
-        $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo({Parameter.Name}{Subscript}, Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
+        $"  {GetCodecFieldNameFor(Parameter)}.EncodeTo(");
+      W.WriteLine(
+        $"    {Parameter.Name}{Subscript},");
+      W.WriteLine(
+        $"    __TARGET__[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.FloatLength)],");
+      W.WriteLine(
+        $"    __TOKENS__[{TokenOffset}..({TokenOffset}+{GetCodecFieldNameFor(Parameter)}.EncodedTokenClassCounts.Length)]);");
     }
 
     W.WriteLine("}");
     W.WriteLine();
     W.WriteLine(
-      $"public static {CognitiveDataClass.Address.TypeName.FullName} UnmarshalFrom(ReadOnlySpan<float> Target)");
+      $"public static {CognitiveDataClass.Address.TypeName.FullName} UnmarshalFrom(ReadOnlySpan<float> __SOURCE__, ReadOnlySpan<long> __TOKENS__)");
     W.WriteLine("{");
     W.WriteLine($"  var Result = new {CognitiveDataClass.Address.TypeName.FullName}();");
     W.WriteLine();
@@ -94,9 +114,15 @@ class CognitiveDataClassRenderer
     {
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
       var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
-                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.Length" : "0") + ")";
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.FloatLength" : "0") + ")";
+      var TokenOffset = "(" + GetTokenIndexFieldNameFor(Parameter) + " + " +
+                        (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.EncodedTokenClassCounts.Length" : "0") + ")";
       W.WriteLine(
-        $"  Result.{Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(Target[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.Length)]);");
+        $"  Result.{Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(");
+      W.WriteLine(
+        $"    __SOURCE__[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.FloatLength)],");
+      W.WriteLine(
+        $"    __TOKENS__[{TokenOffset}..({TokenOffset}+{GetCodecFieldNameFor(Parameter)}.EncodedTokenClassCounts.Length)]);");
     }
 
     W.WriteLine("  return Result;");
@@ -113,7 +139,7 @@ class CognitiveDataClassRenderer
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I.ToLiteralExpression()}]" : "";
       var CodecFieldNameForParameter = GetCodecFieldNameFor(Parameter);
       var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
-                   (Parameter.ExplicitCount.HasValue ? $"{I} * {CodecFieldNameForParameter}.Length" : "0") + ")";
+                   (Parameter.ExplicitCount.HasValue ? $"{I} * {CodecFieldNameForParameter}.FloatLength" : "0") + ")";
       W.WriteLine(
         $"{CodecFieldNameForParameter}.WriteLossRulesFor({Parameter.Name}{Subscript}, Writer.ForOffset({Offset}));");
     }
@@ -127,17 +153,22 @@ class CognitiveDataClassRenderer
         W.WriteLine($"{GetCodecFieldNameFor(Parameter)}.WriteIsolationBoundaries(Writer.AddOffset({GetIndexFieldNameFor(Parameter)}));");
   }
 
-  static void WriteIndexValue(IndentedTextWriter Target, string LastValue, CognitiveParameter? LastParameter)
+  static void WriteIndexValue(IndentedTextWriter Target, string LastValue, CognitiveParameter? LastParameter, string LengthExpression)
   {
     Target.Write($"{LastValue}");
     if (LastParameter is not null)
-      Target.Write($" + {GetCodecFieldNameFor(LastParameter)}.Length * {LastParameter.EffectiveCount}");
+      Target.Write($" + {GetCodecFieldNameFor(LastParameter)}.{LengthExpression} * {LastParameter.EffectiveCount}");
     Target.WriteLine(";");
   }
 
   static string GetIndexFieldNameFor(CognitiveParameter Parameter)
   {
     return $"{Parameter.Name}Index";
+  }
+
+  static string GetTokenIndexFieldNameFor(CognitiveParameter Parameter)
+  {
+    return $"{Parameter.Name}TokenIndex";
   }
 
   static string GetCodecFieldNameFor(CognitiveParameter Parameter)
@@ -162,6 +193,7 @@ class CognitiveDataClassRenderer
           {
             W.WriteLine("using ThoughtSharp.Runtime;");
             W.WriteLine("using ThoughtSharp.Runtime.Codecs;");
+            W.WriteLine("using System.Collections.Immutable;");
             W.WriteLine();
           },
           WriteBeforeTypeDeclaration = W =>

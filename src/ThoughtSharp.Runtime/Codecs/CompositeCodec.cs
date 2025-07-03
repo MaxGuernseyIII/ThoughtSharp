@@ -20,16 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime.Codecs;
 
 public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T> Second) : CognitiveDataCodec<T>
 {
-  public int Length => First.Length + Second.Length;
+  public int FloatLength => First.FloatLength + Second.FloatLength;
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts =>
+    [..First.EncodedTokenClassCounts, ..Second.EncodedTokenClassCounts];
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    First.EncodeTo(ObjectToEncode, Target[..First.Length]);
-    Second.EncodeTo(ObjectToEncode, Target[First.Length..]);
+    First.EncodeTo(ObjectToEncode, Target[..First.FloatLength], Tokens[..First.EncodedTokenClassCounts.Length]);
+    Second.EncodeTo(ObjectToEncode, Target[First.FloatLength..], Tokens[First.EncodedTokenClassCounts.Length..]);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -40,11 +45,11 @@ public class CompositeCodec<T>(CognitiveDataCodec<T> First, CognitiveDataCodec<T
   public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
   {
     First.WriteIsolationBoundaries(Writer);
-    Second.WriteIsolationBoundaries(Writer.AddOffset(First.Length));
+    Second.WriteIsolationBoundaries(Writer.AddOffset(First.FloatLength));
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    return First.DecodeFrom(Source[..First.Length]);
+    return First.DecodeFrom(Source[..First.FloatLength], Tokens[..First.EncodedTokenClassCounts.Length]);
   }
 }

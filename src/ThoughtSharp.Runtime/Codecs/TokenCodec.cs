@@ -20,36 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using TorchSharp;
+using System.Collections.Immutable;
+using System.Numerics;
 
-namespace ThoughtSharp.Adapters.TorchSharp;
+namespace ThoughtSharp.Runtime.Codecs;
 
-sealed class AttentionPooling : torch.nn.Module<TorchInferenceParts, TorchInferenceParts>
+public class TokenCodec<T>(long NumberOfTokenClasses) : CognitiveDataCodec<T>
+  where T : INumber<T>
 {
-  readonly torch.nn.Module<torch.Tensor, torch.Tensor> Weighting;
+  public int FloatLength => 0;
 
-  public AttentionPooling(int InputFeatures, string Name = "_unnamed") : base(Name)
+  public ImmutableArray<long> EncodedTokenClassCounts => [NumberOfTokenClasses];
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    this.InputFeatures = InputFeatures;
-    Weighting = torch.nn.Linear(InputFeatures, 1);
-    RegisterComponents();
+    Tokens[0] = long.CreateChecked(ObjectToEncode);
   }
 
-  public int InputFeatures { get; }
-
-  public override TorchInferenceParts forward(TorchInferenceParts Input)
+  public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
   {
-    var Mask = Input.GetMask().unsqueeze(-1);
-    var Scores = Weighting.forward(Input.Features);
-    var MinusInfinity = torch.full_like(Scores, float.NegativeInfinity, dtype:torch.ScalarType.Float32).to(Scores.device);
-    var MaskedScores = torch.where(Mask, Scores, MinusInfinity);
-    var Weights = MaskedScores.softmax(1);
-    var Weighted = Weights * Input.Features;
+    throw new NotImplementedException();
+  }
 
-    return Input with
-    {
-      Features = Weighted.sum(dim: 1).unsqueeze(1),
-      SequenceLengths = torch.zeros(Input.SequenceLengths.shape[0], dtype:torch.ScalarType.Int64) + 1
-    };
+  public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
+  {
+    throw new NotImplementedException();
+  }
+
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
+  {
+    return T.CreateChecked(Tokens[0]);
   }
 }

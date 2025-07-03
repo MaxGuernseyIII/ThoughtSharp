@@ -20,14 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
 public class CopyFloatCodec : CognitiveDataCodec<float>
 {
-  public int Length => 1;
+  public int FloatLength => 1;
 
-  public void EncodeTo(float ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
+
+  public void EncodeTo(float ObjectToEncode, Span<float> Target, Span<long> _)
   {
     Target[0] = ObjectToEncode;
   }
@@ -41,7 +45,7 @@ public class CopyFloatCodec : CognitiveDataCodec<float>
   {
   }
 
-  public float DecodeFrom(ReadOnlySpan<float> Source)
+  public float DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     return Source[0];
   }

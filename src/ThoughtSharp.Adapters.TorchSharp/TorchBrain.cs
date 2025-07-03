@@ -78,9 +78,9 @@ public class TorchBrain(
     Optimizer.Dispose();
   }
 
-  internal Tensor ConvertFloatsToTensor(Batch<float[]> JaggedTensor)
+  internal Tensor ConvertBatchToFeaturesTensor(Batch<TensorData> JaggedTensor)
   {
-    return ConvertFloatsToInput(JaggedTensor).Payload;
+    return ConvertFloatsToInput(JaggedTensor).Features;
   }
 
   internal TorchInferenceParts Forward(TorchInferenceParts Input)
@@ -88,7 +88,7 @@ public class TorchBrain(
     return Model.forward(Input);
   }
 
-  public Inference MakeInference(Batch<float[]> JaggedTensor)
+  public Inference MakeInference(Batch<TensorData> JaggedTensor)
   {
     return ExecuteInference(null, ConvertFloatsToInput(JaggedTensor));
   }
@@ -114,22 +114,32 @@ public class TorchBrain(
     return tensor([RuleIndex], ScalarType.Int64).to(Device);
   }
 
-  public TorchInferenceParts ConvertFloatsToInput(Batch<float[]> JaggedTensor)
+  public TorchInferenceParts ConvertFloatsToInput(Batch<TensorData> JaggedTensor)
   {
-    var TensorShaped = new float[
+    var TensorShapedFeatures = new float[
       JaggedTensor.Sequences.Length,
       JaggedTensor.Sequences.Max(B => B.Steps.Count),
-      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Length)];
+      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Features.Length)];
+    var TensorShapedTokens = new long[
+      JaggedTensor.Sequences.Length,
+      JaggedTensor.Sequences.Max(B => B.Steps.Count),
+      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Tokens.Length)
+    ];
 
     var Sequences = JaggedTensor.Sequences.Select((TimeSequence, TimeSequenceNumber) => (TimeSequence, TimeSequenceNumber)).ToImmutableArray();
     foreach (var (TimeSequence, TimeSequenceNumber) in Sequences)
     foreach (var (TimeStep, TimeStepNumber) in TimeSequence.Steps.Select((TimeStep, TimeStepNumber) => (TimeStep, TimeStepNumber)))
-    foreach (var (Feature, FeatureNumber) in TimeStep.Select((Feature, FeatureNumber) => (Feature, FeatureNumber)))
-      TensorShaped[TimeSequenceNumber, TimeStepNumber, FeatureNumber] = Feature;
+    {
+      foreach (var (Feature, FeatureNumber) in TimeStep.Features.Select((Feature, FeatureNumber) => (Feature, FeatureNumber)))
+        TensorShapedFeatures[TimeSequenceNumber, TimeStepNumber, FeatureNumber] = Feature;
+      foreach (var (Token, TokenNumber) in TimeStep.Tokens.Select((Token, TokenNumber) => (Token, TokenNumber)))
+        TensorShapedTokens[TimeSequenceNumber, TimeStepNumber, TokenNumber] = Token;
+    }
 
     return new()
     {
-      Payload= tensor(TensorShaped, ScalarType.Float32).to(Device),
+      Features = tensor(TensorShapedFeatures, ScalarType.Float32).to(Device),
+      Tokens = tensor(TensorShapedTokens, ScalarType.Int64).to(Device),
       SequenceLengths = tensor(Sequences.Select(S => S.TimeSequence.Steps.Count).ToArray(), dtype: int64),
       State = EmptyState
     };

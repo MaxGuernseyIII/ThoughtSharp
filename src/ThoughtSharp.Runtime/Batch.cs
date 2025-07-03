@@ -95,8 +95,14 @@ public sealed record Batch<T>
 
 public static class Batch
 {
-  public static class OfFeatureSets
+  public static class OfTensorData
   {
-    public static Batch<float[]>.Builder Builder => new();
+    public static Batch<TensorData>.Builder Builder => new();
   }
+}
+
+public record struct TensorData
+{
+  public required float[] Features { get; init; }
+  public required long[] Tokens { get; init; }
 }

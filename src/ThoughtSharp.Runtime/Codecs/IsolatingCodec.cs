@@ -20,15 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime.Codecs;
 
 public class IsolatingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<T>
 {
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => Inner.EncodedTokenClassCounts;
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    Inner.EncodeTo(ObjectToEncode, Target);
+    Inner.EncodeTo(ObjectToEncode, Target, Tokens);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -40,11 +44,11 @@ public class IsolatingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec
   {
     Writer.Write(0);
     Inner.WriteIsolationBoundaries(Writer);
-    Writer.Write(Length);
+    Writer.Write(FloatLength);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    return Inner.DecodeFrom(Source);
+    return Inner.DecodeFrom(Source, Tokens);
   }
 }

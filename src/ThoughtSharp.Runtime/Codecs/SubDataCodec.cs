@@ -20,17 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime.Codecs;
 
 // ReSharper disable once UnusedMember.Global
 public class SubDataCodec<T> : CognitiveDataCodec<T>
   where T : CognitiveData<T>
 {
-  public int Length => T.Length;
+  public int FloatLength => T.FloatLength;
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => T.EncodedTokenClassCounts;
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    ObjectToEncode.MarshalTo(Target);
+    ObjectToEncode.MarshalTo(Target, Tokens);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -43,8 +47,8 @@ public class SubDataCodec<T> : CognitiveDataCodec<T>
     T.WriteIsolationBoundaries(Writer);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    return T.UnmarshalFrom(Source);
+    return T.UnmarshalFrom(Source, Tokens);
   }
 }

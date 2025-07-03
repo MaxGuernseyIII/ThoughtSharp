@@ -33,6 +33,7 @@ static class MindRenderer
       WriteHeader = W =>
       {
         W.WriteLine("using ThoughtSharp.Runtime;");
+        W.WriteLine("using System.Collections.Immutable;");
         W.WriteLine();
       },
       WriteAfterTypeName = W => { W.Write($" : Mind<{M.TypeName.FullName}>"); },
@@ -72,8 +73,9 @@ static class MindRenderer
     W.WriteLine(
       $"public {M.TypeName.FullName} WithChainedReasoning() => new {M.TypeName.FullName}(Brain, CognitionMode.EnterChainedLineOfReasoning());");
 
-    W.WriteLine($"public static int InputLength {{ get; }} = {M.TypeName.FullName}.Input.Length;");
-    W.WriteLine($"public static int OutputLength {{ get; }} = {M.TypeName.FullName}.Output.Length;");
+    W.WriteLine($"public static ImmutableArray<long> EncodedTokenClassCounts => Input.EncodedTokenClassCounts;");
+    W.WriteLine($"public static int InputLength {{ get; }} = {M.TypeName.FullName}.Input.FloatLength;");
+    W.WriteLine($"public static int OutputLength {{ get; }} = {M.TypeName.FullName}.Output.FloatLength;");
     W.WriteLine();
 
     using (W.DeclareWithBlock("public static void WriteIsolationBoundaries(IsolationBoundariesWriter W)"))
@@ -124,14 +126,14 @@ static class MindRenderer
 
         W.WriteLine($"InputObject.Parameters.{TellOperation.Name}.{TellOperation.ParameterName} = Item;");
 
-        W.WriteLine("var InputBuffer = new float[Input.Length];");
-        W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+        W.WriteLine("var InputBuffer = new float[Input.FloatLength];");
+        W.WriteLine("InputObject.MarshalTo(InputBuffer, []);");
         W.WriteLine("InputBuffers.Add(InputBuffer);");
       }
 
       W.WriteLine();
-      W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfFeatureSets.Builder.AddSequence(S => InputBuffers.Aggregate(S, (Previous, Step) => Previous.AddStep(Step))).Build());");
-      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
+      W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfTensorData.Builder.AddSequence(S => InputBuffers.Aggregate(S, (Previous, Step) => Previous.AddStep(new() { Features = Step, Tokens = [] }))).Build());");
+      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result.Sequences.Single().Steps.Single().Features, []);");
       W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
     }
   }
@@ -172,11 +174,11 @@ static class MindRenderer
 
     var TimeStepParameterName = MakeOperation.TimeSteps?.ParameterName;
 
-    W.WriteLine("var InputBatches = new List<float[][]>();");
+    W.WriteLine("var InputBatches = new List<TensorData[]>();");
 
     using (W.DeclareWithBlock("foreach (var __TIME_SEQUENCE__ in TimeSequences)"))
     {
-      W.WriteLine("var InputBuffers = new List<float[]>();");
+      W.WriteLine("var InputBuffers = new List<TensorData>();");
 
       W.WriteLine();
 
@@ -192,8 +194,8 @@ static class MindRenderer
           W.WriteLine($"InputObject.Parameters.{MakeOperation.Name}.{Parameter.Name} = {AssignmentSource};");
         }
 
-        W.WriteLine("var InputBuffer = new float[Input.Length];");
-        W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+        W.WriteLine("var InputBuffer = new TensorData() { Features = new float[Input.FloatLength], Tokens = new long[Input.EncodedTokenClassCounts.Length] };");
+        W.WriteLine("InputObject.MarshalTo(InputBuffer.Features, InputBuffer.Tokens);");
         W.WriteLine("InputBuffers.Add(InputBuffer);");
       }
 
@@ -204,16 +206,17 @@ static class MindRenderer
     W.WriteLine();
     W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(__BATCH__);");
     W.WriteLine($"var ReturnObjects = new List<{MakeOperation.ReturnType}>();");
-    using (W.DeclareWithBlock("foreach (var Result in Inference.Result)"))
+    using (W.DeclareWithBlock("foreach (var __TIME_SEQUENCE__ in Inference.Result.Sequences)"))
     {
-      W.WriteLine("var OutputObject = Output.UnmarshalFrom(Result);");
+      W.WriteLine("var __TIME_STEP__ = __TIME_SEQUENCE__.Steps.Single();");
+      W.WriteLine("var OutputObject = Output.UnmarshalFrom(__TIME_STEP__.Features, __TIME_STEP__.Tokens);");
       W.WriteLine($"ReturnObjects.Add(OutputObject.Parameters.{MakeOperation.Name}.Value);");
     }
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
     W.WriteLine();
 
     W.WriteLine($"var OutputStart = Output.ParametersIndex + Output.OutputParameters.{MakeOperation.Name}Index;");
-    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{MakeOperation.Name}Parameters.Length;");
+    W.WriteLine($"var OutputEnd = OutputStart + Output.OutputParameters.{MakeOperation.Name}Parameters.FloatLength;");
 
     W.WriteLine("return CognitiveResult.From(");
     W.Indent++;
@@ -248,7 +251,7 @@ static class MindRenderer
 
   static void WriteBatchConstructionLogic(IndentedTextWriter W, string BatchListName)
   {
-    W.WriteLine("var __BATCH__ = " + BatchListName + ".Aggregate(Batch.OfFeatureSets.Builder,");
+    W.WriteLine("var __BATCH__ = " + BatchListName + ".Aggregate(Batch.OfTensorData.Builder,");
     W.Indent++;
     W.WriteLine("(B, Sequence) => B.AddSequence(SB =>");
     W.Indent++;
@@ -387,7 +390,7 @@ static class MindRenderer
     W.WriteLine("{");
     W.Indent++;
 
-    W.WriteLine("var InputBuffers = new List<float[][]>();");
+    W.WriteLine("var InputBuffers = new List<TensorData[]>();");
 
     using (W.DeclareWithBlock("foreach (var __TIME_SEQUENCE__ in __TIME_SEQUENCES__)"))
     {
@@ -397,8 +400,8 @@ static class MindRenderer
       foreach (var Parameter in InputParameters)
         W.WriteLine($"InputObject.Parameters.{UseOperation.Name}.{Parameter.Name} = __TIME_SEQUENCE__.{Parameter.Name};");
 
-      W.WriteLine("var InputBuffer = new float[Input.Length];");
-      W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+      W.WriteLine("var InputBuffer = new TensorData { Features = new float[Input.FloatLength], Tokens = new long[Input.EncodedTokenClassCounts.Length] };");
+      W.WriteLine("InputObject.MarshalTo(InputBuffer.Features, InputBuffer.Tokens);");
       W.WriteLine("InputBuffers.Add([InputBuffer]);");
 
       W.WriteLine();
@@ -408,7 +411,15 @@ static class MindRenderer
 
     W.WriteLine();
     W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(__BATCH__);");
-    W.WriteLine("var OutputObjects = Inference.Result.Select(R => Output.UnmarshalFrom(R)).ToList();");
+    W.WriteLine("var OutputObjects = Inference.Result.Sequences.Select(__TIME_SEQUENCE__ => ");
+    using (W.EnterBlock(Suffix: ").ToList();"))
+    {
+      W.WriteLine("var __THIS_STEP__ = __TIME_SEQUENCE__.Steps.Single();");
+      W.WriteLine("return Output.UnmarshalFrom(__THIS_STEP__.Features, __THIS_STEP__.Tokens);");
+    }
+
+    W.WriteLine();
+
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
 
     W.WriteLine($"var FeedbackOutputs = new List<Output>(OutputObjects);");
@@ -496,11 +507,11 @@ static class MindRenderer
 
   static void RenderMakeInference(IndentedTextWriter W, MindModel Model)
   {
-    W.WriteLine("var InputBuffer = new float[Input.Length];");
-    W.WriteLine("InputObject.MarshalTo(InputBuffer);");
+    W.WriteLine("var InputBuffer = new TensorData() { Features = new float[Input.FloatLength], Tokens = new long[Input.EncodedTokenClassCounts.Length] };");
+    W.WriteLine("InputObject.MarshalTo(InputBuffer.Features, InputBuffer.Tokens);");
     W.WriteLine();
-    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfFeatureSets.Builder.AddSequence(S => S.AddStep(InputBuffer)).Build());");
-    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0]);");
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfTensorData.Builder.AddSequence(S => S.AddStep(InputBuffer)).Build());");
+    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result.Sequences.Single().Steps.Single().Features, new long[Output.EncodedTokenClassCounts.Length]);");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
   }
 }

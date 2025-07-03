@@ -33,23 +33,23 @@ public partial class GeneratedCognitiveData
   [TestMethod]
   public void LengthTest()
   {
-    EmptyMockThoughtData.Length.Should().Be(0);
-    SingleFloatMockThoughtData.Length.Should().Be(1);
-    FloatArrayMockThoughtData.Length.Should().Be(4);
-    CodecMockThoughtData.Length.Should().Be(9);
+    EmptyMockThoughtData.FloatLength.Should().Be(0);
+    SingleFloatMockThoughtData.FloatLength.Should().Be(1);
+    FloatArrayMockThoughtData.FloatLength.Should().Be(4);
+    CodecMockThoughtData.FloatLength.Should().Be(9);
   }
 
   [TestMethod]
   public void MarshalSingleFloat()
   {
-    var Values = new float[SingleFloatMockThoughtData.Length];
+    var Values = new float[SingleFloatMockThoughtData.FloatLength];
     var Expected = Any.Float;
     var Data = new SingleFloatMockThoughtData
     {
       P1 = Expected
     };
 
-    Data.MarshalTo(Values);
+    Data.MarshalTo(Values, []);
 
     Values.Should().Equal(Expected);
   }
@@ -60,7 +60,7 @@ public partial class GeneratedCognitiveData
     var Expected = Any.Float;
     var Values = new[] {Expected};
 
-    var Data = SingleFloatMockThoughtData.UnmarshalFrom(Values);
+    var Data = SingleFloatMockThoughtData.UnmarshalFrom(Values, []);
 
     Data.P1.Should().Be(Expected);
   }
@@ -76,9 +76,9 @@ public partial class GeneratedCognitiveData
     {
       P2 = [Expected0, Expected1, Expected2, Expected3]
     };
-    var Values = new float[FloatArrayMockThoughtData.Length];
+    var Values = new float[FloatArrayMockThoughtData.FloatLength];
 
-    Data.MarshalTo(Values);
+    Data.MarshalTo(Values, []);
 
     Values.Should().Equal(Expected0, Expected1, Expected2, Expected3);
   }
@@ -91,7 +91,7 @@ public partial class GeneratedCognitiveData
     var Expected2 = Any.Float;
     var Expected3 = Any.Float;
     var Values = new[] {Expected0, Expected1, Expected2, Expected3};
-    var Data = FloatArrayMockThoughtData.UnmarshalFrom(Values);
+    var Data = FloatArrayMockThoughtData.UnmarshalFrom(Values, []);
 
     Data.P2[0].Should().Be(Expected0);
     Data.P2[1].Should().Be(Expected1);
@@ -104,9 +104,9 @@ public partial class GeneratedCognitiveData
   {
     RoundTripTest(new ThreeStringsMockThoughtData
     {
-      S1 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S1Codec.Length).TrimEnd((char) 0),
-      S2 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S2Codec.Length).TrimEnd((char) 0),
-      S3 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S3Codec.Length).TrimEnd((char) 0)
+      S1 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S1Codec.FloatLength).TrimEnd((char) 0),
+      S2 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S2Codec.FloatLength).TrimEnd((char) 0),
+      S3 = Any.StringWithBitsLength(ThreeStringsMockThoughtData.S3Codec.FloatLength).TrimEnd((char) 0)
     });
   }
 
@@ -115,7 +115,7 @@ public partial class GeneratedCognitiveData
   {
     RoundTripTest(new ComplexDataStructureMockThoughtData
     {
-      EncodedString = Any.StringWithBitsLength(ComplexDataStructureMockThoughtData.EncodedStringCodec.Length),
+      EncodedString = Any.StringWithBitsLength(ComplexDataStructureMockThoughtData.EncodedStringCodec.FloatLength),
       SomeEnum = Any.EnumValue<MockPrivateEnum>(),
       SomeFlag = Any.Bool,
       SomeFloat = Any.Float,
@@ -148,9 +148,9 @@ public partial class GeneratedCognitiveData
   void RoundTripTest<T>(T ToTest)
     where T : CognitiveData<T>, new()
   {
-    var Buffer = new float[T.Length];
-    ToTest.MarshalTo(Buffer);
-    var Actual = T.UnmarshalFrom(Buffer);
+    var Buffer = new float[T.FloatLength];
+    ToTest.MarshalTo(Buffer, []);
+    var Actual = T.UnmarshalFrom(Buffer, []);
 
     Actual.Should().BeEquivalentTo(ToTest);
   }
@@ -163,8 +163,8 @@ public partial class GeneratedCognitiveData
       ToNormalize = Any.Float * 5 + 1
     };
 
-    var Target = new float[DeclarativelyNormalizedMockThoughtData.Length];
-    Data.MarshalTo(Target);
+    var Target = new float[DeclarativelyNormalizedMockThoughtData.FloatLength];
+    Data.MarshalTo(Target, []);
 
     Target[0].Should().BeApproximately((Data.ToNormalize - 1f) / 5f, 0.01f);
   }
@@ -172,9 +172,9 @@ public partial class GeneratedCognitiveData
   [TestMethod]
   public void DenormalizeData()
   {
-    var Target = new float[DeclarativelyNormalizedMockThoughtData.Length];
+    var Target = new float[DeclarativelyNormalizedMockThoughtData.FloatLength];
     Target[0] = Any.Float;
-    var Data = DeclarativelyNormalizedMockThoughtData.UnmarshalFrom(Target);
+    var Data = DeclarativelyNormalizedMockThoughtData.UnmarshalFrom(Target, []);
 
     Data.ToNormalize.Should().BeApproximately(Target[0] * 5 + 1, 0.01f);
   }
@@ -218,10 +218,44 @@ public partial class GeneratedCognitiveData
     }, 0.9999999f);
   }
 
+  [TestMethod]
+  public void MarshalToTokens()
+  {
+    var TokenContainer = new TokenContainingData()
+    {
+      Token1 = (byte) Any.Int(0, 100),
+      Token2 = Any.Long
+    };
+    var Tokens = new long[TokenContainingData.EncodedTokenClassCounts.Length];
+
+    TokenContainer.MarshalTo(new float[TokenContainingData.FloatLength], Tokens);
+
+    Tokens[TokenContainingData.Token1TokenIndex].Should().Be(TokenContainer.Token1);
+    Tokens[TokenContainingData.Token2TokenIndex].Should().Be(TokenContainer.Token2);
+  }
+
+  [TestMethod]
+  public void UnmarshalFromTokens()
+  {
+    var Token1 = (byte) Any.Int(0, 100);
+    var Token2 = Any.Long;
+    var Tokens = new long[2];
+    Tokens[TokenContainingData.Token1TokenIndex] = Token1;
+    Tokens[TokenContainingData.Token2TokenIndex] = Token2;
+
+    var Actual = TokenContainingData.UnmarshalFrom([], Tokens);
+    
+    Actual.Should().BeEquivalentTo(new TokenContainingData()
+    {
+      Token1 = Token1,
+      Token2 = Token2
+    });
+  }
+
   void BoundsMarshallingTest(DefaultNormalizationMockThoughtData Data, float Expected)
   {
-    var Buffer = new float[DefaultNormalizationMockThoughtData.Length];
-    Data.MarshalTo(Buffer);
+    var Buffer = new float[DefaultNormalizationMockThoughtData.FloatLength];
+    Data.MarshalTo(Buffer, []);
 
     foreach (var F in Buffer)
       F.Should().BeApproximately(Expected, 0.01f);
@@ -229,11 +263,11 @@ public partial class GeneratedCognitiveData
 
   void BoundsUnmarshallingTest(DefaultNormalizationMockThoughtData Data, float Value)
   {
-    var Buffer = new float[DefaultNormalizationMockThoughtData.Length];
+    var Buffer = new float[DefaultNormalizationMockThoughtData.FloatLength];
     for (var I = 0; I < Buffer.Length; ++I)
       Buffer[I] = Value;
 
-    var NewData = DefaultNormalizationMockThoughtData.UnmarshalFrom(Buffer);
+    var NewData = DefaultNormalizationMockThoughtData.UnmarshalFrom(Buffer, []);
 
     NewData.Should().BeEquivalentTo(Data);
   }
@@ -301,6 +335,16 @@ public partial class GeneratedCognitiveData
 
     [CognitiveDataLength(ImplicitlyEncodedStringLength)]
     public string ImplicitlyEncodedString { get; set; } = "";
+  }
+
+  [CognitiveData]
+  public partial class TokenContainingData
+  {
+    public byte Token1 { get; set; }
+    public static CognitiveDataCodec<byte> Token1Codec = new TokenCodec<byte>(byte.MaxValue + 1);
+
+    public long Token2 { get; set; }
+    public static CognitiveDataCodec<long> Token2Codec = new TokenCodec<long>(2000);
   }
 
   [CognitiveData]

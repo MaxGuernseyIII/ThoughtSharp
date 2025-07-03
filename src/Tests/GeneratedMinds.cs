@@ -24,6 +24,7 @@ using System.Collections.Immutable;
 using FluentAssertions;
 using Tests.Mocks;
 using ThoughtSharp.Runtime;
+using ThoughtSharp.Runtime.Codecs;
 
 namespace Tests;
 
@@ -186,6 +187,48 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
+  public void DoMakeWithTokens()
+  {
+    var Brain = new MockBrain<TokenMindWithAllOperations.Input, TokenMindWithAllOperations.Output>();
+    var Mind = new TokenMindWithAllOperations(Brain);
+    var InputToMakeCall = new TokenBucket()
+    {
+      Token = Any.Long
+    };
+    var ExpectedOutput = new TokenBucket()
+    {
+      Token = Any.Long
+    };
+    Brain.SetOutputForOnlyInput([
+        new()
+        {
+          OperationCode = 1,
+          Parameters =
+          {
+            MakeTokenBucket =
+            {
+              Inputs = InputToMakeCall
+            }
+          }
+        }
+      ],
+      new()
+      {
+        Parameters =
+        {
+          MakeTokenBucket =
+          {
+            Value = ExpectedOutput
+          }
+        }
+      });
+
+    var Actual = Mind.MakeTokenBucket(InputToMakeCall).Payload;
+
+    Actual.Should().BeEquivalentTo(ExpectedOutput);
+  }
+
+  [TestMethod]
   public void TrainingOfMakeAsOutputThought()
   {
     var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();
@@ -262,6 +305,25 @@ public partial class GeneratedMinds
     var ExpectedSomeData = Any.Float;
 
     TestSynchronousUseMethod(new()
+    {
+      ActionCode = 1,
+      MoreActions = false,
+      Parameters =
+      {
+        DoSomething1 =
+        {
+          SomeData = ExpectedSomeData
+        }
+      }
+    }, ExpectedSomeData, null);
+  }
+
+  [TestMethod]
+  public void UseActionWithTokenTriggersOperation1()
+  {
+    var ExpectedSomeData = Any.Float;
+
+    TestSynchronousUseMethodWithTokens(new()
     {
       ActionCode = 1,
       MoreActions = false,
@@ -609,6 +671,12 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
+  public void ChooseWithTokensFromTwoOptions()
+  {
+    TestChooseBatchesWithToken(new([AnyMockOption(), AnyMockOption()]));
+  }
+
+  [TestMethod]
   public void InferenceChainForChooseRewardedAsOnePiece()
   {
     var Category = new MockCategory([
@@ -756,6 +824,7 @@ public partial class GeneratedMinds
     var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg).Payload;
 
     Result.Should().BeSameAs(Selected.Payload);
+    return;
 
     Inference MakeInferenceFunction(ImmutableArray<ImmutableArray<StatelessMind.Input>> Batches)
     {
@@ -779,6 +848,81 @@ public partial class GeneratedMinds
           _ => throw new InvalidOperationException("Should not get here.")
       };
     }
+  }
+
+  static void TestChooseBatchesWithToken(MockCategory Category)
+  {
+    var Selected = Any.Of(Category.AllOptions);
+    var ArgumentA = Any.Long;
+    var Brain = new MockBrain<TokenMindWithAllOperations.Input, TokenMindWithAllOperations.Output>();
+    Brain.MakeInferenceFunc = MakeInferenceFunction;
+
+    var Mind = new TokenMindWithAllOperations(Brain);
+
+    var Result = Mind.ChooseWithTokenBucket(Category, new() { Token = ArgumentA}).Payload;
+
+    Result.Should().BeSameAs(Selected.Payload);
+    return;
+
+    Inference MakeInferenceFunction(ImmutableArray<ImmutableArray<TokenMindWithAllOperations.Input>> Batches)
+    {
+      Batches.Length.Should().Be(1);
+      var Inputs = Batches[0];
+      Inputs.Length.Should().Be(1);
+      var Input = Inputs.Single();
+      Input.OperationCode.Should().Be(3);
+      Input.Parameters.ChooseWithTokenBucket.Inputs.Token.Should().Be(ArgumentA);
+      var RightOption =
+        Category.AllOptions.Single(C => Equals(C.Descriptor, Input.Parameters.ChooseWithTokenBucket.Category.Right));
+
+      var Output = new TokenMindWithAllOperations.Output();
+      Output.Parameters.ChooseWithTokenBucket.Category.RightIsWinner = RightOption == Selected;
+
+      return new MockInference<TokenMindWithAllOperations.Input, TokenMindWithAllOperations.Output>(Output)
+      {
+        MakeInferenceFunc =
+          _ => throw new InvalidOperationException("Should not get here.")
+      };
+    }
+  }
+
+  static void TestSynchronousUseMethodWithTokens(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,
+    float? ExpectedSomeOtherData)
+  {
+    var Surface = new MockSynchronousSurface();
+    var Brain = new MockBrain<TokenMindWithAllOperations.Input, TokenMindWithAllOperations.Output>();
+    var ExpectedInput = new TokenMindWithAllOperations.Input
+    {
+      OperationCode = 2,
+      Parameters =
+      {
+        UseWithTokenBucket = 
+        {
+          Inputs =
+          {
+            Token = Any.Int(0, 100)
+          }
+        }
+      }
+    };
+
+    var StipulatedOutput = new TokenMindWithAllOperations.Output
+    {
+      Parameters =
+      {
+        UseWithTokenBucket =
+        {
+          ToUse = Selection
+        }
+      }
+    };
+    Brain.SetOutputForOnlyInput([ExpectedInput], StipulatedOutput);
+    new TokenMindWithAllOperations(Brain).UseWithTokenBucket(
+      ExpectedInput.Parameters.UseWithTokenBucket.Inputs,
+      Surface);
+
+    Surface.SomeData.Should().Be(ExpectedSomeData);
+    Surface.SomeOtherData.Should().Be(ExpectedSomeOtherData);
   }
 
   static void TestSynchronousUseMethod(SynchronousActionSurface.Output Selection, float? ExpectedSomeData,
@@ -933,10 +1077,12 @@ public partial class GeneratedMinds
     Brain.SetOutputsForBatchedInputs([..ExpectedInputs.Select(I => new[] {I}.ToImmutableArray())],
       [..StipulatedOutputs]);
     var Thought = await new StatelessMind(Brain).AsynchronousUseSomeInterfaceBatch(
-      ExpectedInputs.Zip(Actions).Select(Pair => new StatelessMind.AsynchronousUseSomeInterfaceArgs(Pair.Second.Surface,
-        Pair.First.Parameters.AsynchronousUseSomeInterface.Argument1,
-        Pair.First.Parameters.AsynchronousUseSomeInterface.Argument2)
-      ).ToImmutableArray()
+      [
+        ..ExpectedInputs.Zip(Actions).Select(Pair => new StatelessMind.AsynchronousUseSomeInterfaceArgs(Pair.Second.Surface,
+          Pair.First.Parameters.AsynchronousUseSomeInterface.Argument1,
+          Pair.First.Parameters.AsynchronousUseSomeInterface.Argument2)
+        )
+      ]
     );
     return Thought.Payload;
   }
@@ -952,7 +1098,7 @@ public partial class GeneratedMinds
 
     S.Boundaries.Should().BeEquivalentTo([
       Offset + HasIsolationBoundaries.P3Index,
-      Offset + HasIsolationBoundaries.P3Index + HasIsolationBoundaries.P3Codec.Length
+      Offset + HasIsolationBoundaries.P3Index + HasIsolationBoundaries.P3Codec.FloatLength
     ]);
   }
 
@@ -1119,4 +1265,64 @@ public partial class GeneratedMinds
 
   [CognitiveCategory<MockSelectable, MockDescriptor>(3)]
   partial class MockCategory;
+
+  [TestMethod]
+  public void TokenLayout()
+  {
+    TokenContainer.EncodedTokenClassCounts.Should().BeEquivalentTo([100, 900], O => O.WithStrictOrdering());
+  }
+
+  [TestMethod]
+  public void TokenLayoutForMind()
+  {
+    TokenUsingMind.EncodedTokenClassCounts.Should()
+      .BeEquivalentTo(TokenUsingMind.Input.EncodedTokenClassCounts, O => O.WithStrictOrdering());
+  }
+
+  [CognitiveData]
+  partial class TokenContainer
+  {
+    public long Token1;
+    public static readonly TokenCodec<long> Token1Codec = new(100);
+
+    public int Token2;
+    public static readonly TokenCodec<int> Token2Codec = new(900);
+  }
+
+  [CognitiveData]
+  public partial class DummyData
+  {
+
+  }
+
+  [Mind]
+  partial class TokenUsingMind
+  {
+    [Make]
+    public partial CognitiveResult<DummyData, DummyData> Make(TokenContainer ContainsToken);
+  }
+
+  [CognitiveData]
+  partial class TokenBucket
+  {
+    public long Token;
+
+    public static readonly CognitiveDataCodec<long> TokenCodec = new TokenCodec<long>(3000);
+  }
+
+  [Mind]
+  partial class TokenMindWithAllOperations
+  {
+    [Make]
+    public partial CognitiveResult<TokenBucket, TokenBucket> MakeTokenBucket(TokenBucket Inputs);
+
+    [Choose]
+    public partial CognitiveResult<MockSelectable, MockSelectable> ChooseWithTokenBucket(MockCategory Category, TokenBucket Inputs);
+
+    [Use]
+    public partial CognitiveResult<bool, UseFeedbackMethod<SynchronousActionSurface>> UseWithTokenBucket(TokenBucket Inputs, SynchronousActionSurface ToUse);
+
+    [Tell]
+    public partial void TellWithTokenBucket(IEnumerable<TokenBucket> Inputs);
+  }
 }

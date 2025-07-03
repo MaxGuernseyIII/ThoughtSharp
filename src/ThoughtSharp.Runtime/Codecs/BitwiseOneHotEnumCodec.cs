@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -38,11 +39,13 @@ public class BitwiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
         $"Cannot one-hot encode type {typeof(T)} to {typeof(U)} because its underlying type is {Enum.GetUnderlyingType(typeof(T))}");
   }
 
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> _)
   {
-    Inner.EncodeTo((U)(object)ObjectToEncode, Target);
+    Inner.EncodeTo((U)(object)ObjectToEncode, Target, []);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -55,8 +58,8 @@ public class BitwiseOneHotEnumCodec<T, U> : CognitiveDataCodec<T>
   }
 
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
-    return (T)(object)Inner.DecodeFrom(Source);
+    return (T)(object)Inner.DecodeFrom(Source, []);
   }
 }

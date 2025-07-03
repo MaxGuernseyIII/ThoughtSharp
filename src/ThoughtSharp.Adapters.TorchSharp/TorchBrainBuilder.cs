@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using ThoughtSharp.Runtime;
 using static TorchSharp.torch;
 
@@ -35,12 +36,12 @@ public static class TorchBrainBuilder
     var Stream = new IsolationBoundaryStream();
     var Writer = new IsolationBoundariesWriter(Stream);
     TMind.WriteIsolationBoundaries(Writer);
-    return For(TMind.InputLength, TMind.OutputLength).WithIsolationBoundaries(Stream.Boundaries);
+    return For(TMind.InputLength, TMind.OutputLength, TMind.EncodedTokenClassCounts).WithIsolationBoundaries(Stream.Boundaries);
   }
 
   public static BrainBuilder<TorchBrain, nn.Module<TorchInferenceParts, TorchInferenceParts>, Device> 
-    For(int InputFeatures, int OutputFeatures)
+    For(int InputFeatures, int OutputFeatures, ImmutableArray<long> TokenClassCounts)
   {
-    return new(TorchBrainFactory.Instance, InputFeatures, OutputFeatures);
+    return new(TorchBrainFactory.Instance, InputFeatures, OutputFeatures, TokenClassCounts);
   }
 }

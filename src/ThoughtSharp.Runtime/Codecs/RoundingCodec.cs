@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -27,11 +28,13 @@ namespace ThoughtSharp.Runtime.Codecs;
 public class RoundingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<T>
   where T : IFloatingPoint<T>
 {
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => Inner.EncodedTokenClassCounts;
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
-    Inner.EncodeTo(ObjectToEncode, Target);
+    Inner.EncodeTo(ObjectToEncode, Target, Tokens);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -44,8 +47,8 @@ public class RoundingCodec<T>(CognitiveDataCodec<T> Inner) : CognitiveDataCodec<
     Inner.WriteIsolationBoundaries(Writer);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    return T.Round(Inner.DecodeFrom(Source));
+    return T.Round(Inner.DecodeFrom(Source, Tokens));
   }
 }

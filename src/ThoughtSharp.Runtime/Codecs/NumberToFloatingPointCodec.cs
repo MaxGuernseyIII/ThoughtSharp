@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -28,12 +29,14 @@ public class NumberToFloatingPointCodec<T, U>(CognitiveDataCodec<U> Inner) : Cog
   where T : INumber<T>
   where U : IFloatingPoint<U>
 {
-  public int Length => Inner.Length;
+  public int FloatLength => Inner.FloatLength;
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => Inner.EncodedTokenClassCounts;
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens)
   {
     var ObjectOfInnerType = U.CreateChecked(ObjectToEncode);
-    Inner.EncodeTo(ObjectOfInnerType, Target);
+    Inner.EncodeTo(ObjectOfInnerType, Target, Tokens);
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
@@ -47,9 +50,9 @@ public class NumberToFloatingPointCodec<T, U>(CognitiveDataCodec<U> Inner) : Cog
     Inner.WriteIsolationBoundaries(Writer);
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens)
   {
-    var ObjectOfInnerType = Inner.DecodeFrom(Source);
+    var ObjectOfInnerType = Inner.DecodeFrom(Source, Tokens);
     return T.CreateChecked(ObjectOfInnerType);
   }
 }

@@ -29,7 +29,7 @@ namespace Tests;
 public class TokenPacking
 {
   int BitCountPerCharacter;
-  PackTokenCodec Codec = null!;
+  PackStringTokenCodec Codec = null!;
   string ValidCharacters = null!;
   int Width;
 
@@ -64,8 +64,8 @@ public class TokenPacking
 
   float[] WhenPackBuffer(string Content)
   {
-    var Buffer = new float[Codec.Length];
-    Codec.EncodeTo(Content, Buffer);
+    var Buffer = new float[Codec.FloatLength];
+    Codec.EncodeTo(Content, Buffer, []);
     return Buffer;
   }
 

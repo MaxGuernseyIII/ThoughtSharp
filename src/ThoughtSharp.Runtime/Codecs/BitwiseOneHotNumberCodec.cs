@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -28,7 +29,7 @@ namespace ThoughtSharp.Runtime.Codecs;
 public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
   where T : unmanaged, INumber<T>, IBitwiseOperators<T, T, T>, IShiftOperators<T, int, T>
 {
-  public int Length { get; } = typeof(T) switch
+  public int FloatLength { get; } = typeof(T) switch
   {
     var T when T == typeof(byte) => 8,
     var T when T == typeof(sbyte) => 8,
@@ -42,9 +43,11 @@ public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
     _ => throw new NotSupportedException($"Unsupported type {typeof(T)}")
   };
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> _)
   {
-    for (var I = 0; I < Length; I++)
+    for (var I = 0; I < FloatLength; I++)
     {
       var BitMask = T.One << I;
       var BitSet = (ObjectToEncode & BitMask) != T.Zero;
@@ -61,11 +64,11 @@ public class BitwiseOneHotNumberCodec<T> : CognitiveDataCodec<T>
   {
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     var Result = T.Zero;
 
-    for (var Index = 0; Index < Length; Index++)
+    for (var Index = 0; Index < FloatLength; Index++)
       if (Source[Index] >= 0.5f)
         Result |= T.One << Index;
 

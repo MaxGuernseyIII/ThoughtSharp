@@ -35,19 +35,18 @@ class MockInference<TInput, TOutput>(params ImmutableArray<TOutput> ResultOutput
   public ImmutableArray<TOutput> ResultOutputs { get; } = ResultOutputs;
   IReadOnlyList<(int, int, LossRule)>? TrainedLossRules;
 
-  public float[][] Result
+  public Batch<TensorData> Result
   {
     get
     {
-      var Result = new List<float[]>();
-      foreach (var ResultOutput in ResultOutputs)
-      {
-        var Buffer = new float[TOutput.Length];
-        ResultOutput.MarshalTo(Buffer);
-        Result.Add(Buffer);
-      }
-
-      return Result.ToArray();
+      return ResultOutputs.Aggregate(Batch.OfTensorData.Builder,
+        (Builder, Slice) =>
+        {
+          var Buffer = new float[TOutput.FloatLength];
+          var Tokens = new long[TOutput.EncodedTokenClassCounts.Length];
+          Slice.MarshalTo(Buffer, Tokens);
+          return Builder.AddSequence(S => S.AddStep(new() {Features = Buffer, Tokens = Tokens}));
+        }).Build();
     }
   }
 

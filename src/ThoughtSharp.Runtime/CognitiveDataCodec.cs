@@ -20,26 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
+
 namespace ThoughtSharp.Runtime;
 
 public interface CognitiveDataCodec<T>
 {
-  int Length { get; }
+  int FloatLength { get; }
+  ImmutableArray<long> EncodedTokenClassCounts { get; }
 
-  void EncodeTo(T ObjectToEncode, Span<float> Target);
+  void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> Tokens);
 
   void WriteLossRulesFor(T Target, LossRuleWriter Writer);
   void WriteIsolationBoundaries(IsolationBoundariesWriter Writer);
 
-  T DecodeFrom(ReadOnlySpan<float> Source);
+  T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> Tokens);
 }
 
 public static class CognitiveDataCodecExtensions
 {
   public static void WriteStandardLossRulesFor<T>(this CognitiveDataCodec<T> Codec, T Target, LossRuleWriter Writer)
   {
-    var TargetBuffer = new float[Codec.Length];
-    Codec.EncodeTo(Target, TargetBuffer);
+    var TargetBuffer = new float[Codec.FloatLength];
+    var TokenDiscard = new long[Codec.EncodedTokenClassCounts.Length];
+    Codec.EncodeTo(Target, TargetBuffer, TokenDiscard);
     Writer.WriteLossRule(0, new BinaryCrossEntropyWithLogitsLossRule(TargetBuffer));
   }
 }

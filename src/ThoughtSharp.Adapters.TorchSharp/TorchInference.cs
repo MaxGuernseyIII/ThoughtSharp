@@ -34,11 +34,11 @@ public class TorchInference(
   internal TorchInferenceParts Output { get; } = Output;
   internal TorchInferenceParts OriginalInput { get; } = OriginalInput;
 
-  public float[][] Result
+  public Batch<TensorData> Result
   {
     get
     {
-      var OutputTensor = Output.Payload;
+      var OutputTensor = Output.Features;
       var LastIndices = (Output.SequenceLengths - 1).unsqueeze(1).unsqueeze(2).to(OutputTensor.device);
       var BatchSize = LastIndices.shape[0];
 
@@ -46,13 +46,22 @@ public class TorchInference(
 
       var FinalItems = OutputTensor.gather(1, ExpandedIndices);
 
-      return FinalItems
+      var AllFeatureSets = FinalItems
         .to(torch.CPU)
         .data<float>()
         .ToArray()
         .Chunk((int)OutputTensor.shape[2])
         .Select(Chunk => Chunk.ToArray())
         .ToArray();
+
+      return AllFeatureSets.Aggregate(Batch.OfTensorData.Builder, (Builder, Tensor) =>
+      {
+        return Builder.AddSequence(S => S.AddStep(new()
+        {
+          Features = Tensor,
+          Tokens = []
+        }));
+      }).Build();
     }
   }
 
@@ -61,13 +70,13 @@ public class TorchInference(
   public void Dispose()
   {
     OriginalInput.State?.Dispose();
-    Output.Payload.Dispose();
+    Output.Features.Dispose();
   }
 
   public void Train(params IReadOnlyList<(int, int, LossRule)> LossRules)
   {
     var Visitor = new TorchLossRuleVisitor(Brain);
-    var TensorForBackPropagation = Replay().Payload;
+    var TensorForBackPropagation = Replay().Features;
 
     var CumulativeLoss = torch.tensor(0.0f, requires_grad: true);
 
@@ -96,7 +105,7 @@ public class TorchInference(
     });
   }
 
-  public Inference MakeInference(Batch<float[]> JaggedTensor)
+  public Inference MakeInference(Batch<TensorData> JaggedTensor)
   {
     return Brain.ExecuteInference(this, 
       Brain.ConvertFloatsToInput(JaggedTensor) with

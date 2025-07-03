@@ -36,7 +36,7 @@
     },
     "target one curriculum in samples folder": {
       "commandName": "Project",
-      "commandLineArgs": "--curricula GradedCurriculum",
+      "commandLineArgs": "--curricula EmbeddingCurriculum",
       "workingDirectory": "E:\\repos\\ThoughtSharp\\src\\Tests.SampleScenarios"
     }
   }

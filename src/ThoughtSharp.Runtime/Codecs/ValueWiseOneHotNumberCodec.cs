@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace ThoughtSharp.Runtime.Codecs;
@@ -31,29 +32,31 @@ public class ValueWiseOneHotNumberCodec<T>(T Bound1, T Bound2) : CognitiveDataCo
   readonly T Minimum = T.MinNumber(Bound1, Bound2);
   readonly T Maximum = T.MaxNumber(Bound1, Bound2);
 
-  public int Length => int.CreateChecked(Maximum) - int.CreateChecked(Minimum) + 1;
+  public int FloatLength => int.CreateChecked(Maximum) - int.CreateChecked(Minimum) + 1;
 
-  public void EncodeTo(T ObjectToEncode, Span<float> Target)
+  public ImmutableArray<long> EncodedTokenClassCounts => [];
+
+  public void EncodeTo(T ObjectToEncode, Span<float> Target, Span<long> _)
   {
-    for (var I = 0; I < Length; ++I)
+    for (var I = 0; I < FloatLength; ++I)
       Target[I] = T.CreateChecked(I) + Minimum == ObjectToEncode ? 1 : 0;
   }
 
   public void WriteLossRulesFor(T Target, LossRuleWriter Writer)
   {
-    Writer.WriteLossRule(0, new CrossEntropyLossRule(long.CreateChecked(Target - Minimum), Length));
+    Writer.WriteLossRule(0, new CrossEntropyLossRule(long.CreateChecked(Target - Minimum), FloatLength));
   }
 
   public void WriteIsolationBoundaries(IsolationBoundariesWriter Writer)
   {
   }
 
-  public T DecodeFrom(ReadOnlySpan<float> Source)
+  public T DecodeFrom(ReadOnlySpan<float> Source, ReadOnlySpan<long> _)
   {
     var LargestScale = Source[0];
     var Largest = 0;
 
-    for (var I = 0; I < Length; ++I)
+    for (var I = 0; I < FloatLength; ++I)
     {
       var CandidateScale = Source[I];
       if (CandidateScale > LargestScale)
