@@ -29,7 +29,7 @@ public sealed class EmbedMultipleTokens : torch.nn.Module<TorchInferenceParts, T
 {
   readonly ImmutableArray<torch.nn.Module<torch.Tensor, torch.Tensor>> Modules;
 
-  public EmbedMultipleTokens((long ClassCount, int Dimensions)[] Configuration, string Name = "_unnamed") : base(Name)
+  public EmbedMultipleTokens(ImmutableArray<(long ClassCount, int Dimensions)> Configuration, string Name = "_unnamed") : base(Name)
   {
     var Modules = new List<torch.nn.Module<torch.Tensor, torch.Tensor>>();
 

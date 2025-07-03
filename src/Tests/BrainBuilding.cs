@@ -22,6 +22,8 @@
 
 using FluentAssertions;
 using FluentAssertions.Execution;
+using System.Collections.Immutable;
+using System.Text;
 using ThoughtSharp.Runtime;
 
 // ReSharper disable NotAccessedPositionalProperty.Local
@@ -35,14 +37,16 @@ public class BrainBuilding
   BrainFactory<MockBuiltBrain, MockBuiltModel, MockDevice> Factory = null!;
   int InputFeatures;
   int OutputFeatures;
+  ImmutableArray<long> TokenClassCounts;
 
   [TestInitialize]
   public void Setup()
   {
     InputFeatures = Any.Int(1, 200);
     OutputFeatures = Any.Int(1, 200);
+    TokenClassCounts = [..Any.ListOf(() => Any.Long, 1, 3)];
     Factory = new MockFactory();
-    BrainBuilder = new(Factory, InputFeatures, OutputFeatures);
+    BrainBuilder = new(Factory, InputFeatures, OutputFeatures, TokenClassCounts);
   }
 
   [TestMethod]
@@ -229,7 +233,7 @@ public class BrainBuilding
   public void SetIsolationLayers()
   {
     OutputFeatures = Any.Int(10, 20);
-    BrainBuilder = new(Factory, InputFeatures, OutputFeatures);
+    BrainBuilder = new(Factory, InputFeatures, OutputFeatures, TokenClassCounts);
 
     var Builder = BrainBuilder
       .WithIsolationBoundaries(0, 4, 9, OutputFeatures)
@@ -474,6 +478,18 @@ public class BrainBuilding
   }
 
   [TestMethod]
+  public void AddEmbedded()
+  {
+    var Device = UpdateBrainBuilderToAnyDevice();
+    var BroadcastOutputSize = Any.Int(1, 10);
+
+    var Actual = BrainBuilder.UsingSequence(S => S.AddEmbedding(BroadcastOutputSize)).Build();
+
+    ShouldBeAdaptedContainerFor(Actual, BroadcastOutputSize * TokenClassCounts.Length + InputFeatures, Device, Factory.CreateEmbedding(
+      [..TokenClassCounts.Select(Count => (Count, BroadcastOutputSize))]));
+  }
+
+  [TestMethod]
   public void AddEmptyTimeAware()
   {
     var Device = UpdateBrainBuilderToAnyDevice();
@@ -581,7 +597,7 @@ public class BrainBuilding
 
     ShouldBeAdaptedContainerFor(Actual, InputFeatures,
       Device,
-      Factory.CreateTimeAware([], Factory.CreateLastTimeStep()));
+      Factory.CreateTimeAware([], Factory.CreateLastTimeStepPooling()));
   }
 
   [TestMethod]
@@ -597,7 +613,7 @@ public class BrainBuilding
       Factory.CreateTimeAware([
           Factory.CreateGRU(InputFeatures, GRUFeatures, GRULayers, false, Device)
         ],
-        Factory.CreateLastTimeStep()));
+        Factory.CreateLastTimeStepPooling()));
   }
 
   [TestMethod]
@@ -612,7 +628,7 @@ public class BrainBuilding
       Factory.CreateTimeAware([
           Factory.CreateGRU(InputFeatures, GRUFeatures, 1, true, Device)
         ],
-        Factory.CreateLastTimeStep()));
+        Factory.CreateLastTimeStepPooling()));
   }
 
   [TestMethod]
@@ -627,7 +643,7 @@ public class BrainBuilding
       Factory.CreateTimeAware([
           Factory.CreateGRU(InputFeatures, GRUFeatures, 1, false, Device)
         ],
-        Factory.CreateLastTimeStep()));
+        Factory.CreateLastTimeStepPooling()));
   }
 
   void ShouldBeAdaptedContainerFor(MockBuiltBrain Actual, int Features, MockDevice Device,
@@ -759,6 +775,11 @@ public class BrainBuilding
       return new MockMultiHeadedAttention(InputFeatures, Heads, FeaturesPerHead);
     }
 
+    public MockBuiltModel CreateEmbedding(ImmutableArray<(long Count, int Dimensions)> Configuration)
+    {
+      return new MockEmbedding(Configuration);
+    }
+
     public MockBuiltModel CreateDropout(float Rate)
     {
       return new MockDropout(Rate);
@@ -779,7 +800,7 @@ public class BrainBuilding
       return new MockSiLU();
     }
 
-    public MockBuiltModel CreateLastTimeStep()
+    public MockBuiltModel CreateLastTimeStepPooling()
     {
       return new MockLastTimeStepPooling();
     }
@@ -877,6 +898,40 @@ public class BrainBuilding
       public override int GetHashCode()
       {
         return HashCode.Combine(base.GetHashCode(), Children);
+      }
+    }
+
+    sealed record MockEmbedding : MockBuiltModel
+    {
+      readonly ImmutableArray<(long Count, int Dimensions)> Configuration;
+
+      public MockEmbedding(ImmutableArray<(long Count, int Dimensions)> Configuration)
+      {
+        this.Configuration = Configuration;
+      }
+
+      public bool Equals(MockEmbedding? Other)
+      {
+        if (Other is null) return false;
+        if (ReferenceEquals(this, Other)) return true;
+        return base.Equals(Other) && Configuration.SequenceEqual(Other.Configuration);
+      }
+
+      protected override bool PrintMembers(StringBuilder Builder)
+      {
+        var Previous = base.PrintMembers(Builder);
+
+        if (Previous)
+          Builder.Append(", ");
+
+        Builder.Append($"Configuration = [{string.Join(", ", Configuration)}]");
+
+        return true;
+      }
+
+      public override int GetHashCode()
+      {
+        return 0;
       }
     }
   }

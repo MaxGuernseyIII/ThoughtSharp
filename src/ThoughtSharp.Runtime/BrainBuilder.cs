@@ -27,15 +27,19 @@ namespace ThoughtSharp.Runtime;
 public sealed record BrainBuilder<TBrain, TModel, TDevice>
 {
   readonly BrainFactory<TBrain, TModel, TDevice> Factory;
+  readonly ImmutableArray<long> TokenClassCounts;
   readonly ModelConstructor Input;
 
-  public BrainBuilder(BrainFactory<TBrain, TModel, TDevice> Factory,
+  public BrainBuilder(
+    BrainFactory<TBrain, TModel, TDevice> Factory,
     int InputFeatures,
-    int OutputFeatures)
+    int OutputFeatures,
+    ImmutableArray<long> TokenClassCounts)
   {
     this.InputFeatures = InputFeatures;
     this.OutputFeatures = OutputFeatures;
     this.Factory = Factory;
+    this.TokenClassCounts = TokenClassCounts;
     Input = new VirtualConstructor(InputFeatures);
     Constructor = new(Factory,
       new SequenceConstructor(this, Input, []), true, OutputFeatures, [0, OutputFeatures]);
@@ -214,6 +218,14 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     {
       return new(Host, Tail, Constructors);
     }
+
+    public SequenceConstructor AddEmbedding(int BroadcastOutputSize)
+    {
+      return Add(new EmbeddingConstructor(
+        Host,
+        Tail,
+        [..Host.TokenClassCounts.Select(Count => (Count, BroadcastOutputSize))]));
+    }
   }
 
   public record TimeAwareConstructor :  HasInternalSequence<TimeAwareConstructor>, ModelConstructor
@@ -389,7 +401,7 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
 
     public TModel Build()
     {
-      return Host.Factory.CreateLastTimeStep();
+      return Host.Factory.CreateLastTimeStepPooling();
     }
   }
 
@@ -445,6 +457,21 @@ public sealed record BrainBuilder<TBrain, TModel, TDevice>
     public TModel Build()
     {
       return BrainFactory.CreateTanh();
+    }
+  }
+
+  sealed class EmbeddingConstructor(
+    BrainBuilder<TBrain, TModel, TDevice> Host, 
+    ModelConstructor Predecessor,
+    ImmutableArray<(long Count, int Dimensions)> Configuration) : ModelConstructor
+  {
+    public int OutputFeatures => Predecessor.OutputFeatures + Configuration.Select(C => C.Dimensions).Sum();
+
+    public string CompactDescriptiveText => "e";
+
+    public TModel Build()
+    {
+      return Host.Factory.CreateEmbedding(Configuration);
     }
   }
 

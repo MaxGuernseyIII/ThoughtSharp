@@ -1,4 +1,6 @@
-﻿namespace ThoughtSharp.Runtime;
+﻿using System.Collections.Immutable;
+
+namespace ThoughtSharp.Runtime;
 
 public interface BrainFactory<
   out TBrain, 
@@ -14,11 +16,12 @@ public interface BrainFactory<
   TModel CreateLinear(int InputFeatures, int OutputFeatures, bool WithBias);
   TModel CreateGRU(int InputFeatures, int OutputFeatures, int GRULayers, bool Bidirectional, TDevice Device);
   TModel CreateMultiHeadedAttention(int InputFeatures, int Heads, int FeaturesPerHead);
+  TModel CreateEmbedding(ImmutableArray<(long Count, int Dimensions)> Configuration);
 
   TModel CreateDropout(float Rate);
   TModel CreateLayerNorm(int InputFeatures);
 
-  TModel CreateLastTimeStep();
+  TModel CreateLastTimeStepPooling();
   TModel CreateMeanOverTimeStepsPooling();
   TModel CreateAttentionPooling(int InputFeatures);
 
