@@ -1156,4 +1156,28 @@ public partial class GeneratedMinds
     [Make]
     public partial CognitiveResult<DummyData, DummyData> Make(TokenContainer ContainsToken);
   }
+
+  [CognitiveData]
+  partial class TokenBucket
+  {
+    public long Token;
+
+    public static readonly CognitiveDataCodec<long> TokenCodec = new TokenCodec<long>(3000);
+  }
+
+  [Mind]
+  partial class TokenMindWithAllOperations
+  {
+    [Make]
+    public partial CognitiveResult<TokenBucket, TokenBucket> MakeTokenBucket(TokenBucket Inputs);
+
+    [Choose]
+    public partial CognitiveResult<MockSelectable, MockSelectable> ChooseWithTokenBucket(MockCategory Category, TokenBucket Inputs);
+
+    [Use]
+    public partial CognitiveResult<bool, UseFeedbackMethod<SynchronousActionSurface>> UseWithTokenBucket(TokenBucket Inputs, SynchronousActionSurface ToUse);
+
+    [Tell]
+    public partial void TellWithTokenBucket(IEnumerable<TokenBucket> Inputs);
+  }
 }
