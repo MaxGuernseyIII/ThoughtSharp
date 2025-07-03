@@ -889,7 +889,7 @@ public class BrainBuilding
     {
     }
 
-    public Inference MakeInference(Batch<float[]> Features, Batch<long[]> Tokens)
+    public Inference MakeInference(Batch<TensorData> Features)
     {
       Assert.Fail();
       return null!;

@@ -78,7 +78,7 @@ public class TorchBrain(
     Optimizer.Dispose();
   }
 
-  internal Tensor ConvertFloatsToTensor(Batch<float[]> JaggedTensor)
+  internal Tensor ConvertFloatsToTensor(Batch<TensorData> JaggedTensor)
   {
     return ConvertFloatsToInput(JaggedTensor).Payload;
   }
@@ -88,9 +88,9 @@ public class TorchBrain(
     return Model.forward(Input);
   }
 
-  public Inference MakeInference(Batch<float[]> Features, Batch<long[]> Tokens)
+  public Inference MakeInference(Batch<TensorData> JaggedTensor)
   {
-    return ExecuteInference(null, ConvertFloatsToInput(Features));
+    return ExecuteInference(null, ConvertFloatsToInput(JaggedTensor));
   }
 
   internal Inference ExecuteInference(TorchInference? Predecessor, TorchInferenceParts Input)
@@ -114,17 +114,17 @@ public class TorchBrain(
     return tensor([RuleIndex], ScalarType.Int64).to(Device);
   }
 
-  public TorchInferenceParts ConvertFloatsToInput(Batch<float[]> JaggedTensor)
+  public TorchInferenceParts ConvertFloatsToInput(Batch<TensorData> JaggedTensor)
   {
     var TensorShaped = new float[
       JaggedTensor.Sequences.Length,
       JaggedTensor.Sequences.Max(B => B.Steps.Count),
-      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Length)];
+      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Features.Length)];
 
     var Sequences = JaggedTensor.Sequences.Select((TimeSequence, TimeSequenceNumber) => (TimeSequence, TimeSequenceNumber)).ToImmutableArray();
     foreach (var (TimeSequence, TimeSequenceNumber) in Sequences)
     foreach (var (TimeStep, TimeStepNumber) in TimeSequence.Steps.Select((TimeStep, TimeStepNumber) => (TimeStep, TimeStepNumber)))
-    foreach (var (Feature, FeatureNumber) in TimeStep.Select((Feature, FeatureNumber) => (Feature, FeatureNumber)))
+    foreach (var (Feature, FeatureNumber) in TimeStep.Features.Select((Feature, FeatureNumber) => (Feature, FeatureNumber)))
       TensorShaped[TimeSequenceNumber, TimeStepNumber, FeatureNumber] = Feature;
 
     return new()
