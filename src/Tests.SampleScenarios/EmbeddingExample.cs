@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using Google.Protobuf.WellKnownTypes;
 using ThoughtSharp.Adapters.TorchSharp;
 using ThoughtSharp.Runtime;
 using ThoughtSharp.Runtime.Codecs;
@@ -91,6 +90,38 @@ public partial class EmbeddingExample
           F => F.Value, 
           (Expected, Actual) => Actual.ShouldConvergeOn().Approximately(Expected, .01f, .20f)));
     }
+    [Behavior]
+    public Transcript TrainReverseOrder()
+    {
+      var Result = Mind.ReverseOrderBatch(
+        new(new() { Token = 0 }),
+        new(new() { Token = 1 }),
+        new(new() { Token = 2 }),
+        new(new() { Token = 3 }),
+        new(new() { Token = 4 }),
+        new(new() { Token = 5 }),
+        new(new() { Token = 6 }),
+        new(new() { Token = 7 }),
+        new(new() { Token = 8 }),
+        new(new() { Token = 9 }));
+
+      return Assert.That(Result).ConvergesOn().Target(
+        [
+          new() { Value = 9f },
+          new() { Value = 8f },
+          new() { Value = 7f },
+          new() { Value = 6f },
+          new() { Value = 5f },
+          new() { Value = 4f },
+          new() { Value = 3f },
+          new() { Value = 2f },
+          new() { Value = 1f },
+          new() { Value = 0f },
+        ],
+        C => C.Expect(
+          F => F.Value,
+          (Expected, Actual) => Actual.ShouldConvergeOn().Approximately(Expected, .01f, .20f)));
+    }
   }
 
   [CognitiveData]
@@ -104,6 +135,9 @@ public partial class EmbeddingExample
   {
     [Make]
     public partial CognitiveResult<Result, Result> Identity(TokenContainer C);
+
+    [Make]
+    public partial CognitiveResult<Result, Result> ReverseOrder(TokenContainer C);
   }
 
   [MaximumAttempts(500000)]
