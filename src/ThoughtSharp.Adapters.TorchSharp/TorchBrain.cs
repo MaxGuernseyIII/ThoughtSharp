@@ -116,20 +116,30 @@ public class TorchBrain(
 
   public TorchInferenceParts ConvertFloatsToInput(Batch<TensorData> JaggedTensor)
   {
-    var TensorShaped = new float[
+    var TensorShapedFeatures = new float[
       JaggedTensor.Sequences.Length,
       JaggedTensor.Sequences.Max(B => B.Steps.Count),
       JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Features.Length)];
+    var TensorShapedTokens = new long[
+      JaggedTensor.Sequences.Length,
+      JaggedTensor.Sequences.Max(B => B.Steps.Count),
+      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Features.Length)
+    ];
 
     var Sequences = JaggedTensor.Sequences.Select((TimeSequence, TimeSequenceNumber) => (TimeSequence, TimeSequenceNumber)).ToImmutableArray();
     foreach (var (TimeSequence, TimeSequenceNumber) in Sequences)
     foreach (var (TimeStep, TimeStepNumber) in TimeSequence.Steps.Select((TimeStep, TimeStepNumber) => (TimeStep, TimeStepNumber)))
-    foreach (var (Feature, FeatureNumber) in TimeStep.Features.Select((Feature, FeatureNumber) => (Feature, FeatureNumber)))
-      TensorShaped[TimeSequenceNumber, TimeStepNumber, FeatureNumber] = Feature;
+    {
+      foreach (var (Feature, FeatureNumber) in TimeStep.Features.Select((Feature, FeatureNumber) => (Feature, FeatureNumber)))
+        TensorShapedFeatures[TimeSequenceNumber, TimeStepNumber, FeatureNumber] = Feature;
+      foreach (var (Token, TokenNumber) in TimeStep.Tokens.Select((Token, TokenNumber) => (Token, TokenNumber)))
+        TensorShapedTokens[TimeSequenceNumber, TimeStepNumber, TokenNumber] = Token;
+    }
 
     return new()
     {
-      Features= tensor(TensorShaped, ScalarType.Float32).to(Device),
+      Features = tensor(TensorShapedFeatures, ScalarType.Float32).to(Device),
+      Tokens = tensor(TensorShapedTokens, ScalarType.Int64).to(Device),
       SequenceLengths = tensor(Sequences.Select(S => S.TimeSequence.Steps.Count).ToArray(), dtype: int64),
       State = EmptyState
     };
