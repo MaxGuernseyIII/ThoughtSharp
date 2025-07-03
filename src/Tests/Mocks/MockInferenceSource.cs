@@ -73,7 +73,6 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     ImmutableArray<ImmutableArray<TInput>> ExpectedInputs,
     ImmutableArray<TOutput> StipulatedOutputs)
   {
-
     var ResultInference = new MockInference<TInput, TOutput>(StipulatedOutputs);
 
     MakeInferenceFunc = ActualInputs =>
