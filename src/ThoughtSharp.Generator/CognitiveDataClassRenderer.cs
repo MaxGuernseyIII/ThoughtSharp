@@ -115,12 +115,14 @@ class CognitiveDataClassRenderer
       var Subscript = Parameter.ExplicitCount.HasValue ? $"[{I}]" : "";
       var Offset = "(" + GetIndexFieldNameFor(Parameter) + " + " +
                    (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.FloatLength" : "0") + ")";
+      var TokenOffset = "(" + GetTokenIndexFieldNameFor(Parameter) + " + " +
+                        (Parameter.ExplicitCount.HasValue ? $"{I} * {GetCodecFieldNameFor(Parameter)}.EncodedTokenClassCounts.Length" : "0") + ")";
       W.WriteLine(
         $"  Result.{Parameter.Name}{Subscript} = {GetCodecFieldNameFor(Parameter)}.DecodeFrom(");
       W.WriteLine(
         $"    __SOURCE__[{Offset}..({Offset}+{GetCodecFieldNameFor(Parameter)}.FloatLength)],");
       W.WriteLine(
-        $"    []);");
+        $"    __TOKENS__[{TokenOffset}..({TokenOffset}+{GetCodecFieldNameFor(Parameter)}.EncodedTokenClassCounts.Length)]);");
     }
 
     W.WriteLine("  return Result;");

@@ -219,7 +219,7 @@ public partial class GeneratedCognitiveData
   }
 
   [TestMethod]
-  public void CopyTokens()
+  public void MarshalToTokens()
   {
     var TokenContainer = new TokenContainingData()
     {
@@ -232,6 +232,24 @@ public partial class GeneratedCognitiveData
 
     Tokens[TokenContainingData.Token1TokenIndex].Should().Be(TokenContainer.Token1);
     Tokens[TokenContainingData.Token2TokenIndex].Should().Be(TokenContainer.Token2);
+  }
+
+  [TestMethod]
+  public void UnmarshalFromTokens()
+  {
+    var Token1 = (byte) Any.Int(0, 100);
+    var Token2 = Any.Long;
+    var Tokens = new long[2];
+    Tokens[TokenContainingData.Token1TokenIndex] = Token1;
+    Tokens[TokenContainingData.Token2TokenIndex] = Token2;
+
+    var Actual = TokenContainingData.UnmarshalFrom([], Tokens);
+    
+    Actual.Should().BeEquivalentTo(new TokenContainingData()
+    {
+      Token1 = Token1,
+      Token2 = Token2
+    });
   }
 
   void BoundsMarshallingTest(DefaultNormalizationMockThoughtData Data, float Expected)
