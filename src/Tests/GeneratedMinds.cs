@@ -187,6 +187,48 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
+  public void DoMakeWithTokens()
+  {
+    var Brain = new MockBrain<TokenMindWithAllOperations.Input, TokenMindWithAllOperations.Output>();
+    var Mind = new TokenMindWithAllOperations(Brain);
+    var InputToMakeCall = new TokenBucket()
+    {
+      Token = Any.Long
+    };
+    var ExpectedOutput = new TokenBucket()
+    {
+      Token = Any.Long
+    };
+    Brain.SetOutputForOnlyInput([
+        new()
+        {
+          OperationCode = 1,
+          Parameters =
+          {
+            MakeTokenBucket =
+            {
+              Inputs = InputToMakeCall
+            }
+          }
+        }
+      ],
+      new()
+      {
+        Parameters =
+        {
+          MakeTokenBucket =
+          {
+            Value = ExpectedOutput
+          }
+        }
+      });
+
+    var Actual = Mind.MakeTokenBucket(InputToMakeCall).Payload;
+
+    Actual.Should().BeEquivalentTo(ExpectedOutput);
+  }
+
+  [TestMethod]
   public void TrainingOfMakeAsOutputThought()
   {
     var Brain = new MockBrain<StatelessMind.Input, StatelessMind.Output>();

@@ -195,7 +195,7 @@ static class MindRenderer
         }
 
         W.WriteLine("var InputBuffer = new TensorData() { Features = new float[Input.FloatLength], Tokens = new long[Input.EncodedTokenClassCounts.Length] };");
-        W.WriteLine("InputObject.MarshalTo(InputBuffer.Features, []);");
+        W.WriteLine("InputObject.MarshalTo(InputBuffer.Features, InputBuffer.Tokens);");
         W.WriteLine("InputBuffers.Add(InputBuffer);");
       }
 
@@ -208,7 +208,8 @@ static class MindRenderer
     W.WriteLine($"var ReturnObjects = new List<{MakeOperation.ReturnType}>();");
     using (W.DeclareWithBlock("foreach (var __TIME_SEQUENCE__ in Inference.Result.Sequences)"))
     {
-      W.WriteLine("var OutputObject = Output.UnmarshalFrom(__TIME_SEQUENCE__.Steps.Single().Features, []);");
+      W.WriteLine("var __TIME_STEP__ = __TIME_SEQUENCE__.Steps.Single();");
+      W.WriteLine("var OutputObject = Output.UnmarshalFrom(__TIME_STEP__.Features, __TIME_STEP__.Tokens);");
       W.WriteLine($"ReturnObjects.Add(OutputObject.Parameters.{MakeOperation.Name}.Value);");
     }
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
