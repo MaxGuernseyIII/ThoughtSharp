@@ -43,7 +43,7 @@ class MockInference<TInput, TOutput>(params ImmutableArray<TOutput> ResultOutput
       foreach (var ResultOutput in ResultOutputs)
       {
         var Buffer = new float[TOutput.FloatLength];
-        ResultOutput.MarshalTo(Buffer, []);
+        ResultOutput.MarshalTo(Buffer, new long[TOutput.EncodedTokenClassCounts.Length]);
         Result.Add(Buffer);
       }
 

@@ -498,11 +498,11 @@ static class MindRenderer
 
   static void RenderMakeInference(IndentedTextWriter W, MindModel Model)
   {
-    W.WriteLine("var InputBuffer = new float[Input.FloatLength];");
-    W.WriteLine("InputObject.MarshalTo(InputBuffer, []);");
+    W.WriteLine("var InputBuffer = new TensorData() { Features = new float[Input.FloatLength], Tokens = new long[Input.EncodedTokenClassCounts.Length] };");
+    W.WriteLine("InputObject.MarshalTo(InputBuffer.Features, InputBuffer.Tokens);");
     W.WriteLine();
-    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfTensorData.Builder.AddSequence(S => S.AddStep(new() { Features = InputBuffer, Tokens = [] })).Build());");
-    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0], []);");
+    W.WriteLine("var Inference = CognitionMode.CurrentInferenceSource.MakeInference(Batch.OfTensorData.Builder.AddSequence(S => S.AddStep(InputBuffer)).Build());");
+    W.WriteLine("var OutputObject = Output.UnmarshalFrom(Inference.Result[0], new long[Output.EncodedTokenClassCounts.Length]);");
     W.WriteLine("CognitionMode = CognitionMode.RegisterNewInference(Inference);");
   }
 }

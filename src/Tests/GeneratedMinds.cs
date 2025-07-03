@@ -610,6 +610,12 @@ public partial class GeneratedMinds
   }
 
   [TestMethod]
+  public void ChooseWithTokensFromTwoOptions()
+  {
+    TestChooseBatchesWithToken(new([AnyMockOption(), AnyMockOption()]));
+  }
+
+  [TestMethod]
   public void InferenceChainForChooseRewardedAsOnePiece()
   {
     var Category = new MockCategory([
@@ -757,6 +763,7 @@ public partial class GeneratedMinds
     var Result = Mind.ChooseItems(Category, ArgumentA, Argument2, AThirdArg).Payload;
 
     Result.Should().BeSameAs(Selected.Payload);
+    return;
 
     Inference MakeInferenceFunction(ImmutableArray<ImmutableArray<StatelessMind.Input>> Batches)
     {
@@ -775,6 +782,42 @@ public partial class GeneratedMinds
       Output.Parameters.ChooseItems.Category.RightIsWinner = RightOption == Selected;
 
       return new MockInference<StatelessMind.Input, StatelessMind.Output>(Output)
+      {
+        MakeInferenceFunc =
+          _ => throw new InvalidOperationException("Should not get here.")
+      };
+    }
+  }
+
+  static void TestChooseBatchesWithToken(MockCategory Category)
+  {
+    var Selected = Any.Of(Category.AllOptions);
+    var ArgumentA = Any.Long;
+    var Brain = new MockBrain<TokenMindWithAllOperations.Input, TokenMindWithAllOperations.Output>();
+    Brain.MakeInferenceFunc = MakeInferenceFunction;
+
+    var Mind = new TokenMindWithAllOperations(Brain);
+
+    var Result = Mind.ChooseWithTokenBucket(Category, new() { Token = ArgumentA}).Payload;
+
+    Result.Should().BeSameAs(Selected.Payload);
+    return;
+
+    Inference MakeInferenceFunction(ImmutableArray<ImmutableArray<TokenMindWithAllOperations.Input>> Batches)
+    {
+      Batches.Length.Should().Be(1);
+      var Inputs = Batches[0];
+      Inputs.Length.Should().Be(1);
+      var Input = Inputs.Single();
+      Input.OperationCode.Should().Be(3);
+      Input.Parameters.ChooseWithTokenBucket.Inputs.Token.Should().Be(ArgumentA);
+      var RightOption =
+        Category.AllOptions.Single(C => Equals(C.Descriptor, Input.Parameters.ChooseWithTokenBucket.Category.Right));
+
+      var Output = new TokenMindWithAllOperations.Output();
+      Output.Parameters.ChooseWithTokenBucket.Category.RightIsWinner = RightOption == Selected;
+
+      return new MockInference<TokenMindWithAllOperations.Input, TokenMindWithAllOperations.Output>(Output)
       {
         MakeInferenceFunc =
           _ => throw new InvalidOperationException("Should not get here.")
@@ -934,10 +977,12 @@ public partial class GeneratedMinds
     Brain.SetOutputsForBatchedInputs([..ExpectedInputs.Select(I => new[] {I}.ToImmutableArray())],
       [..StipulatedOutputs]);
     var Thought = await new StatelessMind(Brain).AsynchronousUseSomeInterfaceBatch(
-      ExpectedInputs.Zip(Actions).Select(Pair => new StatelessMind.AsynchronousUseSomeInterfaceArgs(Pair.Second.Surface,
-        Pair.First.Parameters.AsynchronousUseSomeInterface.Argument1,
-        Pair.First.Parameters.AsynchronousUseSomeInterface.Argument2)
-      ).ToImmutableArray()
+      [
+        ..ExpectedInputs.Zip(Actions).Select(Pair => new StatelessMind.AsynchronousUseSomeInterfaceArgs(Pair.Second.Surface,
+          Pair.First.Parameters.AsynchronousUseSomeInterface.Argument1,
+          Pair.First.Parameters.AsynchronousUseSomeInterface.Argument2)
+        )
+      ]
     );
     return Thought.Payload;
   }
