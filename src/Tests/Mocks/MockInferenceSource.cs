@@ -54,7 +54,7 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
 
     for (var TerminalNumber = 0; TerminalNumber < Features.TerminalCount; ++TerminalNumber)
     {
-      var FeaturesSequences = GetTerminal(Features).Features.Cases;
+      var FeaturesSequences = Features.GetTerminal(TerminalNumber).Features.Cases;
       for (var Index = 0; Index < FeaturesSequences.Length; Index++)
       {
         var Timeline = FeaturesSequences[Index];
@@ -76,11 +76,6 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     var Result = MakeInferenceFunc([.. InputSequences]);
 
     return Result;
-  }
-
-  static BatchTerminal GetTerminal(Batch Features)
-  {
-    return new BatchTerminal(Features);
   }
 
   static ImmutableArray<Batch.Sequence> _(BatchTerminal BatchTerminal)

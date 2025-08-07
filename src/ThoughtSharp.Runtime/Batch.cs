@@ -98,4 +98,9 @@ public sealed record Batch
   {
     return Cases.Aggregate(0, HashCode.Combine);
   }
+
+  public BatchTerminal GetTerminal(int TerminalNumber)
+  {
+    return new BatchTerminal(this);
+  }
 }
