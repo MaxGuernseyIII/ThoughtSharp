@@ -24,7 +24,7 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Runtime;
 
-public sealed record Batch<T>
+public sealed record Batch<T> : AbstractTensor
 {
   Batch(ImmutableArray<Sequence> Sequences)
   {
@@ -99,10 +99,4 @@ public static class Batch
   {
     public static Batch<TensorData>.Builder Builder => new();
   }
-}
-
-public record struct TensorData
-{
-  public required float[] Features { get; init; }
-  public required long[] Tokens { get; init; }
 }
