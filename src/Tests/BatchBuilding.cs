@@ -93,6 +93,6 @@ public class BatchBuilding
 
   void ThenBatchElementIs(int SequenceNumber, int StepNumber, TensorData Expected)
   {
-    Batch.Sequences[SequenceNumber].Steps[StepNumber].Should().Be(Expected);
+    Batch.Cases[SequenceNumber].Steps[StepNumber].Should().Be(Expected);
   }
 }

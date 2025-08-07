@@ -26,9 +26,9 @@ namespace ThoughtSharp.Runtime;
 
 public sealed record Batch
 {
-  Batch(ImmutableArray<Sequence> Sequences)
+  Batch(ImmutableArray<Sequence> Cases)
   {
-    this.Sequences = Sequences;
+    this.Cases = Cases;
   }
 
   public static class OfTensorData
@@ -38,7 +38,7 @@ public sealed record Batch
 
   public int TerminalCount => 1;
 
-  public ImmutableArray<Sequence> Sequences { get; }
+  public ImmutableArray<Sequence> Cases { get; }
 
   public sealed record Builder
   {
@@ -91,11 +91,11 @@ public sealed record Batch
   {
     if (Other is null) return false;
     if (ReferenceEquals(this, Other)) return true;
-    return Sequences.SequenceEqual(Other.Sequences);
+    return Cases.SequenceEqual(Other.Cases);
   }
 
   public override int GetHashCode()
   {
-    return Sequences.Aggregate(0, HashCode.Combine);
+    return Cases.Aggregate(0, HashCode.Combine);
   }
 }

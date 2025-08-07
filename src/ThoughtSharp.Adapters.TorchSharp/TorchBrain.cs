@@ -117,16 +117,16 @@ public class TorchBrain(
   public TorchInferenceParts ConvertFloatsToInput(Batch JaggedTensor)
   {
     var TensorShapedFeatures = new float[
-      JaggedTensor.Sequences.Length,
-      JaggedTensor.Sequences.Max(B => B.Steps.Count),
-      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Features.Length)];
+      JaggedTensor.Cases.Length,
+      JaggedTensor.Cases.Max(B => B.Steps.Count),
+      JaggedTensor.Cases.SelectMany(B => B.Steps).Max(R => R.Features.Length)];
     var TensorShapedTokens = new long[
-      JaggedTensor.Sequences.Length,
-      JaggedTensor.Sequences.Max(B => B.Steps.Count),
-      JaggedTensor.Sequences.SelectMany(B => B.Steps).Max(R => R.Tokens.Length)
+      JaggedTensor.Cases.Length,
+      JaggedTensor.Cases.Max(B => B.Steps.Count),
+      JaggedTensor.Cases.SelectMany(B => B.Steps).Max(R => R.Tokens.Length)
     ];
 
-    var Sequences = JaggedTensor.Sequences.Select((TimeSequence, TimeSequenceNumber) => (TimeSequence, TimeSequenceNumber)).ToImmutableArray();
+    var Sequences = JaggedTensor.Cases.Select((TimeSequence, TimeSequenceNumber) => (TimeSequence, TimeSequenceNumber)).ToImmutableArray();
     foreach (var (TimeSequence, TimeSequenceNumber) in Sequences)
     foreach (var (TimeStep, TimeStepNumber) in TimeSequence.Steps.Select((TimeStep, TimeStepNumber) => (TimeStep, TimeStepNumber)))
     {
