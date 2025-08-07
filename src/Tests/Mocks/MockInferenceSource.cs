@@ -26,6 +26,11 @@ using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
+class BatchTerminal(Batch<TensorData> Features)
+{
+  public Batch<TensorData> Features { get; } = Features;
+}
+
 class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
   where TInput : CognitiveData<TInput>
   where TOutput : CognitiveData<TOutput>, new()
@@ -47,27 +52,41 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
   {
     var InputSequences = new List<ImmutableArray<TInput>>();
 
-    for (var TerminalNumber = 0; TerminalNumber < 1; ++TerminalNumber)
-    for (var Index = 0; Index < Features.Sequences.Length; Index++)
+    for (var TerminalNumber = 0; TerminalNumber < Features.TerminalCount; ++TerminalNumber)
     {
-      var Timeline = Features.Sequences[Index];
-      var Inputs = new List<TInput>();
-
-      for (var I = 0; I < Timeline.Steps.Count; I++)
+      var FeaturesSequences = GetTerminal(Features).Features.Sequences;
+      for (var Index = 0; Index < FeaturesSequences.Length; Index++)
       {
-        var StepInput = Timeline.Steps[I];
-        StepInput.Features.Length.Should().Be(TInput.FloatLength);
-        StepInput.Tokens.Length.Should().Be(TInput.EncodedTokenClassCounts.Length);
-        var Input = TInput.UnmarshalFrom(StepInput.Features, StepInput.Tokens);
-        Inputs.Add(Input);
-      }
+        var Timeline = FeaturesSequences[Index];
+        var Inputs = new List<TInput>();
 
-      InputSequences.Add([..Inputs]);
+        for (var I = 0; I < Timeline.Steps.Count; I++)
+        {
+          var StepInput = Timeline.Steps[I];
+          StepInput.Features.Length.Should().Be(TInput.FloatLength);
+          StepInput.Tokens.Length.Should().Be(TInput.EncodedTokenClassCounts.Length);
+          var Input = TInput.UnmarshalFrom(StepInput.Features, StepInput.Tokens);
+          Inputs.Add(Input);
+        }
+
+        InputSequences.Add([..Inputs]);
+      }
     }
 
     var Result = MakeInferenceFunc([.. InputSequences]);
 
     return Result;
+  }
+
+  static BatchTerminal GetTerminal(Batch<TensorData> Features)
+  {
+    return new BatchTerminal(Features);
+  }
+
+  static ImmutableArray<Batch<TensorData>.Sequence> _(BatchTerminal BatchTerminal)
+  {
+    var Features = BatchTerminal.Features;
+    return Features.Sequences;
   }
 
   public MockInference<TInput, TOutput> SetOutputForOnlyInput(

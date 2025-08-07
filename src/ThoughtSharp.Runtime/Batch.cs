@@ -31,6 +31,9 @@ public sealed record Batch<T> : RawCognitiveData
     this.Sequences = Sequences;
   }
 
+  public int TerminalCount => 1;
+
+
   public ImmutableArray<Sequence> Sequences { get; }
 
   public sealed record Builder
