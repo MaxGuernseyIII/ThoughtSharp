@@ -26,9 +26,9 @@ using ThoughtSharp.Runtime;
 
 namespace Tests.Mocks;
 
-class BatchTerminal(Batch<TensorData> Features)
+class BatchTerminal(Batch Features)
 {
-  public Batch<TensorData> Features { get; } = Features;
+  public Batch Features { get; } = Features;
 }
 
 class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
@@ -48,7 +48,7 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     };
   }
 
-  public Inference MakeInference(Batch<TensorData> Features)
+  public Inference MakeInference(Batch Features)
   {
     var InputSequences = new List<ImmutableArray<TInput>>();
 
@@ -78,12 +78,12 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     return Result;
   }
 
-  static BatchTerminal GetTerminal(Batch<TensorData> Features)
+  static BatchTerminal GetTerminal(Batch Features)
   {
     return new BatchTerminal(Features);
   }
 
-  static ImmutableArray<Batch<TensorData>.Sequence> _(BatchTerminal BatchTerminal)
+  static ImmutableArray<Batch.Sequence> _(BatchTerminal BatchTerminal)
   {
     var Features = BatchTerminal.Features;
     return Features.Sequences;

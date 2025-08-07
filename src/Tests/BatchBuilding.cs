@@ -28,8 +28,8 @@ namespace Tests;
 [TestClass]
 public class BatchBuilding
 {
-  Batch<TensorData>.Builder BatchBuilder = null!;
-  Batch<TensorData> Batch = null!;
+  Batch.Builder BatchBuilder = null!;
+  Batch Batch = null!;
 
   [TestInitialize]
   public void SetUp()
@@ -53,7 +53,7 @@ public class BatchBuilding
     ThenBatchElementIs(SequenceCount, StepCount, Value);
   }
 
-  static Func<Batch<TensorData>.Builder.SequenceBuilder, Batch<TensorData>.Builder.SequenceBuilder> GivenStepsInSequence(int Count)
+  static Func<Batch.Builder.SequenceBuilder, Batch.Builder.SequenceBuilder> GivenStepsInSequence(int Count)
   {
     return S =>
     {
@@ -73,7 +73,7 @@ public class BatchBuilding
     return Count;
   }
 
-  void GivenSequence(params IEnumerable<Func<Batch<TensorData>.Builder.SequenceBuilder, Batch<TensorData>.Builder.SequenceBuilder>> Configs)
+  void GivenSequence(params IEnumerable<Func<Batch.Builder.SequenceBuilder, Batch.Builder.SequenceBuilder>> Configs)
   {
     BatchBuilder = BatchBuilder.AddSequence(S =>
     {
@@ -81,7 +81,7 @@ public class BatchBuilding
     });
   }
 
-  static Func<Batch<TensorData>.Builder.SequenceBuilder, Batch<TensorData>.Builder.SequenceBuilder> GivenStepInSequence(TensorData Value)
+  static Func<Batch.Builder.SequenceBuilder, Batch.Builder.SequenceBuilder> GivenStepInSequence(TensorData Value)
   {
     return S => S.AddStep(Value);
   }

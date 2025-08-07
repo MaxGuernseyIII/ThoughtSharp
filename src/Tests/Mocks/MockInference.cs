@@ -35,7 +35,7 @@ class MockInference<TInput, TOutput>(params ImmutableArray<TOutput> ResultOutput
   public ImmutableArray<TOutput> ResultOutputs { get; } = ResultOutputs;
   IReadOnlyList<(int, int, LossRule)>? TrainedLossRules;
 
-  public Batch<TensorData> Result
+  public Batch Result
   {
     get
     {

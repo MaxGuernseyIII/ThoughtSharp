@@ -24,7 +24,7 @@ namespace ThoughtSharp.Runtime;
 
 public interface Inference : IDisposable, InferenceSource
 {
-  Batch<TensorData> Result { get; }
+  Batch Result { get; }
 
   void Train(params IReadOnlyList<(int BatchNumber, int FirstFeatureNumber, LossRule Rule)> LossRules);
 }

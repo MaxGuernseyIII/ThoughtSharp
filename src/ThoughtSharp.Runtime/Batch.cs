@@ -24,15 +24,19 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Runtime;
 
-public sealed record Batch<T> : RawCognitiveData
+public sealed record Batch
 {
   Batch(ImmutableArray<Sequence> Sequences)
   {
     this.Sequences = Sequences;
   }
 
-  public int TerminalCount => 1;
+  public static class OfTensorData
+  {
+    public static Builder Builder => new();
+  }
 
+  public int TerminalCount => 1;
 
   public ImmutableArray<Sequence> Sequences { get; }
 
@@ -42,21 +46,21 @@ public sealed record Batch<T> : RawCognitiveData
 
     public Builder AddSequence(Func<SequenceBuilder, SequenceBuilder> ConfigureBuilder)
     {
-      return this with {Sequences = [..Sequences, ConfigureBuilder(new()).Build()]};
+      return this with { Sequences = [.. Sequences, ConfigureBuilder(new()).Build()] };
     }
 
-    public Batch<T> Build()
+    public Batch Build()
     {
       return new(Sequences);
     }
 
     public sealed record SequenceBuilder()
     {
-      ImmutableArray<T> Steps = [];
+      ImmutableArray<TensorData> Steps = [];
 
-      public SequenceBuilder AddStep(T NextStep)
+      public SequenceBuilder AddStep(TensorData NextStep)
       {
-        return this with {Steps = [..Steps, NextStep]};
+        return this with { Steps = [.. Steps, NextStep] };
       }
 
       public Sequence Build()
@@ -66,9 +70,9 @@ public sealed record Batch<T> : RawCognitiveData
     }
   }
 
-  public sealed record Sequence(IReadOnlyList<T> Steps)
+  public sealed record Sequence(IReadOnlyList<TensorData> Steps)
   {
-    public IReadOnlyList<T> Steps { get; } = Steps;
+    public IReadOnlyList<TensorData> Steps { get; } = Steps;
 
     public bool Equals(Sequence? Other)
     {
@@ -83,7 +87,7 @@ public sealed record Batch<T> : RawCognitiveData
     }
   }
 
-  public bool Equals(Batch<T>? Other)
+  public bool Equals(Batch? Other)
   {
     if (Other is null) return false;
     if (ReferenceEquals(this, Other)) return true;
@@ -93,13 +97,5 @@ public sealed record Batch<T> : RawCognitiveData
   public override int GetHashCode()
   {
     return Sequences.Aggregate(0, HashCode.Combine);
-  }
-}
-
-public static class Batch
-{
-  public static class OfTensorData
-  {
-    public static Batch<TensorData>.Builder Builder => new();
   }
 }

@@ -944,7 +944,7 @@ public class BrainBuilding
     {
     }
 
-    public Inference MakeInference(Batch<TensorData> Features)
+    public Inference MakeInference(Batch Features)
     {
       Assert.Fail();
       return null!;

@@ -34,7 +34,7 @@ public class TorchInference(
   internal TorchInferenceParts Output { get; } = Output;
   internal TorchInferenceParts OriginalInput { get; } = OriginalInput;
 
-  public Batch<TensorData> Result
+  public Batch Result
   {
     get
     {
@@ -105,7 +105,7 @@ public class TorchInference(
     });
   }
 
-  public Inference MakeInference(Batch<TensorData> JaggedTensor)
+  public Inference MakeInference(Batch JaggedTensor)
   {
     return Brain.ExecuteInference(this, 
       Brain.ConvertFloatsToInput(JaggedTensor) with

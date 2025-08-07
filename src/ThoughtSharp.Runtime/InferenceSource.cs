@@ -25,5 +25,5 @@ namespace ThoughtSharp.Runtime;
 public interface InferenceSource
 {
   Inference MakeInference(
-    Batch<TensorData> JaggedTensor);
+    Batch JaggedTensor);
 }
