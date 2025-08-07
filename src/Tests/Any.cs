@@ -23,6 +23,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Tests.Mocks;
+using ThoughtSharp.Runtime;
 using ThoughtSharp.Scenarios;
 using ThoughtSharp.Scenarios.Model;
 
@@ -219,4 +220,11 @@ static class Any
     var Original = Grade;
     return Original with { Score = Original.Score - (1f - Ceiling) };
   }
+
+  public static TensorData TensorData =>
+    new()
+    {
+      Features = [Any.Float],
+      Tokens = [Any.Long]
+    };
 }

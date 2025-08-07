@@ -28,8 +28,8 @@ namespace Tests;
 [TestClass]
 public class BatchBuilding
 {
-  Batch<float>.Builder BatchBuilder = null!;
-  Batch<float> Batch = null!;
+  Batch<TensorData>.Builder BatchBuilder = null!;
+  Batch<TensorData> Batch = null!;
 
   [TestInitialize]
   public void SetUp()
@@ -42,7 +42,7 @@ public class BatchBuilding
   {
     var SequenceCount = GivenSequences();
     var StepCount = Any.Int(0, 3);
-    var Value = Any.Float;
+    var Value = Any.TensorData;
     GivenSequence(
       GivenStepsInSequence(StepCount),
       GivenStepInSequence(Value)
@@ -53,12 +53,12 @@ public class BatchBuilding
     ThenBatchElementIs(SequenceCount, StepCount, Value);
   }
 
-  static Func<Batch<float>.Builder.SequenceBuilder, Batch<float>.Builder.SequenceBuilder> GivenStepsInSequence(int Count)
+  static Func<Batch<TensorData>.Builder.SequenceBuilder, Batch<TensorData>.Builder.SequenceBuilder> GivenStepsInSequence(int Count)
   {
     return S =>
     {
       foreach (var I in Enumerable.Range(0, Count))
-        S = GivenStepInSequence(Any.Float)(S);
+        S = GivenStepInSequence(Any.TensorData)(S);
 
       return S;
     };
@@ -73,7 +73,7 @@ public class BatchBuilding
     return Count;
   }
 
-  void GivenSequence(params IEnumerable<Func<Batch<float>.Builder.SequenceBuilder, Batch<float>.Builder.SequenceBuilder>> Configs)
+  void GivenSequence(params IEnumerable<Func<Batch<TensorData>.Builder.SequenceBuilder, Batch<TensorData>.Builder.SequenceBuilder>> Configs)
   {
     BatchBuilder = BatchBuilder.AddSequence(S =>
     {
@@ -81,7 +81,7 @@ public class BatchBuilding
     });
   }
 
-  static Func<Batch<float>.Builder.SequenceBuilder, Batch<float>.Builder.SequenceBuilder> GivenStepInSequence(float Value)
+  static Func<Batch<TensorData>.Builder.SequenceBuilder, Batch<TensorData>.Builder.SequenceBuilder> GivenStepInSequence(TensorData Value)
   {
     return S => S.AddStep(Value);
   }
@@ -91,7 +91,7 @@ public class BatchBuilding
     Batch = BatchBuilder.Build();
   }
 
-  void ThenBatchElementIs(int SequenceNumber, int StepNumber, float Expected)
+  void ThenBatchElementIs(int SequenceNumber, int StepNumber, TensorData Expected)
   {
     Batch.Sequences[SequenceNumber].Steps[StepNumber].Should().Be(Expected);
   }
