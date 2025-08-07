@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
 using System.Collections.Immutable;
 using FluentAssertions;
 using ThoughtSharp.Runtime;
@@ -31,6 +30,9 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
   where TInput : CognitiveData<TInput>
   where TOutput : CognitiveData<TOutput>, new()
 {
+  public Func<ImmutableArray<ImmutableArray<TInput>>, Inference> MakeInferenceFunc;
+  public List<MockInference<TInput, TOutput>> MockInferences = [];
+
   public MockInferenceSource()
   {
     MakeInferenceFunc = Batch =>
@@ -41,13 +43,11 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     };
   }
 
-  public Func<ImmutableArray<ImmutableArray<TInput>>, Inference> MakeInferenceFunc;
-  public List<MockInference<TInput, TOutput>> MockInferences = [];
-
   public Inference MakeInference(Batch<TensorData> Features)
   {
     var InputSequences = new List<ImmutableArray<TInput>>();
 
+    for (var TerminalNumber = 0; TerminalNumber < 1; ++TerminalNumber)
     for (var Index = 0; Index < Features.Sequences.Length; Index++)
     {
       var Timeline = Features.Sequences[Index];
@@ -71,7 +71,7 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
   }
 
   public MockInference<TInput, TOutput> SetOutputForOnlyInput(
-    ImmutableArray<TInput> ExpectedInput, 
+    ImmutableArray<TInput> ExpectedInput,
     TOutput StipulatedOutput)
   {
     return SetOutputsForBatchedInputs([ExpectedInput], [StipulatedOutput]);
