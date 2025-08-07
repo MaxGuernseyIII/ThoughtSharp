@@ -48,12 +48,14 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
   {
     var InputSequences = new List<ImmutableArray<TInput>>();
 
-    foreach (var Timeline in Features.Sequences)
+    for (var Index = 0; Index < Features.Sequences.Length; Index++)
     {
+      var Timeline = Features.Sequences[Index];
       var Inputs = new List<TInput>();
 
-      foreach (var StepInput in Timeline.Steps)
+      for (var I = 0; I < Timeline.Steps.Count; I++)
       {
+        var StepInput = Timeline.Steps[I];
         StepInput.Features.Length.Should().Be(TInput.FloatLength);
         StepInput.Tokens.Length.Should().Be(TInput.EncodedTokenClassCounts.Length);
         var Input = TInput.UnmarshalFrom(StepInput.Features, StepInput.Tokens);

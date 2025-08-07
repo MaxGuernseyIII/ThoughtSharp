@@ -22,6 +22,6 @@
 
 namespace ThoughtSharp.Runtime;
 
-public interface AbstractTensor
+public interface RawCognitiveData
 {
 }

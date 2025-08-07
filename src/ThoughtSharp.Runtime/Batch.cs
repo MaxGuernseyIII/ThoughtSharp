@@ -24,7 +24,7 @@ using System.Collections.Immutable;
 
 namespace ThoughtSharp.Runtime;
 
-public sealed record Batch<T> : AbstractTensor
+public sealed record Batch<T> : RawCognitiveData
 {
   Batch(ImmutableArray<Sequence> Sequences)
   {
