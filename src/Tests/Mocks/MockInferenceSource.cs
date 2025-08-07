@@ -46,22 +46,24 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
 
   public Inference MakeInference(Batch<TensorData> Features)
   {
-    var TrueInputs = new List<ImmutableArray<TInput>>();
+    var InputSequences = new List<ImmutableArray<TInput>>();
 
     foreach (var Timeline in Features.Sequences)
     {
-      var TrueInput = Timeline.Steps.Select(StepInput =>
+      var Inputs = new List<TInput>();
+
+      foreach (var StepInput in Timeline.Steps)
       {
         StepInput.Features.Length.Should().Be(TInput.FloatLength);
         StepInput.Tokens.Length.Should().Be(TInput.EncodedTokenClassCounts.Length);
         var Input = TInput.UnmarshalFrom(StepInput.Features, StepInput.Tokens);
-        return Input;
-      }).ToImmutableArray();
+        Inputs.Add(Input);
+      }
 
-      TrueInputs.Add(TrueInput);
+      InputSequences.Add([..Inputs]);
     }
 
-    var Result = MakeInferenceFunc([.. TrueInputs]);
+    var Result = MakeInferenceFunc([.. InputSequences]);
 
     return Result;
   }
