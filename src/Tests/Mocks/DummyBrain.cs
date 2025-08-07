@@ -31,7 +31,7 @@ class DummyBrain : Brain
     throw new NotImplementedException();
   }
 
-  public Inference MakeInference(Batch Features)
+  public Inference MakeInference(Batch B)
   {
     throw new NotImplementedException();
   }

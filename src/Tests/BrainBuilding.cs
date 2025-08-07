@@ -944,7 +944,7 @@ public class BrainBuilding
     {
     }
 
-    public Inference MakeInference(Batch Features)
+    public Inference MakeInference(Batch B)
     {
       Assert.Fail();
       return null!;

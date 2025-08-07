@@ -48,13 +48,13 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
     };
   }
 
-  public Inference MakeInference(Batch Features)
+  public Inference MakeInference(Batch B)
   {
     var InputSequences = new List<ImmutableArray<TInput>>();
 
-    for (var TerminalNumber = 0; TerminalNumber < Features.TerminalCount; ++TerminalNumber)
+    for (var TerminalNumber = 0; TerminalNumber < B.TerminalCount; ++TerminalNumber)
     {
-      var FeaturesSequences = Features.GetTerminal(TerminalNumber).Features.Cases;
+      var FeaturesSequences = B.GetTerminal(TerminalNumber).Features.Cases;
       for (var Index = 0; Index < FeaturesSequences.Length; Index++)
       {
         var Timeline = FeaturesSequences[Index];
@@ -63,10 +63,12 @@ class MockInferenceSource<TInput, TOutput> : MockDisposable, InferenceSource
         for (var I = 0; I < Timeline.Steps.Count; I++)
         {
           var StepInput = Timeline.Steps[I];
-          StepInput.Features.Length.Should().Be(TInput.FloatLength);
-          StepInput.Tokens.Length.Should().Be(TInput.EncodedTokenClassCounts.Length);
-          var Input = TInput.UnmarshalFrom(StepInput.Features, StepInput.Tokens);
-          Inputs.Add(Input);
+          var Features = StepInput.Features;
+          var Tokens = StepInput.Tokens;
+          Features.Length.Should().Be(TInput.FloatLength);
+          Tokens.Length.Should().Be(TInput.EncodedTokenClassCounts.Length);
+
+          Inputs.Add(TInput.UnmarshalFrom(Features, Tokens));
         }
 
         InputSequences.Add([..Inputs]);
